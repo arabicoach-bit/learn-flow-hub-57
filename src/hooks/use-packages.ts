@@ -1,6 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+export interface AddPackageResult {
+  success: boolean;
+  package_id: string;
+  old_wallet: number;
+  new_wallet: number;
+  debt_covered: number;
+}
+
 export interface Package {
   package_id: string;
   student_id: string;
@@ -60,7 +68,7 @@ export function useAddPackage() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (input: CreatePackageInput) => {
+    mutationFn: async (input: CreatePackageInput): Promise<AddPackageResult> => {
       const { data, error } = await supabase.rpc('add_package_with_debt', {
         p_student_id: input.student_id,
         p_amount: input.amount,
@@ -68,7 +76,7 @@ export function useAddPackage() {
       });
 
       if (error) throw error;
-      return data;
+      return data as unknown as AddPackageResult;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['packages'] });
