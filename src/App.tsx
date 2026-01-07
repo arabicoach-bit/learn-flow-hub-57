@@ -54,6 +54,10 @@ const AppRoutes = () => (
     <Route path="/unauthorized" element={<Unauthorized />} />
     <Route path="/change-password" element={<ChangePassword />} />
     
+    {/* Redirect signup/register to auth */}
+    <Route path="/signup" element={<Auth />} />
+    <Route path="/register" element={<Auth />} />
+    
     {/* Root redirect */}
     <Route path="/" element={<RootRedirect />} />
     
