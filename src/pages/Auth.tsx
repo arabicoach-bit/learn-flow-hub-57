@@ -13,7 +13,7 @@ const emailSchema = z.string().email('Please enter a valid email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
 
 export default function Auth() {
-  const { user, role, signIn, loading } = useAuth();
+  const { user, role, needsPasswordChange, signIn, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -25,6 +25,12 @@ export default function Auth() {
   // Redirect if already logged in
   useEffect(() => {
     if (user && role && !loading) {
+      // Check if user needs to change password first
+      if (needsPasswordChange) {
+        navigate('/change-password', { replace: true, state: { mandatory: true, firstLogin: true } });
+        return;
+      }
+      
       const from = location.state?.from?.pathname;
       if (from && from !== '/auth') {
         navigate(from, { replace: true });
@@ -34,7 +40,7 @@ export default function Auth() {
         navigate('/teacher', { replace: true });
       }
     }
-  }, [user, role, loading, navigate, location]);
+  }, [user, role, needsPasswordChange, loading, navigate, location]);
 
   // Redirect from signup/register routes
   useEffect(() => {

@@ -11,6 +11,8 @@ interface Profile {
   email: string;
   phone: string | null;
   is_active: boolean;
+  first_login_at: string | null;
+  password_changed_at: string | null;
 }
 
 interface AuthContextType {
@@ -19,9 +21,11 @@ interface AuthContextType {
   profile: Profile | null;
   role: AppRole | null;
   loading: boolean;
+  needsPasswordChange: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,6 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
   const [loading, setLoading] = useState(true);
+  const [needsPasswordChange, setNeedsPasswordChange] = useState(false);
 
   const fetchUserData = async (userId: string) => {
     try {
@@ -44,6 +49,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (profileData) {
         setProfile(profileData as Profile);
+        
+        // Check if this is a teacher who needs to change password
+        // They need to change password if password_changed_at is null
+        const needsChange = !profileData.password_changed_at;
+        setNeedsPasswordChange(needsChange);
+        
+        // Update first_login_at if it's null (first time logging in)
+        if (!profileData.first_login_at) {
+          await supabase
+            .from('profiles')
+            .update({ first_login_at: new Date().toISOString() })
+            .eq('id', userId);
+        }
       }
 
       // Fetch role
@@ -67,6 +85,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const refreshProfile = async () => {
+    if (user) {
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      
+      if (profileData) {
+        setProfile(profileData as Profile);
+        setNeedsPasswordChange(!profileData.password_changed_at);
+      }
+    }
+  };
+
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -82,6 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           setProfile(null);
           setRole(null);
+          setNeedsPasswordChange(false);
         }
         
         setLoading(false);
@@ -133,6 +167,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
     setProfile(null);
     setRole(null);
+    setNeedsPasswordChange(false);
   };
 
   return (
@@ -142,9 +177,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profile,
       role,
       loading,
+      needsPasswordChange,
       signIn,
       signUp,
       signOut,
+      refreshProfile,
     }}>
       {children}
     </AuthContext.Provider>

@@ -43,7 +43,7 @@ export default function ChangePassword() {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { user, role, profile } = useAuth();
+  const { user, role, profile, refreshProfile } = useAuth();
   
   const isMandatory = location.state?.mandatory || false;
   const isFirstLogin = location.state?.firstLogin || false;
@@ -110,6 +110,8 @@ export default function ChangePassword() {
             temp_password: null, // Clear temp password
           })
           .eq('id', user.id);
+        // Refresh profile to update needsPasswordChange state
+        await refreshProfile();
       }
 
       toast({
