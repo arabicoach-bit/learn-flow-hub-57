@@ -205,7 +205,9 @@ export type Database = {
           message: string
           notification_id: string
           related_id: string | null
+          student_name: string | null
           type: Database["public"]["Enums"]["notification_type"]
+          wallet_balance: number | null
         }
         Insert: {
           created_at?: string | null
@@ -213,7 +215,9 @@ export type Database = {
           message: string
           notification_id?: string
           related_id?: string | null
+          student_name?: string | null
           type: Database["public"]["Enums"]["notification_type"]
+          wallet_balance?: number | null
         }
         Update: {
           created_at?: string | null
@@ -221,7 +225,9 @@ export type Database = {
           message?: string
           notification_id?: string
           related_id?: string | null
+          student_name?: string | null
           type?: Database["public"]["Enums"]["notification_type"]
+          wallet_balance?: number | null
         }
         Relationships: []
       }

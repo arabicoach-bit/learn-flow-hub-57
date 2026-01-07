@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useClasses } from '@/hooks/use-classes';
 import { useStudents } from '@/hooks/use-students';
 import { useMarkLesson } from '@/hooks/use-lessons';
@@ -9,9 +9,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
-import { Loader2, CheckCircle2 } from 'lucide-react';
+import { Loader2, CheckCircle2, Ban, AlertTriangle } from 'lucide-react';
 import { getWalletColor } from '@/lib/wallet-utils';
+import { supabase } from '@/integrations/supabase/client';
 
 interface StudentLessonStatus {
   student_id: string;
@@ -43,18 +45,28 @@ export function MarkLessonForm() {
   };
 
   // Populate students when data loads
-  if (students && selectedClassId && studentStatuses.length === 0 && students.length > 0) {
-    setStudentStatuses(students.map(s => ({
-      student_id: s.student_id,
-      name: s.name,
-      wallet_balance: s.wallet_balance,
-      status: s.status,
-      lessonStatus: null,
-      selected: false,
-    })));
-  }
+  useEffect(() => {
+    if (students && selectedClassId && students.length > 0) {
+      setStudentStatuses(students.map(s => ({
+        student_id: s.student_id,
+        name: s.name,
+        wallet_balance: s.wallet_balance,
+        status: s.status,
+        lessonStatus: null,
+        selected: false,
+      })));
+    }
+  }, [students, selectedClassId]);
 
   const handleStudentSelect = (studentId: string, checked: boolean) => {
+    const student = studentStatuses.find(s => s.student_id === studentId);
+    
+    // Prevent selecting blocked students
+    if (student?.status === 'Blocked') {
+      toast.error(`Cannot select ${student.name} - student is BLOCKED. Contact admin.`);
+      return;
+    }
+    
     setStudentStatuses(prev => prev.map(s => 
       s.student_id === studentId 
         ? { ...s, selected: checked, lessonStatus: checked ? 'Taken' : null }
@@ -81,10 +93,32 @@ export function MarkLessonForm() {
       return;
     }
 
-    // Check for blocked students trying to take lessons
-    const blockedTaking = selectedStudents.filter(s => s.status === 'Blocked' && s.lessonStatus === 'Taken');
-    if (blockedTaking.length > 0) {
-      toast.error(`Cannot mark lesson as taken for blocked student(s): ${blockedTaking.map(s => s.name).join(', ')}`);
+    // Re-validate student statuses from database before submission
+    const studentIds = selectedStudents.map(s => s.student_id);
+    const { data: currentStudents, error: fetchError } = await supabase
+      .from('students')
+      .select('student_id, name, status')
+      .in('student_id', studentIds);
+
+    if (fetchError) {
+      toast.error('Failed to validate student statuses');
+      return;
+    }
+
+    // Check for any blocked students
+    const blockedStudents = currentStudents?.filter(s => s.status === 'Blocked') || [];
+    if (blockedStudents.length > 0) {
+      const names = blockedStudents.map(s => s.name).join(', ');
+      toast.error(`Cannot mark lessons for blocked students: ${names}`);
+      
+      // Update local state to reflect current blocked status
+      setStudentStatuses(prev => prev.map(s => {
+        const current = currentStudents?.find(cs => cs.student_id === s.student_id);
+        if (current && current.status === 'Blocked') {
+          return { ...s, status: 'Blocked', selected: false, lessonStatus: null };
+        }
+        return s;
+      }));
       return;
     }
 
@@ -112,151 +146,182 @@ export function MarkLessonForm() {
   };
 
   return (
-    <Card className="glass-card">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <CheckCircle2 className="w-5 h-5 text-primary" />
-          Mark Lesson
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Class Selection */}
-        <div className="space-y-2">
-          <Label>Select Class</Label>
-          <Select value={selectedClassId} onValueChange={handleClassChange}>
-            <SelectTrigger>
-              <SelectValue placeholder={classesLoading ? 'Loading...' : 'Choose a class'} />
-            </SelectTrigger>
-            <SelectContent>
-              {classes?.map((cls) => (
-                <SelectItem key={cls.class_id} value={cls.class_id}>
-                  {cls.name} {cls.teachers?.name ? `(${cls.teachers.name})` : ''}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Students List with Status */}
-        {selectedClassId && (
-          <div className="space-y-4">
-            <Label>Students in Class</Label>
-            {studentsLoading ? (
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Loading students...
-              </div>
-            ) : studentStatuses.length === 0 ? (
-              <p className="text-muted-foreground text-sm">No students found in this class</p>
-            ) : (
-              <div className="space-y-3">
-                {studentStatuses.map((student) => (
-                  <div 
-                    key={student.student_id} 
-                    className={`p-4 rounded-lg border transition-colors ${
-                      student.selected ? 'border-primary bg-primary/5' : 'border-border/50 bg-muted/30'
-                    } ${student.status === 'Blocked' ? 'opacity-60' : ''}`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <Checkbox
-                        id={student.student_id}
-                        checked={student.selected}
-                        onCheckedChange={(checked) => handleStudentSelect(student.student_id, checked as boolean)}
-                      />
-                      <div className="flex-1 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <label 
-                            htmlFor={student.student_id} 
-                            className="font-medium cursor-pointer flex items-center gap-2"
-                          >
-                            {student.name}
-                            {student.status === 'Blocked' && (
-                              <span className="text-xs px-2 py-0.5 rounded-full bg-destructive/20 text-destructive">
-                                BLOCKED
-                              </span>
-                            )}
-                          </label>
-                          <span 
-                            className="text-sm font-medium px-2 py-0.5 rounded"
-                            style={{ 
-                              backgroundColor: `hsl(${getWalletColor(student.wallet_balance)} / 0.15)`,
-                              color: `hsl(${getWalletColor(student.wallet_balance)})`
-                            }}
-                          >
-                            Balance: {student.wallet_balance}
-                          </span>
-                        </div>
-                        
-                        {student.selected && (
-                          <RadioGroup
-                            value={student.lessonStatus || ''}
-                            onValueChange={(value) => handleStatusChange(student.student_id, value as any)}
-                            className="flex gap-4"
-                          >
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="Taken" id={`${student.student_id}-taken`} />
-                              <Label htmlFor={`${student.student_id}-taken`} className="cursor-pointer text-sm font-normal">
-                                Taken
-                              </Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="Absent" id={`${student.student_id}-absent`} />
-                              <Label htmlFor={`${student.student_id}-absent`} className="cursor-pointer text-sm font-normal">
-                                Absent
-                              </Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="Cancelled" id={`${student.student_id}-cancelled`} />
-                              <Label htmlFor={`${student.student_id}-cancelled`} className="cursor-pointer text-sm font-normal">
-                                Cancelled
-                              </Label>
-                            </div>
-                          </RadioGroup>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Notes */}
-        {selectedClassId && studentStatuses.some(s => s.selected) && (
+    <TooltipProvider>
+      <Card className="glass-card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5 text-primary" />
+            Mark Lesson
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Class Selection */}
           <div className="space-y-2">
-            <Label htmlFor="notes">Notes (optional)</Label>
-            <Textarea
-              id="notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Add any notes about today's lesson..."
-              rows={3}
-            />
+            <Label>Select Class</Label>
+            <Select value={selectedClassId} onValueChange={handleClassChange}>
+              <SelectTrigger>
+                <SelectValue placeholder={classesLoading ? 'Loading...' : 'Choose a class'} />
+              </SelectTrigger>
+              <SelectContent>
+                {classes?.map((cls) => (
+                  <SelectItem key={cls.class_id} value={cls.class_id}>
+                    {cls.name} {cls.teachers?.name ? `(${cls.teachers.name})` : ''}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        )}
 
-        {/* Submit Button */}
-        {selectedClassId && (
-          <Button 
-            onClick={handleSubmit} 
-            disabled={isSubmitting || !studentStatuses.some(s => s.selected)}
-            className="w-full"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Marking Lessons...
-              </>
-            ) : (
-              <>
-                <CheckCircle2 className="w-4 h-4 mr-2" />
-                Mark Selected Lessons
-              </>
-            )}
-          </Button>
-        )}
-      </CardContent>
-    </Card>
+          {/* Students List with Status */}
+          {selectedClassId && (
+            <div className="space-y-4">
+              <Label>Students in Class</Label>
+              {studentsLoading ? (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Loading students...
+                </div>
+              ) : studentStatuses.length === 0 ? (
+                <p className="text-muted-foreground text-sm">No students found in this class</p>
+              ) : (
+                <div className="space-y-3">
+                  {studentStatuses.map((student) => {
+                    const isBlocked = student.status === 'Blocked';
+                    
+                    return (
+                      <div 
+                        key={student.student_id} 
+                        className={`p-4 rounded-lg border transition-colors ${
+                          isBlocked 
+                            ? 'border-destructive/50 bg-destructive/5 opacity-75 cursor-not-allowed' 
+                            : student.selected 
+                              ? 'border-primary bg-primary/5' 
+                              : 'border-border/50 bg-muted/30'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div>
+                                <Checkbox
+                                  id={student.student_id}
+                                  checked={student.selected}
+                                  onCheckedChange={(checked) => handleStudentSelect(student.student_id, checked as boolean)}
+                                  disabled={isBlocked}
+                                  className={isBlocked ? 'cursor-not-allowed opacity-50' : ''}
+                                />
+                              </div>
+                            </TooltipTrigger>
+                            {isBlocked && (
+                              <TooltipContent side="right" className="bg-destructive text-destructive-foreground">
+                                <p>This student has exceeded the debt limit.</p>
+                                <p>Payment required before lessons can be marked.</p>
+                              </TooltipContent>
+                            )}
+                          </Tooltip>
+                          <div className="flex-1 space-y-3">
+                            <div className="flex items-center justify-between">
+                              <label 
+                                htmlFor={student.student_id} 
+                                className={`font-medium flex items-center gap-2 ${isBlocked ? 'text-muted-foreground cursor-not-allowed' : 'cursor-pointer'}`}
+                              >
+                                {student.name}
+                                {isBlocked && (
+                                  <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-destructive/20 text-destructive">
+                                    <Ban className="w-3 h-3" />
+                                    BLOCKED - Contact Admin
+                                  </span>
+                                )}
+                                {student.status === 'Grace' && (
+                                  <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-500">
+                                    <AlertTriangle className="w-3 h-3" />
+                                    Grace Period
+                                  </span>
+                                )}
+                              </label>
+                              <span 
+                                className="text-sm font-medium px-2 py-0.5 rounded"
+                                style={{ 
+                                  backgroundColor: `hsl(${getWalletColor(student.wallet_balance)} / 0.15)`,
+                                  color: `hsl(${getWalletColor(student.wallet_balance)})`
+                                }}
+                              >
+                                Balance: {student.wallet_balance}
+                              </span>
+                            </div>
+                            
+                            {student.selected && !isBlocked && (
+                              <RadioGroup
+                                value={student.lessonStatus || ''}
+                                onValueChange={(value) => handleStatusChange(student.student_id, value as any)}
+                                className="flex gap-4"
+                              >
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="Taken" id={`${student.student_id}-taken`} />
+                                  <Label htmlFor={`${student.student_id}-taken`} className="cursor-pointer text-sm font-normal">
+                                    Taken
+                                  </Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="Absent" id={`${student.student_id}-absent`} />
+                                  <Label htmlFor={`${student.student_id}-absent`} className="cursor-pointer text-sm font-normal">
+                                    Absent
+                                  </Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="Cancelled" id={`${student.student_id}-cancelled`} />
+                                  <Label htmlFor={`${student.student_id}-cancelled`} className="cursor-pointer text-sm font-normal">
+                                    Cancelled
+                                  </Label>
+                                </div>
+                              </RadioGroup>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Notes */}
+          {selectedClassId && studentStatuses.some(s => s.selected) && (
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notes (optional)</Label>
+              <Textarea
+                id="notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Add any notes about today's lesson..."
+                rows={3}
+              />
+            </div>
+          )}
+
+          {/* Submit Button */}
+          {selectedClassId && (
+            <Button 
+              onClick={handleSubmit} 
+              disabled={isSubmitting || !studentStatuses.some(s => s.selected)}
+              className="w-full"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Marking Lessons...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                  Mark Selected Lessons
+                </>
+              )}
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+    </TooltipProvider>
   );
 }
