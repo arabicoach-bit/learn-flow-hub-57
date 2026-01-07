@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string | null
+          details: Json | null
+          log_id: string
+          performed_by: string | null
+          target_user: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          details?: Json | null
+          log_id?: string
+          performed_by?: string | null
+          target_user?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          details?: Json | null
+          log_id?: string
+          performed_by?: string | null
+          target_user?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_performed_by_fkey"
+            columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audit_logs_target_user_fkey"
+            columns: ["target_user"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       classes: {
         Row: {
           class_id: string
@@ -231,32 +273,44 @@ export type Database = {
         Row: {
           created_at: string | null
           email: string
+          first_login_at: string | null
           full_name: string
           id: string
+          invitation_sent_at: string | null
           is_active: boolean | null
           last_login: string | null
+          password_changed_at: string | null
           phone: string | null
           teacher_id: string | null
+          temp_password: string | null
         }
         Insert: {
           created_at?: string | null
           email: string
+          first_login_at?: string | null
           full_name: string
           id: string
+          invitation_sent_at?: string | null
           is_active?: boolean | null
           last_login?: string | null
+          password_changed_at?: string | null
           phone?: string | null
           teacher_id?: string | null
+          temp_password?: string | null
         }
         Update: {
           created_at?: string | null
           email?: string
+          first_login_at?: string | null
           full_name?: string
           id?: string
+          invitation_sent_at?: string | null
           is_active?: boolean | null
           last_login?: string | null
+          password_changed_at?: string | null
           phone?: string | null
           teacher_id?: string | null
+          temp_password?: string | null
         }
         Relationships: [
           {
@@ -357,6 +411,7 @@ export type Database = {
         Row: {
           created_at: string | null
           email: string | null
+          is_active: boolean | null
           name: string
           phone: string | null
           rate_per_lesson: number | null
@@ -366,6 +421,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           email?: string | null
+          is_active?: boolean | null
           name: string
           phone?: string | null
           rate_per_lesson?: number | null
@@ -375,6 +431,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           email?: string | null
+          is_active?: boolean | null
           name?: string
           phone?: string | null
           rate_per_lesson?: number | null

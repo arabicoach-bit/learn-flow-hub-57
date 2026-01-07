@@ -1,1 +1,4 @@
 project_id = "cbgqdmlfwcwmciedwbqp"
+
+[functions.create-teacher-account]
+verify_jwt = false
