@@ -10,6 +10,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Auth from "./pages/Auth";
 import Unauthorized from "./pages/Unauthorized";
 import ChangePassword from "./pages/ChangePassword";
+import ResetPassword from "./pages/ResetPassword";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -53,6 +54,7 @@ const AppRoutes = () => (
     <Route path="/auth" element={<Auth />} />
     <Route path="/unauthorized" element={<Unauthorized />} />
     <Route path="/change-password" element={<ChangePassword />} />
+    <Route path="/reset-password" element={<ResetPassword />} />
     
     {/* Redirect signup/register to auth */}
     <Route path="/signup" element={<Auth />} />
