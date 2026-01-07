@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Trash2 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useClasses, useCreateClass, useDeleteClass } from '@/hooks/use-classes';
@@ -13,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Settings() {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const { data: classes, isLoading: classesLoading } = useClasses();
   const { data: teachers } = useTeachers();
@@ -105,14 +107,22 @@ export default function Settings() {
                 ) : (
                   <div className="space-y-3">
                     {classes?.map((cls) => (
-                      <div key={cls.class_id} className="flex items-center justify-between p-4 rounded-lg bg-muted/30 border border-border/50">
+                      <div
+                        key={cls.class_id}
+                        className="flex items-center justify-between p-4 rounded-lg bg-muted/30 border border-border/50 cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => navigate(`/classes/${cls.class_id}`)}
+                      >
                         <div>
                           <p className="font-medium">{cls.name}</p>
                           <p className="text-sm text-muted-foreground">
                             {cls.schedule || 'No schedule'} • {cls.teachers?.name || 'No teacher'}
                           </p>
                         </div>
-                        <Button variant="ghost" size="icon" onClick={() => handleDeleteClass(cls.class_id)}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => { e.stopPropagation(); handleDeleteClass(cls.class_id); }}
+                        >
                           <Trash2 className="w-4 h-4 text-destructive" />
                         </Button>
                       </div>
