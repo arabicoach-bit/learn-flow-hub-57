@@ -227,6 +227,47 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string
+          full_name: string
+          id: string
+          is_active: boolean | null
+          last_login: string | null
+          phone: string | null
+          teacher_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          full_name: string
+          id: string
+          is_active?: boolean | null
+          last_login?: string | null
+          phone?: string | null
+          teacher_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          is_active?: boolean | null
+          last_login?: string | null
+          phone?: string | null
+          teacher_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["teacher_id"]
+          },
+        ]
+      }
       students: {
         Row: {
           class_id: string | null
@@ -386,6 +427,24 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -399,6 +458,14 @@ export type Database = {
         }
         Returns: Json
       }
+      get_user_teacher_id: { Args: { _user_id: string }; Returns: string }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       mark_lesson_taken: {
         Args: {
           p_class_id: string
@@ -411,6 +478,7 @@ export type Database = {
       }
     }
     Enums: {
+      app_role: "admin" | "teacher"
       lead_status: "New" | "Contacted" | "Interested" | "Converted" | "Lost"
       lesson_status: "Taken" | "Absent" | "Cancelled"
       notification_type:
@@ -549,6 +617,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "teacher"],
       lead_status: ["New", "Contacted", "Interested", "Converted", "Lost"],
       lesson_status: ["Taken", "Absent", "Cancelled"],
       notification_type: [
