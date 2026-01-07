@@ -521,6 +521,10 @@ export type Database = {
         }
         Returns: Json
       }
+      generate_package_summary: {
+        Args: { p_package_id: string }
+        Returns: Json
+      }
       get_user_teacher_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
