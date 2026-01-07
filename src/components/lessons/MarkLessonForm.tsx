@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
 import { Loader2, CheckCircle2, Ban, AlertTriangle } from 'lucide-react';
-import { getWalletColor } from '@/lib/wallet-utils';
+import { getWalletColor, getWalletBgColor } from '@/lib/wallet-utils';
 import { supabase } from '@/integrations/supabase/client';
 
 interface StudentLessonStatus {
@@ -240,11 +240,7 @@ export function MarkLessonForm() {
                                 )}
                               </label>
                               <span 
-                                className="text-sm font-medium px-2 py-0.5 rounded"
-                                style={{ 
-                                  backgroundColor: `hsl(${getWalletColor(student.wallet_balance)} / 0.15)`,
-                                  color: `hsl(${getWalletColor(student.wallet_balance)})`
-                                }}
+                                className={`text-sm font-medium px-2 py-0.5 rounded ${getWalletBgColor(student.wallet_balance)} ${getWalletColor(student.wallet_balance)}`}
                               >
                                 Balance: {student.wallet_balance}
                               </span>
