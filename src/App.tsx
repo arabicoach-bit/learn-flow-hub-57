@@ -9,6 +9,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 // Auth pages
 import Auth from "./pages/Auth";
 import Unauthorized from "./pages/Unauthorized";
+import ChangePassword from "./pages/ChangePassword";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -51,6 +52,7 @@ const AppRoutes = () => (
     {/* Public routes */}
     <Route path="/auth" element={<Auth />} />
     <Route path="/unauthorized" element={<Unauthorized />} />
+    <Route path="/change-password" element={<ChangePassword />} />
     
     {/* Root redirect */}
     <Route path="/" element={<RootRedirect />} />
