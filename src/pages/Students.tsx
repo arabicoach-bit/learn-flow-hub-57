@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Search } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useStudents, useCreateStudent } from '@/hooks/use-students';
@@ -15,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Students() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -167,13 +169,23 @@ export default function Students() {
                 </tr>
               ) : (
                 students?.map((student) => (
-                  <tr key={student.student_id}>
+                  <tr 
+                    key={student.student_id} 
+                    className="cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => navigate(`/students/${student.student_id}`)}
+                  >
                     <td className="font-medium">{student.name}</td>
                     <td>{student.phone}</td>
                     <td>{student.classes?.name || '-'}</td>
                     <td>{student.teachers?.name || '-'}</td>
                     <td>
-                      <span className={`font-bold ${getWalletColor(student.wallet_balance)}`}>
+                      <span 
+                        className="font-bold px-2 py-0.5 rounded"
+                        style={{ 
+                          backgroundColor: `hsl(${getWalletColor(student.wallet_balance)} / 0.15)`,
+                          color: `hsl(${getWalletColor(student.wallet_balance)})`
+                        }}
+                      >
                         {student.wallet_balance}
                       </span>
                     </td>
