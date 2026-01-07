@@ -1,4 +1,4 @@
-import { MainLayout } from '@/components/layout/MainLayout';
+import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useTodaysLessons } from '@/hooks/use-lessons';
 import { MarkLessonForm } from '@/components/lessons/MarkLessonForm';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +11,7 @@ export default function Lessons() {
   const { data: lessons, isLoading } = useTodaysLessons();
 
   return (
-    <MainLayout>
+    <AdminLayout>
       <div className="space-y-6 animate-fade-in">
         <div>
           <h1 className="text-3xl font-display font-bold">Mark Lessons</h1>
@@ -71,6 +71,6 @@ export default function Lessons() {
           </Card>
         </div>
       </div>
-    </MainLayout>
+    </AdminLayout>
   );
 }

@@ -1,5 +1,5 @@
 import { Bell, Check } from 'lucide-react';
-import { MainLayout } from '@/components/layout/MainLayout';
+import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useNotifications, useMarkNotificationRead, useMarkAllNotificationsRead } from '@/hooks/use-notifications';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,7 +21,7 @@ export default function Notifications() {
   };
 
   return (
-    <MainLayout>
+    <AdminLayout>
       <div className="space-y-6 animate-fade-in">
         <div className="flex items-center justify-between">
           <div>
@@ -73,6 +73,6 @@ export default function Notifications() {
           )}
         </div>
       </div>
-    </MainLayout>
+    </AdminLayout>
   );
 }

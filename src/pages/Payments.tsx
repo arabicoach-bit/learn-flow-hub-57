@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MainLayout } from '@/components/layout/MainLayout';
+import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useStudents } from '@/hooks/use-students';
 import { useAddPackage, useRecentPackages } from '@/hooks/use-packages';
 import { Button } from '@/components/ui/button';
@@ -46,7 +46,7 @@ export default function Payments() {
   };
 
   return (
-    <MainLayout>
+    <AdminLayout>
       <div className="space-y-6 animate-fade-in">
         <div>
           <h1 className="text-3xl font-display font-bold">Payments</h1>
@@ -149,6 +149,6 @@ export default function Payments() {
           </Card>
         </div>
       </div>
-    </MainLayout>
+    </AdminLayout>
   );
 }
