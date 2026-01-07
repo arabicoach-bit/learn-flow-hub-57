@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useTeachers, useCreateTeacher } from '@/hooks/use-teachers';
@@ -11,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Teachers() {
+  const navigate = useNavigate();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
   const { data: teachers, isLoading } = useTeachers();
@@ -106,7 +108,11 @@ export default function Teachers() {
                 </tr>
               ) : (
                 teachers?.map((teacher) => (
-                  <tr key={teacher.teacher_id}>
+                  <tr
+                    key={teacher.teacher_id}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => navigate(`/teachers/${teacher.teacher_id}`)}
+                  >
                     <td className="font-medium">{teacher.name}</td>
                     <td>{teacher.phone || '-'}</td>
                     <td>{teacher.email || '-'}</td>
