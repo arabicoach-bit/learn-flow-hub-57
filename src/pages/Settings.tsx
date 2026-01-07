@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Trash2 } from 'lucide-react';
-import { MainLayout } from '@/components/layout/MainLayout';
+import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useClasses, useCreateClass, useDeleteClass } from '@/hooks/use-classes';
 import { useTeachers } from '@/hooks/use-teachers';
 import { Button } from '@/components/ui/button';
@@ -49,7 +49,7 @@ export default function Settings() {
   };
 
   return (
-    <MainLayout>
+    <AdminLayout>
       <div className="space-y-6 animate-fade-in">
         <div>
           <h1 className="text-3xl font-display font-bold">Settings</h1>
@@ -110,7 +110,7 @@ export default function Settings() {
                       <div
                         key={cls.class_id}
                         className="flex items-center justify-between p-4 rounded-lg bg-muted/30 border border-border/50 cursor-pointer hover:bg-muted/50 transition-colors"
-                        onClick={() => navigate(`/classes/${cls.class_id}`)}
+                        onClick={() => navigate(`/admin/classes/${cls.class_id}`)}
                       >
                         <div>
                           <p className="font-medium">{cls.name}</p>
@@ -145,6 +145,6 @@ export default function Settings() {
           </TabsContent>
         </Tabs>
       </div>
-    </MainLayout>
+    </AdminLayout>
   );
 }

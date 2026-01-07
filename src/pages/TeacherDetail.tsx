@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Mail, Phone, DollarSign, BookOpen, Users, Receipt } from 'lucide-react';
-import { MainLayout } from '@/components/layout/MainLayout';
+import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useTeacher, useUpdateTeacher } from '@/hooks/use-teachers';
 import { useClasses } from '@/hooks/use-classes';
 import { useLessons } from '@/hooks/use-lessons';
@@ -103,33 +103,33 @@ export default function TeacherDetail() {
 
   if (teacherLoading) {
     return (
-      <MainLayout>
+      <AdminLayout>
         <div className="space-y-6">
           <Skeleton className="h-10 w-64" />
           <Skeleton className="h-48 w-full" />
         </div>
-      </MainLayout>
+      </AdminLayout>
     );
   }
 
   if (!teacher) {
     return (
-      <MainLayout>
+      <AdminLayout>
         <div className="text-center py-12">
           <p className="text-muted-foreground">Teacher not found</p>
-          <Button variant="ghost" onClick={() => navigate('/teachers')} className="mt-4">
+          <Button variant="ghost" onClick={() => navigate('/admin/teachers')} className="mt-4">
             Back to Teachers
           </Button>
         </div>
-      </MainLayout>
+      </AdminLayout>
     );
   }
 
   return (
-    <MainLayout>
+    <AdminLayout>
       <div className="space-y-6 animate-fade-in">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/teachers')}>
+          <Button variant="ghost" size="icon" onClick={() => navigate('/admin/teachers')}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="flex-1">
@@ -361,6 +361,6 @@ export default function TeacherDetail() {
           </TabsContent>
         </Tabs>
       </div>
-    </MainLayout>
+    </AdminLayout>
   );
 }

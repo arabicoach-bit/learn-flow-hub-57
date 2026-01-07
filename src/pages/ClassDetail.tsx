@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calendar, Users, BookOpen, GraduationCap } from 'lucide-react';
-import { MainLayout } from '@/components/layout/MainLayout';
+import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useClass, useUpdateClass } from '@/hooks/use-classes';
 import { useTeachers } from '@/hooks/use-teachers';
 import { useStudents } from '@/hooks/use-students';
@@ -94,35 +94,35 @@ export default function ClassDetail() {
 
   if (classLoading) {
     return (
-      <MainLayout>
+      <AdminLayout>
         <div className="space-y-6">
           <Skeleton className="h-10 w-64" />
           <Skeleton className="h-48 w-full" />
         </div>
-      </MainLayout>
+      </AdminLayout>
     );
   }
 
   if (!classData) {
     return (
-      <MainLayout>
+      <AdminLayout>
         <div className="text-center py-12">
           <p className="text-muted-foreground">Class not found</p>
-          <Button variant="ghost" onClick={() => navigate('/settings')} className="mt-4">
+          <Button variant="ghost" onClick={() => navigate('/admin/settings')} className="mt-4">
             Back to Settings
           </Button>
         </div>
-      </MainLayout>
+      </AdminLayout>
     );
   }
 
   const assignedTeacher = teachers?.find(t => t.teacher_id === classData.teacher_id);
 
   return (
-    <MainLayout>
+    <AdminLayout>
       <div className="space-y-6 animate-fade-in">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/settings')}>
+          <Button variant="ghost" size="icon" onClick={() => navigate('/admin/settings')}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="flex-1">
@@ -257,7 +257,7 @@ export default function ClassDetail() {
                       <tr
                         key={student.student_id}
                         className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => navigate(`/students/${student.student_id}`)}
+                        onClick={() => navigate(`/admin/students/${student.student_id}`)}
                       >
                         <td className="font-medium">{student.name}</td>
                         <td>{student.phone}</td>
@@ -304,7 +304,7 @@ export default function ClassDetail() {
                         <td>{formatDate(lesson.lesson_date || lesson.date)}</td>
                         <td
                           className="cursor-pointer hover:text-primary"
-                          onClick={() => lesson.students && navigate(`/students/${lesson.students.student_id}`)}
+                          onClick={() => lesson.students && navigate(`/admin/students/${lesson.students.student_id}`)}
                         >
                           {lesson.students?.name || '-'}
                         </td>
@@ -335,6 +335,6 @@ export default function ClassDetail() {
           </TabsContent>
         </Tabs>
       </div>
-    </MainLayout>
+    </AdminLayout>
   );
 }

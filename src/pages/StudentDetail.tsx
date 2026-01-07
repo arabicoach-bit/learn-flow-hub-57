@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MainLayout } from '@/components/layout/MainLayout';
+import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useStudent, useUpdateStudent } from '@/hooks/use-students';
 import { usePackages } from '@/hooks/use-packages';
 import { useLessons } from '@/hooks/use-lessons';
@@ -72,35 +72,35 @@ export default function StudentDetail() {
 
   if (studentLoading) {
     return (
-      <MainLayout>
+      <AdminLayout>
         <div className="space-y-6">
           <Skeleton className="h-10 w-48" />
           <Skeleton className="h-48 w-full" />
         </div>
-      </MainLayout>
+      </AdminLayout>
     );
   }
 
   if (!student) {
     return (
-      <MainLayout>
+      <AdminLayout>
         <div className="text-center py-12">
           <p className="text-muted-foreground">Student not found</p>
-          <Button variant="outline" onClick={() => navigate('/students')} className="mt-4">
+          <Button variant="outline" onClick={() => navigate('/admin/students')} className="mt-4">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Students
           </Button>
         </div>
-      </MainLayout>
+      </AdminLayout>
     );
   }
 
   return (
-    <MainLayout>
+    <AdminLayout>
       <div className="space-y-6 animate-fade-in">
         {/* Header */}
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/students')}>
+          <Button variant="ghost" size="icon" onClick={() => navigate('/admin/students')}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
@@ -361,6 +361,6 @@ export default function StudentDetail() {
           </TabsContent>
         </Tabs>
       </div>
-    </MainLayout>
+    </AdminLayout>
   );
 }

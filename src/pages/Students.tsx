@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search } from 'lucide-react';
-import { MainLayout } from '@/components/layout/MainLayout';
+import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useStudents, useCreateStudent } from '@/hooks/use-students';
 import { useClasses } from '@/hooks/use-classes';
 import { useTeachers } from '@/hooks/use-teachers';
@@ -58,7 +58,7 @@ export default function Students() {
   };
 
   return (
-    <MainLayout>
+    <AdminLayout>
       <div className="space-y-6 animate-fade-in">
         <div className="flex items-center justify-between">
           <div>
@@ -172,7 +172,7 @@ export default function Students() {
                   <tr 
                     key={student.student_id} 
                     className="cursor-pointer hover:bg-muted/50 transition-colors"
-                    onClick={() => navigate(`/students/${student.student_id}`)}
+                    onClick={() => navigate(`/admin/students/${student.student_id}`)}
                   >
                     <td className="font-medium">{student.name}</td>
                     <td>{student.phone}</td>
@@ -201,6 +201,6 @@ export default function Students() {
           </table>
         </div>
       </div>
-    </MainLayout>
+    </AdminLayout>
   );
 }
