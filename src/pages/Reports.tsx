@@ -7,11 +7,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { FileText, AlertTriangle, Package } from 'lucide-react';
+import { FileText, AlertTriangle, Package, ArrowRight } from 'lucide-react';
 import { getWalletColor, formatDate, formatCurrency } from '@/lib/wallet-utils';
 import { usePackages } from '@/hooks/use-packages';
+import { useNavigate } from 'react-router-dom';
 
 export default function Reports() {
+  const navigate = useNavigate();
   const { data: students, isLoading: studentsLoading } = useStudents();
   const { data: packages, isLoading: packagesLoading } = usePackages();
   
@@ -115,11 +117,16 @@ export default function Reports() {
 
           <TabsContent value="packages" className="mt-6">
             <Card className="glass-card">
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
                   <Package className="w-5 h-5 text-primary" />
                   Completed Packages
                 </CardTitle>
+                <Button onClick={() => navigate('/admin/reports/package-summaries')}>
+                  <FileText className="w-4 h-4 mr-2" />
+                  Full Summaries
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
               </CardHeader>
               <CardContent>
                 {packagesLoading ? (

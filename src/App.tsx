@@ -25,6 +25,7 @@ import Lessons from "./pages/Lessons";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Notifications from "./pages/Notifications";
+import PackageSummaries from "./pages/admin/PackageSummaries";
 
 // Teacher pages
 import TeacherDashboard from "./pages/teacher/TeacherDashboard";
@@ -76,6 +77,7 @@ const AppRoutes = () => (
     <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={['admin']}><Settings /></ProtectedRoute>} />
     <Route path="/admin/classes/:id" element={<ProtectedRoute allowedRoles={['admin']}><ClassDetail /></ProtectedRoute>} />
     <Route path="/admin/notifications" element={<ProtectedRoute allowedRoles={['admin']}><Notifications /></ProtectedRoute>} />
+    <Route path="/admin/reports/package-summaries" element={<ProtectedRoute allowedRoles={['admin']}><PackageSummaries /></ProtectedRoute>} />
     
     {/* Teacher routes */}
     <Route path="/teacher" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherDashboard /></ProtectedRoute>} />
