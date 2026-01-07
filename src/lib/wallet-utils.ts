@@ -39,6 +39,19 @@ export function getStatusBadgeClass(status: string): string {
   }
 }
 
+export function getStatusColor(status: string): string {
+  switch (status) {
+    case 'Active':
+      return 'bg-wallet-positive/20 text-wallet-positive';
+    case 'Grace':
+      return 'bg-wallet-warning/20 text-wallet-warning';
+    case 'Blocked':
+      return 'bg-wallet-negative/20 text-wallet-negative';
+    default:
+      return 'bg-muted text-muted-foreground';
+  }
+}
+
 export function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
