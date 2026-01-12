@@ -16,12 +16,13 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { ArrowLeft, User, Wallet, CreditCard, BookOpen, Loader2, Calendar, Plus } from 'lucide-react';
+import { ArrowLeft, User, Wallet, CreditCard, BookOpen, Loader2, Calendar, Plus, RefreshCw } from 'lucide-react';
 import { getWalletColor, getStatusBadgeClass, formatCurrency, formatDate, formatDateTime } from '@/lib/wallet-utils';
 import { StudentScheduleTab } from '@/components/schedule/StudentScheduleTab';
 import { AddPackageForm } from '@/components/packages/AddPackageForm';
+import { RenewPackageForm } from '@/components/packages/RenewPackageForm';
 
 export default function StudentDetail() {
   const { id } = useParams<{ id: string }>();
@@ -30,6 +31,8 @@ export default function StudentDetail() {
   const defaultTab = searchParams.get('tab') || 'payments';
   const [isEditing, setIsEditing] = useState(false);
   const [isAddPackageOpen, setIsAddPackageOpen] = useState(false);
+  const [isRenewPackageOpen, setIsRenewPackageOpen] = useState(false);
+  const [renewPackageId, setRenewPackageId] = useState<string | undefined>();
   const [editForm, setEditForm] = useState({
     name: '',
     phone: '',
@@ -190,6 +193,31 @@ export default function StudentDetail() {
           </DialogContent>
         </Dialog>
 
+        {/* Renew Package Dialog */}
+        <Dialog open={isRenewPackageOpen} onOpenChange={setIsRenewPackageOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Renew Package for {student.name}</DialogTitle>
+            </DialogHeader>
+            <RenewPackageForm
+              studentId={id!}
+              studentName={student.name}
+              currentWallet={student.wallet_balance || 0}
+              previousPackageId={renewPackageId || student.current_package_id || undefined}
+              teacherId={student.teacher_id || undefined}
+              classId={student.class_id || undefined}
+              onSuccess={() => {
+                setIsRenewPackageOpen(false);
+                setRenewPackageId(undefined);
+              }}
+              onCancel={() => {
+                setIsRenewPackageOpen(false);
+                setRenewPackageId(undefined);
+              }}
+            />
+          </DialogContent>
+        </Dialog>
+
         {/* Tabs */}
         <Tabs defaultValue={defaultTab} className="space-y-4">
           <TabsList className="flex-wrap">
@@ -211,15 +239,22 @@ export default function StudentDetail() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Packages Tab */}
           <TabsContent value="payments">
             <Card className="glass-card">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Packages</CardTitle>
-                <Button onClick={() => setIsAddPackageOpen(true)} className="gap-2">
-                  <Plus className="w-4 h-4" />
-                  Add Package
-                </Button>
+                <div className="flex gap-2">
+                  {packages && packages.length > 0 && (
+                    <Button variant="outline" onClick={() => setIsRenewPackageOpen(true)} className="gap-2">
+                      <RefreshCw className="w-4 h-4" />
+                      Renew
+                    </Button>
+                  )}
+                  <Button onClick={() => setIsAddPackageOpen(true)} className="gap-2">
+                    <Plus className="w-4 h-4" />
+                    Add Package
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 {packagesLoading ? (
@@ -239,31 +274,46 @@ export default function StudentDetail() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Date</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Lessons</TableHead>
-                        <TableHead>Used</TableHead>
-                        <TableHead>Duration</TableHead>
-                        <TableHead>Status</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Lessons</TableHead>
+                      <TableHead>Used</TableHead>
+                      <TableHead>Duration</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {packages.map((pkg) => (
+                      <TableRow key={pkg.package_id}>
+                        <TableCell>{formatDate(pkg.payment_date)}</TableCell>
+                        <TableCell>{pkg.package_types?.name || '-'}</TableCell>
+                        <TableCell className="font-medium">{formatCurrency(pkg.amount)}</TableCell>
+                        <TableCell>{pkg.lessons_purchased}</TableCell>
+                        <TableCell>{pkg.lessons_used}</TableCell>
+                        <TableCell>{pkg.lesson_duration ? `${pkg.lesson_duration} mins` : '-'}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={pkg.status === 'Active' ? 'status-active' : 'status-grace'}>
+                            {pkg.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setRenewPackageId(pkg.package_id);
+                              setIsRenewPackageOpen(true);
+                            }}
+                            className="gap-1 text-xs"
+                          >
+                            <RefreshCw className="w-3 h-3" />
+                            Renew
+                          </Button>
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {packages.map((pkg) => (
-                        <TableRow key={pkg.package_id}>
-                          <TableCell>{formatDate(pkg.payment_date)}</TableCell>
-                          <TableCell>{pkg.package_types?.name || '-'}</TableCell>
-                          <TableCell className="font-medium">{formatCurrency(pkg.amount)}</TableCell>
-                          <TableCell>{pkg.lessons_purchased}</TableCell>
-                          <TableCell>{pkg.lessons_used}</TableCell>
-                          <TableCell>{pkg.lesson_duration ? `${pkg.lesson_duration} mins` : '-'}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className={pkg.status === 'Active' ? 'status-active' : 'status-grace'}>
-                              {pkg.status}
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
+                    ))}
+                  </TableBody>
                   </Table>
                 )}
               </CardContent>
