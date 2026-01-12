@@ -2,13 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 @layer base {
   :root {
-    /* Clean light theme with green accent */
-    --background: 0 0% 100%;
-    --foreground: 0 0% 10%;
+    /* Clean light theme matching the design */
+    --background: 210 20% 96%;
+    --foreground: 220 20% 10%;
 
     --card: 0 0% 100%;
     --card-foreground: 0 0% 10%;
@@ -84,11 +84,12 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Inter', sans-serif;
+    font-family: 'DM Sans', sans-serif;
   }
 
   h1, h2, h3, h4 {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    @apply font-semibold;
   }
 }
 
