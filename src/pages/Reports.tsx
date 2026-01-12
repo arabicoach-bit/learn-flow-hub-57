@@ -2,12 +2,13 @@ import { AdminLayout } from '@/components/layout/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TeacherPayrollReport } from '@/components/reports/TeacherPayrollReport';
+import { PackageStatsReport } from '@/components/reports/PackageStatsReport';
 import { useStudents } from '@/hooks/use-students';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { FileText, AlertTriangle, Package, ArrowRight } from 'lucide-react';
+import { FileText, AlertTriangle, Package, ArrowRight, BarChart3 } from 'lucide-react';
 import { getWalletColor, formatDate, formatCurrency } from '@/lib/wallet-utils';
 import { usePackages } from '@/hooks/use-packages';
 import { useNavigate } from 'react-router-dom';
@@ -33,8 +34,12 @@ export default function Reports() {
           <p className="text-muted-foreground">Generate and view analytics reports</p>
         </div>
 
-        <Tabs defaultValue="payroll">
+        <Tabs defaultValue="statistics">
           <TabsList>
+            <TabsTrigger value="statistics" className="gap-2">
+              <BarChart3 className="w-4 h-4" />
+              Package Statistics
+            </TabsTrigger>
             <TabsTrigger value="payroll">Teacher Payroll</TabsTrigger>
             <TabsTrigger value="renewals">
               Student Renewals
@@ -44,6 +49,10 @@ export default function Reports() {
             </TabsTrigger>
             <TabsTrigger value="packages">Package Summary</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="statistics" className="mt-6">
+            <PackageStatsReport />
+          </TabsContent>
 
           <TabsContent value="payroll" className="mt-6">
             <TeacherPayrollReport />
