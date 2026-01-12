@@ -6,21 +6,40 @@ export interface Student {
   name: string;
   phone: string;
   parent_phone: string | null;
+  parent_guardian_name: string | null;
+  age: number | null;
+  gender: string | null;
+  nationality: string | null;
+  school: string | null;
+  year_group: string | null;
+  program_id: string | null;
+  student_level: string | null;
   class_id: string | null;
   teacher_id: string | null;
   status: 'Active' | 'Grace' | 'Blocked';
   wallet_balance: number;
   current_package_id: string | null;
+  total_paid: number | null;
+  number_of_renewals: number | null;
   created_at: string;
   updated_at: string;
   classes?: { name: string } | null;
   teachers?: { name: string } | null;
+  programs?: { name: string } | null;
 }
 
 export interface CreateStudentInput {
   name: string;
   phone: string;
   parent_phone?: string;
+  parent_guardian_name?: string;
+  age?: number;
+  gender?: string;
+  nationality?: string;
+  school?: string;
+  year_group?: string;
+  program_id?: string;
+  student_level?: string;
   class_id?: string;
   teacher_id?: string;
   initial_amount?: number;
@@ -33,7 +52,7 @@ export function useStudents(filters?: { status?: string; teacher_id?: string; cl
     queryFn: async () => {
       let query = supabase
         .from('students')
-        .select('*, classes(name), teachers(name)')
+        .select('*, classes(name), teachers(name), programs(name)')
         .order('created_at', { ascending: false });
 
       if (filters?.status && ['Active', 'Grace', 'Blocked'].includes(filters.status)) {
@@ -62,7 +81,7 @@ export function useStudent(studentId: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('students')
-        .select('*, classes(name), teachers(name)')
+        .select('*, classes(name), teachers(name), programs(name)')
         .eq('student_id', studentId)
         .maybeSingle();
 
@@ -78,13 +97,20 @@ export function useCreateStudent() {
 
   return useMutation({
     mutationFn: async (input: CreateStudentInput) => {
-      // Create the student first
       const { data: student, error: studentError } = await supabase
         .from('students')
         .insert({
           name: input.name,
           phone: input.phone,
           parent_phone: input.parent_phone || null,
+          parent_guardian_name: input.parent_guardian_name || null,
+          age: input.age || null,
+          gender: input.gender || null,
+          nationality: input.nationality || null,
+          school: input.school || null,
+          year_group: input.year_group || null,
+          program_id: input.program_id || null,
+          student_level: input.student_level || null,
           class_id: input.class_id || null,
           teacher_id: input.teacher_id || null,
           wallet_balance: input.initial_lessons || 0,
@@ -95,7 +121,6 @@ export function useCreateStudent() {
 
       if (studentError) throw studentError;
 
-      // If initial lessons provided, create a package
       if (input.initial_lessons && input.initial_lessons > 0 && input.initial_amount) {
         const { data: packageData, error: packageError } = await supabase
           .from('packages')
@@ -110,10 +135,12 @@ export function useCreateStudent() {
 
         if (packageError) throw packageError;
 
-        // Update student with package reference
         await supabase
           .from('students')
-          .update({ current_package_id: packageData.package_id })
+          .update({ 
+            current_package_id: packageData.package_id,
+            total_paid: input.initial_amount 
+          })
           .eq('student_id', student.student_id);
       }
 
@@ -130,7 +157,22 @@ export function useUpdateStudent() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ studentId, ...data }: { studentId: string; name?: string; phone?: string; parent_phone?: string; class_id?: string; teacher_id?: string }) => {
+    mutationFn: async ({ studentId, ...data }: { 
+      studentId: string; 
+      name?: string; 
+      phone?: string; 
+      parent_phone?: string | null;
+      parent_guardian_name?: string | null;
+      age?: number | null;
+      gender?: string | null;
+      nationality?: string | null;
+      school?: string | null;
+      year_group?: string | null;
+      program_id?: string | null;
+      student_level?: string | null;
+      class_id?: string | null; 
+      teacher_id?: string | null;
+    }) => {
       const { error } = await supabase
         .from('students')
         .update(data)

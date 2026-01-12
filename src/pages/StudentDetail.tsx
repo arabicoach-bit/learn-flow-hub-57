@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useStudent, useUpdateStudent } from '@/hooks/use-students';
 import { usePackages } from '@/hooks/use-packages';
 import { useLessons } from '@/hooks/use-lessons';
 import { useClasses } from '@/hooks/use-classes';
 import { useTeachers } from '@/hooks/use-teachers';
+import { usePrograms } from '@/hooks/use-programs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -15,18 +16,32 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { ArrowLeft, User, Wallet, CreditCard, BookOpen, Loader2 } from 'lucide-react';
+import { ArrowLeft, User, Wallet, CreditCard, BookOpen, Loader2, Calendar, Plus } from 'lucide-react';
 import { getWalletColor, getStatusBadgeClass, formatCurrency, formatDate, formatDateTime } from '@/lib/wallet-utils';
+import { StudentScheduleTab } from '@/components/schedule/StudentScheduleTab';
+import { AddPackageForm } from '@/components/packages/AddPackageForm';
 
 export default function StudentDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const defaultTab = searchParams.get('tab') || 'payments';
   const [isEditing, setIsEditing] = useState(false);
+  const [isAddPackageOpen, setIsAddPackageOpen] = useState(false);
   const [editForm, setEditForm] = useState({
     name: '',
     phone: '',
     parent_phone: '',
+    parent_guardian_name: '',
+    age: '',
+    gender: '',
+    nationality: '',
+    school: '',
+    year_group: '',
+    program_id: '',
+    student_level: '',
     class_id: '',
     teacher_id: '',
   });
@@ -36,6 +51,7 @@ export default function StudentDetail() {
   const { data: lessons, isLoading: lessonsLoading } = useLessons({ student_id: id });
   const { data: classes } = useClasses();
   const { data: teachers } = useTeachers();
+  const { data: programs } = usePrograms();
   const updateStudent = useUpdateStudent();
 
   const startEditing = () => {
@@ -44,6 +60,14 @@ export default function StudentDetail() {
         name: student.name,
         phone: student.phone,
         parent_phone: student.parent_phone || '',
+        parent_guardian_name: student.parent_guardian_name || '',
+        age: student.age?.toString() || '',
+        gender: student.gender || '',
+        nationality: student.nationality || '',
+        school: student.school || '',
+        year_group: student.year_group || '',
+        program_id: student.program_id || '',
+        student_level: student.student_level || '',
         class_id: student.class_id || '',
         teacher_id: student.teacher_id || '',
       });
@@ -60,6 +84,14 @@ export default function StudentDetail() {
         name: editForm.name,
         phone: editForm.phone,
         parent_phone: editForm.parent_phone || null,
+        parent_guardian_name: editForm.parent_guardian_name || null,
+        age: editForm.age ? parseInt(editForm.age) : null,
+        gender: editForm.gender || null,
+        nationality: editForm.nationality || null,
+        school: editForm.school || null,
+        year_group: editForm.year_group || null,
+        program_id: editForm.program_id || null,
+        student_level: editForm.student_level || null,
         class_id: editForm.class_id || null,
         teacher_id: editForm.teacher_id || null,
       });
@@ -143,12 +175,31 @@ export default function StudentDetail() {
           </CardContent>
         </Card>
 
+        {/* Add Package Dialog */}
+        <Dialog open={isAddPackageOpen} onOpenChange={setIsAddPackageOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Add Package for {student.name}</DialogTitle>
+            </DialogHeader>
+            <AddPackageForm
+              studentId={id!}
+              studentName={student.name}
+              currentWallet={student.wallet_balance || 0}
+              onSuccess={() => setIsAddPackageOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
+
         {/* Tabs */}
-        <Tabs defaultValue="payments" className="space-y-4">
-          <TabsList>
+        <Tabs defaultValue={defaultTab} className="space-y-4">
+          <TabsList className="flex-wrap">
             <TabsTrigger value="payments" className="flex items-center gap-2">
               <CreditCard className="w-4 h-4" />
-              Payment History
+              Packages
+            </TabsTrigger>
+            <TabsTrigger value="schedule" className="flex items-center gap-2">
+              <Calendar className="w-4 h-4" />
+              Schedule
             </TabsTrigger>
             <TabsTrigger value="lessons" className="flex items-center gap-2">
               <BookOpen className="w-4 h-4" />
@@ -160,11 +211,15 @@ export default function StudentDetail() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Payment History Tab */}
+          {/* Packages Tab */}
           <TabsContent value="payments">
             <Card className="glass-card">
-              <CardHeader>
-                <CardTitle>Payment History</CardTitle>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>Packages</CardTitle>
+                <Button onClick={() => setIsAddPackageOpen(true)} className="gap-2">
+                  <Plus className="w-4 h-4" />
+                  Add Package
+                </Button>
               </CardHeader>
               <CardContent>
                 {packagesLoading ? (
@@ -172,15 +227,23 @@ export default function StudentDetail() {
                     {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-12" />)}
                   </div>
                 ) : !packages?.length ? (
-                  <p className="text-muted-foreground text-center py-8">No payment history</p>
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground mb-4">No packages yet</p>
+                    <Button onClick={() => setIsAddPackageOpen(true)} className="gap-2">
+                      <Plus className="w-4 h-4" />
+                      Add First Package
+                    </Button>
+                  </div>
                 ) : (
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Date</TableHead>
+                        <TableHead>Type</TableHead>
                         <TableHead>Amount</TableHead>
                         <TableHead>Lessons</TableHead>
                         <TableHead>Used</TableHead>
+                        <TableHead>Duration</TableHead>
                         <TableHead>Status</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -188,9 +251,11 @@ export default function StudentDetail() {
                       {packages.map((pkg) => (
                         <TableRow key={pkg.package_id}>
                           <TableCell>{formatDate(pkg.payment_date)}</TableCell>
+                          <TableCell>{pkg.package_types?.name || '-'}</TableCell>
                           <TableCell className="font-medium">{formatCurrency(pkg.amount)}</TableCell>
                           <TableCell>{pkg.lessons_purchased}</TableCell>
                           <TableCell>{pkg.lessons_used}</TableCell>
+                          <TableCell>{pkg.lesson_duration ? `${pkg.lesson_duration} mins` : '-'}</TableCell>
                           <TableCell>
                             <Badge variant="outline" className={pkg.status === 'Active' ? 'status-active' : 'status-grace'}>
                               {pkg.status}
@@ -203,6 +268,11 @@ export default function StudentDetail() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Schedule Tab */}
+          <TabsContent value="schedule">
+            <StudentScheduleTab studentId={id!} />
           </TabsContent>
 
           {/* Lesson History Tab */}
@@ -264,8 +334,8 @@ export default function StudentDetail() {
               </CardHeader>
               <CardContent>
                 {!isEditing ? (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                       <div>
                         <p className="text-sm text-muted-foreground">Name</p>
                         <p className="font-medium">{student.name}</p>
@@ -275,8 +345,40 @@ export default function StudentDetail() {
                         <p className="font-medium">{student.phone}</p>
                       </div>
                       <div>
+                        <p className="text-sm text-muted-foreground">Parent/Guardian</p>
+                        <p className="font-medium">{student.parent_guardian_name || '-'}</p>
+                      </div>
+                      <div>
                         <p className="text-sm text-muted-foreground">Parent Phone</p>
                         <p className="font-medium">{student.parent_phone || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Age</p>
+                        <p className="font-medium">{student.age || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Gender</p>
+                        <p className="font-medium">{student.gender || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Nationality</p>
+                        <p className="font-medium">{student.nationality || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">School</p>
+                        <p className="font-medium">{student.school || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Year Group</p>
+                        <p className="font-medium">{student.year_group || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Program</p>
+                        <p className="font-medium">{student.programs?.name || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Level</p>
+                        <p className="font-medium">{student.student_level || '-'}</p>
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Class</p>
@@ -287,6 +389,14 @@ export default function StudentDetail() {
                         <p className="font-medium">{student.teachers?.name || '-'}</p>
                       </div>
                       <div>
+                        <p className="text-sm text-muted-foreground">Total Paid</p>
+                        <p className="font-medium">{formatCurrency(student.total_paid || 0)}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Renewals</p>
+                        <p className="font-medium">{student.number_of_renewals || 0}</p>
+                      </div>
+                      <div>
                         <p className="text-sm text-muted-foreground">Joined</p>
                         <p className="font-medium">{formatDate(student.created_at)}</p>
                       </div>
@@ -295,9 +405,9 @@ export default function StudentDetail() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="name">Name</Label>
+                        <Label htmlFor="name">Name *</Label>
                         <Input
                           id="name"
                           value={editForm.name}
@@ -305,11 +415,19 @@ export default function StudentDetail() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="phone">Phone</Label>
+                        <Label htmlFor="phone">Phone *</Label>
                         <Input
                           id="phone"
                           value={editForm.phone}
                           onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="parent_guardian_name">Parent/Guardian Name</Label>
+                        <Input
+                          id="parent_guardian_name"
+                          value={editForm.parent_guardian_name}
+                          onChange={(e) => setEditForm({ ...editForm, parent_guardian_name: e.target.value })}
                         />
                       </div>
                       <div className="space-y-2">
@@ -319,6 +437,78 @@ export default function StudentDetail() {
                           value={editForm.parent_phone}
                           onChange={(e) => setEditForm({ ...editForm, parent_phone: e.target.value })}
                         />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="age">Age</Label>
+                        <Input
+                          id="age"
+                          type="number"
+                          value={editForm.age}
+                          onChange={(e) => setEditForm({ ...editForm, age: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Gender</Label>
+                        <Select value={editForm.gender} onValueChange={(v) => setEditForm({ ...editForm, gender: v })}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select gender" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Male">Male</SelectItem>
+                            <SelectItem value="Female">Female</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="nationality">Nationality</Label>
+                        <Input
+                          id="nationality"
+                          value={editForm.nationality}
+                          onChange={(e) => setEditForm({ ...editForm, nationality: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="school">School</Label>
+                        <Input
+                          id="school"
+                          value={editForm.school}
+                          onChange={(e) => setEditForm({ ...editForm, school: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="year_group">Year Group</Label>
+                        <Input
+                          id="year_group"
+                          value={editForm.year_group}
+                          onChange={(e) => setEditForm({ ...editForm, year_group: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Program</Label>
+                        <Select value={editForm.program_id} onValueChange={(v) => setEditForm({ ...editForm, program_id: v })}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select program" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {programs?.map((program) => (
+                              <SelectItem key={program.program_id} value={program.program_id}>{program.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Level</Label>
+                        <Select value={editForm.student_level} onValueChange={(v) => setEditForm({ ...editForm, student_level: v })}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select level" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Beginner">Beginner</SelectItem>
+                            <SelectItem value="Elementary">Elementary</SelectItem>
+                            <SelectItem value="Intermediate">Intermediate</SelectItem>
+                            <SelectItem value="Advanced">Advanced</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="space-y-2">
                         <Label>Class</Label>
