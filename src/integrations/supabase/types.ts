@@ -130,6 +130,41 @@ export type Database = {
         }
         Relationships: []
       }
+      lesson_schedules: {
+        Row: {
+          created_at: string | null
+          day_of_week: number
+          package_id: string | null
+          schedule_id: string
+          time_slot: string
+          timezone: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          day_of_week: number
+          package_id?: string | null
+          schedule_id?: string
+          time_slot: string
+          timezone?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          day_of_week?: number
+          package_id?: string | null
+          schedule_id?: string
+          time_slot?: string
+          timezone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_schedules_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "packages"
+            referencedColumns: ["package_id"]
+          },
+        ]
+      }
       lessons_log: {
         Row: {
           class_id: string | null
@@ -231,15 +266,57 @@ export type Database = {
         }
         Relationships: []
       }
+      package_types: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          is_active: boolean | null
+          lesson_duration: number | null
+          lessons_per_week: number | null
+          monthly_fee: number | null
+          name: string
+          package_type_id: string
+          total_lessons: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          is_active?: boolean | null
+          lesson_duration?: number | null
+          lessons_per_week?: number | null
+          monthly_fee?: number | null
+          name: string
+          package_type_id?: string
+          total_lessons?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          is_active?: boolean | null
+          lesson_duration?: number | null
+          lessons_per_week?: number | null
+          monthly_fee?: number | null
+          name?: string
+          package_type_id?: string
+          total_lessons?: number | null
+        }
+        Relationships: []
+      }
       packages: {
         Row: {
           amount: number
           completed_date: string | null
           created_at: string | null
+          is_renewal: boolean | null
+          lesson_duration: number | null
           lessons_purchased: number
           lessons_used: number | null
+          next_payment_date: string | null
           package_id: string
+          package_type_id: string | null
           payment_date: string | null
+          schedule_generated: boolean | null
+          start_date: string | null
           status: Database["public"]["Enums"]["package_status"] | null
           student_id: string
         }
@@ -247,10 +324,16 @@ export type Database = {
           amount: number
           completed_date?: string | null
           created_at?: string | null
+          is_renewal?: boolean | null
+          lesson_duration?: number | null
           lessons_purchased: number
           lessons_used?: number | null
+          next_payment_date?: string | null
           package_id?: string
+          package_type_id?: string | null
           payment_date?: string | null
+          schedule_generated?: boolean | null
+          start_date?: string | null
           status?: Database["public"]["Enums"]["package_status"] | null
           student_id: string
         }
@@ -258,14 +341,27 @@ export type Database = {
           amount?: number
           completed_date?: string | null
           created_at?: string | null
+          is_renewal?: boolean | null
+          lesson_duration?: number | null
           lessons_purchased?: number
           lessons_used?: number | null
+          next_payment_date?: string | null
           package_id?: string
+          package_type_id?: string | null
           payment_date?: string | null
+          schedule_generated?: boolean | null
+          start_date?: string | null
           status?: Database["public"]["Enums"]["package_status"] | null
           student_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "packages_package_type_id_fkey"
+            columns: ["package_type_id"]
+            isOneToOne: false
+            referencedRelation: "package_types"
+            referencedColumns: ["package_type_id"]
+          },
           {
             foreignKeyName: "packages_student_id_fkey"
             columns: ["student_id"]
@@ -328,45 +424,177 @@ export type Database = {
           },
         ]
       }
-      students: {
+      programs: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          is_active: boolean | null
+          name: string
+          program_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          is_active?: boolean | null
+          name: string
+          program_id?: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          is_active?: boolean | null
+          name?: string
+          program_id?: string
+        }
+        Relationships: []
+      }
+      scheduled_lessons: {
         Row: {
           class_id: string | null
           created_at: string | null
-          current_package_id: string | null
-          name: string
-          parent_phone: string | null
-          phone: string
-          status: Database["public"]["Enums"]["student_status"] | null
-          student_id: string
+          duration_minutes: number
+          lesson_log_id: string | null
+          package_id: string | null
+          scheduled_date: string
+          scheduled_lesson_id: string
+          scheduled_time: string
+          status: string | null
+          student_id: string | null
           teacher_id: string | null
-          updated_at: string | null
-          wallet_balance: number | null
         }
         Insert: {
           class_id?: string | null
           created_at?: string | null
-          current_package_id?: string | null
-          name: string
-          parent_phone?: string | null
-          phone: string
-          status?: Database["public"]["Enums"]["student_status"] | null
-          student_id?: string
+          duration_minutes: number
+          lesson_log_id?: string | null
+          package_id?: string | null
+          scheduled_date: string
+          scheduled_lesson_id?: string
+          scheduled_time: string
+          status?: string | null
+          student_id?: string | null
           teacher_id?: string | null
-          updated_at?: string | null
-          wallet_balance?: number | null
         }
         Update: {
           class_id?: string | null
           created_at?: string | null
+          duration_minutes?: number
+          lesson_log_id?: string | null
+          package_id?: string | null
+          scheduled_date?: string
+          scheduled_lesson_id?: string
+          scheduled_time?: string
+          status?: string | null
+          student_id?: string | null
+          teacher_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_lessons_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["class_id"]
+          },
+          {
+            foreignKeyName: "scheduled_lessons_lesson_log_id_fkey"
+            columns: ["lesson_log_id"]
+            isOneToOne: false
+            referencedRelation: "lessons_log"
+            referencedColumns: ["lesson_id"]
+          },
+          {
+            foreignKeyName: "scheduled_lessons_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "packages"
+            referencedColumns: ["package_id"]
+          },
+          {
+            foreignKeyName: "scheduled_lessons_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "scheduled_lessons_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["teacher_id"]
+          },
+        ]
+      }
+      students: {
+        Row: {
+          age: number | null
+          class_id: string | null
+          created_at: string | null
+          current_package_id: string | null
+          gender: string | null
+          name: string
+          nationality: string | null
+          number_of_renewals: number | null
+          parent_guardian_name: string | null
+          parent_phone: string | null
+          phone: string
+          program_id: string | null
+          school: string | null
+          status: Database["public"]["Enums"]["student_status"] | null
+          student_id: string
+          student_level: string | null
+          teacher_id: string | null
+          total_paid: number | null
+          updated_at: string | null
+          wallet_balance: number | null
+          year_group: string | null
+        }
+        Insert: {
+          age?: number | null
+          class_id?: string | null
+          created_at?: string | null
           current_package_id?: string | null
-          name?: string
+          gender?: string | null
+          name: string
+          nationality?: string | null
+          number_of_renewals?: number | null
+          parent_guardian_name?: string | null
           parent_phone?: string | null
-          phone?: string
+          phone: string
+          program_id?: string | null
+          school?: string | null
           status?: Database["public"]["Enums"]["student_status"] | null
           student_id?: string
+          student_level?: string | null
           teacher_id?: string | null
+          total_paid?: number | null
           updated_at?: string | null
           wallet_balance?: number | null
+          year_group?: string | null
+        }
+        Update: {
+          age?: number | null
+          class_id?: string | null
+          created_at?: string | null
+          current_package_id?: string | null
+          gender?: string | null
+          name?: string
+          nationality?: string | null
+          number_of_renewals?: number | null
+          parent_guardian_name?: string | null
+          parent_phone?: string | null
+          phone?: string
+          program_id?: string | null
+          school?: string | null
+          status?: Database["public"]["Enums"]["student_status"] | null
+          student_id?: string
+          student_level?: string | null
+          teacher_id?: string | null
+          total_paid?: number | null
+          updated_at?: string | null
+          wallet_balance?: number | null
+          year_group?: string | null
         }
         Relationships: [
           {
@@ -382,6 +610,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "classes"
             referencedColumns: ["class_id"]
+          },
+          {
+            foreignKeyName: "students_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["program_id"]
           },
           {
             foreignKeyName: "students_teacher_id_fkey"
@@ -518,6 +753,19 @@ export type Database = {
           p_amount: number
           p_lessons_purchased: number
           p_student_id: string
+        }
+        Returns: Json
+      }
+      generate_package_schedule: {
+        Args: {
+          p_class_id: string
+          p_lesson_duration: number
+          p_package_id: string
+          p_schedule_days: Json
+          p_start_date: string
+          p_student_id: string
+          p_teacher_id: string
+          p_total_lessons: number
         }
         Returns: Json
       }
