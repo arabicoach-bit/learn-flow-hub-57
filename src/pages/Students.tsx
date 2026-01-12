@@ -153,6 +153,7 @@ export default function Students() {
                 <th>Class</th>
                 <th>Teacher</th>
                 <th>Wallet</th>
+                <th>Payment Status</th>
                 <th>Status</th>
               </tr>
             </thead>
@@ -160,42 +161,66 @@ export default function Students() {
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i}>
-                    <td colSpan={6}><Skeleton className="h-8 w-full" /></td>
+                    <td colSpan={7}><Skeleton className="h-8 w-full" /></td>
                   </tr>
                 ))
               ) : students?.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-8 text-muted-foreground">No students found</td>
+                  <td colSpan={7} className="text-center py-8 text-muted-foreground">No students found</td>
                 </tr>
               ) : (
-                students?.map((student) => (
-                  <tr 
-                    key={student.student_id} 
-                    className="cursor-pointer hover:bg-muted/50 transition-colors"
-                    onClick={() => navigate(`/admin/students/${student.student_id}`)}
-                  >
-                    <td className="font-medium">{student.name}</td>
-                    <td>{student.phone}</td>
-                    <td>{student.classes?.name || '-'}</td>
-                    <td>{student.teachers?.name || '-'}</td>
-                    <td>
-                      <span 
-                        className="font-bold px-2 py-0.5 rounded"
-                        style={{ 
-                          backgroundColor: `hsl(${getWalletColor(student.wallet_balance)} / 0.15)`,
-                          color: `hsl(${getWalletColor(student.wallet_balance)})`
-                        }}
-                      >
-                        {student.wallet_balance}
-                      </span>
-                    </td>
-                    <td>
-                      <Badge variant="outline" className={getStatusBadgeClass(student.status)}>
-                        {student.status}
-                      </Badge>
-                    </td>
-                  </tr>
-                ))
+                students?.map((student) => {
+                  // Determine payment status based on wallet balance
+                  const wallet = student.wallet_balance || 0;
+                  let paymentStatus = 'Paid';
+                  let paymentBadgeClass = 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300';
+                  
+                  if (wallet <= 0) {
+                    paymentStatus = 'Overdue';
+                    paymentBadgeClass = 'bg-red-500/20 text-red-700 dark:text-red-300';
+                  } else if (wallet <= 2) {
+                    paymentStatus = 'Due Soon';
+                    paymentBadgeClass = 'bg-amber-500/20 text-amber-700 dark:text-amber-300';
+                  }
+
+                  return (
+                    <tr 
+                      key={student.student_id} 
+                      className="cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={() => navigate(`/admin/students/${student.student_id}`)}
+                    >
+                      <td className="font-medium">{student.name}</td>
+                      <td>{student.phone}</td>
+                      <td>{student.classes?.name || '-'}</td>
+                      <td>{student.teachers?.name || '-'}</td>
+                      <td>
+                        <span 
+                          className={`font-bold px-2 py-0.5 rounded ${getWalletColor(student.wallet_balance)}`}
+                          style={{ 
+                            backgroundColor: wallet >= 5 ? 'rgb(16 185 129 / 0.15)' :
+                                            wallet >= 3 ? 'rgb(132 204 22 / 0.15)' :
+                                            wallet >= 1 ? 'rgb(245 158 11 / 0.15)' :
+                                            wallet === 0 ? 'rgb(249 115 22 / 0.15)' :
+                                            wallet >= -2 ? 'rgb(239 68 68 / 0.15)' :
+                                            'rgb(127 29 29 / 0.15)'
+                          }}
+                        >
+                          {student.wallet_balance}
+                        </span>
+                      </td>
+                      <td>
+                        <Badge variant="outline" className={paymentBadgeClass}>
+                          {paymentStatus}
+                        </Badge>
+                      </td>
+                      <td>
+                        <Badge variant="outline" className={getStatusBadgeClass(student.status)}>
+                          {student.status}
+                        </Badge>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
