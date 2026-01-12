@@ -5,12 +5,14 @@ import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useStudents, useCreateStudent } from '@/hooks/use-students';
 import { useClasses } from '@/hooks/use-classes';
 import { useTeachers } from '@/hooks/use-teachers';
+import { usePrograms } from '@/hooks/use-programs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { getWalletColor, getStatusBadgeClass } from '@/lib/wallet-utils';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -25,12 +27,21 @@ export default function Students() {
   const { data: students, isLoading } = useStudents({ search, status: statusFilter || undefined });
   const { data: classes } = useClasses();
   const { data: teachers } = useTeachers();
+  const { data: programs } = usePrograms();
   const createStudent = useCreateStudent();
 
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
     parent_phone: '',
+    parent_guardian_name: '',
+    age: '',
+    gender: '',
+    nationality: '',
+    school: '',
+    year_group: '',
+    program_id: '',
+    student_level: '',
     class_id: '',
     teacher_id: '',
     initial_amount: '',
@@ -44,6 +55,14 @@ export default function Students() {
         name: formData.name,
         phone: formData.phone,
         parent_phone: formData.parent_phone || undefined,
+        parent_guardian_name: formData.parent_guardian_name || undefined,
+        age: formData.age ? parseInt(formData.age) : undefined,
+        gender: formData.gender || undefined,
+        nationality: formData.nationality || undefined,
+        school: formData.school || undefined,
+        year_group: formData.year_group || undefined,
+        program_id: formData.program_id || undefined,
+        student_level: formData.student_level || undefined,
         class_id: formData.class_id || undefined,
         teacher_id: formData.teacher_id || undefined,
         initial_amount: formData.initial_amount ? parseFloat(formData.initial_amount) : undefined,
@@ -51,7 +70,12 @@ export default function Students() {
       });
       toast({ title: 'Student created successfully!' });
       setIsDialogOpen(false);
-      setFormData({ name: '', phone: '', parent_phone: '', class_id: '', teacher_id: '', initial_amount: '', initial_lessons: '' });
+      setFormData({ 
+        name: '', phone: '', parent_phone: '', parent_guardian_name: '',
+        age: '', gender: '', nationality: '', school: '', year_group: '',
+        program_id: '', student_level: '', class_id: '', teacher_id: '', 
+        initial_amount: '', initial_lessons: '' 
+      });
     } catch (error) {
       toast({ title: 'Error creating student', variant: 'destructive' });
     }
@@ -71,57 +95,127 @@ export default function Students() {
                 <Plus className="w-4 h-4" /> Add Student
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Add New Student</DialogTitle>
               </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Name *</Label>
-                  <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
-                </div>
-                <div className="space-y-2">
-                  <Label>Phone *</Label>
-                  <Input value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} required />
-                </div>
-                <div className="space-y-2">
-                  <Label>Parent Phone</Label>
-                  <Input value={formData.parent_phone} onChange={(e) => setFormData({ ...formData, parent_phone: e.target.value })} />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Class</Label>
-                    <Select value={formData.class_id} onValueChange={(v) => setFormData({ ...formData, class_id: v })}>
-                      <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                      <SelectContent>
-                        {classes?.map((c) => <SelectItem key={c.class_id} value={c.class_id}>{c.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+              <ScrollArea className="max-h-[70vh] pr-4">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Name *</Label>
+                      <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>WhatsApp Contact *</Label>
+                      <Input value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} required />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Teacher</Label>
-                    <Select value={formData.teacher_id} onValueChange={(v) => setFormData({ ...formData, teacher_id: v })}>
-                      <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                      <SelectContent>
-                        {teachers?.map((t) => <SelectItem key={t.teacher_id} value={t.teacher_id}>{t.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Parent/Guardian Name</Label>
+                      <Input value={formData.parent_guardian_name} onChange={(e) => setFormData({ ...formData, parent_guardian_name: e.target.value })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Parent Phone</Label>
+                      <Input value={formData.parent_phone} onChange={(e) => setFormData({ ...formData, parent_phone: e.target.value })} />
+                    </div>
                   </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Initial Amount</Label>
-                    <Input type="number" step="0.01" value={formData.initial_amount} onChange={(e) => setFormData({ ...formData, initial_amount: e.target.value })} />
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label>Age</Label>
+                      <Input type="number" value={formData.age} onChange={(e) => setFormData({ ...formData, age: e.target.value })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Gender</Label>
+                      <Select value={formData.gender} onValueChange={(v) => setFormData({ ...formData, gender: v })}>
+                        <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Male">Male</SelectItem>
+                          <SelectItem value="Female">Female</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Nationality</Label>
+                      <Input value={formData.nationality} onChange={(e) => setFormData({ ...formData, nationality: e.target.value })} />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Initial Lessons</Label>
-                    <Input type="number" value={formData.initial_lessons} onChange={(e) => setFormData({ ...formData, initial_lessons: e.target.value })} />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>School</Label>
+                      <Input value={formData.school} onChange={(e) => setFormData({ ...formData, school: e.target.value })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Year Group</Label>
+                      <Input value={formData.year_group} onChange={(e) => setFormData({ ...formData, year_group: e.target.value })} />
+                    </div>
                   </div>
-                </div>
-                <Button type="submit" className="w-full" disabled={createStudent.isPending}>
-                  {createStudent.isPending ? 'Creating...' : 'Create Student'}
-                </Button>
-              </form>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Program</Label>
+                      <Select value={formData.program_id} onValueChange={(v) => setFormData({ ...formData, program_id: v })}>
+                        <SelectTrigger><SelectValue placeholder="Select program" /></SelectTrigger>
+                        <SelectContent>
+                          {programs?.map((p) => <SelectItem key={p.program_id} value={p.program_id}>{p.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Level</Label>
+                      <Select value={formData.student_level} onValueChange={(v) => setFormData({ ...formData, student_level: v })}>
+                        <SelectTrigger><SelectValue placeholder="Select level" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Beginner">Beginner</SelectItem>
+                          <SelectItem value="Elementary">Elementary</SelectItem>
+                          <SelectItem value="Intermediate">Intermediate</SelectItem>
+                          <SelectItem value="Advanced">Advanced</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Class</Label>
+                      <Select value={formData.class_id} onValueChange={(v) => setFormData({ ...formData, class_id: v })}>
+                        <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                        <SelectContent>
+                          {classes?.map((c) => <SelectItem key={c.class_id} value={c.class_id}>{c.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Teacher</Label>
+                      <Select value={formData.teacher_id} onValueChange={(v) => setFormData({ ...formData, teacher_id: v })}>
+                        <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                        <SelectContent>
+                          {teachers?.map((t) => <SelectItem key={t.teacher_id} value={t.teacher_id}>{t.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Initial Amount (AED)</Label>
+                      <Input type="number" step="0.01" value={formData.initial_amount} onChange={(e) => setFormData({ ...formData, initial_amount: e.target.value })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Initial Lessons</Label>
+                      <Input type="number" value={formData.initial_lessons} onChange={(e) => setFormData({ ...formData, initial_lessons: e.target.value })} />
+                    </div>
+                  </div>
+
+                  <Button type="submit" className="w-full" disabled={createStudent.isPending}>
+                    {createStudent.isPending ? 'Creating...' : 'Create Student'}
+                  </Button>
+                </form>
+              </ScrollArea>
             </DialogContent>
           </Dialog>
         </div>

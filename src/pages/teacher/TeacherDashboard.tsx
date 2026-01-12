@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTodaysLessons, useLessons } from '@/hooks/use-lessons';
 import { useStudents } from '@/hooks/use-students';
 import { useClasses } from '@/hooks/use-classes';
+import { TodaysLessonsCard } from '@/components/schedule/TodaysLessonsCard';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 
 export default function TeacherDashboard() {
@@ -115,12 +116,15 @@ export default function TeacherDashboard() {
           )}
         </div>
 
-        {/* Today's Classes */}
+        {/* Today's Scheduled Lessons */}
+        <TodaysLessonsCard teacherId={teacherId} />
+
+        {/* My Classes */}
         <Card className="glass-card">
           <CardHeader>
             <CardTitle className="font-display flex items-center gap-2">
-              <Clock className="w-5 h-5 text-emerald-500" />
-              Today's Classes
+              <Calendar className="w-5 h-5 text-emerald-500" />
+              My Classes
             </CardTitle>
           </CardHeader>
           <CardContent>

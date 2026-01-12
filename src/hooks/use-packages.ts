@@ -12,14 +12,21 @@ export interface AddPackageResult {
 export interface Package {
   package_id: string;
   student_id: string;
+  package_type_id: string | null;
   payment_date: string;
   amount: number;
   lessons_purchased: number;
   lessons_used: number;
+  lesson_duration: number | null;
+  start_date: string | null;
+  next_payment_date: string | null;
+  schedule_generated: boolean | null;
+  is_renewal: boolean | null;
   status: 'Active' | 'Completed';
   completed_date: string | null;
   created_at: string;
   students?: { name: string } | null;
+  package_types?: { name: string; description: string | null } | null;
 }
 
 export interface CreatePackageInput {
@@ -34,7 +41,7 @@ export function usePackages(studentId?: string) {
     queryFn: async () => {
       let query = supabase
         .from('packages')
-        .select('*, students(name)')
+        .select('*, students(name), package_types(name, description)')
         .order('created_at', { ascending: false });
 
       if (studentId) {
@@ -54,7 +61,7 @@ export function useRecentPackages(limit = 20) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('packages')
-        .select('*, students(name)')
+        .select('*, students(name), package_types(name, description)')
         .order('created_at', { ascending: false })
         .limit(limit);
 
