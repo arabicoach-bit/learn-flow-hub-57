@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useScheduledLessons, useCancelScheduledLesson } from '@/hooks/use-scheduled-lessons';
+import { useScheduledLessons, useCancelScheduledLesson, ScheduledLesson } from '@/hooks/use-scheduled-lessons';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,8 @@ import {
   AlertDialogHeader, 
   AlertDialogTitle 
 } from '@/components/ui/alert-dialog';
-import { Calendar, Clock, CheckCircle2, XCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { RescheduleDialog } from './RescheduleDialog';
+import { Calendar, Clock, CheckCircle2, XCircle, AlertCircle, Loader2, CalendarClock } from 'lucide-react';
 import { format, parseISO, isToday, isFuture, isPast } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -28,6 +29,7 @@ interface StudentScheduleTabProps {
 
 export function StudentScheduleTab({ studentId, lessonsUsed = 0, lessonsPurchased = 0 }: StudentScheduleTabProps) {
   const [cancelLessonId, setCancelLessonId] = useState<string | null>(null);
+  const [rescheduleLesson, setRescheduleLesson] = useState<ScheduledLesson | null>(null);
   const { data: scheduledLessons, isLoading } = useScheduledLessons({ student_id: studentId });
   const cancelLesson = useCancelScheduledLesson();
 
@@ -159,14 +161,25 @@ export function StudentScheduleTab({ studentId, lessonsUsed = 0, lessonsPurchase
                     <TableCell>{getStatusBadge(lesson.status, lesson.scheduled_date)}</TableCell>
                     <TableCell>
                       {lesson.status === 'scheduled' && isFuture(parseISO(lesson.scheduled_date)) && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => setCancelLessonId(lesson.scheduled_lesson_id)}
-                        >
-                          Cancel
-                        </Button>
+                        <div className="flex gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-primary hover:text-primary"
+                            onClick={() => setRescheduleLesson(lesson)}
+                          >
+                            <CalendarClock className="w-4 h-4 mr-1" />
+                            Reschedule
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => setCancelLessonId(lesson.scheduled_lesson_id)}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
                       )}
                     </TableCell>
                   </TableRow>
@@ -201,6 +214,16 @@ export function StudentScheduleTab({ studentId, lessonsUsed = 0, lessonsPurchase
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Reschedule Dialog */}
+      {rescheduleLesson && (
+        <RescheduleDialog
+          lesson={rescheduleLesson}
+          open={!!rescheduleLesson}
+          onOpenChange={(open) => !open && setRescheduleLesson(null)}
+          onSuccess={() => setRescheduleLesson(null)}
+        />
+      )}
     </div>
   );
 }
