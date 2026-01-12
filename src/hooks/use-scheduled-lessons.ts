@@ -147,19 +147,77 @@ export function useRescheduleLesson() {
       newDate: string; 
       newTime: string;
     }) => {
-      const { error } = await supabase
+      // First get the original lesson to create a new scheduled entry
+      const { data: originalLesson, error: fetchError } = await supabase
         .from('scheduled_lessons')
-        .update({ 
-          scheduled_date: newDate, 
-          scheduled_time: newTime,
-          status: 'rescheduled'
-        })
+        .select('*')
+        .eq('scheduled_lesson_id', scheduledLessonId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Mark original as rescheduled
+      const { error: updateError } = await supabase
+        .from('scheduled_lessons')
+        .update({ status: 'rescheduled' })
         .eq('scheduled_lesson_id', scheduledLessonId);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
+
+      // Create new scheduled lesson at the new time
+      const { error: insertError } = await supabase
+        .from('scheduled_lessons')
+        .insert({
+          package_id: originalLesson.package_id,
+          student_id: originalLesson.student_id,
+          teacher_id: originalLesson.teacher_id,
+          class_id: originalLesson.class_id,
+          scheduled_date: newDate,
+          scheduled_time: newTime,
+          duration_minutes: originalLesson.duration_minutes,
+          status: 'scheduled',
+        });
+
+      if (insertError) throw insertError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['scheduled-lessons'] });
+    },
+  });
+}
+
+export function useCheckLessonConflict() {
+  return useMutation({
+    mutationFn: async ({
+      teacherId,
+      date,
+      time,
+      excludeLessonId,
+    }: {
+      teacherId: string;
+      date: string;
+      time: string;
+      excludeLessonId?: string;
+    }) => {
+      let query = supabase
+        .from('scheduled_lessons')
+        .select('scheduled_lesson_id, scheduled_time, students(name)')
+        .eq('teacher_id', teacherId)
+        .eq('scheduled_date', date)
+        .eq('scheduled_time', time)
+        .in('status', ['scheduled', 'rescheduled']);
+
+      if (excludeLessonId) {
+        query = query.neq('scheduled_lesson_id', excludeLessonId);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      return {
+        hasConflict: data && data.length > 0,
+        conflicts: data,
+      };
     },
   });
 }

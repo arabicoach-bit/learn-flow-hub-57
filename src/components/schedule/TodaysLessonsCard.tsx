@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useTodaysScheduledLessons, useMarkScheduledLesson } from '@/hooks/use-scheduled-lessons';
+import { useTodaysScheduledLessons, useMarkScheduledLesson, ScheduledLesson } from '@/hooks/use-scheduled-lessons';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { RescheduleDialog } from './RescheduleDialog';
 import { getWalletColor } from '@/lib/wallet-utils';
-import { Clock, CheckCircle, XCircle, AlertCircle, Loader2, Ban, RefreshCw } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, AlertCircle, Loader2, Ban, RefreshCw, CalendarClock } from 'lucide-react';
 import { format, parseISO, differenceInMinutes, addMinutes } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -16,6 +17,7 @@ interface TodaysLessonsCardProps {
 
 export function TodaysLessonsCard({ teacherId }: TodaysLessonsCardProps) {
   const [now, setNow] = useState(new Date());
+  const [rescheduleLesson, setRescheduleLesson] = useState<ScheduledLesson | null>(null);
   const { data: lessons, isLoading, refetch } = useTodaysScheduledLessons(teacherId);
   const markLesson = useMarkScheduledLesson();
 
@@ -206,6 +208,16 @@ export function TodaysLessonsCard({ teacherId }: TodaysLessonsCardProps) {
                         <Button
                           size="sm"
                           variant="outline"
+                          onClick={() => setRescheduleLesson(lesson)}
+                          disabled={markLesson.isPending}
+                        >
+                          <CalendarClock className="w-4 h-4 mr-1" />
+                          Reschedule
+                        </Button>
+
+                        <Button
+                          size="sm"
+                          variant="outline"
                           className="bg-neutral-500/10 border-neutral-500/30 hover:bg-neutral-500/20"
                           onClick={() => handleMarkLesson(lesson.scheduled_lesson_id, 'Cancelled', lesson.students?.status)}
                           disabled={markLesson.isPending}
@@ -222,6 +234,16 @@ export function TodaysLessonsCard({ teacherId }: TodaysLessonsCardProps) {
           )}
         </CardContent>
       </Card>
+
+      {/* Reschedule Dialog */}
+      {rescheduleLesson && (
+        <RescheduleDialog
+          lesson={rescheduleLesson}
+          open={!!rescheduleLesson}
+          onOpenChange={(open) => !open && setRescheduleLesson(null)}
+          onSuccess={() => setRescheduleLesson(null)}
+        />
+      )}
     </TooltipProvider>
   );
 }
