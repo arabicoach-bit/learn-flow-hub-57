@@ -13,6 +13,9 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { StudentStatsSection } from '@/components/dashboard/StudentStatsSection';
+import { TeacherPerformanceSection } from '@/components/dashboard/TeacherPerformanceSection';
+import { QuickStatsSection } from '@/components/dashboard/QuickStatsSection';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -35,6 +38,7 @@ export default function AdminDashboard() {
         (payload) => {
           // Refresh dashboard metrics when student status changes
           queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+          queryClient.invalidateQueries({ queryKey: ['admin-student-stats'] });
         }
       )
       .subscribe();
@@ -90,6 +94,7 @@ export default function AdminDashboard() {
         },
         () => {
           queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+          queryClient.invalidateQueries({ queryKey: ['admin-teacher-performance'] });
         }
       )
       .subscribe();
@@ -109,7 +114,7 @@ export default function AdminDashboard() {
           <p className="text-muted-foreground">Welcome back! Here's your academy overview.</p>
         </div>
 
-        {/* Metrics Grid */}
+        {/* KPI Metrics Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           {statsLoading ? (
             Array.from({ length: 6 }).map((_, i) => (
@@ -154,6 +159,15 @@ export default function AdminDashboard() {
             </>
           )}
         </div>
+
+        {/* Quick Statistics - Leads & Trials */}
+        <QuickStatsSection />
+
+        {/* Student Statistics Section */}
+        <StudentStatsSection />
+
+        {/* Teacher Performance Section */}
+        <TeacherPerformanceSection />
 
         {/* Recent Notifications */}
         <Card className="glass-card">
