@@ -8,7 +8,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
-  const { user, role, loading } = useAuth();
+  const { user, role, loading, needsPasswordChange } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -25,6 +25,11 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
 
   if (!user) {
     return <Navigate to="/auth" state={{ from: location }} replace />;
+  }
+
+  // Force password change for users who haven't changed their temporary password
+  if (needsPasswordChange && location.pathname !== '/change-password') {
+    return <Navigate to="/change-password" state={{ mandatory: true, firstLogin: true }} replace />;
   }
 
   if (allowedRoles && role && !allowedRoles.includes(role)) {
