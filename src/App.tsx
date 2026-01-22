@@ -16,7 +16,6 @@ import ResetPassword from "./pages/ResetPassword";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Students from "./pages/Students";
 import StudentDetail from "./pages/StudentDetail";
-import Leads from "./pages/Leads";
 import Teachers from "./pages/Teachers";
 import TeacherDetail from "./pages/TeacherDetail";
 import Payments from "./pages/Payments";
@@ -66,7 +65,6 @@ const AppRoutes = () => (
     <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
     <Route path="/admin/students" element={<ProtectedRoute allowedRoles={['admin']}><Students /></ProtectedRoute>} />
     <Route path="/admin/students/:id" element={<ProtectedRoute allowedRoles={['admin']}><StudentDetail /></ProtectedRoute>} />
-    <Route path="/admin/leads" element={<ProtectedRoute allowedRoles={['admin']}><Leads /></ProtectedRoute>} />
     <Route path="/admin/teachers" element={<ProtectedRoute allowedRoles={['admin']}><Teachers /></ProtectedRoute>} />
     <Route path="/admin/teachers/:id" element={<ProtectedRoute allowedRoles={['admin']}><TeacherDetail /></ProtectedRoute>} />
     <Route path="/admin/payments" element={<ProtectedRoute allowedRoles={['admin']}><Payments /></ProtectedRoute>} />
