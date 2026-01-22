@@ -19,10 +19,7 @@ import StudentDetail from "./pages/StudentDetail";
 import Leads from "./pages/Leads";
 import Teachers from "./pages/Teachers";
 import TeacherDetail from "./pages/TeacherDetail";
-import ClassDetail from "./pages/ClassDetail";
 import Payments from "./pages/Payments";
-import Lessons from "./pages/Lessons";
-import LessonsCalendar from "./pages/LessonsCalendar";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Notifications from "./pages/Notifications";
@@ -73,11 +70,8 @@ const AppRoutes = () => (
     <Route path="/admin/teachers" element={<ProtectedRoute allowedRoles={['admin']}><Teachers /></ProtectedRoute>} />
     <Route path="/admin/teachers/:id" element={<ProtectedRoute allowedRoles={['admin']}><TeacherDetail /></ProtectedRoute>} />
     <Route path="/admin/payments" element={<ProtectedRoute allowedRoles={['admin']}><Payments /></ProtectedRoute>} />
-    <Route path="/admin/lessons" element={<ProtectedRoute allowedRoles={['admin']}><Lessons /></ProtectedRoute>} />
-    <Route path="/admin/calendar" element={<ProtectedRoute allowedRoles={['admin']}><LessonsCalendar /></ProtectedRoute>} />
     <Route path="/admin/reports" element={<ProtectedRoute allowedRoles={['admin']}><Reports /></ProtectedRoute>} />
     <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={['admin']}><Settings /></ProtectedRoute>} />
-    <Route path="/admin/classes/:id" element={<ProtectedRoute allowedRoles={['admin']}><ClassDetail /></ProtectedRoute>} />
     <Route path="/admin/notifications" element={<ProtectedRoute allowedRoles={['admin']}><Notifications /></ProtectedRoute>} />
     <Route path="/admin/reports/package-summaries" element={<ProtectedRoute allowedRoles={['admin']}><PackageSummaries /></ProtectedRoute>} />
     
