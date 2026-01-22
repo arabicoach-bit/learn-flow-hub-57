@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, Search } from 'lucide-react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useStudents, useCreateStudent } from '@/hooks/use-students';
-import { useClasses } from '@/hooks/use-classes';
 import { useTeachers } from '@/hooks/use-teachers';
 import { usePrograms } from '@/hooks/use-programs';
 import { Button } from '@/components/ui/button';
@@ -25,7 +24,6 @@ export default function Students() {
   const { toast } = useToast();
 
   const { data: students, isLoading } = useStudents({ search, status: statusFilter || undefined });
-  const { data: classes } = useClasses();
   const { data: teachers } = useTeachers();
   const { data: programs } = usePrograms();
   const createStudent = useCreateStudent();
@@ -42,7 +40,6 @@ export default function Students() {
     year_group: '',
     program_id: '',
     student_level: '',
-    class_id: '',
     teacher_id: '',
     initial_amount: '',
     initial_lessons: '',
@@ -50,6 +47,13 @@ export default function Students() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate teacher is selected
+    if (!formData.teacher_id) {
+      toast({ title: 'Please select a teacher', variant: 'destructive' });
+      return;
+    }
+    
     try {
       await createStudent.mutateAsync({
         name: formData.name,
@@ -63,8 +67,7 @@ export default function Students() {
         year_group: formData.year_group || undefined,
         program_id: formData.program_id || undefined,
         student_level: formData.student_level || undefined,
-        class_id: formData.class_id || undefined,
-        teacher_id: formData.teacher_id || undefined,
+        teacher_id: formData.teacher_id,
         initial_amount: formData.initial_amount ? parseFloat(formData.initial_amount) : undefined,
         initial_lessons: formData.initial_lessons ? parseInt(formData.initial_lessons) : undefined,
       });
@@ -73,7 +76,7 @@ export default function Students() {
       setFormData({ 
         name: '', phone: '', parent_phone: '', parent_guardian_name: '',
         age: '', gender: '', nationality: '', school: '', year_group: '',
-        program_id: '', student_level: '', class_id: '', teacher_id: '', 
+        program_id: '', student_level: '', teacher_id: '', 
         initial_amount: '', initial_lessons: '' 
       });
     } catch (error) {
@@ -179,26 +182,16 @@ export default function Students() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Class</Label>
-                      <Select value={formData.class_id} onValueChange={(v) => setFormData({ ...formData, class_id: v })}>
-                        <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                        <SelectContent>
-                          {classes?.map((c) => <SelectItem key={c.class_id} value={c.class_id}>{c.name}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Teacher</Label>
-                      <Select value={formData.teacher_id} onValueChange={(v) => setFormData({ ...formData, teacher_id: v })}>
-                        <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                        <SelectContent>
-                          {teachers?.map((t) => <SelectItem key={t.teacher_id} value={t.teacher_id}>{t.name}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  <div className="space-y-2">
+                    <Label>Assigned Teacher *</Label>
+                    <Select value={formData.teacher_id} onValueChange={(v) => setFormData({ ...formData, teacher_id: v })}>
+                      <SelectTrigger><SelectValue placeholder="Select teacher" /></SelectTrigger>
+                      <SelectContent>
+                        {teachers?.map((t) => <SelectItem key={t.teacher_id} value={t.teacher_id}>{t.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                   </div>
+
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -244,7 +237,7 @@ export default function Students() {
               <tr>
                 <th>Name</th>
                 <th>Phone</th>
-                <th>Class</th>
+                <th>Programme</th>
                 <th>Teacher</th>
                 <th>Wallet</th>
                 <th>Payment Status</th>
@@ -285,7 +278,7 @@ export default function Students() {
                     >
                       <td className="font-medium">{student.name}</td>
                       <td>{student.phone}</td>
-                      <td>{student.classes?.name || '-'}</td>
+                      <td>{student.programs?.name || '-'}</td>
                       <td>{student.teachers?.name || '-'}</td>
                       <td>
                         <span 

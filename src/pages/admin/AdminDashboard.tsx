@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { StudentStatsSection } from '@/components/dashboard/StudentStatsSection';
 import { TeacherPerformanceSection } from '@/components/dashboard/TeacherPerformanceSection';
 import { QuickStatsSection } from '@/components/dashboard/QuickStatsSection';
+import { PendingPackagesWidget } from '@/components/admin/PendingPackagesWidget';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -159,6 +160,9 @@ export default function AdminDashboard() {
             </>
           )}
         </div>
+
+        {/* Pending Packages Widget */}
+        <PendingPackagesWidget />
 
         {/* Quick Statistics - Leads & Trials */}
         <QuickStatsSection />
