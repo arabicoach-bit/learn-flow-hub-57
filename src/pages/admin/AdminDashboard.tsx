@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Users, GraduationCap, AlertTriangle, UserPlus, Wallet, Calendar, Bell } from 'lucide-react';
+import { Users, GraduationCap, AlertTriangle, UserPlus, Wallet, Bell } from 'lucide-react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { useDashboardStats } from '@/hooks/use-dashboard-stats';
@@ -83,27 +83,10 @@ export default function AdminDashboard() {
       )
       .subscribe();
 
-    // Subscribe to lessons for today's count updates
-    const lessonsChannel = supabase
-      .channel('dashboard-lessons')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'lessons_log',
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
-          queryClient.invalidateQueries({ queryKey: ['admin-teacher-performance'] });
-        }
-      )
-      .subscribe();
 
     return () => {
       supabase.removeChannel(studentsChannel);
       supabase.removeChannel(notificationsChannel);
-      supabase.removeChannel(lessonsChannel);
     };
   }, [queryClient, navigate]);
 
@@ -116,7 +99,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* KPI Metrics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           {statsLoading ? (
             Array.from({ length: 6 }).map((_, i) => (
               <Skeleton key={i} className="h-32 rounded-xl" />
@@ -151,11 +134,6 @@ export default function AdminDashboard() {
                 value={stats?.pendingRenewals || 0}
                 icon={<Wallet className="w-6 h-6" />}
                 variant="warning"
-              />
-              <MetricCard
-                title="Today's Lessons"
-                value={stats?.todaysLessons || 0}
-                icon={<Calendar className="w-6 h-6" />}
               />
             </>
           )}
