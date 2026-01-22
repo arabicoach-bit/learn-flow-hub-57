@@ -83,6 +83,13 @@ export type Database = {
             foreignKeyName: "classes_teacher_id_fkey"
             columns: ["teacher_id"]
             isOneToOne: false
+            referencedRelation: "teacher_monthly_stats"
+            referencedColumns: ["teacher_id"]
+          },
+          {
+            foreignKeyName: "classes_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
             referencedRelation: "teachers"
             referencedColumns: ["teacher_id"]
           },
@@ -228,6 +235,13 @@ export type Database = {
             foreignKeyName: "lessons_log_teacher_id_fkey"
             columns: ["teacher_id"]
             isOneToOne: false
+            referencedRelation: "teacher_monthly_stats"
+            referencedColumns: ["teacher_id"]
+          },
+          {
+            foreignKeyName: "lessons_log_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
             referencedRelation: "teachers"
             referencedColumns: ["teacher_id"]
           },
@@ -304,7 +318,10 @@ export type Database = {
       }
       packages: {
         Row: {
+          admin_approved: boolean | null
           amount: number
+          approved_at: string | null
+          approved_by: string | null
           completed_date: string | null
           created_at: string | null
           is_renewal: boolean | null
@@ -315,13 +332,18 @@ export type Database = {
           package_id: string
           package_type_id: string | null
           payment_date: string | null
+          payment_proof: string | null
+          payment_received: boolean | null
           schedule_generated: boolean | null
           start_date: string | null
           status: Database["public"]["Enums"]["package_status"] | null
           student_id: string
         }
         Insert: {
+          admin_approved?: boolean | null
           amount: number
+          approved_at?: string | null
+          approved_by?: string | null
           completed_date?: string | null
           created_at?: string | null
           is_renewal?: boolean | null
@@ -332,13 +354,18 @@ export type Database = {
           package_id?: string
           package_type_id?: string | null
           payment_date?: string | null
+          payment_proof?: string | null
+          payment_received?: boolean | null
           schedule_generated?: boolean | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["package_status"] | null
           student_id: string
         }
         Update: {
+          admin_approved?: boolean | null
           amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
           completed_date?: string | null
           created_at?: string | null
           is_renewal?: boolean | null
@@ -349,6 +376,8 @@ export type Database = {
           package_id?: string
           package_type_id?: string | null
           payment_date?: string | null
+          payment_proof?: string | null
+          payment_received?: boolean | null
           schedule_generated?: boolean | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["package_status"] | null
@@ -415,6 +444,13 @@ export type Database = {
           temp_password?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teacher_monthly_stats"
+            referencedColumns: ["teacher_id"]
+          },
           {
             foreignKeyName: "profiles_teacher_id_fkey"
             columns: ["teacher_id"]
@@ -521,6 +557,13 @@ export type Database = {
             foreignKeyName: "scheduled_lessons_teacher_id_fkey"
             columns: ["teacher_id"]
             isOneToOne: false
+            referencedRelation: "teacher_monthly_stats"
+            referencedColumns: ["teacher_id"]
+          },
+          {
+            foreignKeyName: "scheduled_lessons_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
             referencedRelation: "teachers"
             referencedColumns: ["teacher_id"]
           },
@@ -617,6 +660,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "programs"
             referencedColumns: ["program_id"]
+          },
+          {
+            foreignKeyName: "students_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teacher_monthly_stats"
+            referencedColumns: ["teacher_id"]
           },
           {
             foreignKeyName: "students_teacher_id_fkey"
@@ -720,6 +770,13 @@ export type Database = {
             foreignKeyName: "teachers_payroll_teacher_id_fkey"
             columns: ["teacher_id"]
             isOneToOne: false
+            referencedRelation: "teacher_monthly_stats"
+            referencedColumns: ["teacher_id"]
+          },
+          {
+            foreignKeyName: "teachers_payroll_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
             referencedRelation: "teachers"
             referencedColumns: ["teacher_id"]
           },
@@ -745,7 +802,136 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      teacher_monthly_stats: {
+        Row: {
+          lessons_taught: number | null
+          month: string | null
+          rate_per_lesson: number | null
+          salary_earned: number | null
+          teacher_id: string | null
+          teacher_name: string | null
+          total_hours: number | null
+        }
+        Relationships: []
+      }
+      teacher_todays_lessons: {
+        Row: {
+          duration_minutes: number | null
+          program_name: string | null
+          scheduled_lesson_id: string | null
+          scheduled_time: string | null
+          status: string | null
+          student_id: string | null
+          student_level: string | null
+          student_name: string | null
+          student_status: Database["public"]["Enums"]["student_status"] | null
+          teacher_id: string | null
+          teacher_name: string | null
+          wallet_balance: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_lessons_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "scheduled_lessons_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teacher_monthly_stats"
+            referencedColumns: ["teacher_id"]
+          },
+          {
+            foreignKeyName: "scheduled_lessons_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["teacher_id"]
+          },
+        ]
+      }
+      teacher_tomorrows_lessons: {
+        Row: {
+          duration_minutes: number | null
+          program_name: string | null
+          scheduled_lesson_id: string | null
+          scheduled_time: string | null
+          status: string | null
+          student_id: string | null
+          student_level: string | null
+          student_name: string | null
+          student_status: Database["public"]["Enums"]["student_status"] | null
+          teacher_id: string | null
+          teacher_name: string | null
+          wallet_balance: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_lessons_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "scheduled_lessons_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teacher_monthly_stats"
+            referencedColumns: ["teacher_id"]
+          },
+          {
+            foreignKeyName: "scheduled_lessons_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["teacher_id"]
+          },
+        ]
+      }
+      teacher_week_lessons: {
+        Row: {
+          duration_minutes: number | null
+          program_name: string | null
+          scheduled_date: string | null
+          scheduled_lesson_id: string | null
+          scheduled_time: string | null
+          status: string | null
+          student_id: string | null
+          student_level: string | null
+          student_name: string | null
+          student_status: Database["public"]["Enums"]["student_status"] | null
+          teacher_id: string | null
+          teacher_name: string | null
+          wallet_balance: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_lessons_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "scheduled_lessons_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teacher_monthly_stats"
+            referencedColumns: ["teacher_id"]
+          },
+          {
+            foreignKeyName: "scheduled_lessons_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["teacher_id"]
+          },
+        ]
+      }
     }
     Functions: {
       add_package_with_debt: {
