@@ -274,46 +274,48 @@ export default function StudentDetail() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Date</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Lessons</TableHead>
-                      <TableHead>Used</TableHead>
-                      <TableHead>Duration</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {packages.map((pkg) => (
-                      <TableRow key={pkg.package_id}>
-                        <TableCell>{formatDate(pkg.payment_date)}</TableCell>
-                        <TableCell>{pkg.package_types?.name || '-'}</TableCell>
-                        <TableCell className="font-medium">{formatCurrency(pkg.amount)}</TableCell>
-                        <TableCell>{pkg.lessons_purchased}</TableCell>
-                        <TableCell>{pkg.lessons_used}</TableCell>
-                        <TableCell>{pkg.lesson_duration ? `${pkg.lesson_duration} mins` : '-'}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className={pkg.status === 'Active' ? 'status-active' : 'status-grace'}>
-                            {pkg.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setRenewPackageId(pkg.package_id);
-                              setIsRenewPackageOpen(true);
-                            }}
-                            className="gap-1 text-xs"
-                          >
-                            <RefreshCw className="w-3 h-3" />
-                            Renew
-                          </Button>
-                        </TableCell>
+                        <TableHead>Package Name</TableHead>
+                        <TableHead>Description</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Lessons</TableHead>
+                        <TableHead>Used</TableHead>
+                        <TableHead>Duration</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
+                    </TableHeader>
+                    <TableBody>
+                      {packages.map((pkg) => (
+                        <TableRow key={pkg.package_id}>
+                          <TableCell>{formatDate(pkg.payment_date)}</TableCell>
+                          <TableCell className="font-medium">{pkg.package_types?.name || '-'}</TableCell>
+                          <TableCell className="text-muted-foreground text-sm">{pkg.package_types?.description || '-'}</TableCell>
+                          <TableCell className="font-medium">{formatCurrency(pkg.amount)}</TableCell>
+                          <TableCell>{pkg.lessons_purchased}</TableCell>
+                          <TableCell>{pkg.lessons_used}</TableCell>
+                          <TableCell>{pkg.lesson_duration ? `${pkg.lesson_duration} mins` : '-'}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className={pkg.status === 'Active' ? 'status-active' : 'status-grace'}>
+                              {pkg.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setRenewPackageId(pkg.package_id);
+                                setIsRenewPackageOpen(true);
+                              }}
+                              className="gap-1 text-xs"
+                            >
+                              <RefreshCw className="w-3 h-3" />
+                              Renew
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
                   </Table>
                 )}
               </CardContent>
