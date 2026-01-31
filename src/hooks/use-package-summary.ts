@@ -53,7 +53,7 @@ export function usePackages(filters?: {
     queryFn: async () => {
       let query = supabase
         .from('packages')
-        .select('*, students(name, phone, parent_phone)')
+        .select('*, students!packages_student_id_fkey(name, phone, parent_phone)')
         .order('created_at', { ascending: false });
 
       if (filters?.status && filters.status !== 'all') {
