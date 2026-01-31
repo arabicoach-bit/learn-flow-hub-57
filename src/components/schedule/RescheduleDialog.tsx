@@ -153,8 +153,10 @@ export function RescheduleDialog({ lesson, open, onOpenChange, onSuccess }: Resc
         <DialogHeader>
           <DialogTitle>Reschedule Lesson</DialogTitle>
           <DialogDescription>
-            Reschedule the lesson for {lesson.students?.name}. The current slot is{' '}
-            {format(parseISO(lesson.scheduled_date), 'MMM d, yyyy')} at {lesson.scheduled_time?.slice(0, 5)}.
+            Reschedule the lesson for {lesson.students?.name}.
+            {lesson.scheduled_date && (
+              <> The current slot is {format(parseISO(lesson.scheduled_date), 'MMM d, yyyy')} at {lesson.scheduled_time?.slice(0, 5)}.</>
+            )}
           </DialogDescription>
         </DialogHeader>
 

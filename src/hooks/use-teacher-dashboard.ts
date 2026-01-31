@@ -63,6 +63,7 @@ export function useTodaysTeacherLessons() {
         student_name: lesson.students?.name || 'Unknown',
         wallet_balance: lesson.students?.wallet_balance || 0,
         student_status: lesson.students?.status || 'Active',
+        scheduled_date: format(new Date(), 'yyyy-MM-dd'), // Today's date
         scheduled_time: lesson.scheduled_time,
         duration_minutes: lesson.duration_minutes,
         status: lesson.status,
@@ -112,6 +113,7 @@ export function useTomorrowsTeacherLessons() {
         student_name: lesson.students?.name || 'Unknown',
         wallet_balance: lesson.students?.wallet_balance || 0,
         student_status: lesson.students?.status || 'Active',
+        scheduled_date: format(tomorrow, 'yyyy-MM-dd'), // Tomorrow's date
         scheduled_time: lesson.scheduled_time,
         duration_minutes: lesson.duration_minutes,
         status: lesson.status,

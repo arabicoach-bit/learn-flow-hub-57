@@ -21,6 +21,8 @@ interface TeacherLessonCardProps {
     status: string;
     program_name: string | null;
     student_level: string | null;
+    teacher_id?: string;
+    scheduled_date?: string;
   };
   onLessonMarked?: () => void;
   showDate?: boolean;
@@ -182,15 +184,20 @@ export function TeacherLessonCard({ lesson, onLessonMarked, showDate, date }: Te
         </CardContent>
       </Card>
 
-      <RescheduleDialog
-        open={isRescheduleOpen}
-        onOpenChange={setIsRescheduleOpen}
-        lesson={{
-          scheduled_lesson_id: lesson.scheduled_lesson_id,
-          student_id: lesson.student_id,
-          students: { name: lesson.student_name },
-        } as any}
-      />
+      {isRescheduleOpen && (
+        <RescheduleDialog
+          open={isRescheduleOpen}
+          onOpenChange={setIsRescheduleOpen}
+          lesson={{
+            scheduled_lesson_id: lesson.scheduled_lesson_id,
+            student_id: lesson.student_id,
+            scheduled_date: date || new Date().toISOString().split('T')[0],
+            scheduled_time: lesson.scheduled_time,
+            teacher_id: (lesson as any).teacher_id,
+            students: { name: lesson.student_name },
+          } as any}
+        />
+      )}
     </TooltipProvider>
   );
 }
