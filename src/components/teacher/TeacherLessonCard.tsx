@@ -33,6 +33,11 @@ export function TeacherLessonCard({ lesson, onLessonMarked, showDate, date }: Te
   const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
   const markLesson = useMarkScheduledLesson();
   const isBlocked = lesson.student_status === 'Blocked';
+  
+  // Check if the lesson date is today or in the past (can mark)
+  const lessonDate = date || lesson.scheduled_date || new Date().toISOString().split('T')[0];
+  const today = new Date().toISOString().split('T')[0];
+  const isFutureLesson = lessonDate > today;
 
   const formatTime = (time: string) => {
     const [hours, minutes] = time.split(':');
@@ -132,7 +137,7 @@ export function TeacherLessonCard({ lesson, onLessonMarked, showDate, date }: Te
                       variant="outline"
                       className="bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border-emerald-600/30"
                       onClick={() => handleMarkLesson('Taken')}
-                      disabled={markLesson.isPending || isBlocked}
+                      disabled={markLesson.isPending || isBlocked || isFutureLesson}
                     >
                       {markLesson.isPending ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -143,34 +148,56 @@ export function TeacherLessonCard({ lesson, onLessonMarked, showDate, date }: Te
                     </Button>
                   </span>
                 </TooltipTrigger>
-                {isBlocked && (
+                {(isBlocked || isFutureLesson) && (
                   <TooltipContent className="bg-destructive text-destructive-foreground">
-                    <p>Student is blocked. Payment required.</p>
+                    <p>{isFutureLesson ? 'Cannot mark future lessons' : 'Student is blocked. Payment required.'}</p>
                   </TooltipContent>
                 )}
               </Tooltip>
               
-              <Button
-                size="sm"
-                variant="outline"
-                className="bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 border-amber-600/30"
-                onClick={() => handleMarkLesson('Absent')}
-                disabled={markLesson.isPending}
-              >
-                <X className="w-4 h-4 mr-1" />
-                Absent
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 border-amber-600/30"
+                      onClick={() => handleMarkLesson('Absent')}
+                      disabled={markLesson.isPending || isFutureLesson}
+                    >
+                      <X className="w-4 h-4 mr-1" />
+                      Absent
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                {isFutureLesson && (
+                  <TooltipContent>
+                    <p>Cannot mark future lessons</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
               
-              <Button
-                size="sm"
-                variant="outline"
-                className="bg-neutral-600/20 hover:bg-neutral-600/30 text-neutral-400 border-neutral-600/30"
-                onClick={() => handleMarkLesson('Cancelled')}
-                disabled={markLesson.isPending}
-              >
-                <Ban className="w-4 h-4 mr-1" />
-                Cancel
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="bg-neutral-600/20 hover:bg-neutral-600/30 text-neutral-400 border-neutral-600/30"
+                      onClick={() => handleMarkLesson('Cancelled')}
+                      disabled={markLesson.isPending || isFutureLesson}
+                    >
+                      <Ban className="w-4 h-4 mr-1" />
+                      Cancel
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                {isFutureLesson && (
+                  <TooltipContent>
+                    <p>Cannot mark future lessons</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
 
               <Button
                 size="sm"
