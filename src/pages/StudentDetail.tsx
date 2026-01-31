@@ -50,7 +50,14 @@ export default function StudentDetail() {
   });
 
   const { data: student, isLoading: studentLoading } = useStudent(id || '');
-  const { data: packages, isLoading: packagesLoading } = usePackages(id);
+  const packagesQuery = usePackages(id);
+  const {
+    data: packages,
+    isLoading: packagesLoading,
+    isFetching: packagesFetching,
+    error: packagesError,
+    refetch: refetchPackages,
+  } = packagesQuery;
   const { data: lessons, isLoading: lessonsLoading } = useLessons({ student_id: id });
   const { data: classes } = useClasses();
   const { data: teachers } = useTeachers();
@@ -260,6 +267,26 @@ export default function StudentDetail() {
                 {packagesLoading ? (
                   <div className="space-y-3">
                     {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-12" />)}
+                  </div>
+                ) : packagesError ? (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground mb-2">Couldn't load packages</p>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      {packagesError instanceof Error ? packagesError.message : 'Unknown error'}
+                    </p>
+                    <Button
+                      variant="outline"
+                      onClick={() => refetchPackages()}
+                      className="gap-2"
+                      disabled={packagesFetching}
+                    >
+                      {packagesFetching ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <RefreshCw className="w-4 h-4" />
+                      )}
+                      Retry
+                    </Button>
                   </div>
                 ) : !packages?.length ? (
                   <div className="text-center py-8">
