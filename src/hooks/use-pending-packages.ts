@@ -35,7 +35,7 @@ export function usePendingPackages() {
         .from('packages')
         .select(`
           *,
-          students!inner(name, wallet_balance, teacher_id, phone, parent_phone),
+          students!packages_student_id_fkey(name, wallet_balance, teacher_id, phone, parent_phone),
           package_types(name)
         `)
         .eq('admin_approved', false)
@@ -57,7 +57,7 @@ export function useActivatePackage() {
         .from('packages')
         .select(`
           *,
-          students!inner(student_id, name, wallet_balance, teacher_id, total_paid, number_of_renewals, status)
+          students!packages_student_id_fkey(student_id, name, wallet_balance, teacher_id, total_paid, number_of_renewals, status)
         `)
         .eq('package_id', packageId)
         .single();

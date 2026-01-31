@@ -41,7 +41,7 @@ export function usePackages(studentId?: string) {
     queryFn: async () => {
       let query = supabase
         .from('packages')
-        .select('*, students(name), package_types(name, description)')
+        .select('*, students!packages_student_id_fkey(name), package_types(name, description)')
         .order('created_at', { ascending: false });
 
       if (studentId) {
@@ -61,7 +61,7 @@ export function useRecentPackages(limit = 20) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('packages')
-        .select('*, students(name), package_types(name, description)')
+        .select('*, students!packages_student_id_fkey(name), package_types(name, description)')
         .order('created_at', { ascending: false })
         .limit(limit);
 
