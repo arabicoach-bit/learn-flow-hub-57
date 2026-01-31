@@ -17,6 +17,7 @@ import {
   AlertDialogTitle 
 } from '@/components/ui/alert-dialog';
 import { RescheduleDialog } from './RescheduleDialog';
+import { WeeklyScheduleCard } from './WeeklyScheduleCard';
 import { Calendar, Clock, CheckCircle2, XCircle, AlertCircle, Loader2, CalendarClock } from 'lucide-react';
 import { format, parseISO, isToday, isFuture, isPast } from 'date-fns';
 import { toast } from 'sonner';
@@ -98,6 +99,9 @@ export function StudentScheduleTab({ studentId, lessonsUsed = 0, lessonsPurchase
 
   return (
     <div className="space-y-6">
+      {/* Weekly Schedule Card */}
+      <WeeklyScheduleCard studentId={studentId} />
+
       {/* Progress Card */}
       <Card className="bg-gradient-to-r from-primary/10 to-primary/5">
         <CardContent className="pt-6">
