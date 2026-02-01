@@ -782,6 +782,192 @@ export type Database = {
           },
         ]
       }
+      trial_lessons_log: {
+        Row: {
+          admin_payment_amount: number | null
+          created_at: string | null
+          duration_minutes: number
+          lesson_date: string
+          lesson_time: string | null
+          notes: string | null
+          status: string
+          teacher_id: string | null
+          teacher_payment_amount: number | null
+          trial_lesson_id: string
+          trial_student_id: string
+        }
+        Insert: {
+          admin_payment_amount?: number | null
+          created_at?: string | null
+          duration_minutes?: number
+          lesson_date: string
+          lesson_time?: string | null
+          notes?: string | null
+          status?: string
+          teacher_id?: string | null
+          teacher_payment_amount?: number | null
+          trial_lesson_id?: string
+          trial_student_id: string
+        }
+        Update: {
+          admin_payment_amount?: number | null
+          created_at?: string | null
+          duration_minutes?: number
+          lesson_date?: string
+          lesson_time?: string | null
+          notes?: string | null
+          status?: string
+          teacher_id?: string | null
+          teacher_payment_amount?: number | null
+          trial_lesson_id?: string
+          trial_student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trial_lessons_log_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teacher_monthly_stats"
+            referencedColumns: ["teacher_id"]
+          },
+          {
+            foreignKeyName: "trial_lessons_log_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["teacher_id"]
+          },
+          {
+            foreignKeyName: "trial_lessons_log_trial_student_id_fkey"
+            columns: ["trial_student_id"]
+            isOneToOne: false
+            referencedRelation: "trial_students"
+            referencedColumns: ["trial_id"]
+          },
+        ]
+      }
+      trial_students: {
+        Row: {
+          admin_payment_amount: number | null
+          age: number | null
+          converted_student_id: string | null
+          created_at: string | null
+          duration_minutes: number
+          follow_up_notes: string | null
+          gender: string | null
+          handled_by: string | null
+          interested_program: string | null
+          lead_id: string | null
+          name: string
+          notes: string | null
+          parent_guardian_name: string | null
+          phone: string
+          registration_date: string | null
+          school: string | null
+          status: Database["public"]["Enums"]["trial_status"]
+          student_level: string | null
+          teacher_id: string | null
+          teacher_pay_percentage: number
+          teacher_payment_amount: number | null
+          teacher_rate_per_lesson: number | null
+          trial_date: string | null
+          trial_id: string
+          trial_result: Database["public"]["Enums"]["trial_result"] | null
+          trial_time: string | null
+          updated_at: string | null
+          year_group: string | null
+        }
+        Insert: {
+          admin_payment_amount?: number | null
+          age?: number | null
+          converted_student_id?: string | null
+          created_at?: string | null
+          duration_minutes?: number
+          follow_up_notes?: string | null
+          gender?: string | null
+          handled_by?: string | null
+          interested_program?: string | null
+          lead_id?: string | null
+          name: string
+          notes?: string | null
+          parent_guardian_name?: string | null
+          phone: string
+          registration_date?: string | null
+          school?: string | null
+          status?: Database["public"]["Enums"]["trial_status"]
+          student_level?: string | null
+          teacher_id?: string | null
+          teacher_pay_percentage?: number
+          teacher_payment_amount?: number | null
+          teacher_rate_per_lesson?: number | null
+          trial_date?: string | null
+          trial_id?: string
+          trial_result?: Database["public"]["Enums"]["trial_result"] | null
+          trial_time?: string | null
+          updated_at?: string | null
+          year_group?: string | null
+        }
+        Update: {
+          admin_payment_amount?: number | null
+          age?: number | null
+          converted_student_id?: string | null
+          created_at?: string | null
+          duration_minutes?: number
+          follow_up_notes?: string | null
+          gender?: string | null
+          handled_by?: string | null
+          interested_program?: string | null
+          lead_id?: string | null
+          name?: string
+          notes?: string | null
+          parent_guardian_name?: string | null
+          phone?: string
+          registration_date?: string | null
+          school?: string | null
+          status?: Database["public"]["Enums"]["trial_status"]
+          student_level?: string | null
+          teacher_id?: string | null
+          teacher_pay_percentage?: number
+          teacher_payment_amount?: number | null
+          teacher_rate_per_lesson?: number | null
+          trial_date?: string | null
+          trial_id?: string
+          trial_result?: Database["public"]["Enums"]["trial_result"] | null
+          trial_time?: string | null
+          updated_at?: string | null
+          year_group?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trial_students_converted_student_id_fkey"
+            columns: ["converted_student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "trial_students_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["lead_id"]
+          },
+          {
+            foreignKeyName: "trial_students_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teacher_monthly_stats"
+            referencedColumns: ["teacher_id"]
+          },
+          {
+            foreignKeyName: "trial_students_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["teacher_id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
@@ -991,6 +1177,8 @@ export type Database = {
       package_status: "Active" | "Completed"
       payroll_status: "Draft" | "Approved" | "Paid"
       student_status: "Active" | "Grace" | "Blocked"
+      trial_result: "Positive" | "Very Positive" | "Neutral" | "Negative"
+      trial_status: "Scheduled" | "Completed" | "Converted" | "Lost"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1131,6 +1319,8 @@ export const Constants = {
       package_status: ["Active", "Completed"],
       payroll_status: ["Draft", "Approved", "Paid"],
       student_status: ["Active", "Grace", "Blocked"],
+      trial_result: ["Positive", "Very Positive", "Neutral", "Negative"],
+      trial_status: ["Scheduled", "Completed", "Converted", "Lost"],
     },
   },
 } as const
