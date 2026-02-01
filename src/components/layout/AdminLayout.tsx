@@ -37,9 +37,7 @@ const adminNavItems = [
   { title: 'Trial Students', url: '/admin/trial-students', icon: UserCheck },
   { title: 'Students', url: '/admin/students', icon: GraduationCap },
   { title: 'Payments', url: '/admin/payments', icon: Wallet },
-  { title: 'Lessons', url: '/admin/lessons', icon: CheckSquare },
   { title: 'Teachers', url: '/admin/teachers', icon: Users },
-  { title: 'Classes', url: '/admin/classes', icon: BookOpen },
   { title: 'Reports', url: '/admin/reports', icon: BarChart3 },
   { title: 'Settings', url: '/admin/settings', icon: Settings },
 ];
