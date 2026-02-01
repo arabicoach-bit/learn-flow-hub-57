@@ -103,10 +103,11 @@ export function useStudentStats() {
       const totalMonthlyRevenue = packages?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
       const averageMonthlyFee = activeStudents > 0 ? totalMonthlyRevenue / activeStudents : 0;
 
-      // Payment status based on wallet balance
-      const paidStudents = students?.filter(s => (s.wallet_balance || 0) >= 4).length || 0;
-      const dueSoonStudents = students?.filter(s => (s.wallet_balance || 0) >= 1 && (s.wallet_balance || 0) <= 3).length || 0;
-      const overdueStudents = students?.filter(s => (s.wallet_balance || 0) <= 0).length || 0;
+      // Payment status based on new wallet thresholds
+      // Active: >= 3 (Paid), Grace: 2 to -1 (Due Soon), Blocked: <= -2 (Overdue)
+      const paidStudents = students?.filter(s => (s.wallet_balance || 0) >= 3).length || 0;
+      const dueSoonStudents = students?.filter(s => (s.wallet_balance || 0) >= -1 && (s.wallet_balance || 0) <= 2).length || 0;
+      const overdueStudents = students?.filter(s => (s.wallet_balance || 0) <= -2).length || 0;
 
       const stats: StudentStats = {
         totalStudents,
