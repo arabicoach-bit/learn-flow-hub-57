@@ -1,19 +1,17 @@
 export function getWalletColor(balance: number): string {
-  if (balance >= 5) return 'wallet-positive';
-  if (balance >= 3) return 'wallet-low';
-  if (balance >= 1) return 'wallet-warning';
-  if (balance === 0) return 'wallet-zero';
-  if (balance >= -2) return 'wallet-negative';
-  return 'wallet-critical';
+  // Active: >= 3, Grace: 2 to -1, Blocked: <= -2
+  if (balance >= 3) return 'wallet-positive';  // Active
+  if (balance >= 0) return 'wallet-warning';   // Grace (approaching limit)
+  if (balance >= -1) return 'wallet-negative'; // Grace (in debt)
+  return 'wallet-critical';                     // Blocked (<= -2)
 }
 
 export function getWalletBgColor(balance: number): string {
-  if (balance >= 5) return 'bg-emerald-500/20';
-  if (balance >= 3) return 'bg-lime-500/20';
-  if (balance >= 1) return 'bg-amber-500/20';
-  if (balance === 0) return 'bg-orange-500/20';
-  if (balance >= -2) return 'bg-red-500/20';
-  return 'bg-red-900/30';
+  // Active: >= 3, Grace: 2 to -1, Blocked: <= -2
+  if (balance >= 3) return 'bg-emerald-500/20';  // Active
+  if (balance >= 0) return 'bg-amber-500/20';    // Grace (approaching limit)
+  if (balance >= -1) return 'bg-red-500/20';     // Grace (in debt)
+  return 'bg-red-900/30';                         // Blocked (<= -2)
 }
 
 export function getStatusBadgeClass(status: string): string {
