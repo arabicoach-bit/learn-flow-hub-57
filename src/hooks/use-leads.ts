@@ -11,6 +11,11 @@ export interface Lead {
   status: 'New' | 'Contacted' | 'Interested' | 'Converted' | 'Lost';
   next_followup_date: string | null;
   notes: string | null;
+  first_contact_date: string | null;
+  last_contact_date: string | null;
+  trial_status: string | null;
+  follow_up: string | null;
+  handled_by: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -22,6 +27,11 @@ export interface CreateLeadInput {
   interest?: string;
   notes?: string;
   next_followup_date?: string;
+  first_contact_date?: string;
+  last_contact_date?: string;
+  trial_status?: string;
+  follow_up?: string;
+  handled_by?: string;
 }
 
 export function useLeads(filters?: { status?: string; search?: string }) {
@@ -78,6 +88,11 @@ export function useCreateLead() {
           interest: input.interest || null,
           notes: input.notes || null,
           next_followup_date: input.next_followup_date || null,
+          first_contact_date: input.first_contact_date || null,
+          last_contact_date: input.last_contact_date || null,
+          trial_status: input.trial_status || null,
+          follow_up: input.follow_up || null,
+          handled_by: input.handled_by || null,
         })
         .select()
         .single();
@@ -97,9 +112,24 @@ export function useUpdateLead() {
 
   return useMutation({
     mutationFn: async ({ leadId, ...data }: { leadId: string } & Partial<CreateLeadInput> & { status?: Lead['status'] }) => {
+      const updateData: Record<string, unknown> = {};
+      
+      if (data.name !== undefined) updateData.name = data.name;
+      if (data.phone !== undefined) updateData.phone = data.phone;
+      if (data.source !== undefined) updateData.source = data.source || null;
+      if (data.interest !== undefined) updateData.interest = data.interest || null;
+      if (data.notes !== undefined) updateData.notes = data.notes || null;
+      if (data.next_followup_date !== undefined) updateData.next_followup_date = data.next_followup_date || null;
+      if (data.first_contact_date !== undefined) updateData.first_contact_date = data.first_contact_date || null;
+      if (data.last_contact_date !== undefined) updateData.last_contact_date = data.last_contact_date || null;
+      if (data.trial_status !== undefined) updateData.trial_status = data.trial_status || null;
+      if (data.follow_up !== undefined) updateData.follow_up = data.follow_up || null;
+      if (data.handled_by !== undefined) updateData.handled_by = data.handled_by || null;
+      if (data.status !== undefined) updateData.status = data.status;
+      
       const { error } = await supabase
         .from('leads')
-        .update(data)
+        .update(updateData)
         .eq('lead_id', leadId);
 
       if (error) throw error;

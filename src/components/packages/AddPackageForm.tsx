@@ -11,7 +11,6 @@ import { Badge } from '@/components/ui/badge';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { usePackageTypes } from '@/hooks/use-package-types';
 import { useTeachers } from '@/hooks/use-teachers';
-import { useClasses } from '@/hooks/use-classes';
 import { useAddPackageWithSchedule, WeeklyScheduleDay } from '@/hooks/use-add-package-with-schedule';
 import { toast } from 'sonner';
 import { Loader2, Plus, X, Calendar, Clock, DollarSign, BookOpen } from 'lucide-react';
@@ -34,7 +33,6 @@ const packageFormSchema = z.object({
   lesson_duration: z.number().min(15, 'Minimum 15 minutes'),
   start_date: z.string().min(1, 'Start date is required'),
   teacher_id: z.string().min(1, 'Teacher is required'),
-  class_id: z.string().optional(),
 });
 
 type PackageFormValues = z.infer<typeof packageFormSchema>;
@@ -55,7 +53,6 @@ export function AddPackageForm({ studentId, studentName, currentWallet, onSucces
 
   const { data: packageTypes } = usePackageTypes();
   const { data: teachers } = useTeachers();
-  const { data: classes } = useClasses();
   const addPackage = useAddPackageWithSchedule();
 
   const form = useForm<PackageFormValues>({
@@ -66,7 +63,6 @@ export function AddPackageForm({ studentId, studentName, currentWallet, onSucces
       lesson_duration: 45,
       start_date: new Date().toISOString().split('T')[0],
       teacher_id: '',
-      class_id: '',
     },
   });
 
@@ -110,7 +106,6 @@ export function AddPackageForm({ studentId, studentName, currentWallet, onSucces
         lesson_duration: values.lesson_duration,
         start_date: values.start_date,
         teacher_id: values.teacher_id,
-        class_id: values.class_id,
         weekly_schedule: weeklySchedule,
       });
 
@@ -237,28 +232,16 @@ export function AddPackageForm({ studentId, studentName, currentWallet, onSucces
         <Card>
           <CardHeader><CardTitle className="text-lg">Assignment</CardTitle></CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <FormField control={form.control} name="teacher_id" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Teacher *</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl><SelectTrigger><SelectValue placeholder="Select teacher" /></SelectTrigger></FormControl>
-                    <SelectContent>{teachers?.map((t) => <SelectItem key={t.teacher_id} value={t.teacher_id}>{t.name}</SelectItem>)}</SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )} />
-              <FormField control={form.control} name="class_id" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Class</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl><SelectTrigger><SelectValue placeholder="Select class" /></SelectTrigger></FormControl>
-                    <SelectContent>{classes?.map((c) => <SelectItem key={c.class_id} value={c.class_id}>{c.name}</SelectItem>)}</SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )} />
-            </div>
+            <FormField control={form.control} name="teacher_id" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Teacher *</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl><SelectTrigger><SelectValue placeholder="Select teacher" /></SelectTrigger></FormControl>
+                  <SelectContent>{teachers?.map((t) => <SelectItem key={t.teacher_id} value={t.teacher_id}>{t.name}</SelectItem>)}</SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )} />
           </CardContent>
         </Card>
 

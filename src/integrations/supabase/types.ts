@@ -99,7 +99,11 @@ export type Database = {
         Row: {
           created_at: string | null
           date: string | null
+          first_contact_date: string | null
+          follow_up: string | null
+          handled_by: string | null
           interest: string | null
+          last_contact_date: string | null
           lead_id: string
           name: string
           next_followup_date: string | null
@@ -107,12 +111,17 @@ export type Database = {
           phone: string
           source: string | null
           status: Database["public"]["Enums"]["lead_status"] | null
+          trial_status: string | null
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
           date?: string | null
+          first_contact_date?: string | null
+          follow_up?: string | null
+          handled_by?: string | null
           interest?: string | null
+          last_contact_date?: string | null
           lead_id?: string
           name: string
           next_followup_date?: string | null
@@ -120,12 +129,17 @@ export type Database = {
           phone: string
           source?: string | null
           status?: Database["public"]["Enums"]["lead_status"] | null
+          trial_status?: string | null
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
           date?: string | null
+          first_contact_date?: string | null
+          follow_up?: string | null
+          handled_by?: string | null
           interest?: string | null
+          last_contact_date?: string | null
           lead_id?: string
           name?: string
           next_followup_date?: string | null
@@ -133,6 +147,7 @@ export type Database = {
           phone?: string
           source?: string | null
           status?: Database["public"]["Enums"]["lead_status"] | null
+          trial_status?: string | null
           updated_at?: string | null
         }
         Relationships: []
