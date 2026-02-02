@@ -4,12 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { useStudents } from '@/hooks/use-students';
+import { useStudents, Student } from '@/hooks/use-students';
 import { usePrograms } from '@/hooks/use-programs';
 import { getWalletColor } from '@/lib/wallet-utils';
-import { GraduationCap, Search, Phone, ChevronDown, User, School, BookOpen, Calendar } from 'lucide-react';
+import { EditStudentDialog } from '@/components/teacher/EditStudentDialog';
+import { GraduationCap, Search, Phone, ChevronDown, User, School, BookOpen, Calendar, Pencil } from 'lucide-react';
 import { useState } from 'react';
 
 export default function TeacherStudents() {
@@ -19,6 +21,7 @@ export default function TeacherStudents() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set());
+  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
 
   const { data: students, isLoading: studentsLoading } = useStudents();
   const { data: programs } = usePrograms();
@@ -203,6 +206,19 @@ export default function TeacherStudents() {
                                 </div>
                               )}
                             </div>
+                            <div className="mt-4 flex justify-end">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingStudent(student);
+                                }}
+                              >
+                                <Pencil className="w-4 h-4 mr-2" />
+                                Edit Profile
+                              </Button>
+                            </div>
                           </div>
                         </CollapsibleContent>
                       </div>
@@ -215,6 +231,12 @@ export default function TeacherStudents() {
             )}
           </CardContent>
         </Card>
+
+        <EditStudentDialog
+          student={editingStudent}
+          open={!!editingStudent}
+          onOpenChange={(open) => !open && setEditingStudent(null)}
+        />
       </div>
     </TeacherLayout>
   );

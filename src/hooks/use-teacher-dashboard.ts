@@ -197,58 +197,71 @@ export function useTeacherMonthlyStats() {
       const lastMonthStart = format(startOfMonth(lastMonthDate), 'yyyy-MM-dd');
       const lastMonthEnd = format(endOfMonth(lastMonthDate), 'yyyy-MM-dd');
 
-      // Get teacher rate
+      // Get teacher rate (this is now hourly rate)
       const { data: teacher } = await supabase
         .from('teachers')
         .select('rate_per_lesson, name')
         .eq('teacher_id', teacherId)
         .single();
 
-      const ratePerLesson = teacher?.rate_per_lesson || 0;
+      const ratePerHour = teacher?.rate_per_lesson || 0;
 
-      // Get current month lessons
+      // Get current month lessons with duration from scheduled_lessons
       const { data: currentMonthLessons } = await supabase
         .from('lessons_log')
-        .select('lesson_id, date')
+        .select(`
+          lesson_id,
+          scheduled_lessons!inner(duration_minutes)
+        `)
         .eq('teacher_id', teacherId)
         .eq('status', 'Taken')
         .gte('lesson_date', currentMonthStart)
         .lte('lesson_date', currentMonthEnd);
 
-      // Get last month lessons
+      // Get last month lessons with duration
       const { data: lastMonthLessons } = await supabase
         .from('lessons_log')
-        .select('lesson_id, date')
+        .select(`
+          lesson_id,
+          scheduled_lessons!inner(duration_minutes)
+        `)
         .eq('teacher_id', teacherId)
         .eq('status', 'Taken')
         .gte('lesson_date', lastMonthStart)
         .lte('lesson_date', lastMonthEnd);
 
+      // Calculate hours from actual lesson durations
+      const currentHours = (currentMonthLessons || []).reduce((total, lesson: any) => {
+        const duration = lesson.scheduled_lessons?.[0]?.duration_minutes || 45;
+        return total + duration / 60;
+      }, 0);
+
+      const lastHours = (lastMonthLessons || []).reduce((total, lesson: any) => {
+        const duration = lesson.scheduled_lessons?.[0]?.duration_minutes || 45;
+        return total + duration / 60;
+      }, 0);
+
       const currentLessonsCount = currentMonthLessons?.length || 0;
       const lastLessonsCount = lastMonthLessons?.length || 0;
-
-      // Assume 45 min per lesson as default
-      const currentHours = (currentLessonsCount * 45) / 60;
-      const lastHours = (lastLessonsCount * 45) / 60;
 
       return {
         currentMonth: {
           teacher_id: teacherId,
           teacher_name: teacher?.name || 'Unknown',
-          rate_per_lesson: ratePerLesson,
+          rate_per_lesson: ratePerHour, // This is now hourly rate
           month: format(now, 'MMMM yyyy'),
           lessons_taught: currentLessonsCount,
           total_hours: currentHours,
-          salary_earned: currentLessonsCount * ratePerLesson,
+          salary_earned: currentHours * ratePerHour, // Pay based on hours
         },
         lastMonth: {
           teacher_id: teacherId,
           teacher_name: teacher?.name || 'Unknown',
-          rate_per_lesson: ratePerLesson,
+          rate_per_lesson: ratePerHour,
           month: format(lastMonthDate, 'MMMM yyyy'),
           lessons_taught: lastLessonsCount,
           total_hours: lastHours,
-          salary_earned: lastLessonsCount * ratePerLesson,
+          salary_earned: lastHours * ratePerHour, // Pay based on hours
         },
       };
     },

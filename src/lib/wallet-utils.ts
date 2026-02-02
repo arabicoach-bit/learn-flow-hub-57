@@ -51,9 +51,11 @@ export function getStatusColor(status: string): string {
 }
 
 export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('en-AE', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'AED',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format(amount);
 }
 
