@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useStudent, useUpdateStudent } from '@/hooks/use-students';
-import { usePackages } from '@/hooks/use-packages';
+import { usePackages, Package } from '@/hooks/use-packages';
 import { useLessons } from '@/hooks/use-lessons';
 import { useClasses } from '@/hooks/use-classes';
 import { useTeachers } from '@/hooks/use-teachers';
@@ -18,11 +18,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { ArrowLeft, User, Wallet, CreditCard, BookOpen, Loader2, Calendar, Plus, RefreshCw } from 'lucide-react';
+import { ArrowLeft, User, Wallet, CreditCard, BookOpen, Loader2, Calendar, Plus, RefreshCw, Pencil } from 'lucide-react';
 import { getWalletColor, getStatusBadgeClass, formatCurrency, formatDate, formatDateTime } from '@/lib/wallet-utils';
 import { StudentScheduleTab } from '@/components/schedule/StudentScheduleTab';
 import { AddPackageForm } from '@/components/packages/AddPackageForm';
 import { RenewPackageForm } from '@/components/packages/RenewPackageForm';
+import { EditPackageDialog } from '@/components/packages/EditPackageDialog';
 
 export default function StudentDetail() {
   const { id } = useParams<{ id: string }>();
@@ -33,6 +34,7 @@ export default function StudentDetail() {
   const [isAddPackageOpen, setIsAddPackageOpen] = useState(false);
   const [isRenewPackageOpen, setIsRenewPackageOpen] = useState(false);
   const [renewPackageId, setRenewPackageId] = useState<string | undefined>();
+  const [editPackage, setEditPackage] = useState<Package | null>(null);
   const [editForm, setEditForm] = useState({
     name: '',
     phone: '',
@@ -225,6 +227,14 @@ export default function StudentDetail() {
           </DialogContent>
         </Dialog>
 
+        {/* Edit Package Dialog */}
+        <EditPackageDialog
+          package_={editPackage}
+          open={!!editPackage}
+          onOpenChange={(open) => !open && setEditPackage(null)}
+          onSuccess={() => setEditPackage(null)}
+        />
+
         {/* Tabs */}
         <Tabs defaultValue={defaultTab} className="space-y-4">
           <TabsList className="flex-wrap">
@@ -327,18 +337,29 @@ export default function StudentDetail() {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setRenewPackageId(pkg.package_id);
-                                setIsRenewPackageOpen(true);
-                              }}
-                              className="gap-1 text-xs"
-                            >
-                              <RefreshCw className="w-3 h-3" />
-                              Renew
-                            </Button>
+                            <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setEditPackage(pkg)}
+                                className="gap-1 text-xs"
+                              >
+                                <Pencil className="w-3 h-3" />
+                                Edit
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setRenewPackageId(pkg.package_id);
+                                  setIsRenewPackageOpen(true);
+                                }}
+                                className="gap-1 text-xs"
+                              >
+                                <RefreshCw className="w-3 h-3" />
+                                Renew
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
