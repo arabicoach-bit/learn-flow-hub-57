@@ -16,19 +16,20 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { EditLeadDialog } from '@/components/leads/EditLeadDialog';
 
 const trialStatusOptions = [
-  'Pending',
   'Trial Booked',
-  'Trial Completed',
-  'Converted',
-  'Not Interested',
+  'Pending',
+  'Price Negotiation',
+  'Lost',
 ];
 
 const followUpOptions = [
   'F.1 – Student Motivation',
-  'F.2 – Parent Contact',
-  'F.3 – Schedule Confirmed',
-  'F.4 – Payment Reminder',
+  'F.2 – Free Resources',
+  'F.3 – Parent Feedback',
+  'F.4 – Special Offer',
   'F.5 – Help Offer',
+  'F.6 – Soft Reminder',
+  'F.7 – Arabic Challenge',
 ];
 
 export default function Leads() {

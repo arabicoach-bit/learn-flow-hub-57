@@ -17,19 +17,20 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
 const trialStatusOptions = [
-  'Pending',
   'Trial Booked',
-  'Trial Completed',
-  'Converted',
-  'Not Interested',
+  'Pending',
+  'Price Negotiation',
+  'Lost',
 ];
 
 const followUpOptions = [
   'F.1 – Student Motivation',
-  'F.2 – Parent Contact',
-  'F.3 – Schedule Confirmed',
-  'F.4 – Payment Reminder',
+  'F.2 – Free Resources',
+  'F.3 – Parent Feedback',
+  'F.4 – Special Offer',
   'F.5 – Help Offer',
+  'F.6 – Soft Reminder',
+  'F.7 – Arabic Challenge',
 ];
 
 interface EditLeadDialogProps {
