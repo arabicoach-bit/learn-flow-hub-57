@@ -18,7 +18,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { RescheduleDialog } from './RescheduleDialog';
 import { WeeklyScheduleCard } from './WeeklyScheduleCard';
-import { Calendar, Clock, CheckCircle2, XCircle, AlertCircle, Loader2, CalendarClock } from 'lucide-react';
+import { EditScheduleDialog } from './EditScheduleDialog';
+import { Calendar, Clock, CheckCircle2, XCircle, AlertCircle, Loader2, CalendarClock, Pencil } from 'lucide-react';
 import { format, parseISO, isToday, isFuture, isPast } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -31,6 +32,7 @@ interface StudentScheduleTabProps {
 export function StudentScheduleTab({ studentId, lessonsUsed = 0, lessonsPurchased = 0 }: StudentScheduleTabProps) {
   const [cancelLessonId, setCancelLessonId] = useState<string | null>(null);
   const [rescheduleLesson, setRescheduleLesson] = useState<ScheduledLesson | null>(null);
+  const [isEditScheduleOpen, setIsEditScheduleOpen] = useState(false);
   const { data: scheduledLessons, isLoading } = useScheduledLessons({ student_id: studentId });
   const cancelLesson = useCancelScheduledLesson();
 
@@ -99,8 +101,19 @@ export function StudentScheduleTab({ studentId, lessonsUsed = 0, lessonsPurchase
 
   return (
     <div className="space-y-6">
-      {/* Weekly Schedule Card */}
-      <WeeklyScheduleCard studentId={studentId} />
+      {/* Weekly Schedule Card with Edit Button */}
+      <div className="relative">
+        <WeeklyScheduleCard studentId={studentId} />
+        <Button
+          variant="outline"
+          size="sm"
+          className="absolute top-4 right-4 gap-2"
+          onClick={() => setIsEditScheduleOpen(true)}
+        >
+          <Pencil className="w-4 h-4" />
+          Edit Schedule
+        </Button>
+      </div>
 
       {/* Progress Card */}
       <Card className="bg-gradient-to-r from-primary/10 to-primary/5">
@@ -228,6 +241,13 @@ export function StudentScheduleTab({ studentId, lessonsUsed = 0, lessonsPurchase
           onSuccess={() => setRescheduleLesson(null)}
         />
       )}
+
+      {/* Edit Schedule Dialog */}
+      <EditScheduleDialog
+        studentId={studentId}
+        open={isEditScheduleOpen}
+        onOpenChange={setIsEditScheduleOpen}
+      />
     </div>
   );
 }
