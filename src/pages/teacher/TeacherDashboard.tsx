@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Calendar, 
-  CheckSquare, 
   GraduationCap, 
   Wallet, 
   Clock, 
@@ -105,13 +104,6 @@ export default function TeacherDashboard() {
           <CardContent className="p-6">
             <div className="flex flex-wrap gap-4">
               <Button 
-                onClick={() => navigate('/teacher/mark-lesson')}
-                className="bg-emerald-600 hover:bg-emerald-700"
-              >
-                <CheckSquare className="w-4 h-4 mr-2" />
-                Mark Lesson
-              </Button>
-              <Button 
                 variant="outline"
                 onClick={() => navigate('/teacher/students')}
               >
@@ -124,6 +116,13 @@ export default function TeacherDashboard() {
               >
                 <Wallet className="w-4 h-4 mr-2" />
                 View Payroll
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => navigate('/teacher/schedule')}
+              >
+                <Calendar className="w-4 h-4 mr-2" />
+                View Schedule
               </Button>
             </div>
           </CardContent>

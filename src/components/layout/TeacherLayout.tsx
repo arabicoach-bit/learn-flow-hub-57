@@ -15,7 +15,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
   LayoutDashboard, 
-  CheckSquare, 
   GraduationCap, 
   Wallet, 
   Calendar, 
@@ -26,7 +25,6 @@ import { cn } from '@/lib/utils';
 
 const teacherNavItems = [
   { title: 'My Dashboard', url: '/teacher', icon: LayoutDashboard },
-  { title: 'Mark Lesson', url: '/teacher/mark-lesson', icon: CheckSquare },
   { title: 'My Students', url: '/teacher/students', icon: GraduationCap },
   { title: 'My Payroll', url: '/teacher/payroll', icon: Wallet },
   { title: 'My Schedule', url: '/teacher/schedule', icon: Calendar },
