@@ -7,6 +7,7 @@ export interface Teacher {
   phone: string | null;
   email: string | null;
   rate_per_lesson: number;
+  is_active: boolean;
   created_at: string;
   updated_at: string;
 }

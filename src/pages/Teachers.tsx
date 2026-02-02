@@ -20,7 +20,6 @@ import { z } from 'zod';
 
 // Extended teacher type with profile info
 interface TeacherWithProfile extends Teacher {
-  is_active?: boolean;
   user_id?: string;
   classes_count?: number;
 }

@@ -73,6 +73,8 @@ export interface UpdateTrialStudentInput {
   notes?: string;
   handled_by?: string;
   follow_up_notes?: string;
+  converted_student_id?: string;
+  registration_date?: string;
 }
 
 export function useTrialStudents(filters?: { status?: TrialStatus; teacher_id?: string; search?: string }) {
