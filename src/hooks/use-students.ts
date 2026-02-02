@@ -14,7 +14,6 @@ export interface Student {
   year_group: string | null;
   program_id: string | null;
   student_level: string | null;
-  class_id: string | null;
   teacher_id: string | null;
   status: 'Active' | 'Grace' | 'Blocked';
   wallet_balance: number;
@@ -23,7 +22,6 @@ export interface Student {
   number_of_renewals: number | null;
   created_at: string;
   updated_at: string;
-  classes?: { name: string } | null;
   teachers?: { name: string } | null;
   programs?: { name: string } | null;
 }
@@ -40,19 +38,18 @@ export interface CreateStudentInput {
   year_group?: string;
   program_id?: string;
   student_level?: string;
-  class_id?: string;
   teacher_id?: string;
   initial_amount?: number;
   initial_lessons?: number;
 }
 
-export function useStudents(filters?: { status?: string; teacher_id?: string; class_id?: string; search?: string }) {
+export function useStudents(filters?: { status?: string; teacher_id?: string; search?: string }) {
   return useQuery({
     queryKey: ['students', filters],
     queryFn: async () => {
       let query = supabase
         .from('students')
-        .select('*, classes(name), teachers(name), programs(name)')
+        .select('*, teachers(name), programs(name)')
         .order('created_at', { ascending: false });
 
       if (filters?.status && ['Active', 'Grace', 'Blocked'].includes(filters.status)) {
@@ -60,9 +57,6 @@ export function useStudents(filters?: { status?: string; teacher_id?: string; cl
       }
       if (filters?.teacher_id) {
         query = query.eq('teacher_id', filters.teacher_id);
-      }
-      if (filters?.class_id) {
-        query = query.eq('class_id', filters.class_id);
       }
       if (filters?.search) {
         query = query.or(`name.ilike.%${filters.search}%,phone.ilike.%${filters.search}%`);
@@ -81,7 +75,7 @@ export function useStudent(studentId: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('students')
-        .select('*, classes(name), teachers(name), programs(name)')
+        .select('*, teachers(name), programs(name)')
         .eq('student_id', studentId)
         .maybeSingle();
 
@@ -111,7 +105,6 @@ export function useCreateStudent() {
           year_group: input.year_group || null,
           program_id: input.program_id || null,
           student_level: input.student_level || null,
-          class_id: input.class_id || null,
           teacher_id: input.teacher_id || null,
           wallet_balance: input.initial_lessons || 0,
           status: (input.initial_lessons || 0) > 0 ? 'Active' : 'Grace',
@@ -170,7 +163,6 @@ export function useUpdateStudent() {
       year_group?: string | null;
       program_id?: string | null;
       student_level?: string | null;
-      class_id?: string | null; 
       teacher_id?: string | null;
     }) => {
       const { error } = await supabase

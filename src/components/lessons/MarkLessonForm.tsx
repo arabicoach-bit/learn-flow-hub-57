@@ -31,9 +31,7 @@ export function MarkLessonForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: classes, isLoading: classesLoading } = useClasses();
-  const { data: students, isLoading: studentsLoading } = useStudents(
-    selectedClassId ? { class_id: selectedClassId } : undefined
-  );
+  const { data: students, isLoading: studentsLoading } = useStudents();
   const markLesson = useMarkLesson();
 
   const selectedClass = classes?.find(c => c.class_id === selectedClassId);
@@ -44,10 +42,14 @@ export function MarkLessonForm() {
     setStudentStatuses([]);
   };
 
-  // Populate students when data loads
+  // Populate students when class is selected
   useEffect(() => {
-    if (students && selectedClassId && students.length > 0) {
-      setStudentStatuses(students.map(s => ({
+    if (students && selectedClassId) {
+      // Filter students by selected class's teacher
+      const selectedClass = classes?.find(c => c.class_id === selectedClassId);
+      const classStudents = students.filter(s => s.teacher_id === selectedClass?.teacher_id);
+      
+      setStudentStatuses(classStudents.map(s => ({
         student_id: s.student_id,
         name: s.name,
         wallet_balance: s.wallet_balance,
@@ -56,7 +58,7 @@ export function MarkLessonForm() {
         selected: false,
       })));
     }
-  }, [students, selectedClassId]);
+  }, [students, selectedClassId, classes]);
 
   const handleStudentSelect = (studentId: string, checked: boolean) => {
     const student = studentStatuses.find(s => s.student_id === studentId);

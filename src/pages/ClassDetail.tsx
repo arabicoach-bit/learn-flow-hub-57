@@ -73,7 +73,9 @@ export default function ClassDetail() {
     }
   }, [classData]);
 
-  const enrolledStudents = allStudents?.filter(s => s.class_id === id) || [];
+  // Note: Since students are directly assigned to teachers, not classes,
+  // we show students whose teacher matches this class's teacher
+  const enrolledStudents = allStudents?.filter(s => s.teacher_id === classData?.teacher_id) || [];
   const takenLessons = lessons?.filter(l => l.status === 'Taken').length || 0;
 
   const handleSave = async () => {
