@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Edit } from 'lucide-react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
-import { useLeads, useCreateLead } from '@/hooks/use-leads';
+import { useLeads, useCreateLead, type Lead } from '@/hooks/use-leads';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -12,11 +12,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { getStatusBadgeClass, formatDate } from '@/lib/wallet-utils';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EditLeadDialog } from '@/components/leads/EditLeadDialog';
 
 export default function Leads() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const { toast } = useToast();
 
   const { data: leads, isLoading } = useLeads({ search, status: statusFilter || undefined });
@@ -86,6 +88,7 @@ export default function Leads() {
                       <SelectItem value="Facebook">Facebook</SelectItem>
                       <SelectItem value="Instagram">Instagram</SelectItem>
                       <SelectItem value="Referral">Referral</SelectItem>
+                      <SelectItem value="Website">Website</SelectItem>
                       <SelectItem value="Other">Other</SelectItem>
                     </SelectContent>
                   </Select>
@@ -140,18 +143,19 @@ export default function Leads() {
                 <th>Status</th>
                 <th>Follow-up</th>
                 <th>Created</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i}>
-                    <td colSpan={6}><Skeleton className="h-8 w-full" /></td>
+                    <td colSpan={7}><Skeleton className="h-8 w-full" /></td>
                   </tr>
                 ))
               ) : leads?.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-8 text-muted-foreground">No leads found</td>
+                  <td colSpan={7} className="text-center py-8 text-muted-foreground">No leads found</td>
                 </tr>
               ) : (
                 leads?.map((lead) => (
@@ -166,12 +170,28 @@ export default function Leads() {
                     </td>
                     <td>{lead.next_followup_date ? formatDate(lead.next_followup_date) : '-'}</td>
                     <td>{formatDate(lead.created_at)}</td>
+                    <td>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setEditingLead(lead)}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                    </td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
         </div>
+
+        {/* Edit Lead Dialog */}
+        <EditLeadDialog
+          lead={editingLead}
+          open={!!editingLead}
+          onOpenChange={(open) => !open && setEditingLead(null)}
+        />
       </div>
     </AdminLayout>
   );

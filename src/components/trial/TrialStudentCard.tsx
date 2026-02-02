@@ -19,7 +19,8 @@ import {
   DollarSign,
   CheckCircle,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  UserPlus
 } from 'lucide-react';
 import type { TrialStudent } from '@/hooks/use-trial-students';
 
@@ -28,6 +29,7 @@ interface TrialStudentCardProps {
   onUpdateStatus: (trialId: string, status: 'Scheduled' | 'Completed' | 'Converted' | 'Lost') => void;
   onUpdateResult: (trialId: string, result: 'Positive' | 'Very Positive' | 'Neutral' | 'Negative') => void;
   onEdit: (student: TrialStudent) => void;
+  onConvert?: (student: TrialStudent) => void;
 }
 
 const statusColors = {
@@ -44,7 +46,9 @@ const resultColors = {
   Negative: 'bg-red-500/20 text-red-400',
 };
 
-export function TrialStudentCard({ student, onUpdateStatus, onUpdateResult, onEdit }: TrialStudentCardProps) {
+export function TrialStudentCard({ student, onUpdateStatus, onUpdateResult, onEdit, onConvert }: TrialStudentCardProps) {
+  const canConvert = student.status === 'Completed' || student.status === 'Scheduled';
+  
   return (
     <Card className="bg-card border-border hover:border-primary/30 transition-colors">
       <CardHeader className="pb-2">
@@ -71,6 +75,12 @@ export function TrialStudentCard({ student, onUpdateStatus, onUpdateResult, onEd
                 <DropdownMenuItem onClick={() => onEdit(student)}>
                   Edit Details
                 </DropdownMenuItem>
+                {canConvert && onConvert && (
+                  <DropdownMenuItem onClick={() => onConvert(student)} className="text-primary">
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Convert to Student
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => onUpdateStatus(student.trial_id, 'Scheduled')}>
                   Mark as Scheduled
@@ -180,6 +190,18 @@ export function TrialStudentCard({ student, onUpdateStatus, onUpdateResult, onEd
           <div className="text-xs text-muted-foreground">
             Handled by: {student.handled_by}
           </div>
+        )}
+
+        {/* Convert to Student Button - Prominent CTA */}
+        {canConvert && onConvert && (
+          <Button 
+            onClick={() => onConvert(student)} 
+            className="w-full mt-2"
+            variant="default"
+          >
+            <UserPlus className="w-4 h-4 mr-2" />
+            Convert to Regular Student
+          </Button>
         )}
       </CardContent>
     </Card>

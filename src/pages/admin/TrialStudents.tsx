@@ -26,6 +26,7 @@ import { useTrialStudents, useUpdateTrialStudent, type TrialStudent } from '@/ho
 import { AddTrialStudentForm } from '@/components/trial/AddTrialStudentForm';
 import { TrialStudentCard } from '@/components/trial/TrialStudentCard';
 import { EditTrialStudentDialog } from '@/components/trial/EditTrialStudentDialog';
+import { ConvertToStudentDialog } from '@/components/trial/ConvertToStudentDialog';
 import { useToast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -37,9 +38,10 @@ export default function TrialStudents() {
   const [statusFilter, setStatusFilter] = useState<TrialStatus | 'all'>('all');
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<TrialStudent | null>(null);
+  const [convertingStudent, setConvertingStudent] = useState<TrialStudent | null>(null);
   const { toast } = useToast();
 
-  const { data: trialStudents, isLoading } = useTrialStudents({
+  const { data: trialStudents, isLoading, refetch } = useTrialStudents({
     status: statusFilter === 'all' ? undefined : statusFilter,
     search: search || undefined,
   });
@@ -80,6 +82,14 @@ export default function TrialStudents() {
 
   const handleEdit = (student: TrialStudent) => {
     setEditingStudent(student);
+  };
+
+  const handleConvert = (student: TrialStudent) => {
+    setConvertingStudent(student);
+  };
+
+  const handleConversionSuccess = () => {
+    refetch();
   };
 
   // Stats
@@ -213,6 +223,7 @@ export default function TrialStudents() {
                 onUpdateStatus={handleUpdateStatus}
                 onUpdateResult={handleUpdateResult}
                 onEdit={handleEdit}
+                onConvert={handleConvert}
               />
             ))}
           </div>
@@ -247,6 +258,14 @@ export default function TrialStudents() {
           student={editingStudent}
           open={!!editingStudent}
           onOpenChange={(open) => !open && setEditingStudent(null)}
+        />
+
+        {/* Convert to Student Dialog */}
+        <ConvertToStudentDialog
+          trialStudent={convertingStudent}
+          open={!!convertingStudent}
+          onOpenChange={(open) => !open && setConvertingStudent(null)}
+          onSuccess={handleConversionSuccess}
         />
       </div>
     </AdminLayout>
