@@ -24,6 +24,7 @@ import Settings from "./pages/Settings";
 import Notifications from "./pages/Notifications";
 import PackageSummaries from "./pages/admin/PackageSummaries";
 import TrialStudents from "./pages/admin/TrialStudents";
+import Leads from "./pages/Leads";
 
 // Teacher pages
 import TeacherDashboard from "./pages/teacher/TeacherDashboard";
@@ -74,6 +75,7 @@ const AppRoutes = () => (
     <Route path="/admin/notifications" element={<ProtectedRoute allowedRoles={['admin']}><Notifications /></ProtectedRoute>} />
     <Route path="/admin/reports/package-summaries" element={<ProtectedRoute allowedRoles={['admin']}><PackageSummaries /></ProtectedRoute>} />
     <Route path="/admin/trial-students" element={<ProtectedRoute allowedRoles={['admin']}><TrialStudents /></ProtectedRoute>} />
+    <Route path="/admin/leads" element={<ProtectedRoute allowedRoles={['admin']}><Leads /></ProtectedRoute>} />
     
     {/* Teacher routes */}
     <Route path="/teacher" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherDashboard /></ProtectedRoute>} />
