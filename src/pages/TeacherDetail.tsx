@@ -1,10 +1,12 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Mail, Phone, DollarSign, BookOpen, Users, Receipt } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, DollarSign, BookOpen, Users, Receipt, GraduationCap } from 'lucide-react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useTeacher, useUpdateTeacher } from '@/hooks/use-teachers';
 import { useClasses } from '@/hooks/use-classes';
 import { useLessons } from '@/hooks/use-lessons';
+import { useStudents } from '@/hooks/use-students';
 import { Button } from '@/components/ui/button';
+import { getWalletColor } from '@/lib/wallet-utils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -53,6 +55,9 @@ export default function TeacherDetail() {
   const { data: allClasses } = useClasses();
   const { data: lessons } = useLessons({ teacher_id: id });
   const { data: payroll } = useTeacherPayroll(id || '');
+  const { data: allStudents } = useStudents();
+  
+  const teacherStudents = allStudents?.filter(s => s.teacher_id === id) || [];
   const updateTeacher = useUpdateTeacher();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -201,7 +206,20 @@ export default function TeacherDetail() {
           </Card>
         )}
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-4 gap-4">
+          <Card className="glass-card">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-lg bg-emerald-500/10">
+                  <GraduationCap className="w-5 h-5 text-emerald-500" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{teacherStudents.length}</p>
+                  <p className="text-sm text-muted-foreground">Students</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
           <Card className="glass-card">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
@@ -245,12 +263,77 @@ export default function TeacherDetail() {
           </Card>
         </div>
 
-        <Tabs defaultValue="classes" className="space-y-4">
+        <Tabs defaultValue="students" className="space-y-4">
           <TabsList>
+            <TabsTrigger value="students">Students ({teacherStudents.length})</TabsTrigger>
             <TabsTrigger value="classes">Classes ({teacherClasses.length})</TabsTrigger>
             <TabsTrigger value="lessons">Lessons ({lessons?.length || 0})</TabsTrigger>
             <TabsTrigger value="payroll">Payroll ({payroll?.length || 0})</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="students">
+            <Card className="glass-card overflow-hidden">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>Program</th>
+                    <th>Level</th>
+                    <th>Wallet</th>
+                    <th>Status</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {teacherStudents.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="text-center py-8 text-muted-foreground">
+                        No students assigned to this teacher
+                      </td>
+                    </tr>
+                  ) : (
+                    teacherStudents.map((student) => (
+                      <tr key={student.student_id}>
+                        <td className="font-medium">{student.name}</td>
+                        <td>{student.phone}</td>
+                        <td>{student.programs?.name || '-'}</td>
+                        <td>{student.student_level || '-'}</td>
+                        <td>
+                          <span className={`font-medium ${getWalletColor(student.wallet_balance || 0)}`}>
+                            {student.wallet_balance} lessons
+                          </span>
+                        </td>
+                        <td>
+                          <Badge
+                            variant="outline"
+                            className={
+                              student.status === 'Active'
+                                ? 'status-active'
+                                : student.status === 'Grace'
+                                ? 'status-grace'
+                                : 'status-blocked'
+                            }
+                          >
+                            {student.status}
+                          </Badge>
+                        </td>
+                        <td>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate(`/admin/students/${student.student_id}`)}
+                          >
+                            View
+                          </Button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </Card>
+          </TabsContent>
 
           <TabsContent value="classes">
             <Card className="glass-card">
