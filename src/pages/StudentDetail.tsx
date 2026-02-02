@@ -214,7 +214,6 @@ export default function StudentDetail() {
               currentWallet={student.wallet_balance || 0}
               previousPackageId={renewPackageId || student.current_package_id || undefined}
               teacherId={student.teacher_id || undefined}
-              classId={student.class_id || undefined}
               onSuccess={() => {
                 setIsRenewPackageOpen(false);
                 setRenewPackageId(undefined);
