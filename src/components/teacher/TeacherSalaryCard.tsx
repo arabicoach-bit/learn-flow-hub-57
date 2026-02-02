@@ -60,7 +60,7 @@ export function TeacherSalaryCard() {
             <TrendingUp className="w-5 h-5 text-emerald-500" />
             <div>
               <p className="text-sm text-muted-foreground">
-                Rate: {formatCurrency(currentMonth?.rate_per_lesson || 0)}/lesson
+                Rate: {formatCurrency(currentMonth?.rate_per_lesson || 0)}/hour
               </p>
               <p className="text-3xl font-bold text-emerald-400">
                 {formatCurrency(currentMonth?.salary_earned || 0)}
@@ -92,7 +92,7 @@ export function TeacherSalaryCard() {
           </div>
           <div className="mt-4">
             <p className="text-sm text-muted-foreground">
-              Rate: {formatCurrency(lastMonth?.rate_per_lesson || 0)}/lesson
+              Rate: {formatCurrency(lastMonth?.rate_per_lesson || 0)}/hour
             </p>
             <p className="text-2xl font-bold text-muted-foreground">
               {formatCurrency(lastMonth?.salary_earned || 0)}
