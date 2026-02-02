@@ -25,6 +25,7 @@ import {
 import { useTrialStudents, useUpdateTrialStudent, type TrialStudent } from '@/hooks/use-trial-students';
 import { AddTrialStudentForm } from '@/components/trial/AddTrialStudentForm';
 import { TrialStudentCard } from '@/components/trial/TrialStudentCard';
+import { EditTrialStudentDialog } from '@/components/trial/EditTrialStudentDialog';
 import { useToast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -35,6 +36,7 @@ export default function TrialStudents() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<TrialStatus | 'all'>('all');
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
+  const [editingStudent, setEditingStudent] = useState<TrialStudent | null>(null);
   const { toast } = useToast();
 
   const { data: trialStudents, isLoading } = useTrialStudents({
@@ -77,8 +79,7 @@ export default function TrialStudents() {
   };
 
   const handleEdit = (student: TrialStudent) => {
-    // TODO: Implement edit dialog
-    console.log('Edit student:', student);
+    setEditingStudent(student);
   };
 
   // Stats
@@ -239,6 +240,13 @@ export default function TrialStudents() {
         <AddTrialStudentForm
           open={isAddFormOpen}
           onOpenChange={setIsAddFormOpen}
+        />
+
+        {/* Edit Dialog */}
+        <EditTrialStudentDialog
+          student={editingStudent}
+          open={!!editingStudent}
+          onOpenChange={(open) => !open && setEditingStudent(null)}
         />
       </div>
     </AdminLayout>
