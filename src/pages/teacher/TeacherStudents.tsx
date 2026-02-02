@@ -5,9 +5,11 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useStudents } from '@/hooks/use-students';
+import { usePrograms } from '@/hooks/use-programs';
 import { getWalletColor } from '@/lib/wallet-utils';
-import { GraduationCap, Search, Phone } from 'lucide-react';
+import { GraduationCap, Search, Phone, ChevronDown, User, School, BookOpen, Calendar } from 'lucide-react';
 import { useState } from 'react';
 
 export default function TeacherStudents() {
@@ -16,8 +18,10 @@ export default function TeacherStudents() {
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set());
 
   const { data: students, isLoading: studentsLoading } = useStudents();
+  const { data: programs } = usePrograms();
   
   // Filter students assigned to this teacher
   const myStudents = students?.filter(s => s.teacher_id === teacherId) || [];
@@ -30,6 +34,23 @@ export default function TeacherStudents() {
   });
 
   const isLoading = studentsLoading;
+
+  const toggleStudent = (studentId: string) => {
+    setExpandedStudents(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(studentId)) {
+        newSet.delete(studentId);
+      } else {
+        newSet.add(studentId);
+      }
+      return newSet;
+    });
+  };
+
+  const getProgramName = (programId: string | null) => {
+    if (!programId) return null;
+    return programs?.find(p => p.program_id === programId)?.name;
+  };
 
   return (
     <TeacherLayout>
@@ -85,42 +106,107 @@ export default function TeacherStudents() {
             ) : filteredStudents.length > 0 ? (
               <div className="space-y-3">
                 {filteredStudents.map((student) => {
+                  const isExpanded = expandedStudents.has(student.student_id);
+                  const programName = getProgramName(student.program_id);
+                  
                   return (
-                    <div
+                    <Collapsible
                       key={student.student_id}
-                      className="p-4 rounded-lg border border-border/50 bg-card/50"
+                      open={isExpanded}
+                      onOpenChange={() => toggleStudent(student.student_id)}
                     >
-                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <p className="font-medium">{student.name}</p>
-                            <Badge
-                              variant="outline"
-                              className={
-                                student.status === 'Active'
-                                  ? 'status-active'
-                                  : student.status === 'Grace'
-                                  ? 'status-grace'
-                                  : 'status-blocked'
-                              }
-                            >
-                              {student.status}
-                            </Badge>
+                      <div className="rounded-lg border border-border/50 bg-card/50 overflow-hidden">
+                        <CollapsibleTrigger className="w-full">
+                          <div className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-2 hover:bg-muted/30 transition-colors cursor-pointer">
+                            <div className="flex-1 text-left">
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium">{student.name}</p>
+                                <Badge
+                                  variant="outline"
+                                  className={
+                                    student.status === 'Active'
+                                      ? 'status-active'
+                                      : student.status === 'Grace'
+                                      ? 'status-grace'
+                                      : 'status-blocked'
+                                  }
+                                >
+                                  {student.status}
+                                </Badge>
+                              </div>
+                              <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  <Phone className="w-3 h-3" />
+                                  {student.phone}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <span className={`font-medium ${getWalletColor(student.wallet_balance || 0)}`}>
+                                Wallet: {student.wallet_balance} lessons
+                              </span>
+                              <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                            </div>
                           </div>
-                          <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <Phone className="w-3 h-3" />
-                              {student.phone}
-                            </span>
+                        </CollapsibleTrigger>
+                        
+                        <CollapsibleContent>
+                          <div className="px-4 pb-4 pt-2 border-t border-border/50 bg-muted/20">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                              {student.age && (
+                                <div className="flex items-center gap-2 text-sm">
+                                  <User className="w-4 h-4 text-muted-foreground" />
+                                  <span className="text-muted-foreground">Age:</span>
+                                  <span className="font-medium">{student.age} years</span>
+                                </div>
+                              )}
+                              {student.gender && (
+                                <div className="flex items-center gap-2 text-sm">
+                                  <User className="w-4 h-4 text-muted-foreground" />
+                                  <span className="text-muted-foreground">Gender:</span>
+                                  <span className="font-medium">{student.gender}</span>
+                                </div>
+                              )}
+                              {student.school && (
+                                <div className="flex items-center gap-2 text-sm">
+                                  <School className="w-4 h-4 text-muted-foreground" />
+                                  <span className="text-muted-foreground">School:</span>
+                                  <span className="font-medium">{student.school}</span>
+                                </div>
+                              )}
+                              {student.year_group && (
+                                <div className="flex items-center gap-2 text-sm">
+                                  <Calendar className="w-4 h-4 text-muted-foreground" />
+                                  <span className="text-muted-foreground">Year Group:</span>
+                                  <span className="font-medium">{student.year_group}</span>
+                                </div>
+                              )}
+                              {programName && (
+                                <div className="flex items-center gap-2 text-sm">
+                                  <BookOpen className="w-4 h-4 text-muted-foreground" />
+                                  <span className="text-muted-foreground">Program:</span>
+                                  <span className="font-medium">{programName}</span>
+                                </div>
+                              )}
+                              {student.student_level && (
+                                <div className="flex items-center gap-2 text-sm">
+                                  <GraduationCap className="w-4 h-4 text-muted-foreground" />
+                                  <span className="text-muted-foreground">Level:</span>
+                                  <span className="font-medium">{student.student_level}</span>
+                                </div>
+                              )}
+                              {student.nationality && (
+                                <div className="flex items-center gap-2 text-sm">
+                                  <User className="w-4 h-4 text-muted-foreground" />
+                                  <span className="text-muted-foreground">Nationality:</span>
+                                  <span className="font-medium">{student.nationality}</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <span className={`font-medium ${getWalletColor(student.wallet_balance || 0)}`}>
-                            Wallet: {student.wallet_balance} lessons
-                          </span>
-                        </div>
+                        </CollapsibleContent>
                       </div>
-                    </div>
+                    </Collapsible>
                   );
                 })}
               </div>
