@@ -145,7 +145,7 @@ export function AddTrialStudentForm({ open, onOpenChange }: AddTrialStudentFormP
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="name"
@@ -175,7 +175,7 @@ export function AddTrialStudentForm({ open, onOpenChange }: AddTrialStudentFormP
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="phone"
@@ -205,7 +205,7 @@ export function AddTrialStudentForm({ open, onOpenChange }: AddTrialStudentFormP
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="gender"
@@ -243,7 +243,7 @@ export function AddTrialStudentForm({ open, onOpenChange }: AddTrialStudentFormP
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="year_group"
@@ -296,7 +296,7 @@ export function AddTrialStudentForm({ open, onOpenChange }: AddTrialStudentFormP
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="student_level"
@@ -354,7 +354,7 @@ export function AddTrialStudentForm({ open, onOpenChange }: AddTrialStudentFormP
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="trial_date"
