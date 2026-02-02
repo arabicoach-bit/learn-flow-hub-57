@@ -2,3 +2,9 @@ project_id = "cbgqdmlfwcwmciedwbqp"
 
 [functions.create-teacher-account]
 verify_jwt = false
+
+[functions.setup-teacher-auth]
+verify_jwt = false
+
+[functions.create-teacher-auth]
+verify_jwt = false
