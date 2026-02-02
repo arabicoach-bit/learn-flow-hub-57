@@ -4,7 +4,6 @@ import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useStudent, useUpdateStudent } from '@/hooks/use-students';
 import { usePackages, Package } from '@/hooks/use-packages';
 import { useLessons } from '@/hooks/use-lessons';
-import { useClasses } from '@/hooks/use-classes';
 import { useTeachers } from '@/hooks/use-teachers';
 import { usePrograms } from '@/hooks/use-programs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -47,7 +46,6 @@ export default function StudentDetail() {
     year_group: '',
     program_id: '',
     student_level: '',
-    class_id: '',
     teacher_id: '',
   });
 
@@ -61,7 +59,6 @@ export default function StudentDetail() {
     refetch: refetchPackages,
   } = packagesQuery;
   const { data: lessons, isLoading: lessonsLoading } = useLessons({ student_id: id });
-  const { data: classes } = useClasses();
   const { data: teachers } = useTeachers();
   const { data: programs } = usePrograms();
   const updateStudent = useUpdateStudent();
@@ -80,7 +77,6 @@ export default function StudentDetail() {
         year_group: student.year_group || '',
         program_id: student.program_id || '',
         student_level: student.student_level || '',
-        class_id: student.class_id || '',
         teacher_id: student.teacher_id || '',
       });
       setIsEditing(true);
@@ -104,7 +100,6 @@ export default function StudentDetail() {
         year_group: editForm.year_group || null,
         program_id: editForm.program_id || null,
         student_level: editForm.student_level || null,
-        class_id: editForm.class_id || null,
         teacher_id: editForm.teacher_id || null,
       });
       toast.success('Student updated successfully');
@@ -166,7 +161,7 @@ export default function StudentDetail() {
                     {student.status}
                   </Badge>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {student.classes?.name || 'No class'} • {student.teachers?.name || 'No teacher'}
+                    {student.teachers?.name || 'No teacher assigned'}
                   </p>
                 </div>
               </div>
@@ -480,8 +475,8 @@ export default function StudentDetail() {
                         <p className="font-medium">{student.student_level || '-'}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Class</p>
-                        <p className="font-medium">{student.classes?.name || '-'}</p>
+                        <p className="text-sm text-muted-foreground">Teacher</p>
+                        <p className="font-medium">{student.teachers?.name || '-'}</p>
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Teacher</p>
@@ -606,19 +601,6 @@ export default function StudentDetail() {
                             <SelectItem value="Elementary">Elementary</SelectItem>
                             <SelectItem value="Intermediate">Intermediate</SelectItem>
                             <SelectItem value="Advanced">Advanced</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Class</Label>
-                        <Select value={editForm.class_id} onValueChange={(v) => setEditForm({ ...editForm, class_id: v })}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select class" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {classes?.map((cls) => (
-                              <SelectItem key={cls.class_id} value={cls.class_id}>{cls.name}</SelectItem>
-                            ))}
                           </SelectContent>
                         </Select>
                       </div>

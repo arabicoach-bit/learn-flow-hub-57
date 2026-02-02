@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useClasses } from '@/hooks/use-classes';
-import { useStudents } from '@/hooks/use-students';
 import { TeacherCalendar } from '@/components/calendar/TeacherCalendar';
 import { Calendar, Users, Clock, CalendarDays, List } from 'lucide-react';
 
@@ -13,14 +12,9 @@ export default function TeacherSchedule() {
   const teacherId = profile?.teacher_id;
 
   const { data: classes, isLoading: classesLoading } = useClasses();
-  const { data: students, isLoading: studentsLoading } = useStudents();
   
   const myClasses = classes?.filter(c => c.teacher_id === teacherId) || [];
-  const isLoading = classesLoading || studentsLoading;
-
-  const getStudentCount = (classId: string) => {
-    return students?.filter(s => s.class_id === classId).length || 0;
-  };
+  const isLoading = classesLoading;
 
   if (!teacherId) {
     return (
@@ -83,10 +77,6 @@ export default function TeacherSchedule() {
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Clock className="w-4 h-4" />
                             <span>{cls.schedule || 'Schedule not set'}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Users className="w-4 h-4" />
-                            <span>{getStudentCount(cls.class_id)} students</span>
                           </div>
                         </div>
                       </div>

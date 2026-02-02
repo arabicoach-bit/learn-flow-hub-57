@@ -14,7 +14,6 @@ export interface AddPackageWithScheduleInput {
   lesson_duration: number;
   start_date: string;
   teacher_id: string;
-  class_id?: string;
   weekly_schedule: WeeklyScheduleDay[];
 }
 
@@ -90,7 +89,7 @@ export function useAddPackageWithSchedule() {
           p_package_id: packageData.package_id,
           p_student_id: input.student_id,
           p_teacher_id: input.teacher_id,
-          p_class_id: input.class_id || null,
+          p_class_id: null,
           p_start_date: input.start_date,
           p_total_lessons: newLessons,
           p_lesson_duration: input.lesson_duration,
@@ -110,7 +109,6 @@ export function useAddPackageWithSchedule() {
           total_paid: (student.total_paid || 0) + input.amount,
           number_of_renewals: (student.number_of_renewals || 0) + 1,
           teacher_id: input.teacher_id,
-          class_id: input.class_id || null,
         })
         .eq('student_id', input.student_id);
 

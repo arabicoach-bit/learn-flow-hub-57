@@ -6,7 +6,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useStudents } from '@/hooks/use-students';
-import { useClasses } from '@/hooks/use-classes';
 import { getWalletColor } from '@/lib/wallet-utils';
 import { GraduationCap, Search, Phone } from 'lucide-react';
 import { useState } from 'react';
@@ -17,23 +16,20 @@ export default function TeacherStudents() {
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [classFilter, setClassFilter] = useState('');
 
   const { data: students, isLoading: studentsLoading } = useStudents();
-  const { data: classes, isLoading: classesLoading } = useClasses();
   
-  const myClasses = classes?.filter(c => c.teacher_id === teacherId) || [];
+  // Filter students assigned to this teacher
   const myStudents = students?.filter(s => s.teacher_id === teacherId) || [];
 
   const filteredStudents = myStudents.filter((student) => {
     const matchesSearch = student.name.toLowerCase().includes(search.toLowerCase()) ||
       student.phone.includes(search);
     const matchesStatus = !statusFilter || student.status === statusFilter;
-    const matchesClass = !classFilter || student.class_id === classFilter;
-    return matchesSearch && matchesStatus && matchesClass;
+    return matchesSearch && matchesStatus;
   });
 
-  const isLoading = studentsLoading || classesLoading;
+  const isLoading = studentsLoading;
 
   return (
     <TeacherLayout>
@@ -67,19 +63,6 @@ export default function TeacherStudents() {
                   <SelectItem value="Blocked">Blocked</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={classFilter || 'all'} onValueChange={(v) => setClassFilter(v === 'all' ? '' : v)}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="All Classes" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Classes</SelectItem>
-                  {myClasses.map((cls) => (
-                    <SelectItem key={cls.class_id} value={cls.class_id}>
-                      {cls.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
           </CardContent>
         </Card>
@@ -102,7 +85,6 @@ export default function TeacherStudents() {
             ) : filteredStudents.length > 0 ? (
               <div className="space-y-3">
                 {filteredStudents.map((student) => {
-                  const studentClass = myClasses.find(c => c.class_id === student.class_id);
                   return (
                     <div
                       key={student.student_id}
@@ -130,9 +112,6 @@ export default function TeacherStudents() {
                               <Phone className="w-3 h-3" />
                               {student.phone}
                             </span>
-                            {studentClass && (
-                              <span>Class: {studentClass.name}</span>
-                            )}
                           </div>
                         </div>
                         <div className="flex items-center gap-4">

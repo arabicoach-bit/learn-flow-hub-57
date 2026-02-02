@@ -84,7 +84,7 @@ export default function Reports() {
                         <TableHead>Phone</TableHead>
                         <TableHead>Balance</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Class</TableHead>
+                        <TableHead>Teacher</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -114,7 +114,7 @@ export default function Reports() {
                               {student.status}
                             </Badge>
                           </TableCell>
-                          <TableCell>{student.classes?.name || '-'}</TableCell>
+                          <TableCell>{student.teachers?.name || '-'}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

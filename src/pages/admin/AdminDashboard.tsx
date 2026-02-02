@@ -17,6 +17,7 @@ import { StudentStatsSection } from '@/components/dashboard/StudentStatsSection'
 import { TeacherPerformanceSection } from '@/components/dashboard/TeacherPerformanceSection';
 import { QuickStatsSection } from '@/components/dashboard/QuickStatsSection';
 import { PendingPackagesWidget } from '@/components/admin/PendingPackagesWidget';
+import { AICRMAssistant } from '@/components/admin/AICRMAssistant';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -215,6 +216,9 @@ export default function AdminDashboard() {
             )}
           </CardContent>
         </Card>
+        
+        {/* AI CRM Assistant */}
+        <AICRMAssistant />
       </div>
     </AdminLayout>
   );
