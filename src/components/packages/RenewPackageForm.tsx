@@ -12,7 +12,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { usePackageTypes } from '@/hooks/use-package-types';
 import { useTeachers } from '@/hooks/use-teachers';
-import { useClasses } from '@/hooks/use-classes';
 import { usePackages } from '@/hooks/use-packages';
 import { useAddPackageWithSchedule, WeeklyScheduleDay } from '@/hooks/use-add-package-with-schedule';
 import { supabase } from '@/integrations/supabase/client';
@@ -37,7 +36,6 @@ const renewalFormSchema = z.object({
   lesson_duration: z.number().min(15, 'Minimum 15 minutes'),
   start_date: z.string().min(1, 'Start date is required'),
   teacher_id: z.string().min(1, 'Teacher is required'),
-  class_id: z.string().optional(),
   use_previous_schedule: z.boolean().default(true),
 });
 
@@ -49,7 +47,6 @@ interface RenewPackageFormProps {
   currentWallet: number;
   previousPackageId?: string;
   teacherId?: string;
-  classId?: string;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
@@ -66,7 +63,6 @@ export function RenewPackageForm({
   currentWallet,
   previousPackageId,
   teacherId,
-  classId,
   onSuccess,
   onCancel,
 }: RenewPackageFormProps) {
@@ -78,7 +74,6 @@ export function RenewPackageForm({
 
   const { data: packageTypes } = usePackageTypes();
   const { data: teachers } = useTeachers();
-  const { data: classes } = useClasses();
   const { data: packages } = usePackages(studentId);
   const addPackage = useAddPackageWithSchedule();
 
@@ -96,7 +91,6 @@ export function RenewPackageForm({
       lesson_duration: 45,
       start_date: new Date().toISOString().split('T')[0],
       teacher_id: teacherId || '',
-      class_id: classId || '',
       use_previous_schedule: true,
     },
   });
@@ -190,7 +184,6 @@ export function RenewPackageForm({
         lesson_duration: values.lesson_duration,
         start_date: values.start_date,
         teacher_id: values.teacher_id,
-        class_id: values.class_id,
         weekly_schedule: weeklySchedule,
       });
 
@@ -375,56 +368,30 @@ export function RenewPackageForm({
             <CardTitle className="text-lg">Assignment</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="teacher_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Teacher *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select teacher" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {teachers?.map((t) => (
-                          <SelectItem key={t.teacher_id} value={t.teacher_id}>
-                            {t.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="class_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Class</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select class" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {classes?.map((c) => (
-                          <SelectItem key={c.class_id} value={c.class_id}>
-                            {c.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="teacher_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Teacher *</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select teacher" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {teachers?.map((t) => (
+                        <SelectItem key={t.teacher_id} value={t.teacher_id}>
+                          {t.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </CardContent>
         </Card>
 
