@@ -146,9 +146,12 @@ export default function Teachers() {
       refetch();
     } catch (error: any) {
       console.error('Error creating teacher:', error);
+      const errorMessage = error?.message || 'Failed to create teacher account';
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to create teacher account',
+        title: 'Error Creating Teacher',
+        description: errorMessage.includes('email already exists') 
+          ? 'This email is already registered in the system. Please use a different email address.'
+          : errorMessage,
         variant: 'destructive',
       });
     } finally {
