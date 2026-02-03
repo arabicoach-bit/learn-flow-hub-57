@@ -74,21 +74,21 @@ export function StudentStatsSection() {
             </p>
           </div>
 
-          {/* Grace Period */}
+          {/* Temporary stop */}
           <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20">
             <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 mb-2">
               <AlertTriangle className="w-4 h-4" />
-              <span className="text-sm font-medium">Grace Period</span>
+              <span className="text-sm font-medium">Temporary stop</span>
             </div>
             <p className="text-2xl font-bold">{stats.graceStudents}</p>
             <p className="text-xs text-muted-foreground">Need attention</p>
           </div>
 
-          {/* Blocked */}
+          {/* Left */}
           <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20">
             <div className="flex items-center gap-2 text-red-600 dark:text-red-400 mb-2">
               <Ban className="w-4 h-4" />
-              <span className="text-sm font-medium">Blocked</span>
+              <span className="text-sm font-medium">Left</span>
             </div>
             <p className="text-2xl font-bold">{stats.blockedStudents}</p>
             <p className="text-xs text-muted-foreground">No lessons</p>
