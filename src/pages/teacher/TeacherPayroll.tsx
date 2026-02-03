@@ -119,7 +119,7 @@ export default function TeacherPayroll() {
                   <p className="text-3xl font-bold text-emerald-400">{lessonsCount}</p>
                 </div>
                 <div className="text-center p-4 rounded-lg bg-card/50 border border-border/50">
-                  <p className="text-sm text-muted-foreground mb-1">Rate per Lesson</p>
+                  <p className="text-sm text-muted-foreground mb-1">Rate per Hour</p>
                   <p className="text-3xl font-bold">{formatSalary(ratePerLesson)}</p>
                 </div>
                 <div className="text-center p-4 rounded-lg bg-emerald-600/10 border border-emerald-600/20">
@@ -165,7 +165,7 @@ export default function TeacherPayroll() {
                           </Badge>
                         </div>
                         <p className="text-sm text-muted-foreground mt-1">
-                          {record.lessons_taken || 0} lessons × {formatSalary(record.rate_per_lesson)}/lesson
+                          {record.lessons_taken || 0} lessons × {formatSalary(record.rate_per_lesson)}/hour
                         </p>
                       </div>
                       <div className="text-right">
