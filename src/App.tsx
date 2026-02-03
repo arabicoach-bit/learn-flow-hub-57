@@ -26,6 +26,7 @@ import PackageSummaries from "./pages/admin/PackageSummaries";
 import TrialStudents from "./pages/admin/TrialStudents";
 import Leads from "./pages/Leads";
 import Packages from "./pages/admin/Packages";
+import AdminPayroll from "./pages/admin/AdminPayroll";
 
 // Teacher pages
 import TeacherDashboard from "./pages/teacher/TeacherDashboard";
@@ -78,6 +79,7 @@ const AppRoutes = () => (
     <Route path="/admin/trial-students" element={<ProtectedRoute allowedRoles={['admin']}><TrialStudents /></ProtectedRoute>} />
     <Route path="/admin/leads" element={<ProtectedRoute allowedRoles={['admin']}><Leads /></ProtectedRoute>} />
     <Route path="/admin/packages" element={<ProtectedRoute allowedRoles={['admin']}><Packages /></ProtectedRoute>} />
+    <Route path="/admin/payroll" element={<ProtectedRoute allowedRoles={['admin']}><AdminPayroll /></ProtectedRoute>} />
     
     {/* Teacher routes */}
     <Route path="/teacher" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherDashboard /></ProtectedRoute>} />
