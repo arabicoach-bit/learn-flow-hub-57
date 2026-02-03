@@ -97,40 +97,57 @@ export default function Teachers() {
 
   const handleAddTeacher = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
+
+    // Validate required fields first
+    if (!formData.name || formData.name.trim().length < 3) {
+      toast({
+        title: 'Validation Error',
+        description: 'Name must be at least 3 characters',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!formData.email || !formData.email.includes('@')) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please enter a valid email address',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     const parsedRate = Number.parseFloat(formData.rate_per_lesson);
-    
-    // Validate form
-    try {
-      teacherFormSchema.parse({
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone || undefined,
-        rate_per_lesson: parsedRate,
+    if (!Number.isFinite(parsedRate) || parsedRate <= 0) {
+      toast({
+        title: 'Validation Error',
+        description: 'Rate must be a positive number',
+        variant: 'destructive',
       });
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        toast({
-          title: 'Validation Error',
-          description: error.errors[0].message,
-          variant: 'destructive',
-        });
-        return;
-      }
+      return;
     }
 
     setIsSubmitting(true);
     
     try {
+      console.log('Submitting teacher creation request...', {
+        name: formData.name,
+        email: formData.email,
+        rate_per_lesson: parsedRate,
+      });
+
       const { data, error } = await supabase.functions.invoke('create-teacher-account', {
         body: {
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone || undefined,
+          name: formData.name.trim(),
+          email: formData.email.trim().toLowerCase(),
+          phone: formData.phone?.trim() || undefined,
           rate_per_lesson: parsedRate,
           class_ids: formData.class_ids.length > 0 ? formData.class_ids : undefined,
         },
       });
+
+      console.log('Server response:', { data, error });
 
       // Handle network/function errors
       if (error) {
@@ -535,7 +552,7 @@ export default function Teachers() {
 
       {/* Add Teacher Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <UserPlus className="w-5 h-5" /> Add New Teacher
@@ -544,7 +561,11 @@ export default function Teachers() {
               Create a new teacher account. They will receive login credentials.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleAddTeacher} className="space-y-4">
+          <form 
+            onSubmit={handleAddTeacher} 
+            className="space-y-4"
+            method="post"
+          >
             <div className="space-y-2">
               <Label htmlFor="name">Full Name *</Label>
               <Input 
@@ -616,7 +637,18 @@ export default function Teachers() {
               <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button 
+                type="submit" 
+                disabled={isSubmitting}
+                onClick={(e) => {
+                  // Fallback: manually trigger form submission if type=submit doesn't work
+                  const form = e.currentTarget.closest('form');
+                  if (form) {
+                    console.log('Button clicked, form found');
+                    // Let the form submit naturally via type="submit"
+                  }
+                }}
+              >
                 {isSubmitting ? 'Creating...' : 'Create Teacher Account'}
               </Button>
             </DialogFooter>
