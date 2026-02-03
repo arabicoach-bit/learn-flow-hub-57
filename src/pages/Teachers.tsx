@@ -95,6 +95,51 @@ export default function Teachers() {
     setFormData({ name: '', phone: '', email: '', rate_per_lesson: '', class_ids: [] });
   };
 
+  const extractFunctionErrorMessage = async (fnError: unknown): Promise<string> => {
+    // supabase.functions.invoke returns a FunctionsHttpError (or similar) where
+    // the actual Response is often attached at `error.context`.
+    const anyErr = fnError as any;
+    const baseMsg = typeof anyErr?.message === 'string' ? anyErr.message : 'Request failed';
+
+    const ctx = anyErr?.context;
+    // In supabase-js, ctx is often a Response.
+    if (ctx && typeof ctx === 'object') {
+      const status = typeof ctx.status === 'number' ? ctx.status : undefined;
+
+      // Try JSON body first
+      if (typeof ctx.clone === 'function' && typeof ctx.json === 'function') {
+        try {
+          const json = await ctx.clone().json();
+          const msg = json?.error || json?.message;
+          if (typeof msg === 'string' && msg.trim()) {
+            return status ? `${msg} (status ${status})` : msg;
+          }
+          if (json) {
+            return status ? `${JSON.stringify(json)} (status ${status})` : JSON.stringify(json);
+          }
+        } catch {
+          // ignore
+        }
+      }
+
+      // Fallback to text
+      if (typeof ctx.clone === 'function' && typeof ctx.text === 'function') {
+        try {
+          const text = await ctx.clone().text();
+          if (typeof text === 'string' && text.trim()) {
+            return status ? `${text} (status ${status})` : text;
+          }
+        } catch {
+          // ignore
+        }
+      }
+
+      if (status) return `${baseMsg} (status ${status})`;
+    }
+
+    return baseMsg;
+  };
+
   const handleAddTeacher = async (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -128,19 +173,41 @@ export default function Teachers() {
       return;
     }
 
+    const normalizedEmail = formData.email.trim().toLowerCase();
+
     setIsSubmitting(true);
     
     try {
+      // Fast client-side guard: avoid calling the backend function when the email is already in use.
+      const { data: existingProfiles, error: existingProfilesError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', normalizedEmail)
+        .limit(1);
+
+      if (existingProfilesError) {
+        console.warn('Email existence check failed:', existingProfilesError);
+      }
+
+      if (existingProfiles && existingProfiles.length > 0) {
+        toast({
+          title: 'Email already in use',
+          description: 'This email already has an account in the system. Please use a different email for the teacher.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       console.log('Submitting teacher creation request...', {
         name: formData.name,
-        email: formData.email,
+        email: normalizedEmail,
         rate_per_lesson: parsedRate,
       });
 
       const { data, error } = await supabase.functions.invoke('create-teacher-account', {
         body: {
           name: formData.name.trim(),
-          email: formData.email.trim().toLowerCase(),
+          email: normalizedEmail,
           phone: formData.phone?.trim() || undefined,
           rate_per_lesson: parsedRate,
           class_ids: formData.class_ids.length > 0 ? formData.class_ids : undefined,
@@ -152,7 +219,8 @@ export default function Teachers() {
       // Handle network/function errors
       if (error) {
         console.error('Function invoke error:', error);
-        throw new Error(error.message || 'Failed to call server function');
+        const msg = await extractFunctionErrorMessage(error);
+        throw new Error(msg);
       }
       
       // Handle application errors returned in the response body
