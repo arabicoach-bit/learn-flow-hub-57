@@ -127,8 +127,23 @@ export default function Teachers() {
         },
       });
 
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      // Handle network/function errors
+      if (error) {
+        console.error('Function invoke error:', error);
+        throw new Error(error.message || 'Failed to call server function');
+      }
+      
+      // Handle application errors returned in the response body
+      if (data?.error) {
+        console.error('Server returned error:', data.error);
+        throw new Error(data.error);
+      }
+
+      // Ensure we have valid response data
+      if (!data?.temp_password) {
+        console.error('Invalid response data:', data);
+        throw new Error('Invalid response from server');
+      }
 
       // Show temporary password
       setTempPasswordInfo({
@@ -146,12 +161,20 @@ export default function Teachers() {
       refetch();
     } catch (error: any) {
       console.error('Error creating teacher:', error);
-      const errorMessage = error?.message || 'Failed to create teacher account';
+      let errorMessage = error?.message || 'Failed to create teacher account';
+      
+      // Check for common error patterns
+      if (errorMessage.toLowerCase().includes('email already exists') || 
+          errorMessage.toLowerCase().includes('already registered')) {
+        errorMessage = 'This email is already registered in the system. Please use a different email address.';
+      } else if (errorMessage.toLowerCase().includes('unauthorized') || 
+                 errorMessage.toLowerCase().includes('missing authorization')) {
+        errorMessage = 'You must be logged in as an admin to create teachers. Please log in again.';
+      }
+      
       toast({
         title: 'Error Creating Teacher',
-        description: errorMessage.includes('email already exists') 
-          ? 'This email is already registered in the system. Please use a different email address.'
-          : errorMessage,
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
