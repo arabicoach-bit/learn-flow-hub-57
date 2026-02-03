@@ -17,12 +17,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { ArrowLeft, User, Wallet, CreditCard, BookOpen, Loader2, Calendar, Plus, RefreshCw, Pencil } from 'lucide-react';
+import { ArrowLeft, User, Wallet, CreditCard, BookOpen, Loader2, Calendar, Plus, RefreshCw, Pencil, Gift } from 'lucide-react';
 import { getWalletColor, getStatusBadgeClass, formatCurrency, formatDate, formatDateTime } from '@/lib/wallet-utils';
 import { StudentScheduleTab } from '@/components/schedule/StudentScheduleTab';
 import { AddPackageForm } from '@/components/packages/AddPackageForm';
 import { RenewPackageForm } from '@/components/packages/RenewPackageForm';
 import { EditPackageDialog } from '@/components/packages/EditPackageDialog';
+import { AddFreeLessonsForm } from '@/components/packages/AddFreeLessonsForm';
 
 export default function StudentDetail() {
   const { id } = useParams<{ id: string }>();
@@ -32,6 +33,7 @@ export default function StudentDetail() {
   const [isEditing, setIsEditing] = useState(false);
   const [isAddPackageOpen, setIsAddPackageOpen] = useState(false);
   const [isRenewPackageOpen, setIsRenewPackageOpen] = useState(false);
+  const [isAddFreeLessonsOpen, setIsAddFreeLessonsOpen] = useState(false);
   const [renewPackageId, setRenewPackageId] = useState<string | undefined>();
   const [editPackage, setEditPackage] = useState<Package | null>(null);
   const [editForm, setEditForm] = useState({
@@ -229,6 +231,21 @@ export default function StudentDetail() {
           onSuccess={() => setEditPackage(null)}
         />
 
+        {/* Add Free Lessons Dialog */}
+        <Dialog open={isAddFreeLessonsOpen} onOpenChange={setIsAddFreeLessonsOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Add Free Lessons</DialogTitle>
+            </DialogHeader>
+            <AddFreeLessonsForm
+              studentId={id!}
+              studentName={student.name}
+              currentWallet={student.wallet_balance || 0}
+              onSuccess={() => setIsAddFreeLessonsOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
+
         {/* Tabs */}
         <Tabs defaultValue={defaultTab} className="space-y-4">
           <TabsList className="flex-wrap">
@@ -254,7 +271,11 @@ export default function StudentDetail() {
             <Card className="glass-card">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Packages</CardTitle>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
+                  <Button variant="outline" onClick={() => setIsAddFreeLessonsOpen(true)} className="gap-2">
+                    <Gift className="w-4 h-4" />
+                    Add Free Lessons
+                  </Button>
                   {packages && packages.length > 0 && (
                     <Button variant="outline" onClick={() => setIsRenewPackageOpen(true)} className="gap-2">
                       <RefreshCw className="w-4 h-4" />
