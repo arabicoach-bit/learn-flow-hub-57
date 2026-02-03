@@ -3,12 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TeacherPayrollReport } from '@/components/reports/TeacherPayrollReport';
 import { PackageStatsReport } from '@/components/reports/PackageStatsReport';
+import { PerformanceTrackingReport } from '@/components/reports/PerformanceTrackingReport';
 import { useStudents } from '@/hooks/use-students';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { FileText, AlertTriangle, Package, ArrowRight, BarChart3, Download } from 'lucide-react';
+import { FileText, AlertTriangle, Package, ArrowRight, BarChart3, Download, TrendingUp } from 'lucide-react';
 import { getWalletColor, formatDate, formatCurrency } from '@/lib/wallet-utils';
 import { usePackages } from '@/hooks/use-packages';
 import { useNavigate } from 'react-router-dom';
@@ -37,8 +38,12 @@ export default function Reports() {
           <p className="text-muted-foreground">Generate and view analytics reports</p>
         </div>
 
-        <Tabs defaultValue="statistics">
+        <Tabs defaultValue="performance">
           <TabsList>
+            <TabsTrigger value="performance" className="gap-2">
+              <TrendingUp className="w-4 h-4" />
+              Performance Tracking
+            </TabsTrigger>
             <TabsTrigger value="statistics" className="gap-2">
               <BarChart3 className="w-4 h-4" />
               Package Statistics
@@ -52,6 +57,10 @@ export default function Reports() {
             </TabsTrigger>
             <TabsTrigger value="packages">Package Summary</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="performance" className="mt-6">
+            <PerformanceTrackingReport />
+          </TabsContent>
 
           <TabsContent value="statistics" className="mt-6">
             <PackageStatsReport />

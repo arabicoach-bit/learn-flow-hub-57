@@ -17,13 +17,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { ArrowLeft, User, Wallet, CreditCard, BookOpen, Loader2, Calendar, Plus, RefreshCw, Pencil, Gift } from 'lucide-react';
+import { ArrowLeft, User, Wallet, CreditCard, BookOpen, Loader2, Calendar, Plus, RefreshCw, Pencil, Gift, History } from 'lucide-react';
 import { getWalletColor, getStatusBadgeClass, formatCurrency, formatDate, formatDateTime } from '@/lib/wallet-utils';
 import { StudentScheduleTab } from '@/components/schedule/StudentScheduleTab';
 import { AddPackageForm } from '@/components/packages/AddPackageForm';
 import { RenewPackageForm } from '@/components/packages/RenewPackageForm';
 import { EditPackageDialog } from '@/components/packages/EditPackageDialog';
 import { AddFreeLessonsForm } from '@/components/packages/AddFreeLessonsForm';
+import { PackageHistoryTimeline } from '@/components/packages/PackageHistoryTimeline';
 
 export default function StudentDetail() {
   const { id } = useParams<{ id: string }>();
@@ -253,6 +254,10 @@ export default function StudentDetail() {
               <CreditCard className="w-4 h-4" />
               Packages
             </TabsTrigger>
+            <TabsTrigger value="history" className="flex items-center gap-2">
+              <History className="w-4 h-4" />
+              Package History
+            </TabsTrigger>
             <TabsTrigger value="schedule" className="flex items-center gap-2">
               <Calendar className="w-4 h-4" />
               Schedule
@@ -383,6 +388,15 @@ export default function StudentDetail() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Package History Tab */}
+          <TabsContent value="history">
+            <PackageHistoryTimeline 
+              packages={packages} 
+              isLoading={packagesLoading} 
+              teacherName={student.teachers?.name}
+            />
           </TabsContent>
 
           {/* Schedule Tab */}
