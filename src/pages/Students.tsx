@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getWalletColor, getStatusBadgeClass } from '@/lib/wallet-utils';
+import { getWalletColor, getStatusBadgeClass, getStatusDisplayLabel } from '@/lib/wallet-utils';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { exportStudents, type StudentExport } from '@/lib/excel-export';
@@ -170,8 +170,8 @@ export default function Students() {
             <SelectContent>
               <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="Active">Active</SelectItem>
-              <SelectItem value="Grace">Grace</SelectItem>
-              <SelectItem value="Blocked">Blocked</SelectItem>
+              <SelectItem value="Grace">Temporary stop</SelectItem>
+              <SelectItem value="Blocked">Left</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -248,7 +248,7 @@ export default function Students() {
                       </td>
                       <td>
                         <Badge variant="outline" className={getStatusBadgeClass(student.status)}>
-                          {student.status}
+                          {getStatusDisplayLabel(student.status)}
                         </Badge>
                       </td>
                     </tr>

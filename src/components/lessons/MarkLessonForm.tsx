@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
 import { Loader2, CheckCircle2, Ban, AlertTriangle } from 'lucide-react';
-import { getWalletColor, getWalletBgColor } from '@/lib/wallet-utils';
+import { getWalletColor, getWalletBgColor, getStatusDisplayLabel } from '@/lib/wallet-utils';
 import { supabase } from '@/integrations/supabase/client';
 
 interface StudentLessonStatus {
@@ -231,13 +231,13 @@ export function MarkLessonForm() {
                                 {isBlocked && (
                                   <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-destructive/20 text-destructive">
                                     <Ban className="w-3 h-3" />
-                                    BLOCKED - Contact Admin
+                                    {getStatusDisplayLabel('Blocked').toUpperCase()} - Contact Admin
                                   </span>
                                 )}
                                 {student.status === 'Grace' && (
                                   <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-500">
                                     <AlertTriangle className="w-3 h-3" />
-                                    Grace Period
+                                    {getStatusDisplayLabel('Grace')}
                                   </span>
                                 )}
                               </label>

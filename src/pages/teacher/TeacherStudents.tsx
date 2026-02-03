@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useStudents, Student } from '@/hooks/use-students';
 import { usePrograms } from '@/hooks/use-programs';
-import { getWalletColor } from '@/lib/wallet-utils';
+import { getWalletColor, getStatusDisplayLabel } from '@/lib/wallet-utils';
 import { EditStudentDialog } from '@/components/teacher/EditStudentDialog';
 import { GraduationCap, Search, Phone, ChevronDown, User, School, BookOpen, Calendar, Pencil } from 'lucide-react';
 import { useState } from 'react';
@@ -83,8 +83,8 @@ export default function TeacherStudents() {
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="Active">Active</SelectItem>
-                  <SelectItem value="Grace">Grace</SelectItem>
-                  <SelectItem value="Blocked">Blocked</SelectItem>
+                  <SelectItem value="Grace">Temporary stop</SelectItem>
+                  <SelectItem value="Blocked">Left</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -134,7 +134,7 @@ export default function TeacherStudents() {
                                       : 'status-blocked'
                                   }
                                 >
-                                  {student.status}
+                                  {getStatusDisplayLabel(student.status)}
                                 </Badge>
                               </div>
                               <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">

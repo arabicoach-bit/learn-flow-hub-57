@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { formatCurrency, formatDate, getStatusBadgeClass } from '@/lib/wallet-utils';
+import { formatCurrency, formatDate, getStatusBadgeClass, getStatusDisplayLabel } from '@/lib/wallet-utils';
 import { Package, RefreshCw, Calendar, Clock, User, Wallet, BookOpen } from 'lucide-react';
 import type { Package as PackageType } from '@/hooks/use-packages';
 
@@ -130,7 +130,7 @@ export function PackageHistoryTimeline({ packages, isLoading, teacherName }: Pac
                         </p>
                       </div>
                       <Badge className={getStatusBadgeClass(pkg.status === 'Active' ? periodStatus : 'Blocked')}>
-                        {pkg.status}
+                        {getStatusDisplayLabel(pkg.status)}
                       </Badge>
                     </div>
 

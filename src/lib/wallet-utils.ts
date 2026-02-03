@@ -1,17 +1,31 @@
+// Map database status values to display labels
+export function getStatusDisplayLabel(status: string): string {
+  switch (status) {
+    case 'Active':
+      return 'Active';
+    case 'Grace':
+      return 'Temporary stop';
+    case 'Blocked':
+      return 'Left';
+    default:
+      return status;
+  }
+}
+
 export function getWalletColor(balance: number): string {
-  // Active: >= 3, Grace: 2 to -1, Blocked: <= -2
+  // Active: >= 3, Temporary stop: 2 to -1, Left: <= -2
   if (balance >= 3) return 'wallet-positive';  // Active
-  if (balance >= 0) return 'wallet-warning';   // Grace (approaching limit)
-  if (balance >= -1) return 'wallet-negative'; // Grace (in debt)
-  return 'wallet-critical';                     // Blocked (<= -2)
+  if (balance >= 0) return 'wallet-warning';   // Temporary stop (approaching limit)
+  if (balance >= -1) return 'wallet-negative'; // Temporary stop (in debt)
+  return 'wallet-critical';                     // Left (<= -2)
 }
 
 export function getWalletBgColor(balance: number): string {
-  // Active: >= 3, Grace: 2 to -1, Blocked: <= -2
+  // Active: >= 3, Temporary stop: 2 to -1, Left: <= -2
   if (balance >= 3) return 'bg-emerald-500/20';  // Active
-  if (balance >= 0) return 'bg-amber-500/20';    // Grace (approaching limit)
-  if (balance >= -1) return 'bg-red-500/20';     // Grace (in debt)
-  return 'bg-red-900/30';                         // Blocked (<= -2)
+  if (balance >= 0) return 'bg-amber-500/20';    // Temporary stop (approaching limit)
+  if (balance >= -1) return 'bg-red-500/20';     // Temporary stop (in debt)
+  return 'bg-red-900/30';                         // Left (<= -2)
 }
 
 export function getStatusBadgeClass(status: string): string {
