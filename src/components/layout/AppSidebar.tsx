@@ -1,4 +1,4 @@
-import { Home, GraduationCap, CreditCard, UserCheck, FileText, Settings, Bell } from 'lucide-react';
+import { Home, GraduationCap, UserCheck, FileText, Settings, Bell } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useUnreadNotificationsCount } from '@/hooks/use-notifications';
 import {
@@ -15,7 +15,6 @@ import {
 const navItems = [
   { title: 'Dashboard', url: '/', icon: Home },
   { title: 'Students', url: '/students', icon: GraduationCap },
-  { title: 'Payments', url: '/payments', icon: CreditCard },
   { title: 'Teachers', url: '/teachers', icon: UserCheck },
   { title: 'Reports', url: '/reports', icon: FileText },
   { title: 'Settings', url: '/settings', icon: Settings },
