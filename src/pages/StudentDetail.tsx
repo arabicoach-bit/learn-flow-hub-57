@@ -18,7 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { ArrowLeft, User, Wallet, CreditCard, BookOpen, Loader2, Calendar, Plus, RefreshCw, Pencil, Gift, History } from 'lucide-react';
-import { getWalletColor, getStatusBadgeClass, formatCurrency, formatDate, formatDateTime } from '@/lib/wallet-utils';
+import { getWalletColor, getStatusBadgeClass, formatCurrency, formatDate, formatDateTime, getStatusDisplayLabel } from '@/lib/wallet-utils';
 import { StudentScheduleTab } from '@/components/schedule/StudentScheduleTab';
 import { AddPackageForm } from '@/components/packages/AddPackageForm';
 import { RenewPackageForm } from '@/components/packages/RenewPackageForm';
@@ -161,7 +161,7 @@ export default function StudentDetail() {
                 </div>
                 <div>
                   <Badge className={getStatusBadgeClass(student.status)}>
-                    {student.status}
+                    {getStatusDisplayLabel(student.status)}
                   </Badge>
                   <p className="text-sm text-muted-foreground mt-1">
                     {student.teachers?.name || 'No teacher assigned'}

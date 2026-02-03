@@ -9,7 +9,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useToast } from '@/hooks/use-toast';
 import { useTeacherStudents } from '@/hooks/use-teacher-dashboard';
 import { useMarkLesson } from '@/hooks/use-lessons';
-import { getWalletColor } from '@/lib/wallet-utils';
+import { getWalletColor, getStatusDisplayLabel } from '@/lib/wallet-utils';
 import { CheckSquare, AlertTriangle, Loader2, Ban, Search } from 'lucide-react';
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -216,7 +216,7 @@ export default function TeacherMarkLesson() {
                                     : 'status-blocked'
                                 }
                               >
-                                {student.status}
+                                {getStatusDisplayLabel(student.status)}
                               </Badge>
                               {student.programs?.name && (
                                 <Badge variant="secondary" className="text-xs">

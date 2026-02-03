@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { FileText, AlertTriangle, Package, ArrowRight, BarChart3, Download, TrendingUp } from 'lucide-react';
-import { getWalletColor, formatDate, formatCurrency } from '@/lib/wallet-utils';
+import { getWalletColor, formatDate, formatCurrency, getStatusDisplayLabel } from '@/lib/wallet-utils';
 import { usePackages } from '@/hooks/use-packages';
 import { useNavigate } from 'react-router-dom';
 import { exportPackages, type PackageExport } from '@/lib/excel-export';
@@ -123,7 +123,7 @@ export default function Reports() {
                                 student.status === 'Grace' ? 'status-grace' : 'status-blocked'
                               }
                             >
-                              {student.status}
+                              {getStatusDisplayLabel(student.status)}
                             </Badge>
                           </TableCell>
                           <TableCell>{student.teachers?.name || '-'}</TableCell>

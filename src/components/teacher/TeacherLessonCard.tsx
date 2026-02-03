@@ -6,7 +6,7 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/comp
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { getWalletColor } from '@/lib/wallet-utils';
+import { getWalletColor, getStatusDisplayLabel } from '@/lib/wallet-utils';
 import { Check, X, Ban, Clock, Loader2, RefreshCw, Edit2, Save, Calendar as CalendarIcon } from 'lucide-react';
 import { useMarkScheduledLesson } from '@/hooks/use-scheduled-lessons';
 import { supabase } from '@/integrations/supabase/client';
@@ -190,7 +190,7 @@ export function TeacherLessonCard({ lesson, onLessonMarked, showDate, date }: Te
                   {isBlocked && (
                     <Badge variant="destructive" className="flex items-center gap-1">
                       <Ban className="w-3 h-3" />
-                      BLOCKED
+                      {getStatusDisplayLabel('Blocked')}
                     </Badge>
                   )}
                 </div>

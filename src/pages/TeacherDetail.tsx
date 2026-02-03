@@ -6,7 +6,7 @@ import { useClasses } from '@/hooks/use-classes';
 import { useLessons } from '@/hooks/use-lessons';
 import { useStudents } from '@/hooks/use-students';
 import { Button } from '@/components/ui/button';
-import { getWalletColor } from '@/lib/wallet-utils';
+import { getWalletColor, getStatusDisplayLabel } from '@/lib/wallet-utils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -315,7 +315,7 @@ export default function TeacherDetail() {
                                 : 'status-blocked'
                             }
                           >
-                            {student.status}
+                            {getStatusDisplayLabel(student.status)}
                           </Badge>
                         </td>
                         <td>
