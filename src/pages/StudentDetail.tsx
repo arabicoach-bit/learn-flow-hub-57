@@ -232,11 +232,11 @@ export default function StudentDetail() {
           onSuccess={() => setEditPackage(null)}
         />
 
-        {/* Add Free Lessons Dialog */}
+        {/* Add Lesson Dialog */}
         <Dialog open={isAddFreeLessonsOpen} onOpenChange={setIsAddFreeLessonsOpen}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Add Free Lessons</DialogTitle>
+              <DialogTitle>Add Lesson</DialogTitle>
             </DialogHeader>
             <AddFreeLessonsForm
               studentId={id!}
@@ -279,7 +279,7 @@ export default function StudentDetail() {
                 <div className="flex gap-2 flex-wrap">
                   <Button variant="outline" onClick={() => setIsAddFreeLessonsOpen(true)} className="gap-2">
                     <Gift className="w-4 h-4" />
-                    Add Free Lessons
+                    Add Lesson
                   </Button>
                   {packages && packages.length > 0 && (
                     <Button variant="outline" onClick={() => setIsRenewPackageOpen(true)} className="gap-2">
