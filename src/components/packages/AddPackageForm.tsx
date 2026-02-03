@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -9,12 +9,22 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { usePackageTypes } from '@/hooks/use-package-types';
 import { useTeachers } from '@/hooks/use-teachers';
 import { useAddPackageWithSchedule, WeeklyScheduleDay } from '@/hooks/use-add-package-with-schedule';
 import { toast } from 'sonner';
 import { Loader2, Plus, X, Calendar, Clock, DollarSign, BookOpen } from 'lucide-react';
-import { formatCurrency } from '@/lib/wallet-utils';
+
+const PACKAGE_DESCRIPTIONS = [
+  { value: '2-30', label: '2 lessons/week – 30 mins', lessonsPerWeek: 2, duration: 30 },
+  { value: '2-45', label: '2 lessons/week – 45 mins', lessonsPerWeek: 2, duration: 45 },
+  { value: '2-60', label: '2 lessons/week – 60 mins', lessonsPerWeek: 2, duration: 60 },
+  { value: '3-30', label: '3 lessons/week – 30 mins', lessonsPerWeek: 3, duration: 30 },
+  { value: '3-45', label: '3 lessons/week – 45 mins', lessonsPerWeek: 3, duration: 45 },
+  { value: '3-60', label: '3 lessons/week – 60 mins', lessonsPerWeek: 3, duration: 60 },
+  { value: '4-30', label: '4 lessons/week – 30 mins', lessonsPerWeek: 4, duration: 30 },
+  { value: '4-45', label: '4 lessons/week – 45 mins', lessonsPerWeek: 4, duration: 45 },
+  { value: '4-60', label: '4 lessons/week – 60 mins', lessonsPerWeek: 4, duration: 60 },
+];
 
 const DAYS_OF_WEEK = [
   { value: 0, label: 'Sunday' },
@@ -27,7 +37,7 @@ const DAYS_OF_WEEK = [
 ];
 
 const packageFormSchema = z.object({
-  package_type_id: z.string().optional(),
+  package_description: z.string().min(1, 'Package description is required'),
   amount: z.number().min(0, 'Amount must be positive'),
   lessons_purchased: z.number().min(1, 'At least 1 lesson required'),
   lesson_duration: z.number().min(15, 'Minimum 15 minutes'),
@@ -49,15 +59,14 @@ export function AddPackageForm({ studentId, studentName, currentWallet, onSucces
   const [weeklySchedule, setWeeklySchedule] = useState<WeeklyScheduleDay[]>([]);
   const [newDay, setNewDay] = useState<number>(1);
   const [newTime, setNewTime] = useState<string>('18:00');
-  const [useCustomPackage, setUseCustomPackage] = useState(false);
 
-  const { data: packageTypes } = usePackageTypes();
   const { data: teachers } = useTeachers();
   const addPackage = useAddPackageWithSchedule();
 
   const form = useForm<PackageFormValues>({
     resolver: zodResolver(packageFormSchema),
     defaultValues: {
+      package_description: '',
       amount: 0,
       lessons_purchased: 8,
       lesson_duration: 45,
@@ -66,17 +75,19 @@ export function AddPackageForm({ studentId, studentName, currentWallet, onSucces
     },
   });
 
-  const selectedPackageType = packageTypes?.find(
-    (pt) => pt.package_type_id === form.watch('package_type_id')
-  );
+  const selectedDescription = form.watch('package_description');
+  const selectedPackage = PACKAGE_DESCRIPTIONS.find(p => p.value === selectedDescription);
 
-  useEffect(() => {
-    if (selectedPackageType && !useCustomPackage) {
-      form.setValue('amount', selectedPackageType.monthly_fee || 0);
-      form.setValue('lessons_purchased', selectedPackageType.total_lessons || 8);
-      form.setValue('lesson_duration', selectedPackageType.lesson_duration || 45);
+  // Auto-update duration when package description changes
+  const handlePackageChange = (value: string) => {
+    form.setValue('package_description', value);
+    const pkg = PACKAGE_DESCRIPTIONS.find(p => p.value === value);
+    if (pkg) {
+      form.setValue('lesson_duration', pkg.duration);
+      // Calculate lessons for 4 weeks
+      form.setValue('lessons_purchased', pkg.lessonsPerWeek * 4);
     }
-  }, [selectedPackageType, form, useCustomPackage]);
+  };
 
   const addScheduleDay = () => {
     const exists = weeklySchedule.some((s) => s.day === newDay && s.time === newTime);
@@ -100,7 +111,6 @@ export function AddPackageForm({ studentId, studentName, currentWallet, onSucces
     try {
       const result = await addPackage.mutateAsync({
         student_id: studentId,
-        package_type_id: values.package_type_id,
         amount: values.amount,
         lessons_purchased: values.lessons_purchased,
         lesson_duration: values.lesson_duration,
@@ -147,45 +157,34 @@ export function AddPackageForm({ studentId, studentName, currentWallet, onSucces
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <BookOpen className="w-5 h-5" />
-              Package Type
+              Package Details
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {!useCustomPackage ? (
-              <>
-                <FormField
-                  control={form.control}
-                  name="package_type_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Select Package</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Choose a package type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {packageTypes?.map((pt) => (
-                            <SelectItem key={pt.package_type_id} value={pt.package_type_id}>
-                              {pt.name} - {pt.description} - {formatCurrency(pt.monthly_fee || 0)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="button" variant="outline" size="sm" onClick={() => setUseCustomPackage(true)}>
-                  Use Custom Values
-                </Button>
-              </>
-            ) : (
-              <Button type="button" variant="outline" size="sm" onClick={() => setUseCustomPackage(false)}>
-                Use Package Type
-              </Button>
-            )}
+            <FormField
+              control={form.control}
+              name="package_description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Package Description *</FormLabel>
+                  <Select onValueChange={handlePackageChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select package description" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {PACKAGE_DESCRIPTIONS.map((pkg) => (
+                        <SelectItem key={pkg.value} value={pkg.value}>
+                          {pkg.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <FormField
@@ -193,11 +192,11 @@ export function AddPackageForm({ studentId, studentName, currentWallet, onSucces
                 name="amount"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Payment Amount</FormLabel>
+                    <FormLabel>Payment Amount (AED)</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input type="number" step="0.01" className="pl-10" {...field} onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} disabled={!useCustomPackage && !!selectedPackageType} />
+                        <Input type="number" step="0.01" className="pl-10" {...field} onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} />
                       </div>
                     </FormControl>
                     <FormMessage />
@@ -207,14 +206,14 @@ export function AddPackageForm({ studentId, studentName, currentWallet, onSucces
               <FormField control={form.control} name="lessons_purchased" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Total Lessons</FormLabel>
-                  <FormControl><Input type="number" {...field} onChange={(e) => field.onChange(parseInt(e.target.value) || 0)} disabled={!useCustomPackage && !!selectedPackageType} /></FormControl>
+                  <FormControl><Input type="number" {...field} onChange={(e) => field.onChange(parseInt(e.target.value) || 0)} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
               <FormField control={form.control} name="lesson_duration" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Duration (mins)</FormLabel>
-                  <FormControl><Input type="number" {...field} onChange={(e) => field.onChange(parseInt(e.target.value) || 0)} disabled={!useCustomPackage && !!selectedPackageType} /></FormControl>
+                  <FormControl><Input type="number" {...field} onChange={(e) => field.onChange(parseInt(e.target.value) || 0)} disabled={!!selectedPackage} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
