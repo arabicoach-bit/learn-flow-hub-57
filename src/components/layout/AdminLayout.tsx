@@ -24,7 +24,8 @@ import {
   LogOut,
   User,
   UserCheck,
-  Package
+  Package,
+  Wallet
 } from 'lucide-react';
 import { useUnreadNotificationsCount } from '@/hooks/use-notifications';
 import { cn } from '@/lib/utils';
@@ -36,6 +37,7 @@ const adminNavItems = [
   { title: 'Students', url: '/admin/students', icon: GraduationCap },
   { title: 'Packages', url: '/admin/packages', icon: Package },
   { title: 'Teachers', url: '/admin/teachers', icon: Users },
+  { title: 'Payroll', url: '/admin/payroll', icon: Wallet },
   { title: 'Reports', url: '/admin/reports', icon: BarChart3 },
   { title: 'Settings', url: '/admin/settings', icon: Settings },
 ];
