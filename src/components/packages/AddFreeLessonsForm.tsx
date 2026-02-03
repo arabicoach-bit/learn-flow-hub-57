@@ -13,7 +13,9 @@ import { useQueryClient } from '@tanstack/react-query';
 
 const formSchema = z.object({
   lessons: z.coerce.number().min(1, 'Must add at least 1 lesson').max(50, 'Maximum 50 lessons at a time'),
-  reason: z.string().min(1, 'Please provide a reason for adding free lessons'),
+  lesson_time: z.string().min(1, 'Please select a lesson time'),
+  lesson_duration: z.coerce.number().min(15, 'Minimum 15 minutes').max(180, 'Maximum 180 minutes'),
+  reason: z.string().min(1, 'Please provide a reason for adding lessons'),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -33,6 +35,8 @@ export function AddFreeLessonsForm({ studentId, studentName, currentWallet, onSu
     resolver: zodResolver(formSchema),
     defaultValues: {
       lessons: 1,
+      lesson_time: '',
+      lesson_duration: 30,
       reason: '',
     },
   });
@@ -72,6 +76,8 @@ export function AddFreeLessonsForm({ studentId, studentName, currentWallet, onSu
         details: {
           student_name: studentName,
           lessons_added: values.lessons,
+          lesson_time: values.lesson_time,
+          lesson_duration: values.lesson_duration,
           reason: values.reason,
           old_balance: currentWallet,
           new_balance: newBalance,
@@ -125,13 +131,52 @@ export function AddFreeLessonsForm({ studentId, studentName, currentWallet, onSu
           name="lessons"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Number of Free Lessons</FormLabel>
+              <FormLabel>Number of Lessons</FormLabel>
               <FormControl>
                 <Input
                   type="number"
                   min={1}
                   max={50}
                   placeholder="1"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Lesson Time */}
+        <FormField
+          control={form.control}
+          name="lesson_time"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Lesson Time</FormLabel>
+              <FormControl>
+                <Input
+                  type="time"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Lesson Duration */}
+        <FormField
+          control={form.control}
+          name="lesson_duration"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Lesson Duration (minutes)</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  min={15}
+                  max={180}
+                  placeholder="30"
                   {...field}
                 />
               </FormControl>
@@ -170,7 +215,7 @@ export function AddFreeLessonsForm({ studentId, studentName, currentWallet, onSu
             ) : (
               <>
                 <Gift className="w-4 h-4" />
-                Add {lessonsToAdd} Free Lesson{lessonsToAdd !== 1 ? 's' : ''}
+                Add {lessonsToAdd} Lesson{lessonsToAdd !== 1 ? 's' : ''}
               </>
             )}
           </Button>
