@@ -29,7 +29,10 @@ const teacherFormSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters'),
   email: z.string().email('Please enter a valid email'),
   phone: z.string().optional(),
-  rate_per_lesson: z.number().positive('Rate must be greater than 0'),
+  rate_per_lesson: z
+    .number()
+    .finite('Rate must be a valid number')
+    .positive('Rate must be greater than 0'),
 });
 
 export default function Teachers() {
@@ -94,6 +97,8 @@ export default function Teachers() {
 
   const handleAddTeacher = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const parsedRate = Number.parseFloat(formData.rate_per_lesson);
     
     // Validate form
     try {
@@ -101,7 +106,7 @@ export default function Teachers() {
         name: formData.name,
         email: formData.email,
         phone: formData.phone || undefined,
-        rate_per_lesson: parseFloat(formData.rate_per_lesson) || 0,
+        rate_per_lesson: parsedRate,
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -122,7 +127,7 @@ export default function Teachers() {
           name: formData.name,
           email: formData.email,
           phone: formData.phone || undefined,
-          rate_per_lesson: parseFloat(formData.rate_per_lesson),
+          rate_per_lesson: parsedRate,
           class_ids: formData.class_ids.length > 0 ? formData.class_ids : undefined,
         },
       });
@@ -167,6 +172,8 @@ export default function Teachers() {
       if (errorMessage.toLowerCase().includes('email already exists') || 
           errorMessage.toLowerCase().includes('already registered')) {
         errorMessage = 'This email is already registered in the system. Please use a different email address.';
+      } else if (errorMessage.toLowerCase().includes('only admins')) {
+        errorMessage = 'Only admin accounts can create teachers. If you believe you are an admin, please log out and log back in.';
       } else if (errorMessage.toLowerCase().includes('unauthorized') || 
                  errorMessage.toLowerCase().includes('missing authorization')) {
         errorMessage = 'You must be logged in as an admin to create teachers. Please log in again.';

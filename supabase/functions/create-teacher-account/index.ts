@@ -3,7 +3,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 interface CreateTeacherRequest {
@@ -98,20 +98,45 @@ serve(async (req: Request) => {
 
     if (action === 'create') {
       const body: CreateTeacherRequest = await req.json();
-      console.log('Creating teacher:', body.email);
+      const normalizedEmail = (body.email || '').trim().toLowerCase();
+      console.log('Creating teacher:', normalizedEmail);
 
       // Validate required fields
-      if (!body.name || !body.email || body.rate_per_lesson === undefined) {
+      const parsedRate = typeof (body as any).rate_per_lesson === 'number'
+        ? (body as any).rate_per_lesson
+        : Number.parseFloat(String((body as any).rate_per_lesson));
+
+      if (!body.name || !normalizedEmail || (body as any).rate_per_lesson === undefined) {
         return new Response(
           JSON.stringify({ error: 'Name, email, and rate_per_lesson are required' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      // Check if email already exists in auth
-      const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
-      const existingUser = existingUsers?.users?.find(u => u.email === body.email);
-      if (existingUser) {
+      if (!Number.isFinite(parsedRate) || parsedRate <= 0) {
+        return new Response(
+          JSON.stringify({ error: 'rate_per_lesson must be a positive number' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Check if email already exists (avoid auth.listUsers pagination issues)
+      // profiles is created automatically for every auth user.
+      const { data: existingProfiles, error: existingProfilesError } = await supabaseAdmin
+        .from('profiles')
+        .select('id')
+        .ilike('email', normalizedEmail)
+        .limit(1);
+
+      if (existingProfilesError) {
+        console.error('Email existence check failed:', existingProfilesError);
+        return new Response(
+          JSON.stringify({ error: 'Unable to validate email availability. Please try again.' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (existingProfiles && existingProfiles.length > 0) {
         return new Response(
           JSON.stringify({ error: 'An account with this email already exists' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -126,9 +151,9 @@ serve(async (req: Request) => {
         .from('teachers')
         .insert({
           name: body.name,
-          email: body.email,
+          email: normalizedEmail,
           phone: body.phone || null,
-          rate_per_lesson: body.rate_per_lesson,
+          rate_per_lesson: parsedRate,
           is_active: true,
         })
         .select()
@@ -144,7 +169,7 @@ serve(async (req: Request) => {
 
       // 2. Create auth user
       const { data: authUser, error: authUserError } = await supabaseAdmin.auth.admin.createUser({
-        email: body.email,
+        email: normalizedEmail,
         password: tempPassword,
         email_confirm: true,
         user_metadata: {
