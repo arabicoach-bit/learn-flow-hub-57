@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { formatCurrency, formatDate } from '@/lib/wallet-utils';
+import { formatSalary, formatDate } from '@/lib/wallet-utils';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -151,7 +151,7 @@ export default function TeacherDetail() {
                 </span>
               )}
               <span className="flex items-center gap-1">
-                <DollarSign className="w-4 h-4" /> {formatCurrency(teacher.rate_per_lesson)} / lesson
+                <DollarSign className="w-4 h-4" /> {formatSalary(teacher.rate_per_lesson)} / lesson
               </span>
             </div>
           </div>
@@ -254,7 +254,7 @@ export default function TeacherDetail() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">
-                    {formatCurrency(payroll?.reduce((sum, p) => sum + p.amount_due, 0) || 0)}
+                    {formatSalary(payroll?.reduce((sum, p) => sum + p.amount_due, 0) || 0)}
                   </p>
                   <p className="text-sm text-muted-foreground">Total Payroll</p>
                 </div>
@@ -428,8 +428,8 @@ export default function TeacherDetail() {
                           {formatDate(record.period_start)} - {formatDate(record.period_end)}
                         </td>
                         <td>{record.lessons_taken}</td>
-                        <td>{formatCurrency(record.rate_per_lesson)}</td>
-                        <td className="font-medium">{formatCurrency(record.amount_due)}</td>
+                        <td>{formatSalary(record.rate_per_lesson)}</td>
+                        <td className="font-medium">{formatSalary(record.amount_due)}</td>
                         <td>
                           <Badge variant="outline" className={getPayrollStatusColor(record.status)}>
                             {record.status || 'Draft'}

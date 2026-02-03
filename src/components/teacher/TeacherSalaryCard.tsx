@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTeacherMonthlyStats } from '@/hooks/use-teacher-dashboard';
 import { Wallet, TrendingUp, Clock, BookOpen } from 'lucide-react';
-import { formatCurrency } from '@/lib/wallet-utils';
+import { formatSalary } from '@/lib/wallet-utils';
 
 export function TeacherSalaryCard() {
   const { data: stats, isLoading } = useTeacherMonthlyStats();
@@ -60,10 +60,10 @@ export function TeacherSalaryCard() {
             <TrendingUp className="w-5 h-5 text-emerald-500" />
             <div>
               <p className="text-sm text-muted-foreground">
-                Rate: {formatCurrency(currentMonth?.rate_per_lesson || 0)}/hour
+                Rate: {formatSalary(currentMonth?.rate_per_lesson || 0)}/hour
               </p>
               <p className="text-3xl font-bold text-emerald-400">
-                {formatCurrency(currentMonth?.salary_earned || 0)}
+                {formatSalary(currentMonth?.salary_earned || 0)}
               </p>
             </div>
           </div>
@@ -92,10 +92,10 @@ export function TeacherSalaryCard() {
           </div>
           <div className="mt-4">
             <p className="text-sm text-muted-foreground">
-              Rate: {formatCurrency(lastMonth?.rate_per_lesson || 0)}/hour
+              Rate: {formatSalary(lastMonth?.rate_per_lesson || 0)}/hour
             </p>
             <p className="text-2xl font-bold text-muted-foreground">
-              {formatCurrency(lastMonth?.salary_earned || 0)}
+              {formatSalary(lastMonth?.salary_earned || 0)}
             </p>
           </div>
         </div>

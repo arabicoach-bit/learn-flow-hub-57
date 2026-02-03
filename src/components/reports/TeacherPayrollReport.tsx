@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { FileText, Download, Loader2, Calculator, Save } from 'lucide-react';
-import { formatCurrency } from '@/lib/wallet-utils';
+import { formatSalary } from '@/lib/wallet-utils';
 
 interface PayrollData {
   teacher_id: string;
@@ -212,7 +212,7 @@ export function TeacherPayrollReport() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Amount Due</p>
-                <p className="text-2xl font-bold text-primary">{formatCurrency(totalAmount)}</p>
+                <p className="text-2xl font-bold text-primary">{formatSalary(totalAmount)}</p>
               </div>
             </div>
 
@@ -232,8 +232,8 @@ export function TeacherPayrollReport() {
                   <TableRow key={row.teacher_id}>
                     <TableCell className="font-medium">{row.teacher_name}</TableCell>
                     <TableCell className="text-right">{row.lessons_taken}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(row.rate_per_lesson)}</TableCell>
-                    <TableCell className="text-right font-medium">{formatCurrency(row.amount_due)}</TableCell>
+                    <TableCell className="text-right">{formatSalary(row.rate_per_lesson)}</TableCell>
+                    <TableCell className="text-right font-medium">{formatSalary(row.amount_due)}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className="bg-muted">Draft</Badge>
                     </TableCell>

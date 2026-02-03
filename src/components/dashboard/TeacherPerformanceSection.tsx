@@ -10,7 +10,7 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { useTeacherPerformance } from '@/hooks/use-admin-dashboard-stats';
-import { formatCurrency } from '@/lib/wallet-utils';
+import { formatSalary } from '@/lib/wallet-utils';
 import { useNavigate } from 'react-router-dom';
 import { 
   Users, 
@@ -115,7 +115,7 @@ export function TeacherPerformanceSection() {
               <TrendingUp className="w-4 h-4" />
               <span className="text-xs font-medium">Total Salary</span>
             </div>
-            <p className="text-xl font-bold">{formatCurrency(totals.totalSalary)}</p>
+            <p className="text-xl font-bold">{formatSalary(totals.totalSalary)}</p>
           </div>
           <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
             <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 mb-1">
@@ -129,7 +129,7 @@ export function TeacherPerformanceSection() {
               <Award className="w-4 h-4" />
               <span className="text-xs font-medium">Total Bonus</span>
             </div>
-            <p className="text-xl font-bold">{formatCurrency(totals.totalBonus)}</p>
+            <p className="text-xl font-bold">{formatSalary(totals.totalBonus)}</p>
           </div>
         </div>
 
@@ -167,13 +167,13 @@ export function TeacherPerformanceSection() {
                     </div>
                   </TableCell>
                   <TableCell className="text-center">
-                    {formatCurrency(teacher.rate_per_lesson)}
+                    {formatSalary(teacher.rate_per_lesson)}
                   </TableCell>
                   <TableCell className="text-center font-medium">
                     {teacher.totalTeachingHours.toFixed(1)}h
                   </TableCell>
                   <TableCell className="text-center font-medium">
-                    {formatCurrency(teacher.salary)}
+                    {formatSalary(teacher.salary)}
                   </TableCell>
                   <TableCell className="text-center">
                     <Badge variant="outline">{teacher.activeStudents}</Badge>
@@ -200,7 +200,7 @@ export function TeacherPerformanceSection() {
                   </TableCell>
                   <TableCell className="text-center font-medium">
                     {teacher.bonus > 0 ? (
-                      <span className="text-emerald-600">{formatCurrency(teacher.bonus)}</span>
+                      <span className="text-emerald-600">{formatSalary(teacher.bonus)}</span>
                     ) : (
                       '-'
                     )}
@@ -215,7 +215,7 @@ export function TeacherPerformanceSection() {
         <div className="flex justify-end">
           <div className="text-sm text-muted-foreground">
             <span className="font-medium">Quarter Total: </span>
-            {formatCurrency(totals.totalSalary + totals.totalBonus)} (incl. bonus)
+            {formatSalary(totals.totalSalary + totals.totalBonus)} (incl. bonus)
           </div>
         </div>
       </CardContent>

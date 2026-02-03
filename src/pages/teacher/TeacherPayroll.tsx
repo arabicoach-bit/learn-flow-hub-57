@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Wallet, Calendar, DollarSign } from 'lucide-react';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
+import { formatSalary } from '@/lib/wallet-utils';
 
 interface PayrollRecord {
   payroll_id: string;
@@ -119,11 +120,11 @@ export default function TeacherPayroll() {
                 </div>
                 <div className="text-center p-4 rounded-lg bg-card/50 border border-border/50">
                   <p className="text-sm text-muted-foreground mb-1">Rate per Lesson</p>
-                  <p className="text-3xl font-bold">${ratePerLesson}</p>
+                  <p className="text-3xl font-bold">{formatSalary(ratePerLesson)}</p>
                 </div>
                 <div className="text-center p-4 rounded-lg bg-emerald-600/10 border border-emerald-600/20">
                   <p className="text-sm text-muted-foreground mb-1">Estimated Earnings</p>
-                  <p className="text-3xl font-bold text-emerald-400">${estimatedEarnings}</p>
+                  <p className="text-3xl font-bold text-emerald-400">{formatSalary(estimatedEarnings)}</p>
                 </div>
               </div>
             )}
@@ -164,11 +165,11 @@ export default function TeacherPayroll() {
                           </Badge>
                         </div>
                         <p className="text-sm text-muted-foreground mt-1">
-                          {record.lessons_taken || 0} lessons × ${record.rate_per_lesson}/lesson
+                          {record.lessons_taken || 0} lessons × {formatSalary(record.rate_per_lesson)}/lesson
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-2xl font-bold text-emerald-400">${record.amount_due}</p>
+                        <p className="text-2xl font-bold text-emerald-400">{formatSalary(record.amount_due)}</p>
                       </div>
                     </div>
                   </div>
