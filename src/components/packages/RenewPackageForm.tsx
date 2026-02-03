@@ -10,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
-import { usePackageTypes } from '@/hooks/use-package-types';
 import { useTeachers } from '@/hooks/use-teachers';
 import { usePackages } from '@/hooks/use-packages';
 import { useAddPackageWithSchedule, WeeklyScheduleDay } from '@/hooks/use-add-package-with-schedule';
@@ -18,6 +17,18 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Loader2, Plus, X, Calendar, Clock, DollarSign, RefreshCw, History } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/wallet-utils';
+
+const PACKAGE_DESCRIPTIONS = [
+  { value: '2-30', label: '2 lessons/week – 30 mins', lessonsPerWeek: 2, duration: 30 },
+  { value: '2-45', label: '2 lessons/week – 45 mins', lessonsPerWeek: 2, duration: 45 },
+  { value: '2-60', label: '2 lessons/week – 60 mins', lessonsPerWeek: 2, duration: 60 },
+  { value: '3-30', label: '3 lessons/week – 30 mins', lessonsPerWeek: 3, duration: 30 },
+  { value: '3-45', label: '3 lessons/week – 45 mins', lessonsPerWeek: 3, duration: 45 },
+  { value: '3-60', label: '3 lessons/week – 60 mins', lessonsPerWeek: 3, duration: 60 },
+  { value: '4-30', label: '4 lessons/week – 30 mins', lessonsPerWeek: 4, duration: 30 },
+  { value: '4-45', label: '4 lessons/week – 45 mins', lessonsPerWeek: 4, duration: 45 },
+  { value: '4-60', label: '4 lessons/week – 60 mins', lessonsPerWeek: 4, duration: 60 },
+];
 
 const DAYS_OF_WEEK = [
   { value: 0, label: 'Sunday' },
@@ -30,7 +41,7 @@ const DAYS_OF_WEEK = [
 ];
 
 const renewalFormSchema = z.object({
-  package_type_id: z.string().optional(),
+  package_description: z.string().min(1, 'Package description is required'),
   amount: z.number().min(0, 'Amount must be positive'),
   lessons_purchased: z.number().min(1, 'At least 1 lesson required'),
   lesson_duration: z.number().min(15, 'Minimum 15 minutes'),
@@ -72,7 +83,6 @@ export function RenewPackageForm({
   const [newTime, setNewTime] = useState<string>('18:00');
   const [loadingPrevious, setLoadingPrevious] = useState(false);
 
-  const { data: packageTypes } = usePackageTypes();
   const { data: teachers } = useTeachers();
   const { data: packages } = usePackages(studentId);
   const addPackage = useAddPackageWithSchedule();
@@ -86,6 +96,7 @@ export function RenewPackageForm({
   const form = useForm<RenewalFormValues>({
     resolver: zodResolver(renewalFormSchema),
     defaultValues: {
+      package_description: '',
       amount: 0,
       lessons_purchased: 8,
       lesson_duration: 45,
@@ -96,15 +107,24 @@ export function RenewPackageForm({
   });
 
   const usePreviousSchedule = form.watch('use_previous_schedule');
+  const selectedDescription = form.watch('package_description');
+  const selectedPackage = PACKAGE_DESCRIPTIONS.find(p => p.value === selectedDescription);
+
+  // Auto-update duration when package description changes
+  const handlePackageChange = (value: string) => {
+    form.setValue('package_description', value);
+    const pkg = PACKAGE_DESCRIPTIONS.find(p => p.value === value);
+    if (pkg) {
+      form.setValue('lesson_duration', pkg.duration);
+      form.setValue('lessons_purchased', pkg.lessonsPerWeek * 4);
+    }
+  };
 
   // Load previous schedule when component mounts or package changes
   useEffect(() => {
     if (lastPackage) {
       loadPreviousSchedule(lastPackage.package_id);
       // Pre-fill form with previous package values
-      if (lastPackage.package_type_id) {
-        form.setValue('package_type_id', lastPackage.package_type_id);
-      }
       form.setValue('amount', lastPackage.amount);
       form.setValue('lessons_purchased', lastPackage.lessons_purchased);
       form.setValue('lesson_duration', lastPackage.lesson_duration || 45);
@@ -144,18 +164,6 @@ export function RenewPackageForm({
     }
   };
 
-  const selectedPackageType = packageTypes?.find(
-    (pt) => pt.package_type_id === form.watch('package_type_id')
-  );
-
-  useEffect(() => {
-    if (selectedPackageType) {
-      form.setValue('amount', selectedPackageType.monthly_fee || 0);
-      form.setValue('lessons_purchased', selectedPackageType.total_lessons || 8);
-      form.setValue('lesson_duration', selectedPackageType.lesson_duration || 45);
-    }
-  }, [selectedPackageType, form]);
-
   const addScheduleDay = () => {
     const exists = weeklySchedule.some((s) => s.day === newDay && s.time === newTime);
     if (exists) {
@@ -178,7 +186,6 @@ export function RenewPackageForm({
     try {
       const result = await addPackage.mutateAsync({
         student_id: studentId,
-        package_type_id: values.package_type_id,
         amount: values.amount,
         lessons_purchased: values.lessons_purchased,
         lesson_duration: values.lesson_duration,
@@ -257,7 +264,7 @@ export function RenewPackageForm({
           </Card>
         )}
 
-        {/* Package Type Selection */}
+        {/* Package Description Selection */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Package Details</CardTitle>
@@ -265,20 +272,20 @@ export function RenewPackageForm({
           <CardContent className="space-y-4">
             <FormField
               control={form.control}
-              name="package_type_id"
+              name="package_description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Package Type</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <FormLabel>Package Description *</FormLabel>
+                  <Select onValueChange={handlePackageChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Choose a package type" />
+                        <SelectValue placeholder="Select package description" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {packageTypes?.map((pt) => (
-                        <SelectItem key={pt.package_type_id} value={pt.package_type_id}>
-                          {pt.name} - {pt.description} - {formatCurrency(pt.monthly_fee || 0)}
+                      {PACKAGE_DESCRIPTIONS.map((pkg) => (
+                        <SelectItem key={pkg.value} value={pkg.value}>
+                          {pkg.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -339,6 +346,7 @@ export function RenewPackageForm({
                         type="number"
                         {...field}
                         onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                        disabled={!!selectedPackage}
                       />
                     </FormControl>
                     <FormMessage />
