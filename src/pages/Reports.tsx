@@ -8,12 +8,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { FileText, AlertTriangle, Package, ArrowRight, BarChart3 } from 'lucide-react';
+import { FileText, AlertTriangle, Package, ArrowRight, BarChart3, Download } from 'lucide-react';
 import { getWalletColor, formatDate, formatCurrency } from '@/lib/wallet-utils';
 import { usePackages } from '@/hooks/use-packages';
 import { useNavigate } from 'react-router-dom';
+import { exportPackages, type PackageExport } from '@/lib/excel-export';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Reports() {
+  const { toast } = useToast();
   const navigate = useNavigate();
   const { data: students, isLoading: studentsLoading } = useStudents();
   const { data: packages, isLoading: packagesLoading } = usePackages();
@@ -131,11 +134,41 @@ export default function Reports() {
                   <Package className="w-5 h-5 text-primary" />
                   Completed Packages
                 </CardTitle>
-                <Button onClick={() => navigate('/admin/reports/package-summaries')}>
-                  <FileText className="w-4 h-4 mr-2" />
-                  Full Summaries
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      if (!packages || packages.length === 0) {
+                        toast({ title: 'No data to export', variant: 'destructive' });
+                        return;
+                      }
+                      const exportData: PackageExport[] = packages.map(p => ({
+                        student_name: p.students?.name || null,
+                        package_type: p.package_types?.name || null,
+                        amount: p.amount,
+                        lessons_purchased: p.lessons_purchased,
+                        lessons_used: p.lessons_used,
+                        status: p.status,
+                        payment_date: p.payment_date,
+                        start_date: p.start_date,
+                        next_payment_date: p.next_payment_date,
+                        completed_date: p.completed_date,
+                        is_renewal: p.is_renewal,
+                        created_at: p.created_at,
+                      }));
+                      exportPackages(exportData);
+                      toast({ title: 'Exported successfully!' });
+                    }}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Export Excel
+                  </Button>
+                  <Button onClick={() => navigate('/admin/reports/package-summaries')}>
+                    <FileText className="w-4 h-4 mr-2" />
+                    Full Summaries
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 {packagesLoading ? (

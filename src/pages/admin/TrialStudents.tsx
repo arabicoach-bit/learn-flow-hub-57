@@ -20,7 +20,8 @@ import {
   CheckCircle, 
   XCircle,
   UserCheck,
-  Loader2
+  Loader2,
+  Download
 } from 'lucide-react';
 import { useTrialStudents, useUpdateTrialStudent, type TrialStudent } from '@/hooks/use-trial-students';
 import { AddTrialStudentForm } from '@/components/trial/AddTrialStudentForm';
@@ -28,6 +29,7 @@ import { TrialStudentCard } from '@/components/trial/TrialStudentCard';
 import { EditTrialStudentDialog } from '@/components/trial/EditTrialStudentDialog';
 import { ConvertToStudentDialog } from '@/components/trial/ConvertToStudentDialog';
 import { useToast } from '@/hooks/use-toast';
+import { exportTrialStudents, type TrialStudentExport } from '@/lib/excel-export';
 import type { Database } from '@/integrations/supabase/types';
 
 type TrialStatus = Database['public']['Enums']['trial_status'];
@@ -112,10 +114,46 @@ export default function TrialStudents() {
               Manage trial lesson students with 30-minute sessions and 50/50 payment split
             </p>
           </div>
-          <Button onClick={() => setIsAddFormOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Add Trial Student
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (!trialStudents || trialStudents.length === 0) {
+                  toast({ title: 'No data to export', variant: 'destructive' });
+                  return;
+                }
+                const exportData: TrialStudentExport[] = trialStudents.map(s => ({
+                  name: s.name,
+                  phone: s.phone,
+                  parent_guardian_name: s.parent_guardian_name,
+                  age: s.age,
+                  gender: s.gender,
+                  school: s.school,
+                  year_group: s.year_group,
+                  interested_program: s.interested_program,
+                  student_level: s.student_level,
+                  trial_date: s.trial_date,
+                  trial_time: s.trial_time,
+                  duration_minutes: s.duration_minutes,
+                  status: s.status,
+                  trial_result: s.trial_result,
+                  teacher_name: s.teachers?.name || null,
+                  notes: s.notes,
+                  follow_up_notes: s.follow_up_notes,
+                  created_at: s.created_at,
+                }));
+                exportTrialStudents(exportData);
+                toast({ title: 'Exported successfully!' });
+              }}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Export Excel
+            </Button>
+            <Button onClick={() => setIsAddFormOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Trial Student
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}

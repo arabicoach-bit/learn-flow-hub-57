@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Download } from 'lucide-react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useStudents, useCreateStudent } from '@/hooks/use-students';
 import { useTeachers } from '@/hooks/use-teachers';
@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { getWalletColor, getStatusBadgeClass } from '@/lib/wallet-utils';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import { exportStudents, type StudentExport } from '@/lib/excel-export';
 
 export default function Students() {
   const navigate = useNavigate();
@@ -69,12 +70,46 @@ export default function Students() {
             <h1 className="text-3xl font-display font-bold">Students</h1>
             <p className="text-muted-foreground">Manage your academy students</p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2">
-                <Plus className="w-4 h-4" /> Add Student
-              </Button>
-            </DialogTrigger>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (!students || students.length === 0) {
+                  toast({ title: 'No data to export', variant: 'destructive' });
+                  return;
+                }
+                const exportData: StudentExport[] = students.map(s => ({
+                  name: s.name,
+                  phone: s.phone,
+                  parent_phone: s.parent_phone,
+                  parent_guardian_name: s.parent_guardian_name,
+                  age: s.age,
+                  gender: s.gender,
+                  nationality: s.nationality,
+                  school: s.school,
+                  year_group: s.year_group,
+                  student_level: s.student_level,
+                  program_name: s.programs?.name || null,
+                  teacher_name: s.teachers?.name || null,
+                  status: s.status,
+                  wallet_balance: s.wallet_balance,
+                  total_paid: s.total_paid,
+                  number_of_renewals: s.number_of_renewals,
+                  created_at: s.created_at,
+                }));
+                exportStudents(exportData);
+                toast({ title: 'Exported successfully!' });
+              }}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Export Excel
+            </Button>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-2">
+                  <Plus className="w-4 h-4" /> Add Student
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-md">
               <DialogHeader>
                 <DialogTitle>Add New Student</DialogTitle>
@@ -121,6 +156,7 @@ export default function Students() {
               </form>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         {/* Filters */}

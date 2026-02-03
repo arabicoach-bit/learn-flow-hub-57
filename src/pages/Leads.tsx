@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Search, Edit } from 'lucide-react';
+import { Plus, Search, Edit, Download } from 'lucide-react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useLeads, useCreateLead, type Lead } from '@/hooks/use-leads';
 import { usePrograms } from '@/hooks/use-programs';
@@ -14,6 +14,7 @@ import { getStatusBadgeClass, formatDate } from '@/lib/wallet-utils';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EditLeadDialog } from '@/components/leads/EditLeadDialog';
+import { exportLeads, type LeadExport } from '@/lib/excel-export';
 
 const trialStatusOptions = [
   'Trial Booked',
@@ -101,12 +102,42 @@ export default function Leads() {
             <h1 className="text-3xl font-display font-bold">Leads CRM</h1>
             <p className="text-muted-foreground">Track and manage potential students</p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2">
-                <Plus className="w-4 h-4" /> Add Lead
-              </Button>
-            </DialogTrigger>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (!leads || leads.length === 0) {
+                  toast({ title: 'No data to export', variant: 'destructive' });
+                  return;
+                }
+                const exportData: LeadExport[] = leads.map(l => ({
+                  name: l.name,
+                  phone: l.phone,
+                  source: l.source,
+                  interest: l.interest,
+                  status: l.status,
+                  first_contact_date: l.first_contact_date,
+                  last_contact_date: l.last_contact_date,
+                  next_followup_date: l.next_followup_date,
+                  handled_by: l.handled_by,
+                  trial_status: l.trial_status,
+                  follow_up: l.follow_up,
+                  notes: l.notes,
+                  created_at: l.created_at,
+                }));
+                exportLeads(exportData);
+                toast({ title: 'Exported successfully!' });
+              }}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Export Excel
+            </Button>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-2">
+                  <Plus className="w-4 h-4" /> Add Lead
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Add New Lead</DialogTitle>
@@ -244,6 +275,7 @@ export default function Leads() {
               </form>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         {/* Filters */}

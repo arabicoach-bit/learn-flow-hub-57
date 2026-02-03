@@ -50,13 +50,18 @@ export function getStatusColor(status: string): string {
   }
 }
 
-export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-AE', {
+export function formatCurrency(amount: number, currency: 'AED' | 'EGP' = 'AED'): string {
+  const locale = currency === 'EGP' ? 'ar-EG' : 'en-AE';
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
-    currency: 'AED',
+    currency: currency,
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);
+}
+
+export function formatSalary(amount: number): string {
+  return formatCurrency(amount, 'EGP');
 }
 
 export function formatDate(date: string | Date): string {
