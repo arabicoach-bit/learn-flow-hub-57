@@ -234,7 +234,7 @@ export default function StudentDetail() {
 
         {/* Add Lesson Dialog */}
         <Dialog open={isAddFreeLessonsOpen} onOpenChange={setIsAddFreeLessonsOpen}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md w-[95vw] sm:w-full max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Add Lesson</DialogTitle>
             </DialogHeader>

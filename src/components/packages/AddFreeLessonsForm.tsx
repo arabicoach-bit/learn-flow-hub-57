@@ -18,8 +18,8 @@ import { cn } from '@/lib/utils';
 const formSchema = z.object({
   lesson_date: z.date({ required_error: 'Please select a date' }),
   lessons: z.coerce.number().min(1, 'Must add at least 1 lesson').max(50, 'Maximum 50 lessons at a time'),
-  lesson_time: z.string().min(1, 'Please select a lesson time'),
-  lesson_duration: z.coerce.number().min(15, 'Minimum 15 minutes').max(180, 'Maximum 180 minutes'),
+  lesson_time: z.string().optional(),
+  lesson_duration: z.coerce.number().min(15, 'Minimum 15 minutes').max(180, 'Maximum 180 minutes').optional(),
   reason: z.string().min(1, 'Please provide a reason for adding lessons'),
 });
 
@@ -42,7 +42,7 @@ export function AddFreeLessonsForm({ studentId, studentName, currentWallet, onSu
       lesson_date: new Date(),
       lessons: 1,
       lesson_time: '',
-      lesson_duration: 30,
+      lesson_duration: undefined,
       reason: '',
     },
   });
@@ -83,8 +83,8 @@ export function AddFreeLessonsForm({ studentId, studentName, currentWallet, onSu
           student_name: studentName,
           lessons_added: values.lessons,
           lesson_date: format(values.lesson_date, 'yyyy-MM-dd'),
-          lesson_time: values.lesson_time,
-          lesson_duration: values.lesson_duration,
+          lesson_time: values.lesson_time || null,
+          lesson_duration: values.lesson_duration || null,
           reason: values.reason,
           old_balance: currentWallet,
           new_balance: newBalance,
@@ -110,128 +110,134 @@ export function AddFreeLessonsForm({ studentId, studentName, currentWallet, onSu
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         {/* Current Balance Info */}
-        <div className="p-4 rounded-lg bg-muted/50 border">
+        <div className="p-3 sm:p-4 rounded-lg bg-muted/50 border">
           <div className="flex items-center gap-3">
-            <Gift className="w-8 h-8 text-primary" />
+            <Gift className="w-6 h-6 sm:w-8 sm:h-8 text-primary flex-shrink-0" />
             <div>
               <p className="text-sm text-muted-foreground">Adding free lessons to</p>
-              <p className="font-semibold">{studentName}</p>
+              <p className="font-semibold text-sm sm:text-base">{studentName}</p>
             </div>
           </div>
           <div className="mt-3 grid grid-cols-2 gap-4 text-sm">
             <div>
               <span className="text-muted-foreground">Current Balance:</span>
-              <span className="ml-2 font-medium">{currentWallet} lessons</span>
+              <span className="ml-1 sm:ml-2 font-medium">{currentWallet}</span>
             </div>
             <div>
               <span className="text-muted-foreground">New Balance:</span>
-              <span className="ml-2 font-medium text-primary">{newBalance} lessons</span>
+              <span className="ml-1 sm:ml-2 font-medium text-primary">{newBalance}</span>
             </div>
           </div>
         </div>
 
-        {/* Lesson Date */}
-        <FormField
-          control={form.control}
-          name="lesson_date"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>Lesson Date</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full pl-3 text-left font-normal",
-                        !field.value && "text-muted-foreground"
-                      )}
-                    >
-                      {field.value ? (
-                        format(field.value, "PPP")
-                      ) : (
-                        <span>Pick a date</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    initialFocus
-                    className={cn("p-3 pointer-events-auto")}
+        {/* Date and Lessons Row */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Lesson Date */}
+          <FormField
+            control={form.control}
+            name="lesson_date"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Lesson Date</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full pl-3 text-left font-normal",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        {field.value ? (
+                          format(field.value, "PPP")
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Number of Lessons */}
+          <FormField
+            control={form.control}
+            name="lessons"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Number of Lessons</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={50}
+                    placeholder="1"
+                    {...field}
                   />
-                </PopoverContent>
-              </Popover>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
-        {/* Number of Lessons */}
-        <FormField
-          control={form.control}
-          name="lessons"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Number of Lessons</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  min={1}
-                  max={50}
-                  placeholder="1"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {/* Time and Duration Row (Optional) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Lesson Time */}
+          <FormField
+            control={form.control}
+            name="lesson_time"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Lesson Time (Optional)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="time"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        {/* Lesson Time */}
-        <FormField
-          control={form.control}
-          name="lesson_time"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Lesson Time</FormLabel>
-              <FormControl>
-                <Input
-                  type="time"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Lesson Duration */}
-        <FormField
-          control={form.control}
-          name="lesson_duration"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Lesson Duration (minutes)</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  min={15}
-                  max={180}
-                  placeholder="30"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          {/* Lesson Duration */}
+          <FormField
+            control={form.control}
+            name="lesson_duration"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Duration (Optional)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min={15}
+                    max={180}
+                    placeholder="30 minutes"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         {/* Reason */}
         <FormField
@@ -243,7 +249,7 @@ export function AddFreeLessonsForm({ studentId, studentName, currentWallet, onSu
               <FormControl>
                 <Textarea
                   placeholder="e.g., Compensation for cancelled class, promotional offer, loyalty bonus..."
-                  className="min-h-[80px]"
+                  className="min-h-[60px] sm:min-h-[80px]"
                   {...field}
                 />
               </FormControl>
@@ -253,8 +259,8 @@ export function AddFreeLessonsForm({ studentId, studentName, currentWallet, onSu
         />
 
         {/* Submit Button */}
-        <div className="flex justify-end gap-3">
-          <Button type="submit" disabled={isSubmitting} className="gap-2">
+        <div className="flex justify-end pt-2">
+          <Button type="submit" disabled={isSubmitting} className="gap-2 w-full sm:w-auto">
             {isSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
