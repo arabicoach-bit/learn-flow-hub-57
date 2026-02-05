@@ -25,7 +25,7 @@ import {
 } from '@/hooks/use-teacher-dashboard';
 import { TeacherLessonCard } from '@/components/teacher/TeacherLessonCard';
 import { TeacherSalaryCard } from '@/components/teacher/TeacherSalaryCard';
-import { formatCurrency } from '@/lib/wallet-utils';
+ import { formatSalary } from '@/lib/wallet-utils';
 import { format } from 'date-fns';
 
 export default function TeacherDashboard() {
@@ -90,7 +90,7 @@ export default function TeacherDashboard() {
                 <div className="text-center p-4 bg-background/50 rounded-lg">
                   <Wallet className="w-6 h-6 mx-auto text-emerald-500 mb-2" />
                   <p className="text-3xl font-bold text-emerald-400">
-                    {formatCurrency(stats?.currentMonth?.salary_earned || 0)}
+                    {formatSalary(stats?.currentMonth?.salary_earned || 0)}
                   </p>
                   <p className="text-sm text-muted-foreground">Salary Earned</p>
                 </div>
