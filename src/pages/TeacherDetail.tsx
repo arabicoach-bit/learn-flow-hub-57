@@ -190,7 +190,7 @@ export default function TeacherDetail() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Rate per Lesson ($)</Label>
+                  <Label>Rate per Lesson (EGP)</Label>
                   <Input
                     type="number"
                     step="0.01"

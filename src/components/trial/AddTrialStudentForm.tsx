@@ -337,15 +337,15 @@ export function AddTrialStudentForm({ open, onOpenChange }: AddTrialStudentFormP
                       <SelectContent>
                         {teachers?.map(teacher => (
                           <SelectItem key={teacher.teacher_id} value={teacher.teacher_id}>
-                            {teacher.name} (AED {teacher.rate_per_lesson}/lesson)
+                            {teacher.name} (EGP {teacher.rate_per_lesson}/lesson)
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                     {selectedTeacher && (
                       <FormDescription className="text-xs">
-                        Teacher gets AED {(selectedTeacher.rate_per_lesson / 2).toFixed(2)}, 
-                        Admin gets AED {(selectedTeacher.rate_per_lesson / 2).toFixed(2)}
+                        Teacher gets EGP {(selectedTeacher.rate_per_lesson / 2).toFixed(2)}, 
+                        Admin gets EGP {(selectedTeacher.rate_per_lesson / 2).toFixed(2)}
                       </FormDescription>
                     )}
                     <FormMessage />

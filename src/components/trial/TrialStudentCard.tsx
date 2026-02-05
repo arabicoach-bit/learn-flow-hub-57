@@ -163,11 +163,11 @@ export function TrialStudentCard({ student, onUpdateStatus, onUpdateResult, onEd
               <div className="flex items-center gap-4 text-xs">
                 <div className="flex items-center gap-1">
                   <DollarSign className="w-3 h-3 text-green-400" />
-                  <span>Teacher: AED {student.teacher_payment_amount}</span>
+                  <span>Teacher: EGP {student.teacher_payment_amount}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <DollarSign className="w-3 h-3 text-blue-400" />
-                  <span>Admin: AED {student.admin_payment_amount}</span>
+                  <span>Admin: EGP {student.admin_payment_amount}</span>
                 </div>
               </div>
             )}
