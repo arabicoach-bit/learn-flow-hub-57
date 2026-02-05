@@ -21,12 +21,14 @@ import {
   useTomorrowsTeacherLessons, 
   useWeekTeacherLessons,
   useTeacherMonthlyStats,
-  useTeacherStudents
+  useTeacherStudents,
+  usePast7DaysUnmarkedLessons
 } from '@/hooks/use-teacher-dashboard';
 import { TeacherLessonCard } from '@/components/teacher/TeacherLessonCard';
 import { TeacherSalaryCard } from '@/components/teacher/TeacherSalaryCard';
  import { formatSalary } from '@/lib/wallet-utils';
 import { format } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 
 export default function TeacherDashboard() {
   const { profile } = useAuth();
@@ -39,6 +41,7 @@ export default function TeacherDashboard() {
   const { data: weekLessons, isLoading: weekLoading } = useWeekTeacherLessons();
   const { data: stats, isLoading: statsLoading } = useTeacherMonthlyStats();
   const { data: students, isLoading: studentsLoading } = useTeacherStudents();
+  const { data: past7DaysLessons, isLoading: past7DaysLoading, refetch: refetchPast7Days } = usePast7DaysUnmarkedLessons();
 
   const isLoading = todaysLoading || statsLoading || studentsLoading;
 
@@ -47,7 +50,12 @@ export default function TeacherDashboard() {
 
   const handleLessonMarked = () => {
     refetchToday();
+    refetchPast7Days();
   };
+
+  // Filter past lessons (not including today) for the "pending" section
+  const today = format(new Date(), 'yyyy-MM-dd');
+  const pastUnmarkedLessons = past7DaysLessons?.filter(l => l.scheduled_date < today) || [];
 
   return (
     <TeacherLayout>
@@ -129,7 +137,7 @@ export default function TeacherDashboard() {
         </Card>
 
         {/* Today's Lessons */}
-        <Card className="glass-card border-blue-500/20">
+        <Card className={`glass-card border-blue-500/20 ${todaysLessons && todaysLessons.length > 0 ? '' : ''}`}>
           <CardHeader>
             <CardTitle className="font-display flex items-center gap-2 text-blue-400">
               <Calendar className="w-5 h-5" />
@@ -161,6 +169,61 @@ export default function TeacherDashboard() {
             )}
           </CardContent>
         </Card>
+
+        {/* Past 7 Days Unmarked Lessons */}
+        {pastUnmarkedLessons.length > 0 && (
+          <Card className="glass-card border-orange-500/30 bg-orange-500/5">
+            <CardHeader>
+              <CardTitle className="font-display flex items-center gap-2 text-orange-400">
+                <AlertTriangle className="w-5 h-5" />
+                Pending Lessons to Mark ({pastUnmarkedLessons.length})
+              </CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                These lessons from the past 7 days need to be marked. They will expire after 7 days.
+              </p>
+            </CardHeader>
+            <CardContent>
+              {past7DaysLoading ? (
+                <div className="space-y-3">
+                  {Array.from({ length: 2 }).map((_, i) => (
+                    <Skeleton key={i} className="h-24 rounded-lg" />
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {/* Group by date */}
+                  {Object.entries(
+                    pastUnmarkedLessons.reduce((acc, lesson) => {
+                      const date = lesson.scheduled_date;
+                      if (!acc[date]) acc[date] = [];
+                      acc[date].push(lesson);
+                      return acc;
+                    }, {} as Record<string, typeof pastUnmarkedLessons>)
+                  ).map(([date, lessons]) => (
+                    <div key={date} className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm font-medium text-orange-400">
+                        <Calendar className="w-4 h-4" />
+                        {format(new Date(date), 'EEEE, MMMM d')}
+                        <Badge variant="outline" className="text-xs border-orange-500/30 text-orange-400">
+                          {formatDistanceToNow(new Date(date), { addSuffix: true })}
+                        </Badge>
+                      </div>
+                      {lessons.map((lesson) => (
+                        <TeacherLessonCard 
+                          key={lesson.scheduled_lesson_id} 
+                          lesson={lesson}
+                          onLessonMarked={handleLessonMarked}
+                          showDate={false}
+                          date={lesson.scheduled_date}
+                        />
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Tomorrow's Lessons */}
         <Card className="glass-card border-green-500/20">
