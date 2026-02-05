@@ -171,6 +171,9 @@ export default function Notifications() {
           <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/10 text-amber-500">
             <AlertTriangle className="w-3 h-3" /> Grace Mode (High)
           </span>
+          <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-orange-500/10 text-orange-500">
+            ⏰ Unmarked Lessons (High)
+          </span>
           <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-yellow-500/10 text-yellow-500">
             💰 Low Balance (Medium)
           </span>

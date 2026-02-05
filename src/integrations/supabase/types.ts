@@ -1189,6 +1189,7 @@ export type Database = {
         | "blocked"
         | "renewal_due"
         | "followup_due"
+        | "unmarked_lesson_reminder"
       package_status: "Active" | "Completed"
       payroll_status: "Draft" | "Approved" | "Paid"
       student_status: "Active" | "Grace" | "Blocked"
@@ -1330,6 +1331,7 @@ export const Constants = {
         "blocked",
         "renewal_due",
         "followup_due",
+        "unmarked_lesson_reminder",
       ],
       package_status: ["Active", "Completed"],
       payroll_status: ["Draft", "Approved", "Paid"],
