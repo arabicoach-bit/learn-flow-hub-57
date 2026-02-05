@@ -7,11 +7,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { toast } from 'sonner';
-import { Loader2, Gift } from 'lucide-react';
+import { Loader2, Gift, CalendarIcon } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 const formSchema = z.object({
+  lesson_date: z.date({ required_error: 'Please select a date' }),
   lessons: z.coerce.number().min(1, 'Must add at least 1 lesson').max(50, 'Maximum 50 lessons at a time'),
   lesson_time: z.string().min(1, 'Please select a lesson time'),
   lesson_duration: z.coerce.number().min(15, 'Minimum 15 minutes').max(180, 'Maximum 180 minutes'),
@@ -34,6 +39,7 @@ export function AddFreeLessonsForm({ studentId, studentName, currentWallet, onSu
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      lesson_date: new Date(),
       lessons: 1,
       lesson_time: '',
       lesson_duration: 30,
@@ -76,6 +82,7 @@ export function AddFreeLessonsForm({ studentId, studentName, currentWallet, onSu
         details: {
           student_name: studentName,
           lessons_added: values.lessons,
+          lesson_date: format(values.lesson_date, 'yyyy-MM-dd'),
           lesson_time: values.lesson_time,
           lesson_duration: values.lesson_duration,
           reason: values.reason,
@@ -124,6 +131,47 @@ export function AddFreeLessonsForm({ studentId, studentName, currentWallet, onSu
             </div>
           </div>
         </div>
+
+        {/* Lesson Date */}
+        <FormField
+          control={form.control}
+          name="lesson_date"
+          render={({ field }) => (
+            <FormItem className="flex flex-col">
+              <FormLabel>Lesson Date</FormLabel>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <FormControl>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full pl-3 text-left font-normal",
+                        !field.value && "text-muted-foreground"
+                      )}
+                    >
+                      {field.value ? (
+                        format(field.value, "PPP")
+                      ) : (
+                        <span>Pick a date</span>
+                      )}
+                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={field.value}
+                    onSelect={field.onChange}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         {/* Number of Lessons */}
         <FormField
