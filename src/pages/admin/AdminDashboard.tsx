@@ -114,13 +114,13 @@ export default function AdminDashboard() {
                 variant="success"
               />
               <MetricCard
-                title="Grace Period"
+                title="Temporary Stop"
                 value={stats?.graceStudents || 0}
                 icon={<AlertTriangle className="w-6 h-6" />}
                 variant="warning"
               />
               <MetricCard
-                title="Blocked"
+                title="Left"
                 value={stats?.blockedStudents || 0}
                 icon={<AlertTriangle className="w-6 h-6" />}
                 variant="danger"
