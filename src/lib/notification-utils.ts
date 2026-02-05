@@ -17,6 +17,8 @@ export function getNotificationPriority(type: string): number {
       return 4;
     case 'grace_mode':
       return 3;
+    case 'unmarked_lesson_reminder':
+      return 3;
     case 'low_balance':
       return 2;
     case 'followup_due':
@@ -71,6 +73,14 @@ export function getNotificationStyles(type: string) {
         badgeClass: 'bg-primary/20 text-primary border-primary/30',
         icon: '📞',
         priority: 'normal',
+      };
+    case 'unmarked_lesson_reminder':
+      return {
+        borderColor: 'border-orange-500/50',
+        bgColor: 'bg-orange-500/10',
+        badgeClass: 'bg-orange-500/20 text-orange-500 border-orange-500/30',
+        icon: '⏰',
+        priority: 'high',
       };
     default:
       return {
