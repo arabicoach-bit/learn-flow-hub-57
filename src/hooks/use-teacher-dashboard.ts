@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
+import { format, startOfMonth, endOfMonth, subMonths, subDays } from 'date-fns';
 
 export interface TeacherLesson {
   scheduled_lesson_id: string;
@@ -70,6 +70,59 @@ export function useTodaysTeacherLessons() {
         program_name: lesson.students?.programs?.name || null,
         student_level: lesson.students?.student_level || null,
       })) as TeacherLesson[];
+    },
+    enabled: !!teacherId,
+    refetchInterval: 60000, // Refresh every minute
+  });
+}
+
+export function usePast7DaysUnmarkedLessons() {
+  const { profile } = useAuth();
+  const teacherId = profile?.teacher_id;
+
+  return useQuery({
+    queryKey: ['teacher-past-7-days-unmarked', teacherId],
+    queryFn: async () => {
+      if (!teacherId) return [];
+      
+      const today = new Date();
+      const sevenDaysAgo = subDays(today, 7);
+      
+      const { data, error } = await supabase
+        .from('scheduled_lessons')
+        .select(`
+          scheduled_lesson_id,
+          teacher_id,
+          student_id,
+          scheduled_date,
+          scheduled_time,
+          duration_minutes,
+          status,
+          students!inner(name, wallet_balance, status, student_level, program_id, programs(name))
+        `)
+        .eq('teacher_id', teacherId)
+        .eq('status', 'scheduled')
+        .gte('scheduled_date', format(sevenDaysAgo, 'yyyy-MM-dd'))
+        .lte('scheduled_date', format(today, 'yyyy-MM-dd'))
+        .order('scheduled_date', { ascending: false })
+        .order('scheduled_time');
+
+      if (error) throw error;
+
+      return (data || []).map((lesson: any) => ({
+        scheduled_lesson_id: lesson.scheduled_lesson_id,
+        teacher_id: lesson.teacher_id,
+        student_id: lesson.student_id,
+        student_name: lesson.students?.name || 'Unknown',
+        wallet_balance: lesson.students?.wallet_balance || 0,
+        student_status: lesson.students?.status || 'Active',
+        scheduled_date: lesson.scheduled_date,
+        scheduled_time: lesson.scheduled_time,
+        duration_minutes: lesson.duration_minutes,
+        status: lesson.status,
+        program_name: lesson.students?.programs?.name || null,
+        student_level: lesson.students?.student_level || null,
+      })) as (TeacherLesson & { scheduled_date: string })[];
     },
     enabled: !!teacherId,
     refetchInterval: 60000, // Refresh every minute
