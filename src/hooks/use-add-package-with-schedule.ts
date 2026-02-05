@@ -82,7 +82,6 @@ export function useAddPackageWithSchedule() {
       }
 
       // 6. Generate all scheduled lessons using the database function
-      const scheduleData = input.weekly_schedule.map(s => ({ day: s.day, time: s.time }));
       const { data: generatedSchedule, error: generateError } = await supabase.rpc(
         'generate_package_schedule',
         {
@@ -93,7 +92,7 @@ export function useAddPackageWithSchedule() {
           p_start_date: input.start_date,
           p_total_lessons: newLessons,
           p_lesson_duration: input.lesson_duration,
-          p_schedule_days: JSON.stringify(scheduleData),
+          p_schedule_days: input.weekly_schedule.map(s => ({ day: s.day, time: s.time })),
         }
       );
 
