@@ -164,6 +164,7 @@ export function useUpdateStudent() {
       program_id?: string | null;
       student_level?: string | null;
       teacher_id?: string | null;
+      status?: 'Active' | 'Grace' | 'Blocked';
     }) => {
       const { error } = await supabase
         .from('students')
