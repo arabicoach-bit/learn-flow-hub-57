@@ -65,8 +65,7 @@ export function getStatusColor(status: string): string {
 }
 
 export function formatCurrency(amount: number, currency: 'AED' | 'EGP' = 'AED'): string {
-  const locale = currency === 'EGP' ? 'ar-EG' : 'en-AE';
-  return new Intl.NumberFormat(locale, {
+  return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: currency,
     minimumFractionDigits: 0,
