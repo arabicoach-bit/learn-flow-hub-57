@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Download, Filter } from 'lucide-react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
-import { useStudents, useCreateStudent } from '@/hooks/use-students';
+import { useStudents, useCreateStudent, useUpdateStudent } from '@/hooks/use-students';
 import { useTeachers } from '@/hooks/use-teachers';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,6 +26,7 @@ export default function Students() {
   const { data: students, isLoading } = useStudents({ search, status: statusFilter || undefined, teacher_id: teacherFilter || undefined });
   const { data: teachers } = useTeachers();
   const createStudent = useCreateStudent();
+  const updateStudent = useUpdateStudent();
 
   const PROGRAMMES = ['Arabic A', 'Arabic B', 'IGCSE', 'Adult Course', 'Islamic Arabic'];
 
@@ -256,10 +257,34 @@ export default function Students() {
                           {paymentStatus}
                         </Badge>
                       </td>
-                      <td>
-                        <Badge variant="outline" className={getStatusBadgeClass(student.status)}>
-                          {getStatusDisplayLabel(student.status)}
-                        </Badge>
+                      <td onClick={(e) => e.stopPropagation()}>
+                        <Select
+                          value={student.status}
+                          onValueChange={(value: 'Active' | 'Grace' | 'Blocked') => {
+                            updateStudent.mutate(
+                              { studentId: student.student_id, status: value },
+                              {
+                                onSuccess: () => toast({ title: `Status updated to ${getStatusDisplayLabel(value)}` }),
+                                onError: () => toast({ title: 'Failed to update status', variant: 'destructive' }),
+                              }
+                            );
+                          }}
+                        >
+                          <SelectTrigger className="w-[130px] h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Active">
+                              <Badge variant="outline" className={getStatusBadgeClass('Active')}>Active</Badge>
+                            </SelectItem>
+                            <SelectItem value="Grace">
+                              <Badge variant="outline" className={getStatusBadgeClass('Grace')}>{getStatusDisplayLabel('Grace')}</Badge>
+                            </SelectItem>
+                            <SelectItem value="Blocked">
+                              <Badge variant="outline" className={getStatusBadgeClass('Blocked')}>{getStatusDisplayLabel('Blocked')}</Badge>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
                       </td>
                     </tr>
                   );
