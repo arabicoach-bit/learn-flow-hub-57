@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { formatCurrency } from '@/lib/wallet-utils';
+import { formatSalary } from '@/lib/wallet-utils';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
@@ -558,7 +558,7 @@ export default function Teachers() {
                         </div>
                       </td>
                       <td className="hidden sm:table-cell">{teacher.phone || '-'}</td>
-                      <td className="hidden md:table-cell">{formatCurrency(teacher.rate_per_lesson)}</td>
+                      <td className="hidden md:table-cell">{formatSalary(teacher.rate_per_lesson)}</td>
                       <td>
                         <Badge variant={isActive ? 'default' : 'secondary'}>
                           {isActive ? 'Active' : 'Inactive'}
@@ -665,16 +665,16 @@ export default function Teachers() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="rate">Rate per Lesson *</Label>
+              <Label htmlFor="rate">Rate per Lesson (EGP) *</Label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">D</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">EGP</span>
                 <Input 
                   id="rate"
                   type="number" 
                   step="0.01"
                   min="0"
                   placeholder="200"
-                  className="pl-8"
+                  className="pl-12"
                   value={formData.rate_per_lesson} 
                   onChange={(e) => setFormData({ ...formData, rate_per_lesson: e.target.value })} 
                   required 
