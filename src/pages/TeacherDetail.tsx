@@ -1,12 +1,13 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Mail, Phone, DollarSign, BookOpen, Users, Receipt, GraduationCap } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, DollarSign, BookOpen, Users, Receipt, GraduationCap, Clock, CalendarDays, TrendingUp } from 'lucide-react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useTeacher, useUpdateTeacher } from '@/hooks/use-teachers';
-import { useClasses } from '@/hooks/use-classes';
+
 import { useLessons } from '@/hooks/use-lessons';
 import { useStudents } from '@/hooks/use-students';
+import { useTeacherLiveStats } from '@/hooks/use-teacher-live-stats';
 import { Button } from '@/components/ui/button';
-import { getWalletColor, getStatusDisplayLabel } from '@/lib/wallet-utils';
+import { getWalletColor, getStatusDisplayLabel, getStatusBadgeClass } from '@/lib/wallet-utils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -52,10 +53,11 @@ export default function TeacherDetail() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { data: teacher, isLoading: teacherLoading } = useTeacher(id || '');
-  const { data: allClasses } = useClasses();
+  
   const { data: lessons } = useLessons({ teacher_id: id });
   const { data: payroll } = useTeacherPayroll(id || '');
   const { data: allStudents } = useStudents();
+  const { data: liveStats, isLoading: liveStatsLoading } = useTeacherLiveStats(id || '');
   
   const teacherStudents = allStudents?.filter(s => s.teacher_id === id) || [];
   const updateTeacher = useUpdateTeacher();
@@ -79,7 +81,7 @@ export default function TeacherDetail() {
     }
   }, [teacher]);
 
-  const teacherClasses = allClasses?.filter(c => c.teacher_id === id) || [];
+  
 
   const handleSave = async () => {
     if (!id) return;
@@ -206,12 +208,13 @@ export default function TeacherDetail() {
           </Card>
         )}
 
-        <div className="grid grid-cols-4 gap-4">
+        {/* Live Performance Metrics */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <Card className="glass-card">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
-                <div className="p-3 rounded-lg bg-emerald-500/10">
-                  <GraduationCap className="w-5 h-5 text-emerald-500" />
+                <div className="p-3 rounded-lg bg-primary/10">
+                  <GraduationCap className="w-5 h-5 text-primary" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{teacherStudents.length}</p>
@@ -223,12 +226,51 @@ export default function TeacherDetail() {
           <Card className="glass-card">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
+                <div className="p-3 rounded-lg bg-accent">
+                  <CalendarDays className="w-5 h-5 text-accent-foreground" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{liveStatsLoading ? '...' : liveStats?.todayLessons.length || 0}</p>
+                  <p className="text-sm text-muted-foreground">Today's Lessons</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="glass-card">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-lg bg-secondary">
+                  <Clock className="w-5 h-5 text-secondary-foreground" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{liveStatsLoading ? '...' : `${liveStats?.weeklyHours || 0}h`}</p>
+                  <p className="text-sm text-muted-foreground">Weekly Hours</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="glass-card">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-lg bg-muted">
+                  <BookOpen className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{liveStatsLoading ? '...' : `${liveStats?.monthlyHours || 0}h`}</p>
+                  <p className="text-sm text-muted-foreground">Monthly Hours</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="glass-card">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
                 <div className="p-3 rounded-lg bg-primary/10">
-                  <Users className="w-5 h-5 text-primary" />
+                  <TrendingUp className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{teacherClasses.length}</p>
-                  <p className="text-sm text-muted-foreground">Classes</p>
+                  <p className="text-2xl font-bold">{liveStatsLoading ? '...' : liveStats?.monthlyLessonsCount || 0}</p>
+                  <p className="text-sm text-muted-foreground">Lessons This Month</p>
                 </div>
               </div>
             </CardContent>
@@ -236,37 +278,68 @@ export default function TeacherDetail() {
           <Card className="glass-card">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
-                <div className="p-3 rounded-lg bg-wallet-positive/10">
-                  <BookOpen className="w-5 h-5 text-wallet-positive" />
+                <div className="p-3 rounded-lg bg-accent">
+                  <Receipt className="w-5 h-5 text-accent-foreground" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{lessons?.length || 0}</p>
-                  <p className="text-sm text-muted-foreground">Lessons Taught</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="glass-card">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="p-3 rounded-lg bg-wallet-warning/10">
-                  <Receipt className="w-5 h-5 text-wallet-warning" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">
-                    {formatSalary(payroll?.reduce((sum, p) => sum + p.amount_due, 0) || 0)}
-                  </p>
-                  <p className="text-sm text-muted-foreground">Total Payroll</p>
+                  <p className="text-2xl font-bold">{liveStatsLoading ? '...' : formatSalary(liveStats?.monthlySalary || 0)}</p>
+                  <p className="text-sm text-muted-foreground">Salary This Month</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
+        {/* Today's Lessons */}
+        {liveStats && liveStats.todayLessons.length > 0 && (
+          <Card className="glass-card">
+            <CardHeader>
+              <CardTitle className="font-display flex items-center gap-2 text-lg">
+                <CalendarDays className="w-5 h-5" />
+                Today's Lessons
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {liveStats.todayLessons.map((lesson) => (
+                  <div key={lesson.scheduled_lesson_id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border/50">
+                    <div className="flex items-center gap-3">
+                      <div className="text-center min-w-[60px]">
+                        <p className="text-sm font-bold">{lesson.scheduled_time?.slice(0, 5)}</p>
+                        <p className="text-xs text-muted-foreground">{lesson.duration_minutes} min</p>
+                      </div>
+                      <div>
+                        <p className="font-medium">{lesson.student_name}</p>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          {lesson.program_name && <span>{lesson.program_name}</span>}
+                          {lesson.student_level && <span>• {lesson.student_level}</span>}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {lesson.wallet_balance !== null && (
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded ${getWalletColor(lesson.wallet_balance)}`}>
+                          {lesson.wallet_balance} lessons
+                        </span>
+                      )}
+                      <Badge variant="outline" className={
+                        lesson.status === 'completed' ? 'bg-wallet-positive/20 text-wallet-positive' :
+                        lesson.status === 'scheduled' ? 'bg-primary/20 text-primary' :
+                        'bg-muted text-muted-foreground'
+                      }>
+                        {lesson.status === 'completed' ? 'Done' : lesson.status === 'scheduled' ? 'Pending' : lesson.status}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <Tabs defaultValue="students" className="space-y-4">
           <TabsList>
             <TabsTrigger value="students">Students ({teacherStudents.length})</TabsTrigger>
-            <TabsTrigger value="classes">Classes ({teacherClasses.length})</TabsTrigger>
             <TabsTrigger value="lessons">Lessons ({lessons?.length || 0})</TabsTrigger>
             <TabsTrigger value="payroll">Payroll ({payroll?.length || 0})</TabsTrigger>
           </TabsList>
@@ -335,26 +408,6 @@ export default function TeacherDetail() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="classes">
-            <Card className="glass-card">
-              <CardContent className="pt-6">
-                {teacherClasses.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">No classes assigned</p>
-                ) : (
-                  <div className="space-y-3">
-                    {teacherClasses.map((cls) => (
-                      <div key={cls.class_id} className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
-                        <div>
-                          <p className="font-medium">{cls.name}</p>
-                          <p className="text-sm text-muted-foreground">{cls.schedule || 'No schedule set'}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           <TabsContent value="lessons">
             <Card className="glass-card overflow-hidden">

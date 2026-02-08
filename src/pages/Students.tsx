@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Download } from 'lucide-react';
+import { Plus, Search, Download, Filter } from 'lucide-react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useStudents, useCreateStudent } from '@/hooks/use-students';
 import { useTeachers } from '@/hooks/use-teachers';
@@ -19,10 +19,11 @@ export default function Students() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
+  const [teacherFilter, setTeacherFilter] = useState<string>('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
 
-  const { data: students, isLoading } = useStudents({ search, status: statusFilter || undefined });
+  const { data: students, isLoading } = useStudents({ search, status: statusFilter || undefined, teacher_id: teacherFilter || undefined });
   const { data: teachers } = useTeachers();
   const createStudent = useCreateStudent();
 
@@ -165,6 +166,15 @@ export default function Students() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input placeholder="Search students..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
           </div>
+          <Select value={teacherFilter || 'all'} onValueChange={(v) => setTeacherFilter(v === 'all' ? '' : v)}>
+            <SelectTrigger className="w-48"><SelectValue placeholder="All Teachers" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Teachers</SelectItem>
+              {teachers?.map((t) => (
+                <SelectItem key={t.teacher_id} value={t.teacher_id}>{t.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Select value={statusFilter || 'all'} onValueChange={(v) => setStatusFilter(v === 'all' ? '' : v)}>
             <SelectTrigger className="w-40"><SelectValue placeholder="All Status" /></SelectTrigger>
             <SelectContent>
