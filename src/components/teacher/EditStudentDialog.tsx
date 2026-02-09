@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useUpdateStudent, Student } from '@/hooks/use-students';
 import { usePrograms } from '@/hooks/use-programs';
+import { useTeachers } from '@/hooks/use-teachers';
 import { useToast } from '@/hooks/use-toast';
 
 interface EditStudentDialogProps {
@@ -18,6 +19,7 @@ export function EditStudentDialog({ student, open, onOpenChange }: EditStudentDi
   const { toast } = useToast();
   const updateStudent = useUpdateStudent();
   const { data: programs } = usePrograms();
+  const { data: teachers } = useTeachers();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -29,6 +31,7 @@ export function EditStudentDialog({ student, open, onOpenChange }: EditStudentDi
     year_group: '',
     program_id: '',
     student_level: '',
+    teacher_id: '',
   });
 
   useEffect(() => {
@@ -43,6 +46,7 @@ export function EditStudentDialog({ student, open, onOpenChange }: EditStudentDi
         year_group: student.year_group || '',
         program_id: student.program_id || '',
         student_level: student.student_level || '',
+        teacher_id: student.teacher_id || '',
       });
     }
   }, [student]);
@@ -63,6 +67,7 @@ export function EditStudentDialog({ student, open, onOpenChange }: EditStudentDi
         year_group: formData.year_group || null,
         program_id: formData.program_id || null,
         student_level: formData.student_level || null,
+        teacher_id: formData.teacher_id || null,
       });
 
       toast({
@@ -181,6 +186,22 @@ export function EditStudentDialog({ student, open, onOpenChange }: EditStudentDi
                 <SelectItem value="Intermediate">Intermediate</SelectItem>
                 <SelectItem value="Upper Intermediate">Upper Intermediate</SelectItem>
                 <SelectItem value="Advanced">Advanced</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Assigned Teacher</Label>
+            <Select value={formData.teacher_id} onValueChange={(v) => setFormData({ ...formData, teacher_id: v })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select teacher" />
+              </SelectTrigger>
+              <SelectContent>
+                {teachers?.filter(t => t.is_active).map((teacher) => (
+                  <SelectItem key={teacher.teacher_id} value={teacher.teacher_id}>
+                    {teacher.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
