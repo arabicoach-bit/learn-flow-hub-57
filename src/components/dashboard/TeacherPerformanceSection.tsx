@@ -15,26 +15,9 @@ import { useNavigate } from 'react-router-dom';
 import { 
   Users, 
   Clock, 
-  TrendingUp,
-  Award,
-  Star
+  TrendingUp
 } from 'lucide-react';
 import { format } from 'date-fns';
-
-function getPerformanceBadgeClass(rating: string): string {
-  switch (rating) {
-    case 'Excellent':
-      return 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/30';
-    case 'Good':
-      return 'bg-blue-500/20 text-blue-700 dark:text-blue-300 border-blue-500/30';
-    case 'Average':
-      return 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/30';
-    case 'Poor':
-      return 'bg-red-500/20 text-red-700 dark:text-red-300 border-red-500/30';
-    default:
-      return 'bg-muted text-muted-foreground';
-  }
-}
 
 export function TeacherPerformanceSection() {
   const navigate = useNavigate();
@@ -81,10 +64,12 @@ export function TeacherPerformanceSection() {
     (acc, t) => ({
       totalHours: acc.totalHours + t.totalTeachingHours,
       totalSalary: acc.totalSalary + t.salary,
-      totalStudents: acc.totalStudents + t.activeStudents,
-      totalBonus: acc.totalBonus + t.bonus,
+      totalActiveStudents: acc.totalActiveStudents + t.activeStudents,
+      totalTempStop: acc.totalTempStop + t.temporaryStopStudents,
+      totalLeft: acc.totalLeft + t.leftStudents,
+      totalTrialLessons: acc.totalTrialLessons + t.trialLessons,
     }),
-    { totalHours: 0, totalSalary: 0, totalStudents: 0, totalBonus: 0 }
+    { totalHours: 0, totalSalary: 0, totalActiveStudents: 0, totalTempStop: 0, totalLeft: 0, totalTrialLessons: 0 }
   );
 
   const currentMonth = format(new Date(), 'MMMM yyyy');
@@ -122,14 +107,14 @@ export function TeacherPerformanceSection() {
               <Users className="w-4 h-4" />
               <span className="text-xs font-medium">Active Students</span>
             </div>
-            <p className="text-xl font-bold">{totals.totalStudents}</p>
+            <p className="text-xl font-bold">{totals.totalActiveStudents}</p>
           </div>
           <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20">
             <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 mb-1">
-              <Award className="w-4 h-4" />
-              <span className="text-xs font-medium">Total Bonus</span>
+              <Users className="w-4 h-4" />
+              <span className="text-xs font-medium">Trial Lessons</span>
             </div>
-            <p className="text-xl font-bold">{formatSalary(totals.totalBonus)}</p>
+            <p className="text-xl font-bold">{totals.totalTrialLessons}</p>
           </div>
         </div>
 
@@ -142,10 +127,10 @@ export function TeacherPerformanceSection() {
                 <TableHead className="text-center">Rate/hr</TableHead>
                 <TableHead className="text-center">Hours</TableHead>
                 <TableHead className="text-center">Salary</TableHead>
-                <TableHead className="text-center">Students</TableHead>
-                <TableHead className="text-center">Retention</TableHead>
-                <TableHead className="text-center">Rating</TableHead>
-                <TableHead className="text-center">Bonus</TableHead>
+                <TableHead className="text-center">Active</TableHead>
+                <TableHead className="text-center">Temp. Stopped</TableHead>
+                <TableHead className="text-center">Left</TableHead>
+                <TableHead className="text-center">Trial Lessons</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -176,34 +161,24 @@ export function TeacherPerformanceSection() {
                     {formatSalary(teacher.salary)}
                   </TableCell>
                   <TableCell className="text-center">
-                    <Badge variant="outline">{teacher.activeStudents}</Badge>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <span className={
-                      teacher.retentionRate >= 90 
-                        ? 'text-emerald-600' 
-                        : teacher.retentionRate >= 70 
-                          ? 'text-amber-600' 
-                          : 'text-red-600'
-                    }>
-                      {teacher.retentionRate.toFixed(0)}%
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Badge 
-                      variant="outline" 
-                      className={getPerformanceBadgeClass(teacher.performanceRating)}
-                    >
-                      {teacher.performanceRating === 'Excellent' && <Star className="w-3 h-3 mr-1" />}
-                      {teacher.performanceRating}
+                    <Badge variant="outline" className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30">
+                      {teacher.activeStudents}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-center font-medium">
-                    {teacher.bonus > 0 ? (
-                      <span className="text-emerald-600">{formatSalary(teacher.bonus)}</span>
-                    ) : (
-                      '-'
-                    )}
+                  <TableCell className="text-center">
+                    <Badge variant="outline" className="bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30">
+                      {teacher.temporaryStopStudents}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <Badge variant="outline" className="bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/30">
+                      {teacher.leftStudents}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <Badge variant="outline" className="bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30">
+                      {teacher.trialLessons}
+                    </Badge>
                   </TableCell>
                 </TableRow>
               ))}
@@ -214,8 +189,8 @@ export function TeacherPerformanceSection() {
         {/* Footer totals */}
         <div className="flex justify-end">
           <div className="text-sm text-muted-foreground">
-            <span className="font-medium">Quarter Total: </span>
-            {formatSalary(totals.totalSalary + totals.totalBonus)} (incl. bonus)
+            <span className="font-medium">Total Salary: </span>
+            {formatSalary(totals.totalSalary)}
           </div>
         </div>
       </CardContent>

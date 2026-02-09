@@ -40,15 +40,9 @@ export interface TeacherPerformance {
   salary: number;
   // Student metrics
   activeStudents: number;
-  studentsLeft: number;
-  retentionRate: number;
-  // Trial metrics
-  trialsScheduled: number;
-  successfulRegistrations: number;
-  trialConversionRate: number;
-  // Performance
-  performanceRating: 'Excellent' | 'Good' | 'Average' | 'Poor';
-  bonus: number;
+  temporaryStopStudents: number;
+  leftStudents: number;
+  trialLessons: number;
 }
 
 export interface AdminDashboardStats {
@@ -170,30 +164,26 @@ export function useTeacherPerformance() {
 
       if (studentsError) throw studentsError;
 
+      // Fetch trial students per teacher
+      const { data: trialStudents, error: trialError } = await supabase
+        .from('trial_students')
+        .select('trial_id, teacher_id, status')
+        .eq('status', 'Scheduled');
+
+      if (trialError) throw trialError;
+
       // Calculate performance for each teacher
       const performance: TeacherPerformance[] = teachers?.map((teacher) => {
         const teacherLessons = lessons?.filter(l => l.teacher_id === teacher.teacher_id) || [];
         const teacherStudents = students?.filter(s => s.teacher_id === teacher.teacher_id) || [];
-        const activeTeacherStudents = teacherStudents.filter(s => s.status === 'Active' || s.status === 'Grace');
+        const activeTeacherStudents = teacherStudents.filter(s => s.status === 'Active');
+        const temporaryStopStudents = teacherStudents.filter(s => s.status === 'Grace').length;
+        const leftStudents = teacherStudents.filter(s => s.status === 'Blocked').length;
+        const trialLessons = trialStudents?.filter(t => t.teacher_id === teacher.teacher_id).length || 0;
 
         // Assuming 45min average lesson duration
         const totalTeachingHours = teacherLessons.length * 0.75;
         const salary = totalTeachingHours * (teacher.rate_per_lesson || 0);
-
-        // Calculate retention (students that haven't left)
-        const retentionRate = teacherStudents.length > 0 
-          ? (activeTeacherStudents.length / teacherStudents.length) * 100 
-          : 100;
-
-        // Performance rating based on retention and lessons
-        let performanceRating: TeacherPerformance['performanceRating'] = 'Average';
-        if (retentionRate >= 90 && teacherLessons.length >= 20) {
-          performanceRating = 'Excellent';
-        } else if (retentionRate >= 75 && teacherLessons.length >= 10) {
-          performanceRating = 'Good';
-        } else if (retentionRate < 60) {
-          performanceRating = 'Poor';
-        }
 
         return {
           teacher_id: teacher.teacher_id,
@@ -205,13 +195,9 @@ export function useTeacherPerformance() {
           lessonsThisMonth: teacherLessons.length,
           salary,
           activeStudents: activeTeacherStudents.length,
-          studentsLeft: 0, // Would need historical tracking
-          retentionRate,
-          trialsScheduled: 0, // Would need trials tracking
-          successfulRegistrations: 0,
-          trialConversionRate: 0,
-          performanceRating,
-          bonus: performanceRating === 'Excellent' ? salary * 0.1 : 0,
+          temporaryStopStudents,
+          leftStudents,
+          trialLessons,
         };
       }) || [];
 
