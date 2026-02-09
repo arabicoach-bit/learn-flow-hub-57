@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useStudent, useUpdateStudent } from '@/hooks/use-students';
-import { usePackages, Package } from '@/hooks/use-packages';
+import { usePackages, Package, useDeletePackage } from '@/hooks/use-packages';
 import { useLessons } from '@/hooks/use-lessons';
 import { useTeachers } from '@/hooks/use-teachers';
 import { usePrograms } from '@/hooks/use-programs';
@@ -12,12 +12,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { ArrowLeft, User, Wallet, CreditCard, BookOpen, Loader2, Calendar, Plus, RefreshCw, Pencil, Gift, History, ChevronDown, ChevronRight } from 'lucide-react';
+import { ArrowLeft, User, Wallet, CreditCard, BookOpen, Loader2, Calendar, Plus, RefreshCw, Pencil, Gift, History, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { getWalletColor, getStatusBadgeClass, formatCurrency, formatDate, formatDateTime, getStatusDisplayLabel } from '@/lib/wallet-utils';
 import { StudentScheduleTab } from '@/components/schedule/StudentScheduleTab';
 import { AddPackageForm } from '@/components/packages/AddPackageForm';
@@ -39,6 +40,7 @@ export default function StudentDetail() {
   const [renewPackageId, setRenewPackageId] = useState<string | undefined>();
   const [editPackage, setEditPackage] = useState<Package | null>(null);
   const [expandedPackageId, setExpandedPackageId] = useState<string | null>(null);
+  const [deletePackageId, setDeletePackageId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({
     name: '',
     phone: '',
@@ -67,6 +69,7 @@ export default function StudentDetail() {
   const { data: teachers } = useTeachers();
   const { data: programs } = usePrograms();
   const updateStudent = useUpdateStudent();
+  const deletePackage = useDeletePackage();
 
   const startEditing = () => {
     if (student) {
@@ -249,6 +252,42 @@ export default function StudentDetail() {
           </DialogContent>
         </Dialog>
 
+        {/* Delete Package Confirmation */}
+        <AlertDialog open={!!deletePackageId} onOpenChange={(open) => { if (!open) setDeletePackageId(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Package</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this package? This will permanently remove:
+                <ul className="list-disc ml-6 mt-2 space-y-1">
+                  <li>The package record</li>
+                  <li>All scheduled lessons linked to it</li>
+                  <li>The student's wallet balance will be adjusted accordingly</li>
+                </ul>
+                <span className="block mt-2 font-medium text-destructive">This action cannot be undone.</span>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={async () => {
+                  if (!deletePackageId || !id) return;
+                  try {
+                    const result = await deletePackage.mutateAsync({ packageId: deletePackageId, studentId: id });
+                    toast.success(`Package deleted. Wallet adjusted by -${result.lessonsRemaining} lessons.`);
+                    setDeletePackageId(null);
+                  } catch (error: any) {
+                    toast.error(error.message || 'Failed to delete package');
+                  }
+                }}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {deletePackage.isPending ? 'Deleting...' : 'Delete Package'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         {/* Tabs */}
         <Tabs defaultValue={defaultTab} className="space-y-4">
           <TabsList className="flex-wrap">
@@ -395,6 +434,15 @@ export default function StudentDetail() {
                                   >
                                     <RefreshCw className="w-3 h-3" />
                                     Renew
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setDeletePackageId(pkg.package_id)}
+                                    className="gap-1 text-xs text-destructive hover:text-destructive"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                    Delete
                                   </Button>
                                 </div>
                               </TableCell>

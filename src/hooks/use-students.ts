@@ -176,6 +176,11 @@ export function useUpdateStudent() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['students'] });
       queryClient.invalidateQueries({ queryKey: ['student'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-students'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-todays-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-tomorrows-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-week-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-monthly-stats'] });
     },
   });
 }

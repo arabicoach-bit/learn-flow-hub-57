@@ -145,6 +145,10 @@ export function useCancelScheduledLesson() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['scheduled-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-todays-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-tomorrows-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-week-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-past-7-days-unmarked'] });
     },
   });
 }
@@ -197,6 +201,10 @@ export function useRescheduleLesson() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['scheduled-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-todays-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-tomorrows-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-week-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-past-7-days-unmarked'] });
     },
   });
 }
@@ -269,6 +277,10 @@ export function useUpdateScheduledLesson() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['scheduled-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-todays-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-tomorrows-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-week-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-past-7-days-unmarked'] });
     },
   });
 }
@@ -306,6 +318,10 @@ export function useAddScheduledLesson() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['scheduled-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-todays-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-tomorrows-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-week-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-past-7-days-unmarked'] });
     },
   });
 }
@@ -324,6 +340,10 @@ export function useDeleteScheduledLesson() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['scheduled-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-todays-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-tomorrows-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-week-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-past-7-days-unmarked'] });
     },
   });
 }

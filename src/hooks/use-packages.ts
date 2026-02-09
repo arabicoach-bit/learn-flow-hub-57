@@ -88,7 +88,127 @@ export function useAddPackage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['packages'] });
       queryClient.invalidateQueries({ queryKey: ['students'] });
+      queryClient.invalidateQueries({ queryKey: ['student'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-todays-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-tomorrows-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-week-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-monthly-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-students'] });
+      queryClient.invalidateQueries({ queryKey: ['scheduled-lessons'] });
+    },
+  });
+}
+
+export function useDeletePackage() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ packageId, studentId }: { packageId: string; studentId: string }) => {
+      // First, count how many unused scheduled lessons belong to this package
+      const { data: scheduledLessons, error: fetchError } = await supabase
+        .from('scheduled_lessons')
+        .select('scheduled_lesson_id, status')
+        .eq('package_id', packageId);
+
+      if (fetchError) throw fetchError;
+
+      // Get the package info to know lessons_purchased and lessons_used
+      const { data: pkg, error: pkgError } = await supabase
+        .from('packages')
+        .select('lessons_purchased, lessons_used, status')
+        .eq('package_id', packageId)
+        .single();
+
+      if (pkgError) throw pkgError;
+
+      // Calculate wallet adjustment: remaining lessons that were credited
+      const lessonsRemaining = pkg.lessons_purchased - (pkg.lessons_used || 0);
+
+      // Delete all scheduled lessons for this package
+      const { error: deleteScheduledError } = await supabase
+        .from('scheduled_lessons')
+        .delete()
+        .eq('package_id', packageId);
+
+      if (deleteScheduledError) throw deleteScheduledError;
+
+      // Delete lesson schedule templates for this package
+      const { error: deleteScheduleError } = await supabase
+        .from('lesson_schedules')
+        .delete()
+        .eq('package_id', packageId);
+
+      if (deleteScheduleError) throw deleteScheduleError;
+
+      // Delete the package itself
+      const { error: deletePackageError } = await supabase
+        .from('packages')
+        .delete()
+        .eq('package_id', packageId);
+
+      if (deletePackageError) throw deletePackageError;
+
+      // Update student wallet balance (subtract remaining lessons)
+      if (lessonsRemaining > 0 && pkg.status === 'Active') {
+        const { data: student } = await supabase
+          .from('students')
+          .select('wallet_balance, current_package_id')
+          .eq('student_id', studentId)
+          .single();
+
+        if (student) {
+          const newWallet = (student.wallet_balance || 0) - lessonsRemaining;
+          const newStatus = newWallet >= 3 ? 'Active' : newWallet >= -1 ? 'Grace' : 'Blocked';
+          
+          const updateData: Record<string, any> = {
+            wallet_balance: newWallet,
+            status: newStatus,
+          };
+
+          // If this was the current package, clear it
+          if (student.current_package_id === packageId) {
+            updateData.current_package_id = null;
+          }
+
+          await supabase
+            .from('students')
+            .update(updateData)
+            .eq('student_id', studentId);
+        }
+      } else {
+        // Still clear current_package_id if it matches
+        const { data: student } = await supabase
+          .from('students')
+          .select('current_package_id')
+          .eq('student_id', studentId)
+          .single();
+
+        if (student?.current_package_id === packageId) {
+          await supabase
+            .from('students')
+            .update({ current_package_id: null })
+            .eq('student_id', studentId);
+        }
+      }
+
+      return { packageId, lessonsRemaining };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['packages'] });
+      queryClient.invalidateQueries({ queryKey: ['packages-recent'] });
+      queryClient.invalidateQueries({ queryKey: ['students'] });
+      queryClient.invalidateQueries({ queryKey: ['student'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['scheduled-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-todays-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-tomorrows-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-week-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-past-7-days-unmarked'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-monthly-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-students'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['package-stats'] });
     },
   });
 }

@@ -70,7 +70,16 @@ export function EditPackageDialog({ package_, open, onOpenChange, onSuccess }: E
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['packages'] });
+      queryClient.invalidateQueries({ queryKey: ['packages-recent'] });
       queryClient.invalidateQueries({ queryKey: ['students'] });
+      queryClient.invalidateQueries({ queryKey: ['student'] });
+      queryClient.invalidateQueries({ queryKey: ['scheduled-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-todays-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-tomorrows-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-week-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-monthly-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-students'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-past-7-days-unmarked'] });
       toast.success('Package updated successfully');
       onOpenChange(false);
       onSuccess?.();
