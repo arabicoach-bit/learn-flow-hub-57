@@ -149,47 +149,38 @@ export function useDeletePackage() {
 
       if (deletePackageError) throw deletePackageError;
 
-      // Update student wallet balance (subtract remaining lessons)
-      if (lessonsRemaining > 0 && pkg.status === 'Active') {
-        const { data: student } = await supabase
-          .from('students')
-          .select('wallet_balance, current_package_id')
-          .eq('student_id', studentId)
-          .single();
+      // After deleting, check if student has any remaining active packages
+      const { data: remainingPackages } = await supabase
+        .from('packages')
+        .select('package_id, lessons_purchased, lessons_used, status')
+        .eq('student_id', studentId)
+        .eq('status', 'Active');
 
-        if (student) {
-          const newWallet = (student.wallet_balance || 0) - lessonsRemaining;
-          const newStatus = newWallet >= 3 ? 'Active' : newWallet >= -1 ? 'Grace' : 'Blocked';
-          
-          const updateData: Record<string, any> = {
-            wallet_balance: newWallet,
+      if (remainingPackages && remainingPackages.length > 0) {
+        // Recalculate wallet from remaining active packages
+        const totalRemaining = remainingPackages.reduce((sum, p) => {
+          return sum + (p.lessons_purchased - (p.lessons_used || 0));
+        }, 0);
+        const newStatus = totalRemaining >= 3 ? 'Active' : totalRemaining >= -1 ? 'Grace' : 'Blocked';
+        
+        await supabase
+          .from('students')
+          .update({
+            wallet_balance: totalRemaining,
             status: newStatus,
-          };
-
-          // If this was the current package, clear it
-          if (student.current_package_id === packageId) {
-            updateData.current_package_id = null;
-          }
-
-          await supabase
-            .from('students')
-            .update(updateData)
-            .eq('student_id', studentId);
-        }
+            current_package_id: remainingPackages[0].package_id,
+          })
+          .eq('student_id', studentId);
       } else {
-        // Still clear current_package_id if it matches
-        const { data: student } = await supabase
+        // No active packages left — reset wallet to 0
+        await supabase
           .from('students')
-          .select('current_package_id')
-          .eq('student_id', studentId)
-          .single();
-
-        if (student?.current_package_id === packageId) {
-          await supabase
-            .from('students')
-            .update({ current_package_id: null })
-            .eq('student_id', studentId);
-        }
+          .update({
+            wallet_balance: 0,
+            status: 'Active',
+            current_package_id: null,
+          })
+          .eq('student_id', studentId);
       }
 
       return { packageId, lessonsRemaining };
