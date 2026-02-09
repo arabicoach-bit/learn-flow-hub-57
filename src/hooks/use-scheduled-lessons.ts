@@ -21,6 +21,7 @@ export interface ScheduledLesson {
 export function useScheduledLessons(filters?: { 
   student_id?: string; 
   teacher_id?: string; 
+  package_id?: string;
   date?: string;
   status?: string;
 }) {
@@ -38,6 +39,9 @@ export function useScheduledLessons(filters?: {
       }
       if (filters?.teacher_id) {
         query = query.eq('teacher_id', filters.teacher_id);
+      }
+      if (filters?.package_id) {
+        query = query.eq('package_id', filters.package_id);
       }
       if (filters?.date) {
         query = query.eq('scheduled_date', filters.date);
@@ -218,6 +222,97 @@ export function useCheckLessonConflict() {
         hasConflict: data && data.length > 0,
         conflicts: data,
       };
+    },
+  });
+}
+
+export function useUpdateScheduledLesson() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      scheduledLessonId,
+      scheduled_date,
+      scheduled_time,
+      duration_minutes,
+      status,
+    }: {
+      scheduledLessonId: string;
+      scheduled_date?: string;
+      scheduled_time?: string;
+      duration_minutes?: number;
+      status?: string;
+    }) => {
+      const updateData: Record<string, unknown> = {};
+      if (scheduled_date !== undefined) updateData.scheduled_date = scheduled_date;
+      if (scheduled_time !== undefined) updateData.scheduled_time = scheduled_time;
+      if (duration_minutes !== undefined) updateData.duration_minutes = duration_minutes;
+      if (status !== undefined) updateData.status = status;
+
+      const { error } = await supabase
+        .from('scheduled_lessons')
+        .update(updateData)
+        .eq('scheduled_lesson_id', scheduledLessonId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scheduled-lessons'] });
+    },
+  });
+}
+
+export function useAddScheduledLesson() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: {
+      package_id: string;
+      student_id: string;
+      teacher_id: string;
+      class_id?: string | null;
+      scheduled_date: string;
+      scheduled_time: string;
+      duration_minutes: number;
+    }) => {
+      const { data, error } = await supabase
+        .from('scheduled_lessons')
+        .insert({
+          package_id: input.package_id,
+          student_id: input.student_id,
+          teacher_id: input.teacher_id,
+          class_id: input.class_id || null,
+          scheduled_date: input.scheduled_date,
+          scheduled_time: input.scheduled_time,
+          duration_minutes: input.duration_minutes,
+          status: 'scheduled',
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scheduled-lessons'] });
+    },
+  });
+}
+
+export function useDeleteScheduledLesson() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (scheduledLessonId: string) => {
+      const { error } = await supabase
+        .from('scheduled_lessons')
+        .delete()
+        .eq('scheduled_lesson_id', scheduledLessonId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scheduled-lessons'] });
     },
   });
 }
