@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { ArrowLeft, User, Wallet, CreditCard, BookOpen, Loader2, Calendar, Plus, RefreshCw, Pencil, Gift, History } from 'lucide-react';
+import { ArrowLeft, User, Wallet, CreditCard, BookOpen, Loader2, Calendar, Plus, RefreshCw, Pencil, Gift, History, ChevronDown, ChevronRight } from 'lucide-react';
 import { getWalletColor, getStatusBadgeClass, formatCurrency, formatDate, formatDateTime, getStatusDisplayLabel } from '@/lib/wallet-utils';
 import { StudentScheduleTab } from '@/components/schedule/StudentScheduleTab';
 import { AddPackageForm } from '@/components/packages/AddPackageForm';
@@ -25,6 +25,7 @@ import { RenewPackageForm } from '@/components/packages/RenewPackageForm';
 import { EditPackageDialog } from '@/components/packages/EditPackageDialog';
 import { AddFreeLessonsForm } from '@/components/packages/AddFreeLessonsForm';
 import { PackageHistoryTimeline } from '@/components/packages/PackageHistoryTimeline';
+import { PackageLessonsTable } from '@/components/packages/PackageLessonsTable';
 
 export default function StudentDetail() {
   const { id } = useParams<{ id: string }>();
@@ -37,6 +38,7 @@ export default function StudentDetail() {
   const [isAddFreeLessonsOpen, setIsAddFreeLessonsOpen] = useState(false);
   const [renewPackageId, setRenewPackageId] = useState<string | undefined>();
   const [editPackage, setEditPackage] = useState<Package | null>(null);
+  const [expandedPackageId, setExpandedPackageId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({
     name: '',
     phone: '',
@@ -330,6 +332,7 @@ export default function StudentDetail() {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-10"></TableHead>
                         <TableHead>Date</TableHead>
                         <TableHead>Package Name</TableHead>
                         <TableHead>Description</TableHead>
@@ -342,47 +345,78 @@ export default function StudentDetail() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {packages.map((pkg) => (
-                        <TableRow key={pkg.package_id}>
-                          <TableCell>{formatDate(pkg.payment_date)}</TableCell>
-                          <TableCell className="font-medium">{pkg.package_types?.name || '-'}</TableCell>
-                          <TableCell className="text-muted-foreground text-sm">{pkg.package_types?.description || '-'}</TableCell>
-                          <TableCell className="font-medium">{formatCurrency(pkg.amount)}</TableCell>
-                          <TableCell>{pkg.lessons_purchased}</TableCell>
-                          <TableCell>{pkg.lessons_used}</TableCell>
-                          <TableCell>{pkg.lesson_duration ? `${pkg.lesson_duration} mins` : '-'}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className={pkg.status === 'Active' ? 'status-active' : 'status-grace'}>
-                              {pkg.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-1">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setEditPackage(pkg)}
-                                className="gap-1 text-xs"
-                              >
-                                <Pencil className="w-3 h-3" />
-                                Edit
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  setRenewPackageId(pkg.package_id);
-                                  setIsRenewPackageOpen(true);
-                                }}
-                                className="gap-1 text-xs"
-                              >
-                                <RefreshCw className="w-3 h-3" />
-                                Renew
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {packages.map((pkg) => {
+                        const isExpanded = expandedPackageId === pkg.package_id;
+                        return (
+                          <>
+                            <TableRow 
+                              key={pkg.package_id}
+                              className="cursor-pointer hover:bg-muted/50"
+                              onClick={() => setExpandedPackageId(isExpanded ? null : pkg.package_id)}
+                            >
+                              <TableCell>
+                                {isExpanded ? (
+                                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                                ) : (
+                                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                                )}
+                              </TableCell>
+                              <TableCell>{formatDate(pkg.payment_date)}</TableCell>
+                              <TableCell className="font-medium">{pkg.package_types?.name || '-'}</TableCell>
+                              <TableCell className="text-muted-foreground text-sm">{pkg.package_types?.description || '-'}</TableCell>
+                              <TableCell className="font-medium">{formatCurrency(pkg.amount)}</TableCell>
+                              <TableCell>{pkg.lessons_purchased}</TableCell>
+                              <TableCell>{pkg.lessons_used}</TableCell>
+                              <TableCell>{pkg.lesson_duration ? `${pkg.lesson_duration} mins` : '-'}</TableCell>
+                              <TableCell>
+                                <Badge variant="outline" className={pkg.status === 'Active' ? 'status-active' : 'status-grace'}>
+                                  {pkg.status}
+                                </Badge>
+                              </TableCell>
+                              <TableCell onClick={(e) => e.stopPropagation()}>
+                                <div className="flex gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setEditPackage(pkg)}
+                                    className="gap-1 text-xs"
+                                  >
+                                    <Pencil className="w-3 h-3" />
+                                    Edit
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      setRenewPackageId(pkg.package_id);
+                                      setIsRenewPackageOpen(true);
+                                    }}
+                                    className="gap-1 text-xs"
+                                  >
+                                    <RefreshCw className="w-3 h-3" />
+                                    Renew
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                            {isExpanded && (
+                              <TableRow key={`${pkg.package_id}-lessons`}>
+                                <TableCell colSpan={10} className="bg-muted/30 p-4">
+                                  <div className="text-sm font-medium mb-2 text-muted-foreground">
+                                    Scheduled Lessons for this Package
+                                  </div>
+                                  <PackageLessonsTable
+                                    packageId={pkg.package_id}
+                                    studentId={id!}
+                                    teacherId={student.teacher_id || ''}
+                                    lessonDuration={pkg.lesson_duration || 45}
+                                  />
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 )}
