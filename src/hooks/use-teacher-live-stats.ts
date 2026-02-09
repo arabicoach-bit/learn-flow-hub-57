@@ -57,14 +57,14 @@ export function useTeacherLiveStats(teacherId: string) {
           .lte('scheduled_date', weekEnd)
           .in('status', ['completed']),
 
-        // This month's completed lessons (from lessons_log for salary calc)
+        // This month's completed lessons from scheduled_lessons (reliable source)
         supabase
-          .from('lessons_log')
-          .select('lesson_id, status')
+          .from('scheduled_lessons')
+          .select('scheduled_lesson_id, duration_minutes')
           .eq('teacher_id', teacherId)
-          .eq('status', 'Taken')
-          .gte('lesson_date', monthStart)
-          .lte('lesson_date', today),
+          .eq('status', 'completed')
+          .gte('scheduled_date', monthStart)
+          .lte('scheduled_date', today),
 
         // Get teacher rate
         supabase
@@ -73,15 +73,6 @@ export function useTeacherLiveStats(teacherId: string) {
           .eq('teacher_id', teacherId)
           .single(),
       ]);
-
-      // Also get scheduled lessons with duration for monthly hours
-      const { data: monthScheduled } = await supabase
-        .from('scheduled_lessons')
-        .select('scheduled_lesson_id, duration_minutes')
-        .eq('teacher_id', teacherId)
-        .eq('status', 'completed')
-        .gte('scheduled_date', monthStart)
-        .lte('scheduled_date', today);
 
       const todayLessons: TodayLesson[] = (todayRes.data || []).map((l: any) => ({
         scheduled_lesson_id: l.scheduled_lesson_id,
@@ -98,9 +89,9 @@ export function useTeacherLiveStats(teacherId: string) {
       const weeklyLessons = weekRes.data || [];
       const weeklyHours = weeklyLessons.reduce((sum, l) => sum + (l.duration_minutes || 45) / 60, 0);
 
-      const monthlyLessonsCount = monthRes.data?.length || 0;
-      const monthlyScheduled = monthScheduled || [];
-      const monthlyHours = monthlyScheduled.reduce((sum, l) => sum + (l.duration_minutes || 45) / 60, 0);
+      const monthlyLessons = monthRes.data || [];
+      const monthlyLessonsCount = monthlyLessons.length;
+      const monthlyHours = monthlyLessons.reduce((sum, l) => sum + (l.duration_minutes || 45) / 60, 0);
       const rate = teacherRes.data?.rate_per_lesson || 0;
       const monthlySalary = monthlyHours * rate;
 

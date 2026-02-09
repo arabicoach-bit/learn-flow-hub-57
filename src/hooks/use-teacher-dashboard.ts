@@ -259,43 +259,35 @@ export function useTeacherMonthlyStats() {
 
       const ratePerHour = teacher?.rate_per_lesson || 0;
 
-      // Get current month lessons with duration from scheduled_lessons
-      const { data: currentMonthLessons } = await supabase
-        .from('lessons_log')
-        .select(`
-          lesson_id,
-          scheduled_lessons!inner(duration_minutes)
-        `)
+      // Get current month completed lessons from scheduled_lessons (reliable source for duration)
+      const { data: currentMonthCompleted } = await supabase
+        .from('scheduled_lessons')
+        .select('scheduled_lesson_id, duration_minutes')
         .eq('teacher_id', teacherId)
-        .eq('status', 'Taken')
-        .gte('lesson_date', currentMonthStart)
-        .lte('lesson_date', currentMonthEnd);
+        .eq('status', 'completed')
+        .gte('scheduled_date', currentMonthStart)
+        .lte('scheduled_date', currentMonthEnd);
 
-      // Get last month lessons with duration
-      const { data: lastMonthLessons } = await supabase
-        .from('lessons_log')
-        .select(`
-          lesson_id,
-          scheduled_lessons!inner(duration_minutes)
-        `)
+      // Get last month completed lessons
+      const { data: lastMonthCompleted } = await supabase
+        .from('scheduled_lessons')
+        .select('scheduled_lesson_id, duration_minutes')
         .eq('teacher_id', teacherId)
-        .eq('status', 'Taken')
-        .gte('lesson_date', lastMonthStart)
-        .lte('lesson_date', lastMonthEnd);
+        .eq('status', 'completed')
+        .gte('scheduled_date', lastMonthStart)
+        .lte('scheduled_date', lastMonthEnd);
 
       // Calculate hours from actual lesson durations
-      const currentHours = (currentMonthLessons || []).reduce((total, lesson: any) => {
-        const duration = lesson.scheduled_lessons?.[0]?.duration_minutes || 45;
-        return total + duration / 60;
+      const currentHours = (currentMonthCompleted || []).reduce((total, lesson) => {
+        return total + (lesson.duration_minutes || 45) / 60;
       }, 0);
 
-      const lastHours = (lastMonthLessons || []).reduce((total, lesson: any) => {
-        const duration = lesson.scheduled_lessons?.[0]?.duration_minutes || 45;
-        return total + duration / 60;
+      const lastHours = (lastMonthCompleted || []).reduce((total, lesson) => {
+        return total + (lesson.duration_minutes || 45) / 60;
       }, 0);
 
-      const currentLessonsCount = currentMonthLessons?.length || 0;
-      const lastLessonsCount = lastMonthLessons?.length || 0;
+      const currentLessonsCount = currentMonthCompleted?.length || 0;
+      const lastLessonsCount = lastMonthCompleted?.length || 0;
 
       return {
         currentMonth: {
