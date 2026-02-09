@@ -1,19 +1,22 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Download, Filter } from 'lucide-react';
+import { Plus, Search, Download, Pencil, Trash2 } from 'lucide-react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
-import { useStudents, useCreateStudent, useUpdateStudent } from '@/hooks/use-students';
+import { useStudents, useCreateStudent, useUpdateStudent, useDeleteStudent } from '@/hooks/use-students';
 import { useTeachers } from '@/hooks/use-teachers';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getWalletColor, getStatusBadgeClass, getStatusDisplayLabel } from '@/lib/wallet-utils';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { exportStudents, type StudentExport } from '@/lib/excel-export';
+import { EditStudentDialog } from '@/components/teacher/EditStudentDialog';
+import type { Student } from '@/hooks/use-students';
 
 export default function Students() {
   const navigate = useNavigate();
@@ -21,12 +24,15 @@ export default function Students() {
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [teacherFilter, setTeacherFilter] = useState<string>('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editStudent, setEditStudent] = useState<Student | null>(null);
+  const [deleteStudent, setDeleteStudent] = useState<Student | null>(null);
   const { toast } = useToast();
 
   const { data: students, isLoading } = useStudents({ search, status: statusFilter || undefined, teacher_id: teacherFilter || undefined });
   const { data: teachers } = useTeachers();
   const createStudent = useCreateStudent();
   const updateStudent = useUpdateStudent();
+  const deleteStudentMutation = useDeleteStudent();
 
   const PROGRAMMES = ['Arabic A', 'Arabic B', 'IGCSE', 'Adult Course', 'Islamic Arabic'];
 
@@ -41,7 +47,6 @@ export default function Students() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate teacher is selected
     if (!formData.teacher_id) {
       toast({ title: 'Please select a teacher', variant: 'destructive' });
       return;
@@ -61,6 +66,17 @@ export default function Students() {
       });
     } catch (error) {
       toast({ title: 'Error creating student', variant: 'destructive' });
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteStudent) return;
+    try {
+      await deleteStudentMutation.mutateAsync(deleteStudent.student_id);
+      toast({ title: `${deleteStudent.name} has been deleted` });
+      setDeleteStudent(null);
+    } catch (error) {
+      toast({ title: 'Error deleting student', variant: 'destructive' });
     }
   };
 
@@ -199,22 +215,22 @@ export default function Students() {
                 <th>Wallet</th>
                 <th>Payment Status</th>
                 <th>Status</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i}>
-                    <td colSpan={7}><Skeleton className="h-8 w-full" /></td>
+                    <td colSpan={8}><Skeleton className="h-8 w-full" /></td>
                   </tr>
                 ))
               ) : students?.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-8 text-muted-foreground">No students found</td>
+                  <td colSpan={8} className="text-center py-8 text-muted-foreground">No students found</td>
                 </tr>
               ) : (
                 students?.map((student) => {
-                  // Determine payment status based on wallet balance
                   const wallet = student.wallet_balance || 0;
                   let paymentStatus = 'Paid';
                   let paymentBadgeClass = 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300';
@@ -286,6 +302,26 @@ export default function Students() {
                           </SelectContent>
                         </Select>
                       </td>
+                      <td onClick={(e) => e.stopPropagation()}>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => setEditStudent(student)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                            onClick={() => setDeleteStudent(student)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </td>
                     </tr>
                   );
                 })
@@ -294,6 +330,34 @@ export default function Students() {
           </table>
         </div>
       </div>
+
+      {/* Edit Student Dialog */}
+      <EditStudentDialog
+        student={editStudent}
+        open={!!editStudent}
+        onOpenChange={(open) => { if (!open) setEditStudent(null); }}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteStudent} onOpenChange={(open) => { if (!open) setDeleteStudent(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Student</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to permanently delete <strong>{deleteStudent?.name}</strong>? This action cannot be undone and will remove all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteStudentMutation.isPending ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 }
