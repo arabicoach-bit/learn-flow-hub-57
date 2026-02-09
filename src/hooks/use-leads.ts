@@ -34,7 +34,7 @@ export interface CreateLeadInput {
   handled_by?: string;
 }
 
-export function useLeads(filters?: { status?: string; search?: string }) {
+export function useLeads(filters?: { status?: string; search?: string; trial_status?: string; date_range?: string }) {
   return useQuery({
     queryKey: ['leads', filters],
     queryFn: async () => {
@@ -48,6 +48,33 @@ export function useLeads(filters?: { status?: string; search?: string }) {
       }
       if (filters?.search) {
         query = query.or(`name.ilike.%${filters.search}%,phone.ilike.%${filters.search}%`);
+      }
+      if (filters?.trial_status) {
+        query = query.eq('trial_status', filters.trial_status);
+      }
+      if (filters?.date_range) {
+        const now = new Date();
+        let startDate: Date | null = null;
+        switch (filters.date_range) {
+          case '1_week':
+            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            break;
+          case '2_weeks':
+            startDate = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+            break;
+          case '1_month':
+            startDate = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+            break;
+          case '3_months':
+            startDate = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
+            break;
+          case '6_months':
+            startDate = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate());
+            break;
+        }
+        if (startDate) {
+          query = query.gte('created_at', startDate.toISOString());
+        }
       }
 
       const { data, error } = await query;
