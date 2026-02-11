@@ -48,12 +48,12 @@ export default function TeacherPayroll() {
     queryFn: async () => {
       if (!teacherId) return [];
       const { data, error } = await supabase
-        .from('lessons_log')
-        .select('*')
+        .from('scheduled_lessons')
+        .select('scheduled_lesson_id, duration_minutes')
         .eq('teacher_id', teacherId)
-        .eq('status', 'Taken')
-        .gte('lesson_date', currentMonthStart)
-        .lte('lesson_date', currentMonthEnd);
+        .eq('status', 'completed')
+        .gte('scheduled_date', currentMonthStart)
+        .lte('scheduled_date', currentMonthEnd);
       
       if (error) throw error;
       return data;
@@ -79,7 +79,8 @@ export default function TeacherPayroll() {
 
   const lessonsCount = lessonsThisMonth?.length || 0;
   const ratePerLesson = teacher?.rate_per_lesson || 0;
-  const estimatedEarnings = lessonsCount * ratePerLesson;
+  const totalHours = (lessonsThisMonth || []).reduce((sum, l) => sum + ((l as any).duration_minutes || 45) / 60, 0);
+  const estimatedEarnings = totalHours * ratePerLesson;
 
   const getStatusBadgeClass = (status: string | null) => {
     switch (status) {

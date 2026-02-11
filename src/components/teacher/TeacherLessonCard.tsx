@@ -39,6 +39,7 @@ export function TeacherLessonCard({ lesson, onLessonMarked, showDate, date }: Te
   const [isEditing, setIsEditing] = useState(false);
   const [editedTime, setEditedTime] = useState(lesson.scheduled_time);
   const [editedDuration, setEditedDuration] = useState(lesson.duration_minutes.toString());
+  const [editedDate, setEditedDate] = useState(date || lesson.scheduled_date || new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   
@@ -80,6 +81,7 @@ export function TeacherLessonCard({ lesson, onLessonMarked, showDate, date }: Te
       const { error } = await supabase
         .from('scheduled_lessons')
         .update({
+          scheduled_date: editedDate,
           scheduled_time: editedTime,
           duration_minutes: parseInt(editedDuration),
         })
@@ -140,6 +142,12 @@ export function TeacherLessonCard({ lesson, onLessonMarked, showDate, date }: Te
                 <div className="flex items-center gap-2 mb-1">
                   {isEditing ? (
                     <>
+                      <Input
+                        type="date"
+                        value={editedDate}
+                        onChange={(e) => setEditedDate(e.target.value)}
+                        className="w-36 h-8"
+                      />
                       <Input
                         type="time"
                         value={editedTime}
