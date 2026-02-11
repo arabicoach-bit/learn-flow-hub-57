@@ -45,30 +45,26 @@ export default function AdminPayroll() {
     queryFn: async () => {
       const { start, end } = getDateRange(period);
       
-      // Fetch lessons taken in the period
+      // Fetch completed lessons from scheduled_lessons (only completed count toward salary)
       const { data: lessons, error } = await supabase
-        .from('lessons_log')
-        .select(`
-          teacher_id,
-          status,
-          scheduled_lessons!inner(duration_minutes)
-        `)
-        .eq('status', 'Taken')
-        .gte('lesson_date', format(start, 'yyyy-MM-dd'))
-        .lte('lesson_date', format(end, 'yyyy-MM-dd'));
+        .from('scheduled_lessons')
+        .select('teacher_id, duration_minutes')
+        .eq('status', 'completed')
+        .gte('scheduled_date', format(start, 'yyyy-MM-dd'))
+        .lte('scheduled_date', format(end, 'yyyy-MM-dd'));
 
       if (error) throw error;
 
       // Aggregate by teacher
       const teacherStats: Record<string, { lessons: number; totalMinutes: number }> = {};
-      lessons?.forEach((lesson: any) => {
+      lessons?.forEach((lesson) => {
         const teacherId = lesson.teacher_id;
         if (teacherId) {
           if (!teacherStats[teacherId]) {
             teacherStats[teacherId] = { lessons: 0, totalMinutes: 0 };
           }
           teacherStats[teacherId].lessons += 1;
-          teacherStats[teacherId].totalMinutes += lesson.scheduled_lessons?.duration_minutes || 45;
+          teacherStats[teacherId].totalMinutes += lesson.duration_minutes || 45;
         }
       });
 

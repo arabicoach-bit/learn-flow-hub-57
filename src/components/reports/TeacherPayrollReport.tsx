@@ -44,32 +44,40 @@ export function TeacherPayrollReport() {
 
     setIsLoading(true);
     try {
-      // Fetch lessons taken in the period for each teacher
+      // Fetch completed lessons from scheduled_lessons (only completed count toward salary)
       const { data: lessons, error } = await supabase
-        .from('lessons_log')
-        .select('teacher_id, status')
-        .gte('lesson_date', startDate)
-        .lte('lesson_date', endDate)
-        .eq('status', 'Taken');
+        .from('scheduled_lessons')
+        .select('teacher_id, duration_minutes')
+        .eq('status', 'completed')
+        .gte('scheduled_date', startDate)
+        .lte('scheduled_date', endDate);
 
       if (error) throw error;
 
-      // Count lessons per teacher
-      const lessonCounts: Record<string, number> = {};
+      // Aggregate lessons and hours per teacher
+      const teacherStats: Record<string, { lessons: number; totalMinutes: number }> = {};
       lessons?.forEach(lesson => {
         if (lesson.teacher_id) {
-          lessonCounts[lesson.teacher_id] = (lessonCounts[lesson.teacher_id] || 0) + 1;
+          if (!teacherStats[lesson.teacher_id]) {
+            teacherStats[lesson.teacher_id] = { lessons: 0, totalMinutes: 0 };
+          }
+          teacherStats[lesson.teacher_id].lessons += 1;
+          teacherStats[lesson.teacher_id].totalMinutes += lesson.duration_minutes || 45;
         }
       });
 
-      // Build payroll data
-      const payroll: PayrollData[] = (teachers || []).map(teacher => ({
-        teacher_id: teacher.teacher_id,
-        teacher_name: teacher.name,
-        lessons_taken: lessonCounts[teacher.teacher_id] || 0,
-        rate_per_lesson: teacher.rate_per_lesson,
-        amount_due: (lessonCounts[teacher.teacher_id] || 0) * teacher.rate_per_lesson,
-      })).filter(p => p.lessons_taken > 0);
+      // Build payroll data (hourly-based calculation)
+      const payroll: PayrollData[] = (teachers || []).map(teacher => {
+        const stats = teacherStats[teacher.teacher_id] || { lessons: 0, totalMinutes: 0 };
+        const totalHours = stats.totalMinutes / 60;
+        return {
+          teacher_id: teacher.teacher_id,
+          teacher_name: teacher.name,
+          lessons_taken: stats.lessons,
+          rate_per_lesson: teacher.rate_per_lesson,
+          amount_due: totalHours * (teacher.rate_per_lesson || 0),
+        };
+      }).filter(p => p.lessons_taken > 0);
 
       setPayrollData(payroll);
       
