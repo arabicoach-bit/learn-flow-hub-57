@@ -3,11 +3,13 @@ import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useScheduledLessons } from '@/hooks/use-scheduled-lessons';
+import { useScheduledLessons, ScheduledLesson } from '@/hooks/use-scheduled-lessons';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
-import { CalendarDays, Clock, User, CheckSquare } from 'lucide-react';
+import { CalendarDays, Clock, User, CheckSquare, RefreshCw, Settings2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { RescheduleDialog } from '@/components/schedule/RescheduleDialog';
+import { UpdateLessonStatusDialog } from '@/components/schedule/UpdateLessonStatusDialog';
 
 interface TeacherCalendarProps {
   teacherId: string;
@@ -16,6 +18,8 @@ interface TeacherCalendarProps {
 export function TeacherCalendar({ teacherId }: TeacherCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [viewMonth, setViewMonth] = useState<Date>(new Date());
+  const [rescheduleLesson, setRescheduleLesson] = useState<ScheduledLesson | null>(null);
+  const [statusLesson, setStatusLesson] = useState<ScheduledLesson | null>(null);
   const navigate = useNavigate();
 
   const { data: scheduledLessons, isLoading } = useScheduledLessons({
@@ -201,6 +205,26 @@ export function TeacherCalendar({ teacherId }: TeacherCalendarProps) {
                       </span>
                     )}
                   </div>
+                  <div className="flex gap-2 mt-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs"
+                      onClick={() => setRescheduleLesson(lesson)}
+                    >
+                      <RefreshCw className="w-3 h-3 mr-1" />
+                      Reschedule
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs"
+                      onClick={() => setStatusLesson(lesson)}
+                    >
+                      <Settings2 className="w-3 h-3 mr-1" />
+                      Status
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -218,6 +242,22 @@ export function TeacherCalendar({ teacherId }: TeacherCalendarProps) {
           )}
         </CardContent>
       </Card>
+
+      {/* Dialogs */}
+      {rescheduleLesson && (
+        <RescheduleDialog
+          lesson={rescheduleLesson}
+          open={!!rescheduleLesson}
+          onOpenChange={(open) => !open && setRescheduleLesson(null)}
+        />
+      )}
+      {statusLesson && (
+        <UpdateLessonStatusDialog
+          lesson={statusLesson}
+          open={!!statusLesson}
+          onOpenChange={(open) => !open && setStatusLesson(null)}
+        />
+      )}
     </div>
   );
 }

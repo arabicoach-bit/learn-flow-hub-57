@@ -192,7 +192,6 @@ export function RescheduleDialog({ lesson, open, onOpenChange, onSuccess }: Resc
                         mode="single"
                         selected={field.value}
                         onSelect={handleDateChange}
-                        disabled={(date) => date < new Date()}
                         initialFocus
                       />
                     </PopoverContent>
