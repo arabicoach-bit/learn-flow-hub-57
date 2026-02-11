@@ -147,13 +147,13 @@ export function useTeacherPerformance() {
 
       if (teachersError) throw teachersError;
 
-      // Fetch lessons for this month
-      const { data: lessons, error: lessonsError } = await supabase
-        .from('lessons_log')
-        .select('*')
-        .gte('lesson_date', startDate)
-        .lte('lesson_date', endDate)
-        .eq('status', 'Taken');
+      // Fetch completed lessons from scheduled_lessons (only completed count toward salary)
+      const { data: completedLessons, error: lessonsError } = await supabase
+        .from('scheduled_lessons')
+        .select('teacher_id, duration_minutes')
+        .eq('status', 'completed')
+        .gte('scheduled_date', startDate)
+        .lte('scheduled_date', endDate);
 
       if (lessonsError) throw lessonsError;
 
@@ -172,17 +172,28 @@ export function useTeacherPerformance() {
 
       if (trialError) throw trialError;
 
+      // Aggregate completed lessons per teacher
+      const teacherLessonStats: Record<string, { count: number; totalMinutes: number }> = {};
+      completedLessons?.forEach(l => {
+        if (l.teacher_id) {
+          if (!teacherLessonStats[l.teacher_id]) {
+            teacherLessonStats[l.teacher_id] = { count: 0, totalMinutes: 0 };
+          }
+          teacherLessonStats[l.teacher_id].count += 1;
+          teacherLessonStats[l.teacher_id].totalMinutes += l.duration_minutes || 45;
+        }
+      });
+
       // Calculate performance for each teacher
       const performance: TeacherPerformance[] = teachers?.map((teacher) => {
-        const teacherLessons = lessons?.filter(l => l.teacher_id === teacher.teacher_id) || [];
+        const stats = teacherLessonStats[teacher.teacher_id] || { count: 0, totalMinutes: 0 };
         const teacherStudents = students?.filter(s => s.teacher_id === teacher.teacher_id) || [];
         const activeTeacherStudents = teacherStudents.filter(s => s.status === 'Active');
         const temporaryStopStudents = teacherStudents.filter(s => s.status === 'Grace').length;
         const leftStudents = teacherStudents.filter(s => s.status === 'Blocked').length;
         const trialLessons = trialStudents?.filter(t => t.teacher_id === teacher.teacher_id).length || 0;
 
-        // Assuming 45min average lesson duration
-        const totalTeachingHours = teacherLessons.length * 0.75;
+        const totalTeachingHours = stats.totalMinutes / 60;
         const salary = totalTeachingHours * (teacher.rate_per_lesson || 0);
 
         return {
@@ -192,7 +203,7 @@ export function useTeacherPerformance() {
           rate_per_lesson: teacher.rate_per_lesson || 0,
           is_active: teacher.is_active ?? true,
           totalTeachingHours,
-          lessonsThisMonth: teacherLessons.length,
+          lessonsThisMonth: stats.count,
           salary,
           activeStudents: activeTeacherStudents.length,
           temporaryStopStudents,
