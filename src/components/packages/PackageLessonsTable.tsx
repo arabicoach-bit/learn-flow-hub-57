@@ -24,7 +24,6 @@ const STATUS_STYLES: Record<string, string> = {
   scheduled: 'bg-blue-500/20 text-blue-700 dark:text-blue-300',
   completed: 'status-active',
   cancelled: 'status-blocked',
-  rescheduled: 'bg-amber-500/20 text-amber-700 dark:text-amber-300',
 };
 
 function formatTime12(time: string) {
@@ -108,8 +107,16 @@ export function PackageLessonsTable({ packageId, studentId, teacherId, lessonDur
   const handleDelete = async () => {
     if (!deleteLessonId) return;
     try {
-      await deleteLesson.mutateAsync(deleteLessonId);
-      toast.success('Lesson deleted');
+      // Find the lesson to check its status
+      const lesson = lessons?.find(l => l.scheduled_lesson_id === deleteLessonId);
+      const isScheduled = lesson?.status === 'scheduled';
+      
+      await deleteLesson.mutateAsync({ 
+        scheduledLessonId: deleteLessonId,
+        deductFromWallet: isScheduled,
+        studentId: isScheduled ? studentId : undefined,
+      });
+      toast.success(isScheduled ? 'Lesson deleted and wallet reduced' : 'Lesson deleted');
       setDeleteLessonId(null);
     } catch {
       toast.error('Failed to delete lesson');
@@ -253,15 +260,14 @@ export function PackageLessonsTable({ packageId, studentId, teacherId, lessonDur
                     onChange={(e) => setEditLesson({ ...editLesson, duration_minutes: parseInt(e.target.value) || 0 })}
                   />
                 </div>
-                <div className="space-y-2">
+                 <div className="space-y-2">
                   <Label>Status</Label>
                   <Select value={editLesson.status} onValueChange={(v) => setEditLesson({ ...editLesson, status: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="scheduled">Scheduled</SelectItem>
                       <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
-                      <SelectItem value="rescheduled">Rescheduled</SelectItem>
+                      <SelectItem value="cancelled">Absent</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

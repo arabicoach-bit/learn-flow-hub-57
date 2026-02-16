@@ -19,14 +19,15 @@ import {
   Wallet, 
   LogOut,
   User,
-  BookOpen
+  BookOpen,
+  CalendarDays,
+  Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-import { Users } from 'lucide-react';
-
 const teacherNavItems = [
   { title: 'My Dashboard', url: '/teacher', icon: LayoutDashboard },
+  { title: 'My Schedule', url: '/teacher/schedule', icon: CalendarDays },
   { title: 'Lesson History', url: '/teacher/mark-lesson', icon: BookOpen },
   { title: 'Trial Lessons', url: '/teacher/trial-lessons', icon: Users },
   { title: 'My Students', url: '/teacher/students', icon: GraduationCap },
