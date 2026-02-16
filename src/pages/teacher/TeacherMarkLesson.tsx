@@ -2,316 +2,198 @@ import { TeacherLayout } from '@/components/layout/TeacherLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useToast } from '@/hooks/use-toast';
-import { useTeacherStudents } from '@/hooks/use-teacher-dashboard';
-import { useMarkLesson } from '@/hooks/use-lessons';
-import { getWalletColor, getStatusDisplayLabel } from '@/lib/wallet-utils';
-import { CheckSquare, AlertTriangle, Loader2, Ban, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { BookOpen, Search, Check, X, RefreshCw, Calendar } from 'lucide-react';
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-
-type LessonStatus = 'Taken' | 'Absent' | 'Cancelled';
-
-interface StudentLessonState {
-  [studentId: string]: LessonStatus | null;
-}
+import { format } from 'date-fns';
 
 export default function TeacherMarkLesson() {
   const { profile } = useAuth();
-  const { toast } = useToast();
   const teacherId = profile?.teacher_id;
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [studentStatuses, setStudentStatuses] = useState<StudentLessonState>({});
-  const [notes, setNotes] = useState<{ [studentId: string]: string }>({});
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
-  // Get all students assigned to this teacher (no class filter needed)
-  const { data: students, isLoading: studentsLoading } = useTeacherStudents();
-  
-  // Filter students by search query
-  const filteredStudents = students?.filter(s => 
-    s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (s.programs?.name || '').toLowerCase().includes(searchQuery.toLowerCase())
-  ) || [];
+  const { data: lessons, isLoading } = useQuery({
+    queryKey: ['teacher-lesson-history', teacherId],
+    queryFn: async () => {
+      if (!teacherId) return [];
 
-  const markLesson = useMarkLesson();
+      const { data, error } = await supabase
+        .from('scheduled_lessons')
+        .select(`
+          scheduled_lesson_id,
+          scheduled_date,
+          scheduled_time,
+          duration_minutes,
+          status,
+          students(name)
+        `)
+        .eq('teacher_id', teacherId)
+        .in('status', ['completed', 'cancelled', 'rescheduled'])
+        .order('scheduled_date', { ascending: false })
+        .order('scheduled_time', { ascending: false });
 
-  const handleStatusChange = (studentId: string, status: LessonStatus) => {
-    const student = filteredStudents.find(s => s.student_id === studentId);
-    
-    // Prevent selecting "Taken" for blocked students
-    if (status === 'Taken' && student?.status === 'Blocked') {
-      toast({
-        title: 'Cannot Mark as Taken',
-        description: `${student.name} is blocked. Only Absent or Cancelled can be marked.`,
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    setStudentStatuses(prev => ({ ...prev, [studentId]: status }));
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!teacherId,
+  });
+
+  const filteredLessons = lessons?.filter((lesson: any) => {
+    const studentName = lesson.students?.name || '';
+    const matchesSearch = studentName.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || lesson.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  }) || [];
+
+  const formatTime = (time: string) => {
+    const [hours, minutes] = time.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const hour12 = hour % 12 || 12;
+    return `${hour12}:${minutes} ${ampm}`;
   };
 
-  const handleSubmit = async () => {
-    if (!teacherId) {
-      toast({
-        title: 'Error',
-        description: 'Teacher ID not found',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    const studentsToMark = Object.entries(studentStatuses).filter(([_, status]) => status !== null);
-    
-    if (studentsToMark.length === 0) {
-      toast({
-        title: 'No Students Selected',
-        description: 'Please mark at least one student',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    // Re-validate student statuses from database before submission
-    const studentIds = studentsToMark.map(([id]) => id);
-    const { data: currentStudents, error: fetchError } = await supabase
-      .from('students')
-      .select('student_id, name, status')
-      .in('student_id', studentIds);
-
-    if (fetchError) {
-      toast({
-        title: 'Validation Error',
-        description: 'Failed to validate student statuses',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    // Check for blocked students trying to take lessons
-    const blockedWithTaken = studentsToMark.filter(([id, status]) => {
-      const student = currentStudents?.find(s => s.student_id === id);
-      return student?.status === 'Blocked' && status === 'Taken';
-    });
-
-    if (blockedWithTaken.length > 0) {
-      const blockedNames = blockedWithTaken
-        .map(([id]) => currentStudents?.find(s => s.student_id === id)?.name)
-        .join(', ');
-      toast({
-        title: 'Cannot Mark Lessons',
-        description: `Blocked students cannot take lessons: ${blockedNames}`,
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    let successCount = 0;
-    let errorCount = 0;
-
-    for (const [studentId, status] of studentsToMark) {
-      try {
-        await markLesson.mutateAsync({
-          student_id: studentId,
-          class_id: null as any, // class_id is now optional
-          teacher_id: teacherId,
-          status: status!,
-          notes: notes[studentId] || undefined,
-        });
-        successCount++;
-      } catch (error) {
-        errorCount++;
-      }
-    }
-
-    if (successCount > 0) {
-      toast({
-        title: 'Lessons Marked',
-        description: `Successfully marked ${successCount} lesson(s)`,
-      });
-      setStudentStatuses({});
-      setNotes({});
-    }
-
-    if (errorCount > 0) {
-      toast({
-        title: 'Some Errors Occurred',
-        description: `${errorCount} lesson(s) could not be marked`,
-        variant: 'destructive',
-      });
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return (
+          <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+            <Check className="w-3 h-3 mr-1" />
+            Completed
+          </Badge>
+        );
+      case 'cancelled':
+        return (
+          <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
+            <X className="w-3 h-3 mr-1" />
+            Absent
+          </Badge>
+        );
+      case 'rescheduled':
+        return (
+          <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+            <RefreshCw className="w-3 h-3 mr-1" />
+            Rescheduled
+          </Badge>
+        );
+      default:
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
+
+  const completedCount = lessons?.filter((l: any) => l.status === 'completed').length || 0;
+  const absentCount = lessons?.filter((l: any) => l.status === 'cancelled').length || 0;
+  const rescheduledCount = lessons?.filter((l: any) => l.status === 'rescheduled').length || 0;
 
   return (
-    <TooltipProvider>
-      <TeacherLayout>
-        <div className="space-y-6 animate-fade-in">
-          <div>
-            <h1 className="text-3xl font-display font-bold mb-2">Mark Lesson</h1>
-            <p className="text-muted-foreground">Record attendance for your students</p>
-          </div>
+    <TeacherLayout>
+      <div className="space-y-6 animate-fade-in">
+        <div>
+          <h1 className="text-3xl font-display font-bold mb-2">Lesson History</h1>
+          <p className="text-muted-foreground">All lessons you have completed so far</p>
+        </div>
 
-          {/* Search */}
-          <Card className="glass-card">
-            <CardContent className="p-4">
-              <div className="relative">
+        {/* Summary Stats */}
+        <div className="grid grid-cols-3 gap-4">
+          <Card className="glass-card border-emerald-500/20">
+            <CardContent className="p-4 text-center">
+              <p className="text-2xl font-bold text-emerald-400">{completedCount}</p>
+              <p className="text-sm text-muted-foreground">Completed</p>
+            </CardContent>
+          </Card>
+          <Card className="glass-card border-red-500/20">
+            <CardContent className="p-4 text-center">
+              <p className="text-2xl font-bold text-red-400">{absentCount}</p>
+              <p className="text-sm text-muted-foreground">Absent</p>
+            </CardContent>
+          </Card>
+          <Card className="glass-card border-blue-500/20">
+            <CardContent className="p-4 text-center">
+              <p className="text-2xl font-bold text-blue-400">{rescheduledCount}</p>
+              <p className="text-sm text-muted-foreground">Rescheduled</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Filters */}
+        <Card className="glass-card">
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input 
-                  placeholder="Search students by name or programme..." 
+                <Input
+                  placeholder="Search by student name..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
                 />
               </div>
-            </CardContent>
-          </Card>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="cancelled">Absent</SelectItem>
+                  <SelectItem value="rescheduled">Rescheduled</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Students List - All assigned students */}
-          <Card className="glass-card">
-            <CardHeader>
-              <CardTitle className="font-display flex items-center gap-2">
-                <CheckSquare className="w-5 h-5 text-emerald-500" />
-                My Students ({filteredStudents.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {studentsLoading ? (
-                <div className="space-y-3">
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <Skeleton key={i} className="h-20 rounded-lg" />
-                  ))}
-                </div>
-              ) : filteredStudents.length > 0 ? (
-                <div className="space-y-4">
-                  {filteredStudents.map((student) => {
-                    const isBlocked = student.status === 'Blocked';
-                    
-                    return (
-                      <div
-                        key={student.student_id}
-                        className={`p-4 rounded-lg border ${
-                          isBlocked 
-                            ? 'border-destructive/50 bg-destructive/5 opacity-75' 
-                            : 'border-border/50 bg-card/50'
-                        }`}
-                      >
-                        <div className="flex flex-col md:flex-row md:items-center gap-4">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <p className={`font-medium ${isBlocked ? 'text-muted-foreground' : ''}`}>
-                                {student.name}
-                              </p>
-                              <Badge
-                                variant="outline"
-                                className={
-                                  student.status === 'Active'
-                                    ? 'status-active'
-                                    : student.status === 'Grace'
-                                    ? 'status-grace'
-                                    : 'status-blocked'
-                                }
-                              >
-                                {getStatusDisplayLabel(student.status)}
-                              </Badge>
-                              {student.programs?.name && (
-                                <Badge variant="secondary" className="text-xs">
-                                  {student.programs.name}
-                                </Badge>
-                              )}
-                              {student.student_level && (
-                                <Badge variant="outline" className="text-xs">
-                                  {student.student_level}
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-4 mt-1">
-                              <span className={`text-sm font-medium ${getWalletColor(student.wallet_balance || 0)}`}>
-                                Wallet: {student.wallet_balance} lessons
-                              </span>
-                            </div>
-                            {isBlocked && (
-                              <div className="flex items-center gap-1 mt-2 text-destructive text-sm">
-                                <Ban className="w-4 h-4" />
-                                <span>🚫 BLOCKED - Contact Admin for payment</span>
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex gap-2">
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span>
-                                  <Button
-                                    size="sm"
-                                    variant={studentStatuses[student.student_id] === 'Taken' ? 'default' : 'outline'}
-                                    className={studentStatuses[student.student_id] === 'Taken' ? 'bg-emerald-600 hover:bg-emerald-700' : ''}
-                                    onClick={() => handleStatusChange(student.student_id, 'Taken')}
-                                    disabled={isBlocked}
-                                  >
-                                    Taken
-                                  </Button>
-                                </span>
-                              </TooltipTrigger>
-                              {isBlocked && (
-                                <TooltipContent className="bg-destructive text-destructive-foreground">
-                                  <p>Student exceeded debt limit.</p>
-                                  <p>Payment required before lessons.</p>
-                                </TooltipContent>
-                              )}
-                            </Tooltip>
-                            <Button
-                              size="sm"
-                              variant={studentStatuses[student.student_id] === 'Absent' ? 'default' : 'outline'}
-                              className={studentStatuses[student.student_id] === 'Absent' ? 'bg-amber-600 hover:bg-amber-700' : ''}
-                              onClick={() => handleStatusChange(student.student_id, 'Absent')}
-                            >
-                              Absent
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant={studentStatuses[student.student_id] === 'Cancelled' ? 'default' : 'outline'}
-                              className={studentStatuses[student.student_id] === 'Cancelled' ? 'bg-neutral-600 hover:bg-neutral-700' : ''}
-                              onClick={() => handleStatusChange(student.student_id, 'Cancelled')}
-                            >
-                              Cancelled
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-
-                  <Button 
-                    onClick={handleSubmit} 
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 mt-4"
-                    disabled={markLesson.isPending || Object.values(studentStatuses).every(s => s === null)}
+        {/* Lessons List */}
+        <Card className="glass-card">
+          <CardHeader>
+            <CardTitle className="font-display flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-emerald-500" />
+              Lessons ({filteredLessons.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="space-y-3">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton key={i} className="h-16 rounded-lg" />
+                ))}
+              </div>
+            ) : filteredLessons.length > 0 ? (
+              <div className="space-y-3">
+                {filteredLessons.map((lesson: any) => (
+                  <div
+                    key={lesson.scheduled_lesson_id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg border border-border/50 bg-card/50"
                   >
-                    {markLesson.isPending ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Submitting...
-                      </>
-                    ) : (
-                      <>
-                        <CheckSquare className="w-4 h-4 mr-2" />
-                        Submit Attendance
-                      </>
-                    )}
-                  </Button>
-                </div>
-              ) : (
-                <p className="text-muted-foreground text-center py-8">
-                  {searchQuery ? 'No students match your search' : 'No students assigned to you'}
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </TeacherLayout>
-    </TooltipProvider>
+                    <div className="flex-1">
+                      <p className="font-medium">{lesson.students?.name || 'Unknown'}</p>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                        <Calendar className="w-3.5 h-3.5" />
+                        <span>{format(new Date(lesson.scheduled_date), 'EEE, MMM d, yyyy')}</span>
+                        <span>•</span>
+                        <span>{formatTime(lesson.scheduled_time)}</span>
+                        <span>•</span>
+                        <span>{lesson.duration_minutes} min</span>
+                      </div>
+                    </div>
+                    {getStatusBadge(lesson.status)}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-center py-8">
+                {searchQuery || statusFilter !== 'all' ? 'No lessons match your filters' : 'No lesson history yet'}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </TeacherLayout>
   );
 }
