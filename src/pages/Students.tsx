@@ -213,7 +213,6 @@ export default function Students() {
                 <th>Programme</th>
                 <th>Teacher</th>
                 <th>Wallet</th>
-                <th>Payment Status</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
@@ -222,26 +221,17 @@ export default function Students() {
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i}>
-                    <td colSpan={8}><Skeleton className="h-8 w-full" /></td>
+                    <td colSpan={7}><Skeleton className="h-8 w-full" /></td>
                   </tr>
                 ))
               ) : students?.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-8 text-muted-foreground">No students found</td>
+                  <td colSpan={7} className="text-center py-8 text-muted-foreground">No students found</td>
                 </tr>
               ) : (
-                students?.map((student) => {
+              students?.map((student) => {
                   const wallet = student.wallet_balance || 0;
-                  let paymentStatus = 'Paid';
-                  let paymentBadgeClass = 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300';
-                  
-                  if (wallet <= 0) {
-                    paymentStatus = 'Overdue';
-                    paymentBadgeClass = 'bg-red-500/20 text-red-700 dark:text-red-300';
-                  } else if (wallet <= 2) {
-                    paymentStatus = 'Due Soon';
-                    paymentBadgeClass = 'bg-amber-500/20 text-amber-700 dark:text-amber-300';
-                  }
+                  const isOverdue = wallet <= 0;
 
                   return (
                     <tr 
@@ -268,12 +258,8 @@ export default function Students() {
                           {student.wallet_balance}
                         </span>
                       </td>
-                      <td>
-                        <Badge variant="outline" className={paymentBadgeClass}>
-                          {paymentStatus}
-                        </Badge>
-                      </td>
                       <td onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center gap-2">
                         <Select
                           value={student.status}
                           onValueChange={(value: 'Active' | 'Grace' | 'Blocked') => {
@@ -301,6 +287,12 @@ export default function Students() {
                             </SelectItem>
                           </SelectContent>
                         </Select>
+                        {isOverdue && (
+                          <Badge variant="outline" className="bg-red-500/20 text-red-700 dark:text-red-300 border-red-500/30 text-xs">
+                            Overdue
+                          </Badge>
+                        )}
+                        </div>
                       </td>
                       <td onClick={(e) => e.stopPropagation()}>
                         <div className="flex gap-1">
