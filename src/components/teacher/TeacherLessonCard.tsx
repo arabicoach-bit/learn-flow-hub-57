@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { getWalletColor, getStatusDisplayLabel } from '@/lib/wallet-utils';
-import { Check, X, Ban, Clock, Loader2, RefreshCw, Edit2, Save, Calendar as CalendarIcon } from 'lucide-react';
+import { Check, X, Ban, Clock, Loader2, RefreshCw, Edit2, Save } from 'lucide-react';
 import { useMarkScheduledLesson } from '@/hooks/use-scheduled-lessons';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -264,57 +264,13 @@ export function TeacherLessonCard({ lesson, onLessonMarked, showDate, date }: Te
                       ) : (
                         <Check className="w-4 h-4 mr-1" />
                       )}
-                      Completed
+                      Complete
                     </Button>
                   </span>
                 </TooltipTrigger>
                 {(isBlocked || isFutureLesson) && (
                   <TooltipContent className="bg-destructive text-destructive-foreground">
                     <p>{isFutureLesson ? 'Cannot mark future lessons' : 'Student is blocked. Payment required.'}</p>
-                  </TooltipContent>
-                )}
-              </Tooltip>
-              
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border-blue-600/30"
-                      onClick={() => handleMarkLesson('Cancelled')}
-                      disabled={markLesson.isPending || isFutureLesson}
-                    >
-                      <CalendarIcon className="w-4 h-4 mr-1" />
-                      Teacher's Schedule
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                {isFutureLesson && (
-                  <TooltipContent>
-                    <p>Cannot mark future lessons</p>
-                  </TooltipContent>
-                )}
-              </Tooltip>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="bg-purple-600/20 hover:bg-purple-600/30 text-purple-400 border-purple-600/30"
-                      onClick={() => handleMarkLesson('Cancelled')}
-                      disabled={markLesson.isPending || isFutureLesson}
-                    >
-                      <CalendarIcon className="w-4 h-4 mr-1" />
-                      Student's Schedule
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                {isFutureLesson && (
-                  <TooltipContent>
-                    <p>Cannot mark future lessons</p>
                   </TooltipContent>
                 )}
               </Tooltip>
@@ -343,10 +299,12 @@ export function TeacherLessonCard({ lesson, onLessonMarked, showDate, date }: Te
 
               <Button
                 size="sm"
-                variant="ghost"
+                variant="outline"
+                className="bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border-blue-600/30"
                 onClick={() => setIsRescheduleOpen(true)}
               >
-                <RefreshCw className="w-4 h-4" />
+                <RefreshCw className="w-4 h-4 mr-1" />
+                Reschedule
               </Button>
             </div>
           </div>
