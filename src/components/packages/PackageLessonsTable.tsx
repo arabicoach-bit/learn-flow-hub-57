@@ -113,10 +113,8 @@ export function PackageLessonsTable({ packageId, studentId, teacherId, lessonDur
       
       await deleteLesson.mutateAsync({ 
         scheduledLessonId: deleteLessonId,
-        deductFromWallet: isScheduled,
-        studentId: isScheduled ? studentId : undefined,
       });
-      toast.success(isScheduled ? 'Lesson deleted and wallet reduced' : 'Lesson deleted');
+      toast.success('Lesson deleted and wallet updated');
       setDeleteLessonId(null);
     } catch {
       toast.error('Failed to delete lesson');
