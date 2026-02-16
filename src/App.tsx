@@ -33,7 +33,7 @@ import TeacherDashboard from "./pages/teacher/TeacherDashboard";
 import TeacherMarkLesson from "./pages/teacher/TeacherMarkLesson";
 import TeacherStudents from "./pages/teacher/TeacherStudents";
 import TeacherPayroll from "./pages/teacher/TeacherPayroll";
-import TeacherSchedule from "./pages/teacher/TeacherSchedule";
+
 
 import NotFound from "./pages/NotFound";
 
@@ -86,7 +86,7 @@ const AppRoutes = () => (
     <Route path="/teacher/mark-lesson" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherMarkLesson /></ProtectedRoute>} />
     <Route path="/teacher/students" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherStudents /></ProtectedRoute>} />
     <Route path="/teacher/payroll" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherPayroll /></ProtectedRoute>} />
-    <Route path="/teacher/schedule" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherSchedule /></ProtectedRoute>} />
+    
     
     {/* Fallback */}
     <Route path="*" element={<NotFound />} />

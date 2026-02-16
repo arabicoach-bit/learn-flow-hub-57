@@ -17,7 +17,6 @@ import {
   LayoutDashboard, 
   GraduationCap, 
   Wallet, 
-  Calendar, 
   LogOut,
   User
 } from 'lucide-react';
@@ -27,7 +26,6 @@ const teacherNavItems = [
   { title: 'My Dashboard', url: '/teacher', icon: LayoutDashboard },
   { title: 'My Students', url: '/teacher/students', icon: GraduationCap },
   { title: 'My Payroll', url: '/teacher/payroll', icon: Wallet },
-  { title: 'My Schedule', url: '/teacher/schedule', icon: Calendar },
 ];
 
 interface TeacherLayoutProps {

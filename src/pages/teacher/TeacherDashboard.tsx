@@ -125,13 +125,6 @@ export default function TeacherDashboard() {
                 <Wallet className="w-4 h-4 mr-2" />
                 View Payroll
               </Button>
-              <Button 
-                variant="outline"
-                onClick={() => navigate('/teacher/schedule')}
-              >
-                <Calendar className="w-4 h-4 mr-2" />
-                View Schedule
-              </Button>
             </div>
           </CardContent>
         </Card>
@@ -245,9 +238,9 @@ export default function TeacherDashboard() {
                   />
                 ))}
                 {tomorrowsLessons.length > 4 && (
-                  <Button variant="ghost" className="w-full text-green-400" onClick={() => navigate('/teacher/schedule')}>
-                    View all {tomorrowsLessons.length} lessons <ChevronRight className="w-4 h-4 ml-1" />
-                  </Button>
+                  <p className="text-sm text-center text-muted-foreground">
+                    +{tomorrowsLessons.length - 4} more lessons
+                  </p>
                 )}
               </div>
             ) : (
@@ -256,52 +249,6 @@ export default function TeacherDashboard() {
           </CardContent>
         </Card>
 
-        {/* This Week's Schedule Preview */}
-        <Card className="glass-card">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="font-display flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-muted-foreground" />
-              This Week's Schedule
-            </CardTitle>
-            <Button variant="ghost" onClick={() => navigate('/teacher/schedule')}>
-              View Full Schedule <ChevronRight className="w-4 h-4 ml-1" />
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {weekLoading ? (
-              <div className="space-y-3">
-                <Skeleton className="h-16 rounded-lg" />
-                <Skeleton className="h-16 rounded-lg" />
-              </div>
-            ) : weekLessons && weekLessons.length > 0 ? (
-              <div className="space-y-2">
-                {/* Group by date */}
-                {Object.entries(
-                  weekLessons.reduce((acc, lesson) => {
-                    const date = lesson.scheduled_date || '';
-                    if (!acc[date]) acc[date] = [];
-                    acc[date].push(lesson);
-                    return acc;
-                  }, {} as Record<string, typeof weekLessons>)
-                ).slice(0, 5).map(([date, lessons]) => (
-                  <div key={date} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
-                    <div>
-                      <p className="font-medium">
-                        {format(new Date(date), 'EEEE, MMM d')}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {lessons.length} lesson{lessons.length !== 1 ? 's' : ''}
-                      </p>
-                    </div>
-                    <Badge variant="outline">{lessons.length}</Badge>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-muted-foreground text-center py-4">No scheduled lessons this week</p>
-            )}
-          </CardContent>
-        </Card>
 
         {/* Salary Breakdown */}
         <TeacherSalaryCard />
