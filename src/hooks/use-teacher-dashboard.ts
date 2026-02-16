@@ -277,6 +277,24 @@ export function useTeacherMonthlyStats() {
         .gte('scheduled_date', lastMonthStart)
         .lte('scheduled_date', lastMonthEnd);
 
+      // Get current month completed trial lessons
+      const { data: currentMonthTrials } = await supabase
+        .from('trial_lessons_log')
+        .select('trial_lesson_id, duration_minutes, teacher_payment_amount')
+        .eq('teacher_id', teacherId)
+        .eq('status', 'completed')
+        .gte('lesson_date', currentMonthStart)
+        .lte('lesson_date', currentMonthEnd);
+
+      // Get last month completed trial lessons
+      const { data: lastMonthTrials } = await supabase
+        .from('trial_lessons_log')
+        .select('trial_lesson_id, duration_minutes, teacher_payment_amount')
+        .eq('teacher_id', teacherId)
+        .eq('status', 'completed')
+        .gte('lesson_date', lastMonthStart)
+        .lte('lesson_date', lastMonthEnd);
+
       // Calculate hours from actual lesson durations
       const currentHours = (currentMonthCompleted || []).reduce((total, lesson) => {
         return total + (lesson.duration_minutes || 45) / 60;
@@ -286,18 +304,39 @@ export function useTeacherMonthlyStats() {
         return total + (lesson.duration_minutes || 45) / 60;
       }, 0);
 
-      const currentLessonsCount = currentMonthCompleted?.length || 0;
-      const lastLessonsCount = lastMonthCompleted?.length || 0;
+      // Trial lesson hours (always 30 min max)
+      const currentTrialHours = (currentMonthTrials || []).reduce((total, lesson) => {
+        return total + Math.min(lesson.duration_minutes || 30, 30) / 60;
+      }, 0);
+
+      const lastTrialHours = (lastMonthTrials || []).reduce((total, lesson) => {
+        return total + Math.min(lesson.duration_minutes || 30, 30) / 60;
+      }, 0);
+
+      // Trial lesson salary (use pre-calculated teacher_payment_amount)
+      const currentTrialSalary = (currentMonthTrials || []).reduce((total, lesson) => {
+        return total + (lesson.teacher_payment_amount || 0);
+      }, 0);
+
+      const lastTrialSalary = (lastMonthTrials || []).reduce((total, lesson) => {
+        return total + (lesson.teacher_payment_amount || 0);
+      }, 0);
+
+      const currentLessonsCount = (currentMonthCompleted?.length || 0) + (currentMonthTrials?.length || 0);
+      const lastLessonsCount = (lastMonthCompleted?.length || 0) + (lastMonthTrials?.length || 0);
+
+      const totalCurrentHours = currentHours + currentTrialHours;
+      const totalLastHours = lastHours + lastTrialHours;
 
       return {
         currentMonth: {
           teacher_id: teacherId,
           teacher_name: teacher?.name || 'Unknown',
-          rate_per_lesson: ratePerHour, // This is now hourly rate
+          rate_per_lesson: ratePerHour,
           month: format(now, 'MMMM yyyy'),
           lessons_taught: currentLessonsCount,
-          total_hours: currentHours,
-          salary_earned: currentHours * ratePerHour, // Pay based on hours
+          total_hours: totalCurrentHours,
+          salary_earned: (currentHours * ratePerHour) + currentTrialSalary,
         },
         lastMonth: {
           teacher_id: teacherId,
@@ -305,8 +344,8 @@ export function useTeacherMonthlyStats() {
           rate_per_lesson: ratePerHour,
           month: format(lastMonthDate, 'MMMM yyyy'),
           lessons_taught: lastLessonsCount,
-          total_hours: lastHours,
-          salary_earned: lastHours * ratePerHour, // Pay based on hours
+          total_hours: totalLastHours,
+          salary_earned: (lastHours * ratePerHour) + lastTrialSalary,
         },
       };
     },
