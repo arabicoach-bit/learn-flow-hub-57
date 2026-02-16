@@ -293,6 +293,23 @@ export function useAddScheduledLesson() {
         .single();
 
       if (error) throw error;
+
+      // Increment wallet balance when a lesson is added
+      const { data: student } = await supabase
+        .from('students')
+        .select('wallet_balance')
+        .eq('student_id', input.student_id)
+        .single();
+
+      if (student) {
+        const newBalance = (student.wallet_balance || 0) + 1;
+        const newStatus = newBalance >= 3 ? 'Active' : newBalance >= -1 ? 'Grace' : 'Blocked';
+        await supabase
+          .from('students')
+          .update({ wallet_balance: newBalance, status: newStatus })
+          .eq('student_id', input.student_id);
+      }
+
       return data;
     },
     onSuccess: () => {
@@ -309,39 +326,41 @@ export function useDeleteScheduledLesson() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ scheduledLessonId, deductFromWallet, studentId }: { 
+    mutationFn: async ({ scheduledLessonId }: { 
       scheduledLessonId: string; 
-      deductFromWallet?: boolean;
-      studentId?: string;
     }) => {
-      // If deducting from wallet (admin deleting a scheduled lesson)
-      if (deductFromWallet && studentId) {
-        const { error: walletError } = await supabase
-          .from('students')
-          .update({ wallet_balance: supabase.rpc ? undefined : undefined })
-          .eq('student_id', studentId);
-        
-        // Use raw SQL via RPC would be ideal, but let's just decrement manually
-        const { data: student } = await supabase
-          .from('students')
-          .select('wallet_balance')
-          .eq('student_id', studentId)
-          .single();
+      // Get the lesson details before deleting
+      const { data: lesson } = await supabase
+        .from('scheduled_lessons')
+        .select('student_id, status')
+        .eq('scheduled_lesson_id', scheduledLessonId)
+        .single();
 
-        if (student) {
-          await supabase
-            .from('students')
-            .update({ wallet_balance: (student.wallet_balance || 0) - 1 })
-            .eq('student_id', studentId);
-        }
-      }
-
+      // Delete the lesson
       const { error } = await supabase
         .from('scheduled_lessons')
         .delete()
         .eq('scheduled_lesson_id', scheduledLessonId);
 
       if (error) throw error;
+
+      // Deduct from wallet only if lesson was not already completed (completed already deducted via mark_lesson_taken)
+      if (lesson?.student_id && lesson.status !== 'completed') {
+        const { data: student } = await supabase
+          .from('students')
+          .select('wallet_balance')
+          .eq('student_id', lesson.student_id)
+          .single();
+
+        if (student) {
+          const newBalance = (student.wallet_balance || 0) - 1;
+          const newStatus = newBalance >= 3 ? 'Active' : newBalance >= -1 ? 'Grace' : 'Blocked';
+          await supabase
+            .from('students')
+            .update({ wallet_balance: newBalance, status: newStatus })
+            .eq('student_id', lesson.student_id);
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['scheduled-lessons'] });
