@@ -18,12 +18,14 @@ import {
   GraduationCap, 
   Wallet, 
   LogOut,
-  User
+  User,
+  BookOpen
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const teacherNavItems = [
   { title: 'My Dashboard', url: '/teacher', icon: LayoutDashboard },
+  { title: 'Lesson History', url: '/teacher/mark-lesson', icon: BookOpen },
   { title: 'My Students', url: '/teacher/students', icon: GraduationCap },
   { title: 'My Payroll', url: '/teacher/payroll', icon: Wallet },
 ];
