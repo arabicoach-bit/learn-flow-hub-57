@@ -2,11 +2,10 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { format, parseISO, addDays } from 'date-fns';
-import { Calendar as CalendarIcon, Clock, AlertTriangle, Loader2 } from 'lucide-react';
+import { format, parseISO } from 'date-fns';
+import { Calendar as CalendarIcon, AlertTriangle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
-import { Input } from '@/components/ui/input';
 import {
   Dialog,
   DialogContent,
@@ -36,7 +35,6 @@ import { toast } from 'sonner';
 
 const rescheduleSchema = z.object({
   date: z.date({ required_error: 'Please select a date' }),
-  time: z.string().min(1, 'Please select a time'),
 });
 
 type RescheduleFormValues = z.infer<typeof rescheduleSchema>;
@@ -61,34 +59,33 @@ export function RescheduleDialog({ lesson, open, onOpenChange, onSuccess }: Resc
   const [checkingConflict, setCheckingConflict] = useState(false);
   const rescheduleLesson = useRescheduleLesson();
 
+  const currentTime = lesson.scheduled_time?.slice(0, 5) || '18:00';
+
   const form = useForm<RescheduleFormValues>({
     resolver: zodResolver(rescheduleSchema),
     defaultValues: {
       date: lesson.scheduled_date ? parseISO(lesson.scheduled_date) : new Date(),
-      time: lesson.scheduled_time?.slice(0, 5) || '18:00',
     },
   });
 
   const selectedDate = form.watch('date');
-  const selectedTime = form.watch('time');
 
-  // Check for conflicts when date/time changes
-  const checkConflict = async (date: Date, time: string) => {
+  // Check for conflicts when date changes (using existing time)
+  const checkConflict = async (date: Date) => {
     if (!lesson.teacher_id) return;
     
     setCheckingConflict(true);
     try {
       const dateStr = format(date, 'yyyy-MM-dd');
       
-      // Check for existing lessons at the same date/time for the same teacher
       const { data: existingLessons, error } = await supabase
         .from('scheduled_lessons')
         .select('scheduled_lesson_id, scheduled_time, students(name)')
         .eq('teacher_id', lesson.teacher_id)
         .eq('scheduled_date', dateStr)
-        .eq('scheduled_time', time + ':00')
+        .eq('scheduled_time', currentTime + ':00')
         .neq('scheduled_lesson_id', lesson.scheduled_lesson_id)
-        .in('status', ['scheduled', 'rescheduled']);
+        .in('status', ['scheduled']);
 
       if (error) throw error;
 
@@ -111,18 +108,10 @@ export function RescheduleDialog({ lesson, open, onOpenChange, onSuccess }: Resc
     }
   };
 
-  // Check for conflicts on form value changes
   const handleDateChange = (date: Date | undefined) => {
     if (date) {
       form.setValue('date', date);
-      checkConflict(date, selectedTime);
-    }
-  };
-
-  const handleTimeChange = (time: string) => {
-    form.setValue('time', time);
-    if (selectedDate) {
-      checkConflict(selectedDate, time);
+      checkConflict(date);
     }
   };
 
@@ -136,10 +125,10 @@ export function RescheduleDialog({ lesson, open, onOpenChange, onSuccess }: Resc
       await rescheduleLesson.mutateAsync({
         scheduledLessonId: lesson.scheduled_lesson_id,
         newDate: format(values.date, 'yyyy-MM-dd'),
-        newTime: values.time + ':00',
+        newTime: currentTime + ':00',
       });
 
-      toast.success('Lesson rescheduled successfully');
+      toast.success('Lesson moved to new date successfully');
       onOpenChange(false);
       onSuccess?.();
     } catch (error: any) {
@@ -153,9 +142,9 @@ export function RescheduleDialog({ lesson, open, onOpenChange, onSuccess }: Resc
         <DialogHeader>
           <DialogTitle>Reschedule Lesson</DialogTitle>
           <DialogDescription>
-            Reschedule the lesson for {lesson.students?.name}.
+            Move the lesson for {lesson.students?.name} to a new date.
             {lesson.scheduled_date && (
-              <> The current slot is {format(parseISO(lesson.scheduled_date), 'MMM d, yyyy')} at {lesson.scheduled_time?.slice(0, 5)}.</>
+              <> Current date: {format(parseISO(lesson.scheduled_date), 'MMM d, yyyy')} at {currentTime}.</>
             )}
           </DialogDescription>
         </DialogHeader>
@@ -201,27 +190,9 @@ export function RescheduleDialog({ lesson, open, onOpenChange, onSuccess }: Resc
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="time"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>New Time</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        type="time"
-                        className="pl-10"
-                        {...field}
-                        onChange={(e) => handleTimeChange(e.target.value)}
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <p className="text-sm text-muted-foreground">
+              Time will remain: <strong>{currentTime}</strong>
+            </p>
 
             {/* Conflict Warning */}
             {checkingConflict && (
@@ -242,9 +213,9 @@ export function RescheduleDialog({ lesson, open, onOpenChange, onSuccess }: Resc
               </Alert>
             )}
 
-            {!checkingConflict && !conflict.hasConflict && selectedDate && selectedTime && (
+            {!checkingConflict && !conflict.hasConflict && selectedDate && (
               <div className="text-sm text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 p-3 rounded-md">
-                ✓ Time slot is available
+                ✓ Date is available
               </div>
             )}
 
@@ -263,10 +234,10 @@ export function RescheduleDialog({ lesson, open, onOpenChange, onSuccess }: Resc
                 {rescheduleLesson.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Rescheduling...
+                    Moving...
                   </>
                 ) : (
-                  'Reschedule'
+                  'Move Lesson'
                 )}
               </Button>
             </DialogFooter>

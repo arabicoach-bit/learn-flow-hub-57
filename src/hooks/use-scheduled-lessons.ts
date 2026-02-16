@@ -166,38 +166,17 @@ export function useRescheduleLesson() {
       newDate: string; 
       newTime: string;
     }) => {
-      // First get the original lesson to create a new scheduled entry
-      const { data: originalLesson, error: fetchError } = await supabase
-        .from('scheduled_lessons')
-        .select('*')
-        .eq('scheduled_lesson_id', scheduledLessonId)
-        .single();
-
-      if (fetchError) throw fetchError;
-
-      // Mark original as rescheduled
+      // Simply update the lesson's date and time - just move it
       const { error: updateError } = await supabase
         .from('scheduled_lessons')
-        .update({ status: 'rescheduled' })
+        .update({ 
+          scheduled_date: newDate,
+          scheduled_time: newTime,
+          status: 'scheduled',
+        })
         .eq('scheduled_lesson_id', scheduledLessonId);
 
       if (updateError) throw updateError;
-
-      // Create new scheduled lesson at the new time
-      const { error: insertError } = await supabase
-        .from('scheduled_lessons')
-        .insert({
-          package_id: originalLesson.package_id,
-          student_id: originalLesson.student_id,
-          teacher_id: originalLesson.teacher_id,
-          class_id: originalLesson.class_id,
-          scheduled_date: newDate,
-          scheduled_time: newTime,
-          duration_minutes: originalLesson.duration_minutes,
-          status: 'scheduled',
-        });
-
-      if (insertError) throw insertError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['scheduled-lessons'] });
@@ -330,7 +309,33 @@ export function useDeleteScheduledLesson() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (scheduledLessonId: string) => {
+    mutationFn: async ({ scheduledLessonId, deductFromWallet, studentId }: { 
+      scheduledLessonId: string; 
+      deductFromWallet?: boolean;
+      studentId?: string;
+    }) => {
+      // If deducting from wallet (admin deleting a scheduled lesson)
+      if (deductFromWallet && studentId) {
+        const { error: walletError } = await supabase
+          .from('students')
+          .update({ wallet_balance: supabase.rpc ? undefined : undefined })
+          .eq('student_id', studentId);
+        
+        // Use raw SQL via RPC would be ideal, but let's just decrement manually
+        const { data: student } = await supabase
+          .from('students')
+          .select('wallet_balance')
+          .eq('student_id', studentId)
+          .single();
+
+        if (student) {
+          await supabase
+            .from('students')
+            .update({ wallet_balance: (student.wallet_balance || 0) - 1 })
+            .eq('student_id', studentId);
+        }
+      }
+
       const { error } = await supabase
         .from('scheduled_lessons')
         .delete()
@@ -344,6 +349,8 @@ export function useDeleteScheduledLesson() {
       queryClient.invalidateQueries({ queryKey: ['teacher-tomorrows-lessons'] });
       queryClient.invalidateQueries({ queryKey: ['teacher-week-lessons'] });
       queryClient.invalidateQueries({ queryKey: ['teacher-past-7-days-unmarked'] });
+      queryClient.invalidateQueries({ queryKey: ['students'] });
+      queryClient.invalidateQueries({ queryKey: ['packages'] });
     },
   });
 }

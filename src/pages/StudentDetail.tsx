@@ -482,38 +482,66 @@ export default function StudentDetail() {
                 ) : !lessons?.length ? (
                   <p className="text-muted-foreground text-center py-8">No lesson history</p>
                 ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Class</TableHead>
-                        <TableHead>Teacher</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Notes</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {lessons.map((lesson) => (
-                        <TableRow key={lesson.lesson_id}>
-                          <TableCell>{formatDateTime(lesson.date)}</TableCell>
-                          <TableCell>{lesson.classes?.name || '-'}</TableCell>
-                          <TableCell>{lesson.teachers?.name || '-'}</TableCell>
-                          <TableCell>
-                            <Badge 
-                              variant="outline" 
-                              className={
-                                lesson.status === 'Taken' ? 'status-active' :
-                                lesson.status === 'Absent' ? 'status-blocked' : 'status-grace'
-                              }
-                            >
-                              {lesson.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="max-w-[200px] truncate">{lesson.notes || '-'}</TableCell>
+                  <>
+                    {/* Monthly Stats */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                      <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-center">
+                        <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                          {lessons.filter(l => l.status === 'Taken').length}
+                        </p>
+                        <p className="text-xs text-muted-foreground">Completed</p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-center">
+                        <p className="text-2xl font-bold text-red-600 dark:text-red-400">
+                          {lessons.filter(l => l.status === 'Absent').length}
+                        </p>
+                        <p className="text-xs text-muted-foreground">Absent</p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-center">
+                        <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+                          {lessons.filter(l => l.status === 'Cancelled').length}
+                        </p>
+                        <p className="text-xs text-muted-foreground">Cancelled</p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-center">
+                        <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                          {student.wallet_balance}
+                        </p>
+                        <p className="text-xs text-muted-foreground">Remaining Balance</p>
+                      </div>
+                    </div>
+
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Teacher</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Notes</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {lessons.map((lesson) => (
+                          <TableRow key={lesson.lesson_id}>
+                            <TableCell>{formatDateTime(lesson.date)}</TableCell>
+                            <TableCell>{lesson.teachers?.name || '-'}</TableCell>
+                            <TableCell>
+                              <Badge 
+                                variant="outline" 
+                                className={
+                                  lesson.status === 'Taken' ? 'status-active' :
+                                  lesson.status === 'Absent' ? 'status-blocked' : 'status-grace'
+                                }
+                              >
+                                {lesson.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="max-w-[200px] truncate">{lesson.notes || '-'}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </>
                 )}
               </CardContent>
             </Card>

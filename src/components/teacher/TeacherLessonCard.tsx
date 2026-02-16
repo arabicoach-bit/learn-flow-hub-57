@@ -102,7 +102,7 @@ export function TeacherLessonCard({ lesson, onLessonMarked, showDate, date }: Te
     }
   };
 
-  const handleMarkLesson = async (status: 'Taken' | 'Absent' | 'Cancelled') => {
+  const handleMarkLesson = async (status: 'Taken' | 'Absent') => {
     if (status === 'Taken' && isBlocked) {
       toast.error('Cannot mark as Completed', {
         description: `${lesson.student_name} is blocked. Payment required.`,
@@ -117,7 +117,7 @@ export function TeacherLessonCard({ lesson, onLessonMarked, showDate, date }: Te
         notes: notes || undefined,
       });
       
-      const statusLabel = status === 'Taken' ? 'Completed' : status;
+      const statusLabel = status === 'Taken' ? 'Completed' : 'Absent';
       toast.success(`Lesson marked as ${statusLabel}!`);
       setNotes('');
       onLessonMarked?.();

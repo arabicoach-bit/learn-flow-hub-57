@@ -30,8 +30,7 @@ interface UpdateLessonStatusDialogProps {
 const STATUS_OPTIONS = [
   { value: 'scheduled', label: 'Scheduled' },
   { value: 'completed', label: 'Completed' },
-  { value: 'cancelled', label: 'Cancelled' },
-  { value: 'rescheduled', label: 'Rescheduled' },
+  { value: 'cancelled', label: 'Absent' },
 ];
 
 export function UpdateLessonStatusDialog({ lesson, open, onOpenChange }: UpdateLessonStatusDialogProps) {

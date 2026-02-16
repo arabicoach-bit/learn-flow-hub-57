@@ -11,9 +11,8 @@ import { useStudents, Student } from '@/hooks/use-students';
 import { usePrograms } from '@/hooks/use-programs';
 import { getWalletColor, getStatusDisplayLabel } from '@/lib/wallet-utils';
 import { EditStudentDialog } from '@/components/teacher/EditStudentDialog';
-import { GraduationCap, Search, Phone, ChevronDown, User, School, BookOpen, Calendar, Pencil, Plus } from 'lucide-react';
+import { GraduationCap, Search, Phone, ChevronDown, User, School, BookOpen, Calendar, Pencil } from 'lucide-react';
 import { useState } from 'react';
-import { AddLessonRecordDialog } from '@/components/teacher/AddLessonRecordDialog';
 
 export default function TeacherStudents() {
   const { profile } = useAuth();
@@ -23,7 +22,6 @@ export default function TeacherStudents() {
   const [statusFilter, setStatusFilter] = useState('');
   const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set());
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
-  const [lessonRecordStudent, setLessonRecordStudent] = useState<Student | null>(null);
 
   const { data: students, isLoading: studentsLoading } = useStudents();
   const { data: programs } = usePrograms();
@@ -214,17 +212,6 @@ export default function TeacherStudents() {
                                 size="sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  setLessonRecordStudent(student);
-                                }}
-                              >
-                                <Plus className="w-4 h-4 mr-2" />
-                                Add Lesson Record
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
                                   setEditingStudent(student);
                                 }}
                               >
@@ -250,14 +237,6 @@ export default function TeacherStudents() {
           open={!!editingStudent}
           onOpenChange={(open) => !open && setEditingStudent(null)}
         />
-
-        {lessonRecordStudent && (
-          <AddLessonRecordDialog
-            open={!!lessonRecordStudent}
-            onOpenChange={(open) => !open && setLessonRecordStudent(null)}
-            student={lessonRecordStudent}
-          />
-        )}
       </div>
     </TeacherLayout>
   );
