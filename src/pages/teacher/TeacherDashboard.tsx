@@ -24,11 +24,14 @@ import {
   useTeacherStudents,
   usePast7DaysUnmarkedLessons
 } from '@/hooks/use-teacher-dashboard';
+import { useTodaysTrialLessons, usePendingTrialLessons } from '@/hooks/use-teacher-trial-lessons';
 import { TeacherLessonCard } from '@/components/teacher/TeacherLessonCard';
+import { TrialLessonCard } from '@/components/teacher/TrialLessonCard';
 import { TeacherSalaryCard } from '@/components/teacher/TeacherSalaryCard';
- import { formatSalary } from '@/lib/wallet-utils';
+import { formatSalary } from '@/lib/wallet-utils';
 import { format } from 'date-fns';
 import { formatDistanceToNow } from 'date-fns';
+import { Users } from 'lucide-react';
 
 export default function TeacherDashboard() {
   const { profile } = useAuth();
@@ -42,6 +45,8 @@ export default function TeacherDashboard() {
   const { data: stats, isLoading: statsLoading } = useTeacherMonthlyStats();
   const { data: students, isLoading: studentsLoading } = useTeacherStudents();
   const { data: past7DaysLessons, isLoading: past7DaysLoading, refetch: refetchPast7Days } = usePast7DaysUnmarkedLessons();
+  const { data: todaysTrialLessons, isLoading: trialTodayLoading, refetch: refetchTrialToday } = useTodaysTrialLessons();
+  const { data: pendingTrialLessons, isLoading: pendingTrialLoading, refetch: refetchPendingTrial } = usePendingTrialLessons();
 
   const isLoading = todaysLoading || statsLoading || studentsLoading;
 
@@ -51,6 +56,8 @@ export default function TeacherDashboard() {
   const handleLessonMarked = () => {
     refetchToday();
     refetchPast7Days();
+    refetchTrialToday();
+    refetchPendingTrial();
   };
 
   // Filter past lessons (not including today) for the "pending" section
@@ -130,25 +137,32 @@ export default function TeacherDashboard() {
         </Card>
 
         {/* Today's Lessons */}
-        <Card className={`glass-card border-blue-500/20 ${todaysLessons && todaysLessons.length > 0 ? '' : ''}`}>
+        <Card className={`glass-card border-blue-500/20`}>
           <CardHeader>
             <CardTitle className="font-display flex items-center gap-2 text-blue-400">
               <Calendar className="w-5 h-5" />
-              Today's Lessons ({todaysLessons?.length || 0})
+              Today's Lessons ({(todaysLessons?.length || 0) + (todaysTrialLessons?.length || 0)})
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {todaysLoading ? (
+            {todaysLoading || trialTodayLoading ? (
               <div className="space-y-3">
                 {Array.from({ length: 3 }).map((_, i) => (
                   <Skeleton key={i} className="h-24 rounded-lg" />
                 ))}
               </div>
-            ) : todaysLessons && todaysLessons.length > 0 ? (
+            ) : (todaysLessons && todaysLessons.length > 0) || (todaysTrialLessons && todaysTrialLessons.length > 0) ? (
               <div className="space-y-3">
-                {todaysLessons.map((lesson) => (
+                {todaysLessons?.map((lesson) => (
                   <TeacherLessonCard 
                     key={lesson.scheduled_lesson_id} 
+                    lesson={lesson}
+                    onLessonMarked={handleLessonMarked}
+                  />
+                ))}
+                {todaysTrialLessons?.map((lesson) => (
+                  <TrialLessonCard
+                    key={lesson.trial_lesson_id}
                     lesson={lesson}
                     onLessonMarked={handleLessonMarked}
                   />
@@ -163,13 +177,13 @@ export default function TeacherDashboard() {
           </CardContent>
         </Card>
 
-        {/* Past 7 Days Unmarked Lessons */}
-        {pastUnmarkedLessons.length > 0 && (
+        {/* Past 7 Days Unmarked Lessons (regular + trial) */}
+        {(pastUnmarkedLessons.length > 0 || (pendingTrialLessons && pendingTrialLessons.length > 0)) && (
           <Card className="glass-card border-orange-500/30 bg-orange-500/5">
             <CardHeader>
               <CardTitle className="font-display flex items-center gap-2 text-orange-400">
                 <AlertTriangle className="w-5 h-5" />
-                Pending Lessons to Mark ({pastUnmarkedLessons.length})
+                Pending Lessons to Mark ({pastUnmarkedLessons.length + (pendingTrialLessons?.length || 0)})
               </CardTitle>
               <p className="text-sm text-muted-foreground mt-1">
                 These lessons from the past 7 days need to be marked. They will expire after 7 days.
@@ -211,6 +225,22 @@ export default function TeacherDashboard() {
                         />
                       ))}
                     </div>
+                  ))}
+                </div>
+              )}
+              {/* Pending Trial Lessons */}
+              {pendingTrialLessons && pendingTrialLessons.length > 0 && (
+                <div className="space-y-2 mt-4">
+                  <div className="flex items-center gap-2 text-sm font-medium text-purple-400">
+                    <Users className="w-4 h-4" />
+                    Pending Trial Lessons
+                  </div>
+                  {pendingTrialLessons.map((lesson) => (
+                    <TrialLessonCard
+                      key={lesson.trial_lesson_id}
+                      lesson={lesson}
+                      onLessonMarked={handleLessonMarked}
+                    />
                   ))}
                 </div>
               )}
