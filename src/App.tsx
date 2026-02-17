@@ -85,7 +85,7 @@ const AppRoutes = () => (
     {/* Teacher routes */}
     <Route path="/teacher" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherDashboard /></ProtectedRoute>} />
     <Route path="/teacher/schedule" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherSchedule /></ProtectedRoute>} />
-    <Route path="/teacher/mark-lesson" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherMarkLesson /></ProtectedRoute>} />
+    <Route path="/teacher/mark-lesson" element={<Navigate to="/teacher/students" replace />} />
     <Route path="/teacher/students" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherStudents /></ProtectedRoute>} />
     <Route path="/teacher/payroll" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherPayroll /></ProtectedRoute>} />
     <Route path="/teacher/trial-lessons" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherTrialLessons /></ProtectedRoute>} />

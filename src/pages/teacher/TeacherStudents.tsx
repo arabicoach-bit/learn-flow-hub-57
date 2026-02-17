@@ -7,11 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useStudents, Student } from '@/hooks/use-students';
 import { usePrograms } from '@/hooks/use-programs';
 import { getWalletColor, getStatusDisplayLabel } from '@/lib/wallet-utils';
 import { EditStudentDialog } from '@/components/teacher/EditStudentDialog';
-import { GraduationCap, Search, Phone, ChevronDown, User, School, BookOpen, Calendar, Pencil } from 'lucide-react';
+import { StudentLessonHistory } from '@/components/teacher/StudentLessonHistory';
+import { GraduationCap, Search, Phone, ChevronDown, User, School, BookOpen, Calendar, Pencil, AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
 
 export default function TeacherStudents() {
@@ -26,7 +28,6 @@ export default function TeacherStudents() {
   const { data: students, isLoading: studentsLoading } = useStudents();
   const { data: programs } = usePrograms();
   
-  // Filter students assigned to this teacher
   const myStudents = students?.filter(s => s.teacher_id === teacherId) || [];
 
   const filteredStudents = myStudents.filter((student) => {
@@ -36,16 +37,11 @@ export default function TeacherStudents() {
     return matchesSearch && matchesStatus;
   });
 
-  const isLoading = studentsLoading;
-
   const toggleStudent = (studentId: string) => {
     setExpandedStudents(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(studentId)) {
-        newSet.delete(studentId);
-      } else {
-        newSet.add(studentId);
-      }
+      if (newSet.has(studentId)) newSet.delete(studentId);
+      else newSet.add(studentId);
       return newSet;
     });
   };
@@ -60,7 +56,7 @@ export default function TeacherStudents() {
       <div className="space-y-6 animate-fade-in">
         <div>
           <h1 className="text-3xl font-display font-bold mb-2">My Students</h1>
-          <p className="text-muted-foreground">View students in your classes</p>
+          <p className="text-muted-foreground">Complete student profiles with lesson history, statistics, and management</p>
         </div>
 
         {/* Filters */}
@@ -100,7 +96,7 @@ export default function TeacherStudents() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
+            {studentsLoading ? (
               <div className="space-y-3">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <Skeleton key={i} className="h-20 rounded-lg" />
@@ -111,6 +107,7 @@ export default function TeacherStudents() {
                 {filteredStudents.map((student) => {
                   const isExpanded = expandedStudents.has(student.student_id);
                   const programName = getProgramName(student.program_id);
+                  const lowCredit = (student.wallet_balance || 0) <= 2;
                   
                   return (
                     <Collapsible
@@ -136,12 +133,24 @@ export default function TeacherStudents() {
                                 >
                                   {getStatusDisplayLabel(student.status)}
                                 </Badge>
+                                {lowCredit && (
+                                  <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs">
+                                    <AlertTriangle className="w-3 h-3 mr-1" />
+                                    Low Credit
+                                  </Badge>
+                                )}
                               </div>
                               <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
                                 <span className="flex items-center gap-1">
                                   <Phone className="w-3 h-3" />
                                   {student.phone}
                                 </span>
+                                {programName && (
+                                  <span className="flex items-center gap-1">
+                                    <BookOpen className="w-3 h-3" />
+                                    {programName}
+                                  </span>
+                                )}
                               </div>
                             </div>
                             <div className="flex items-center gap-4">
@@ -154,71 +163,95 @@ export default function TeacherStudents() {
                         </CollapsibleTrigger>
                         
                         <CollapsibleContent>
-                          <div className="px-4 pb-4 pt-2 border-t border-border/50 bg-muted/20">
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                              {student.age && (
-                                <div className="flex items-center gap-2 text-sm">
-                                  <User className="w-4 h-4 text-muted-foreground" />
-                                  <span className="text-muted-foreground">Age:</span>
-                                  <span className="font-medium">{student.age} years</span>
+                          <div className="border-t border-border/50 bg-muted/10">
+                            <Tabs defaultValue="lessons" className="w-full">
+                              <TabsList className="w-full justify-start rounded-none border-b border-border/50 bg-transparent px-4 pt-2">
+                                <TabsTrigger value="lessons" className="data-[state=active]:bg-muted">
+                                  <BookOpen className="w-4 h-4 mr-1" />
+                                  Lessons
+                                </TabsTrigger>
+                                <TabsTrigger value="profile" className="data-[state=active]:bg-muted">
+                                  <User className="w-4 h-4 mr-1" />
+                                  Profile
+                                </TabsTrigger>
+                              </TabsList>
+                              
+                              <TabsContent value="lessons" className="p-4 mt-0">
+                                <StudentLessonHistory 
+                                  studentId={student.student_id}
+                                  studentName={student.name}
+                                  walletBalance={student.wallet_balance || 0}
+                                  teacherId={teacherId}
+                                />
+                              </TabsContent>
+
+                              <TabsContent value="profile" className="p-4 mt-0">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                  {student.age && (
+                                    <div className="flex items-center gap-2 text-sm">
+                                      <User className="w-4 h-4 text-muted-foreground" />
+                                      <span className="text-muted-foreground">Age:</span>
+                                      <span className="font-medium">{student.age} years</span>
+                                    </div>
+                                  )}
+                                  {student.gender && (
+                                    <div className="flex items-center gap-2 text-sm">
+                                      <User className="w-4 h-4 text-muted-foreground" />
+                                      <span className="text-muted-foreground">Gender:</span>
+                                      <span className="font-medium">{student.gender}</span>
+                                    </div>
+                                  )}
+                                  {student.school && (
+                                    <div className="flex items-center gap-2 text-sm">
+                                      <School className="w-4 h-4 text-muted-foreground" />
+                                      <span className="text-muted-foreground">School:</span>
+                                      <span className="font-medium">{student.school}</span>
+                                    </div>
+                                  )}
+                                  {student.year_group && (
+                                    <div className="flex items-center gap-2 text-sm">
+                                      <Calendar className="w-4 h-4 text-muted-foreground" />
+                                      <span className="text-muted-foreground">Year Group:</span>
+                                      <span className="font-medium">{student.year_group}</span>
+                                    </div>
+                                  )}
+                                  {programName && (
+                                    <div className="flex items-center gap-2 text-sm">
+                                      <BookOpen className="w-4 h-4 text-muted-foreground" />
+                                      <span className="text-muted-foreground">Program:</span>
+                                      <span className="font-medium">{programName}</span>
+                                    </div>
+                                  )}
+                                  {student.student_level && (
+                                    <div className="flex items-center gap-2 text-sm">
+                                      <GraduationCap className="w-4 h-4 text-muted-foreground" />
+                                      <span className="text-muted-foreground">Level:</span>
+                                      <span className="font-medium">{student.student_level}</span>
+                                    </div>
+                                  )}
+                                  {student.nationality && (
+                                    <div className="flex items-center gap-2 text-sm">
+                                      <User className="w-4 h-4 text-muted-foreground" />
+                                      <span className="text-muted-foreground">Nationality:</span>
+                                      <span className="font-medium">{student.nationality}</span>
+                                    </div>
+                                  )}
                                 </div>
-                              )}
-                              {student.gender && (
-                                <div className="flex items-center gap-2 text-sm">
-                                  <User className="w-4 h-4 text-muted-foreground" />
-                                  <span className="text-muted-foreground">Gender:</span>
-                                  <span className="font-medium">{student.gender}</span>
+                                <div className="mt-4 flex justify-end">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setEditingStudent(student);
+                                    }}
+                                  >
+                                    <Pencil className="w-4 h-4 mr-2" />
+                                    Edit Profile
+                                  </Button>
                                 </div>
-                              )}
-                              {student.school && (
-                                <div className="flex items-center gap-2 text-sm">
-                                  <School className="w-4 h-4 text-muted-foreground" />
-                                  <span className="text-muted-foreground">School:</span>
-                                  <span className="font-medium">{student.school}</span>
-                                </div>
-                              )}
-                              {student.year_group && (
-                                <div className="flex items-center gap-2 text-sm">
-                                  <Calendar className="w-4 h-4 text-muted-foreground" />
-                                  <span className="text-muted-foreground">Year Group:</span>
-                                  <span className="font-medium">{student.year_group}</span>
-                                </div>
-                              )}
-                              {programName && (
-                                <div className="flex items-center gap-2 text-sm">
-                                  <BookOpen className="w-4 h-4 text-muted-foreground" />
-                                  <span className="text-muted-foreground">Program:</span>
-                                  <span className="font-medium">{programName}</span>
-                                </div>
-                              )}
-                              {student.student_level && (
-                                <div className="flex items-center gap-2 text-sm">
-                                  <GraduationCap className="w-4 h-4 text-muted-foreground" />
-                                  <span className="text-muted-foreground">Level:</span>
-                                  <span className="font-medium">{student.student_level}</span>
-                                </div>
-                              )}
-                              {student.nationality && (
-                                <div className="flex items-center gap-2 text-sm">
-                                  <User className="w-4 h-4 text-muted-foreground" />
-                                  <span className="text-muted-foreground">Nationality:</span>
-                                  <span className="font-medium">{student.nationality}</span>
-                                </div>
-                              )}
-                            </div>
-                            <div className="mt-4 flex justify-end gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setEditingStudent(student);
-                                }}
-                              >
-                                <Pencil className="w-4 h-4 mr-2" />
-                                Edit Profile
-                              </Button>
-                            </div>
+                              </TabsContent>
+                            </Tabs>
                           </div>
                         </CollapsibleContent>
                       </div>
