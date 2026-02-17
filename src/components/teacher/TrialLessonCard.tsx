@@ -49,7 +49,9 @@ export function TrialLessonCard({ lesson, onLessonMarked }: TrialLessonCardProps
       // Invalidate all relevant queries
       queryClient.invalidateQueries({ queryKey: ['teacher-todays-trial-lessons'] });
       queryClient.invalidateQueries({ queryKey: ['teacher-pending-trial-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-all-trial-lessons'] });
       queryClient.invalidateQueries({ queryKey: ['teacher-monthly-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-live-stats'] });
       onLessonMarked?.();
     } catch (error: any) {
       toast.error('Failed to mark trial lesson', { description: error.message });
