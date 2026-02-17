@@ -23,7 +23,13 @@ interface PackageLessonsTableProps {
 const STATUS_STYLES: Record<string, string> = {
   scheduled: 'bg-blue-500/20 text-blue-700 dark:text-blue-300',
   completed: 'status-active',
-  cancelled: 'status-blocked',
+  cancelled: 'bg-red-500/20 text-red-700 dark:text-red-300',
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  scheduled: 'Scheduled',
+  completed: 'Completed',
+  cancelled: 'Absent',
 };
 
 function formatTime12(time: string) {
@@ -131,7 +137,11 @@ export function PackageLessonsTable({ packageId, studentId, teacherId, lessonDur
 
   const scheduledCount = lessons?.filter(l => l.status === 'scheduled').length || 0;
   const completedCount = lessons?.filter(l => l.status === 'completed').length || 0;
-  const cancelledCount = lessons?.filter(l => l.status === 'cancelled').length || 0;
+  const absentCount = lessons?.filter(l => l.status === 'cancelled').length || 0;
+  const totalHours = lessons?.reduce((sum, l) => {
+    if (l.status === 'completed') return sum + (l.duration_minutes || 0) / 60;
+    return sum;
+  }, 0) || 0;
 
   return (
     <div className="space-y-4">
@@ -147,11 +157,14 @@ export function PackageLessonsTable({ packageId, studentId, teacherId, lessonDur
           <span className="text-emerald-600 dark:text-emerald-400">
             Completed: <strong>{completedCount}</strong>
           </span>
-          {cancelledCount > 0 && (
+          {absentCount > 0 && (
             <span className="text-red-600 dark:text-red-400">
-              Cancelled: <strong>{cancelledCount}</strong>
+              Absent: <strong>{absentCount}</strong>
             </span>
           )}
+          <span className="text-muted-foreground">
+            Hours: <strong>{totalHours.toFixed(1)}</strong>
+          </span>
         </div>
         <Button size="sm" variant="outline" onClick={() => setIsAddOpen(true)} className="gap-1">
           <Plus className="w-3 h-3" />
@@ -178,7 +191,7 @@ export function PackageLessonsTable({ packageId, studentId, teacherId, lessonDur
             </TableHeader>
             <TableBody>
               {lessons.map((lesson, index) => (
-                <TableRow key={lesson.scheduled_lesson_id} className={lesson.status === 'cancelled' ? 'opacity-50' : ''}>
+                <TableRow key={lesson.scheduled_lesson_id} className={lesson.status === 'cancelled' ? 'opacity-60' : ''}>
                   <TableCell className="text-muted-foreground text-xs">{index + 1}</TableCell>
                   <TableCell className="font-medium">{getDayName(lesson.scheduled_date)}</TableCell>
                   <TableCell>{formatDate(lesson.scheduled_date)}</TableCell>
@@ -187,7 +200,7 @@ export function PackageLessonsTable({ packageId, studentId, teacherId, lessonDur
                   <TableCell>{lesson.teachers?.name || '-'}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className={STATUS_STYLES[lesson.status] || ''}>
-                      {lesson.status}
+                      {STATUS_LABELS[lesson.status] || lesson.status}
                     </Badge>
                   </TableCell>
                   <TableCell>

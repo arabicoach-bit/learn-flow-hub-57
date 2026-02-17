@@ -241,6 +241,16 @@ export function useUpdateScheduledLesson() {
       duration_minutes?: number;
       status?: string;
     }) => {
+      // Get current lesson to check status transition
+      const { data: currentLesson } = await supabase
+        .from('scheduled_lessons')
+        .select('status, student_id')
+        .eq('scheduled_lesson_id', scheduledLessonId)
+        .single();
+
+      const oldStatus = currentLesson?.status;
+      const studentId = currentLesson?.student_id;
+
       const updateData: Record<string, unknown> = {};
       if (scheduled_date !== undefined) updateData.scheduled_date = scheduled_date;
       if (scheduled_time !== undefined) updateData.scheduled_time = scheduled_time;
@@ -253,6 +263,45 @@ export function useUpdateScheduledLesson() {
         .eq('scheduled_lesson_id', scheduledLessonId);
 
       if (error) throw error;
+
+      // Handle wallet changes on status transitions
+      if (status && oldStatus && status !== oldStatus && studentId) {
+        const wasDeducted = oldStatus === 'completed' || oldStatus === 'cancelled';
+        const shouldDeduct = status === 'completed' || status === 'cancelled';
+
+        if (!wasDeducted && shouldDeduct) {
+          // Transitioning from scheduled -> completed/absent: deduct 1
+          const { data: student } = await supabase
+            .from('students')
+            .select('wallet_balance')
+            .eq('student_id', studentId)
+            .single();
+          if (student) {
+            const newBalance = (student.wallet_balance || 0) - 1;
+            const newStatus = newBalance >= 3 ? 'Active' : newBalance >= -1 ? 'Grace' : 'Blocked';
+            await supabase
+              .from('students')
+              .update({ wallet_balance: newBalance, status: newStatus })
+              .eq('student_id', studentId);
+          }
+        } else if (wasDeducted && !shouldDeduct) {
+          // Transitioning from completed/absent -> scheduled: refund 1
+          const { data: student } = await supabase
+            .from('students')
+            .select('wallet_balance')
+            .eq('student_id', studentId)
+            .single();
+          if (student) {
+            const newBalance = (student.wallet_balance || 0) + 1;
+            const newStatus = newBalance >= 3 ? 'Active' : newBalance >= -1 ? 'Grace' : 'Blocked';
+            await supabase
+              .from('students')
+              .update({ wallet_balance: newBalance, status: newStatus })
+              .eq('student_id', studentId);
+          }
+        }
+        // If both were deducted states (completed <-> cancelled), no wallet change needed
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['scheduled-lessons'] });
@@ -260,6 +309,12 @@ export function useUpdateScheduledLesson() {
       queryClient.invalidateQueries({ queryKey: ['teacher-tomorrows-lessons'] });
       queryClient.invalidateQueries({ queryKey: ['teacher-week-lessons'] });
       queryClient.invalidateQueries({ queryKey: ['teacher-past-7-days-unmarked'] });
+      queryClient.invalidateQueries({ queryKey: ['students'] });
+      queryClient.invalidateQueries({ queryKey: ['packages'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-live-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-monthly-stats'] });
     },
   });
 }
