@@ -15,7 +15,7 @@ const emailSchema = z.string().email('Please enter a valid email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
 
 export default function Auth() {
-  const { user, role, needsPasswordChange, signIn, loading } = useAuth();
+  const { user, role, needsPasswordChange, signIn, signOut, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -26,11 +26,23 @@ export default function Auth() {
   const [resetEmail, setResetEmail] = useState('');
   const [isResetting, setIsResetting] = useState(false);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
 
-  // Redirect if already logged in
+  // If user arrives at /auth while already logged in, sign them out first
   useEffect(() => {
-    if (user && role && !loading) {
-      // Check if user needs to change password first
+    if (user && !loading && !signingOut) {
+      setSigningOut(true);
+      signOut().finally(() => {
+        setSigningOut(false);
+      });
+    }
+  }, []);
+
+  // Redirect after a fresh login (not on mount)
+  const [hasLoggedInThisSession, setHasLoggedInThisSession] = useState(false);
+
+  useEffect(() => {
+    if (hasLoggedInThisSession && user && role && !loading) {
       if (needsPasswordChange) {
         navigate('/change-password', { replace: true, state: { mandatory: true, firstLogin: true } });
         return;
@@ -45,7 +57,7 @@ export default function Auth() {
         navigate('/teacher', { replace: true });
       }
     }
-  }, [user, role, needsPasswordChange, loading, navigate, location]);
+  }, [hasLoggedInThisSession, user, role, needsPasswordChange, loading, navigate, location]);
 
   // Redirect from signup/register routes
   useEffect(() => {
@@ -89,6 +101,8 @@ export default function Auth() {
           : error.message,
         variant: 'destructive',
       });
+    } else {
+      setHasLoggedInThisSession(true);
     }
   };
 
