@@ -33,7 +33,7 @@ export function useTeacherLiveStats(teacherId: string) {
       const monthStart = format(startOfMonth(new Date()), 'yyyy-MM-dd');
 
       // Fetch today's lessons, weekly scheduled lessons, and monthly lessons in parallel
-      const [todayRes, weekRes, monthRes, teacherRes] = await Promise.all([
+      const [todayRes, weekRes, monthRes, teacherRes, trialMonthRes] = await Promise.all([
         // Today's scheduled lessons
         supabase
           .from('scheduled_lessons')
@@ -57,22 +57,31 @@ export function useTeacherLiveStats(teacherId: string) {
           .lte('scheduled_date', weekEnd)
           .in('status', ['completed']),
 
-        // This month's completed lessons from scheduled_lessons (reliable source)
-        supabase
-          .from('scheduled_lessons')
-          .select('scheduled_lesson_id, duration_minutes')
-          .eq('teacher_id', teacherId)
-          .eq('status', 'completed')
-          .gte('scheduled_date', monthStart)
-          .lte('scheduled_date', today),
+      // This month's completed lessons from scheduled_lessons (reliable source)
+      supabase
+        .from('scheduled_lessons')
+        .select('scheduled_lesson_id, duration_minutes')
+        .eq('teacher_id', teacherId)
+        .eq('status', 'completed')
+        .gte('scheduled_date', monthStart)
+        .lte('scheduled_date', today),
 
-        // Get teacher rate
-        supabase
-          .from('teachers')
-          .select('rate_per_lesson')
-          .eq('teacher_id', teacherId)
-          .single(),
-      ]);
+      // Get teacher rate
+      supabase
+        .from('teachers')
+        .select('rate_per_lesson')
+        .eq('teacher_id', teacherId)
+        .single(),
+
+      // This month's completed trial lessons
+      supabase
+        .from('trial_lessons_log')
+        .select('trial_lesson_id, duration_minutes, teacher_payment_amount')
+        .eq('teacher_id', teacherId)
+        .eq('status', 'completed')
+        .gte('lesson_date', monthStart)
+        .lte('lesson_date', today),
+    ]);
 
       const todayLessons: TodayLesson[] = (todayRes.data || []).map((l: any) => ({
         scheduled_lesson_id: l.scheduled_lesson_id,
@@ -95,13 +104,21 @@ export function useTeacherLiveStats(teacherId: string) {
       const rate = teacherRes.data?.rate_per_lesson || 0;
       const monthlySalary = monthlyHours * rate;
 
+      // Add trial lessons to payroll
+      const trialLessons = trialMonthRes.data || [];
+      const trialHours = trialLessons.reduce((sum, l) => sum + (l.duration_minutes || 30) / 60, 0);
+      const trialSalary = trialLessons.reduce((sum, l) => sum + (Number(l.teacher_payment_amount) || 0), 0);
+      const totalMonthlyHours = monthlyHours + trialHours;
+      const totalMonthlySalary = monthlySalary + trialSalary;
+      const totalMonthlyLessons = monthlyLessonsCount + trialLessons.length;
+
       return {
         todayLessons,
         weeklyHours: Math.round(weeklyHours * 100) / 100,
         weeklyLessonsCount: weeklyLessons.length,
-        monthlySalary: Math.round(monthlySalary * 100) / 100,
-        monthlyLessonsCount,
-        monthlyHours: Math.round(monthlyHours * 100) / 100,
+        monthlySalary: Math.round(totalMonthlySalary * 100) / 100,
+        monthlyLessonsCount: totalMonthlyLessons,
+        monthlyHours: Math.round(totalMonthlyHours * 100) / 100,
       };
     },
     enabled: !!teacherId,
