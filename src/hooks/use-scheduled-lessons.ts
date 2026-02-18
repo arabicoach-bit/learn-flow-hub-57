@@ -398,8 +398,9 @@ export function useDeleteScheduledLesson() {
 
       if (error) throw error;
 
-      // Deduct from wallet only if lesson was not already completed (completed already deducted via mark_lesson_taken)
-      if (lesson?.student_id && lesson.status !== 'completed') {
+      // Only deduct from wallet if lesson was 'scheduled' (not yet marked).
+      // 'completed' and 'cancelled' (absent) already had wallet deducted via mark_lesson_taken.
+      if (lesson?.student_id && lesson.status === 'scheduled') {
         const { data: student } = await supabase
           .from('students')
           .select('wallet_balance')
