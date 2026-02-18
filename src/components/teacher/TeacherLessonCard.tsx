@@ -43,6 +43,7 @@ export function TeacherLessonCard({ lesson, onLessonMarked, showDate, date }: Te
   const [editedDate, setEditedDate] = useState(date || lesson.scheduled_date || new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isSavingNote, setIsSavingNote] = useState(false);
   
   const markLesson = useMarkScheduledLesson();
   const updateLesson = useUpdateScheduledLesson();
@@ -252,15 +253,43 @@ export function TeacherLessonCard({ lesson, onLessonMarked, showDate, date }: Te
             {/* Notes Input */}
             <div className="space-y-2">
               <Label htmlFor={`notes-${lesson.scheduled_lesson_id}`} className="text-sm text-muted-foreground">
-                Notes (optional)
+                Notes
               </Label>
-              <Textarea
-                id={`notes-${lesson.scheduled_lesson_id}`}
-                placeholder="Add a comment about this lesson..."
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                className="min-h-[60px] resize-none"
-              />
+              <div className="flex gap-2">
+                <Textarea
+                  id={`notes-${lesson.scheduled_lesson_id}`}
+                  placeholder="Add a comment about this lesson..."
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  className="min-h-[60px] resize-none flex-1"
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="self-end"
+                  disabled={isSavingNote || !notes.trim()}
+                  onClick={async () => {
+                    setIsSavingNote(true);
+                    try {
+                      const { error } = await supabase
+                        .from('scheduled_lessons')
+                        .update({ notes })
+                        .eq('scheduled_lesson_id', lesson.scheduled_lesson_id);
+                      if (error) throw error;
+                      toast.success('Note saved');
+                      queryClient.invalidateQueries({ queryKey: ['scheduled-lessons'] });
+                      queryClient.invalidateQueries({ queryKey: ['student-all-lessons'] });
+                    } catch (err: any) {
+                      toast.error('Failed to save note', { description: err.message });
+                    } finally {
+                      setIsSavingNote(false);
+                    }
+                  }}
+                >
+                  {isSavingNote ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3 mr-1" />}
+                  Save
+                </Button>
+              </div>
             </div>
 
             {/* Action Buttons */}
