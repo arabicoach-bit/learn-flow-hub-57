@@ -100,8 +100,7 @@ export function useMarkScheduledLesson() {
       if (rpcError) throw rpcError;
 
       // Update scheduled lesson status
-      const newStatus = status === 'Taken' ? 'completed' : 
-                       status === 'Cancelled' ? 'cancelled' : 'completed';
+      const newStatus = status === 'Taken' ? 'completed' : 'cancelled';
       
       const { error: updateError } = await supabase
         .from('scheduled_lessons')
