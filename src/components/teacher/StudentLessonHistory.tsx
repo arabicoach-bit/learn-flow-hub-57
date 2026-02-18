@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RescheduleDialog } from '@/components/schedule/RescheduleDialog';
@@ -11,7 +12,7 @@ import { useUpdateScheduledLesson } from '@/hooks/use-scheduled-lessons';
 import { toast } from 'sonner';
 import { 
   Calendar, Clock, Check, X, RefreshCw, Edit2, Save, Loader2, 
-  MessageSquare, AlertTriangle
+  MessageSquare, AlertTriangle, PenLine
 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 
@@ -27,6 +28,8 @@ export function StudentLessonHistory({ studentId, studentName, walletBalance, te
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
   const [editData, setEditData] = useState({ date: '', time: '', duration: '' });
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [noteText, setNoteText] = useState('');
   const [rescheduleLesson, setRescheduleLesson] = useState<any>(null);
   const updateLesson = useUpdateScheduledLesson();
   const queryClient = useQueryClient();
@@ -37,7 +40,7 @@ export function StudentLessonHistory({ studentId, studentName, walletBalance, te
     queryFn: async () => {
       const { data, error } = await supabase
         .from('scheduled_lessons')
-        .select('scheduled_lesson_id, scheduled_date, scheduled_time, duration_minutes, status, teacher_id, package_id')
+        .select('scheduled_lesson_id, scheduled_date, scheduled_time, duration_minutes, status, teacher_id, package_id, notes')
         .eq('student_id', studentId)
         .order('scheduled_date', { ascending: false })
         .order('scheduled_time', { ascending: false });
@@ -113,8 +116,25 @@ export function StudentLessonHistory({ studentId, studentName, walletBalance, te
     return `${hour12}:${minutes} ${ampm}`;
   };
 
-  const getNotesForLesson = (date: string) => {
-    return lessonNotes?.find(n => n.lesson_date === date)?.notes || null;
+  const getNotesForLesson = (lesson: any) => {
+    // Prefer notes from scheduled_lessons directly
+    if (lesson.notes) return lesson.notes;
+    return lessonNotes?.find(n => n.lesson_date === lesson.scheduled_date)?.notes || null;
+  };
+
+  const handleSaveNote = async (lessonId: string) => {
+    try {
+      const { error } = await supabase
+        .from('scheduled_lessons')
+        .update({ notes: noteText })
+        .eq('scheduled_lesson_id', lessonId);
+      if (error) throw error;
+      toast.success('Note saved');
+      setEditingNoteId(null);
+      queryClient.invalidateQueries({ queryKey: ['student-all-lessons', studentId] });
+    } catch (error: any) {
+      toast.error('Failed to save note', { description: error.message });
+    }
   };
 
   const today = new Date().toISOString().split('T')[0];
@@ -226,7 +246,8 @@ export function StudentLessonHistory({ studentId, studentName, walletBalance, te
         <div className="space-y-2">
           {filteredLessons.map(lesson => {
             const isEditing = editingLessonId === lesson.scheduled_lesson_id;
-            const noteText = getNotesForLesson(lesson.scheduled_date);
+            const isEditingNote = editingNoteId === lesson.scheduled_lesson_id;
+            const existingNote = getNotesForLesson(lesson);
             const canMark = lesson.status === 'scheduled' && lesson.scheduled_date <= today;
 
             return (
@@ -292,10 +313,40 @@ export function StudentLessonHistory({ studentId, studentName, walletBalance, te
                   </div>
                 </div>
 
-                {noteText && (
-                  <div className="flex items-start gap-1.5 mt-2 text-xs text-muted-foreground">
-                    <MessageSquare className="w-3 h-3 mt-0.5 shrink-0" />
-                    <span>{noteText}</span>
+                {/* Notes Section */}
+                {isEditingNote ? (
+                  <div className="mt-2 space-y-2">
+                    <Textarea
+                      placeholder="Add lesson notes..."
+                      value={noteText}
+                      onChange={(e) => setNoteText(e.target.value)}
+                      className="min-h-[60px] resize-none text-sm"
+                    />
+                    <div className="flex gap-2">
+                      <Button size="sm" className="h-7" onClick={() => handleSaveNote(lesson.scheduled_lesson_id)}>
+                        <Save className="w-3 h-3 mr-1" /> Save
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-7" onClick={() => setEditingNoteId(null)}>Cancel</Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-2 flex items-start gap-1.5">
+                    {existingNote ? (
+                      <div className="flex items-start gap-1.5 text-xs text-muted-foreground flex-1 cursor-pointer group" onClick={() => { setEditingNoteId(lesson.scheduled_lesson_id); setNoteText(existingNote); }}>
+                        <MessageSquare className="w-3 h-3 mt-0.5 shrink-0" />
+                        <span className="flex-1">{existingNote}</span>
+                        <PenLine className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                      </div>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 px-2 text-xs text-muted-foreground"
+                        onClick={() => { setEditingNoteId(lesson.scheduled_lesson_id); setNoteText(''); }}
+                      >
+                        <PenLine className="w-3 h-3 mr-1" /> Add note
+                      </Button>
+                    )}
                   </div>
                 )}
 

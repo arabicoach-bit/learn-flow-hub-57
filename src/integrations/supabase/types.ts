@@ -505,6 +505,7 @@ export type Database = {
           created_at: string | null
           duration_minutes: number
           lesson_log_id: string | null
+          notes: string | null
           package_id: string | null
           scheduled_date: string
           scheduled_lesson_id: string
@@ -518,6 +519,7 @@ export type Database = {
           created_at?: string | null
           duration_minutes: number
           lesson_log_id?: string | null
+          notes?: string | null
           package_id?: string | null
           scheduled_date: string
           scheduled_lesson_id?: string
@@ -531,6 +533,7 @@ export type Database = {
           created_at?: string | null
           duration_minutes?: number
           lesson_log_id?: string | null
+          notes?: string | null
           package_id?: string | null
           scheduled_date?: string
           scheduled_lesson_id?: string
