@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { getWalletColor, getStatusDisplayLabel } from '@/lib/wallet-utils';
 import { Check, X, Ban, Clock, Loader2, RefreshCw, Edit2, Save } from 'lucide-react';
-import { useMarkScheduledLesson } from '@/hooks/use-scheduled-lessons';
+import { useMarkScheduledLesson, useUpdateScheduledLesson } from '@/hooks/use-scheduled-lessons';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { RescheduleDialog } from '@/components/schedule/RescheduleDialog';
@@ -44,6 +45,7 @@ export function TeacherLessonCard({ lesson, onLessonMarked, showDate, date }: Te
   const [isSaving, setIsSaving] = useState(false);
   
   const markLesson = useMarkScheduledLesson();
+  const updateLesson = useUpdateScheduledLesson();
   const queryClient = useQueryClient();
   const isBlocked = lesson.student_status === 'Blocked';
   
@@ -125,6 +127,20 @@ export function TeacherLessonCard({ lesson, onLessonMarked, showDate, date }: Te
       toast.error('Failed to mark lesson', {
         description: error.message,
       });
+    }
+  };
+
+  const handleStatusChange = async (newStatus: string) => {
+    try {
+      await updateLesson.mutateAsync({
+        scheduledLessonId: lesson.scheduled_lesson_id,
+        status: newStatus,
+      });
+      const label = newStatus === 'completed' ? 'Completed' : newStatus === 'cancelled' ? 'Absent' : 'Scheduled';
+      toast.success(`Lesson status changed to ${label}`);
+      onLessonMarked?.();
+    } catch (error: any) {
+      toast.error('Failed to change status', { description: error.message });
     }
   };
 
@@ -248,54 +264,27 @@ export function TeacherLessonCard({ lesson, onLessonMarked, showDate, date }: Te
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-wrap gap-2">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border-emerald-600/30"
-                      onClick={() => handleMarkLesson('Taken')}
-                      disabled={markLesson.isPending || isBlocked || isFutureLesson}
-                    >
-                      {markLesson.isPending ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Check className="w-4 h-4 mr-1" />
-                      )}
-                      Complete
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                {(isBlocked || isFutureLesson) && (
-                  <TooltipContent className="bg-destructive text-destructive-foreground">
-                    <p>{isFutureLesson ? 'Cannot mark future lessons' : 'Student is blocked. Payment required.'}</p>
-                  </TooltipContent>
-                )}
-              </Tooltip>
-              
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 border-amber-600/30"
-                      onClick={() => handleMarkLesson('Absent')}
-                      disabled={markLesson.isPending || isFutureLesson}
-                    >
-                      <X className="w-4 h-4 mr-1" />
-                      Absent
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                {isFutureLesson && (
-                  <TooltipContent>
-                    <p>Cannot mark future lessons</p>
-                  </TooltipContent>
-                )}
-              </Tooltip>
+            <div className="flex flex-wrap gap-2 items-center">
+              <Select
+                value={lesson.status === 'completed' ? 'completed' : lesson.status === 'cancelled' ? 'cancelled' : 'scheduled'}
+                onValueChange={handleStatusChange}
+                disabled={updateLesson.isPending}
+              >
+                <SelectTrigger className="w-[140px] h-8 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="scheduled">
+                    <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> Scheduled</span>
+                  </SelectItem>
+                  <SelectItem value="completed">
+                    <span className="flex items-center gap-1"><Check className="w-3 h-3" /> Completed</span>
+                  </SelectItem>
+                  <SelectItem value="cancelled">
+                    <span className="flex items-center gap-1"><X className="w-3 h-3" /> Absent</span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
 
               <Button
                 size="sm"

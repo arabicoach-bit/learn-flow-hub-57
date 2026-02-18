@@ -4,15 +4,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RescheduleDialog } from '@/components/schedule/RescheduleDialog';
-import { useMarkScheduledLesson, useUpdateScheduledLesson } from '@/hooks/use-scheduled-lessons';
+import { useUpdateScheduledLesson } from '@/hooks/use-scheduled-lessons';
 import { toast } from 'sonner';
 import { 
   Calendar, Clock, Check, X, RefreshCw, Edit2, Save, Loader2, 
-  MessageSquare, AlertTriangle, BookOpen, GraduationCap, Wallet
+  MessageSquare, AlertTriangle
 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 
@@ -28,10 +27,7 @@ export function StudentLessonHistory({ studentId, studentName, walletBalance, te
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
   const [editData, setEditData] = useState({ date: '', time: '', duration: '' });
-  const [notesMap, setNotesMap] = useState<Record<string, string>>({});
   const [rescheduleLesson, setRescheduleLesson] = useState<any>(null);
-
-  const markLesson = useMarkScheduledLesson();
   const updateLesson = useUpdateScheduledLesson();
   const queryClient = useQueryClient();
 
@@ -123,17 +119,17 @@ export function StudentLessonHistory({ studentId, studentName, walletBalance, te
 
   const today = new Date().toISOString().split('T')[0];
 
-  const handleMarkLesson = async (lessonId: string, status: 'Taken' | 'Absent', lesson: any) => {
+  const handleStatusChange = async (lessonId: string, newStatus: string) => {
     try {
-      await markLesson.mutateAsync({
+      await updateLesson.mutateAsync({
         scheduledLessonId: lessonId,
-        status,
-        notes: notesMap[lessonId] || undefined,
+        status: newStatus,
       });
-      toast.success(`Lesson marked as ${status === 'Taken' ? 'Completed' : 'Absent'}`);
-      setNotesMap(prev => ({ ...prev, [lessonId]: '' }));
+      toast.success(`Lesson status changed to ${newStatus === 'completed' ? 'Completed' : newStatus === 'cancelled' ? 'Absent' : 'Scheduled'}`);
+      queryClient.invalidateQueries({ queryKey: ['student-all-lessons', studentId] });
+      queryClient.invalidateQueries({ queryKey: ['student-lesson-notes', studentId] });
     } catch (error: any) {
-      toast.error(error.message || 'Failed to mark lesson');
+      toast.error(error.message || 'Failed to update status');
     }
   };
 
@@ -268,15 +264,26 @@ export function StudentLessonHistory({ studentId, studentName, walletBalance, te
                   )}
 
                   <div className="flex items-center gap-2">
-                    {lesson.status === 'completed' && (
-                      <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30"><Check className="w-3 h-3 mr-1" />Completed</Badge>
-                    )}
-                    {lesson.status === 'cancelled' && (
-                      <Badge className="bg-red-500/20 text-red-400 border-red-500/30"><X className="w-3 h-3 mr-1" />Absent</Badge>
-                    )}
-                    {lesson.status === 'scheduled' && (
-                      <Badge variant="outline"><Clock className="w-3 h-3 mr-1" />Scheduled</Badge>
-                    )}
+                    <Select
+                      value={lesson.status}
+                      onValueChange={(val) => handleStatusChange(lesson.scheduled_lesson_id, val)}
+                      disabled={updateLesson.isPending}
+                    >
+                      <SelectTrigger className="h-7 w-[130px] text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="scheduled">
+                          <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> Scheduled</span>
+                        </SelectItem>
+                        <SelectItem value="completed">
+                          <span className="flex items-center gap-1"><Check className="w-3 h-3" /> Completed</span>
+                        </SelectItem>
+                        <SelectItem value="cancelled">
+                          <span className="flex items-center gap-1"><X className="w-3 h-3" /> Absent</span>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
                     {!isEditing && (
                       <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => startEditing(lesson)}>
                         <Edit2 className="w-3 h-3" />
@@ -292,56 +299,8 @@ export function StudentLessonHistory({ studentId, studentName, walletBalance, te
                   </div>
                 )}
 
-                {/* Action buttons for scheduled lessons */}
-                {canMark && (
-                  <div className="mt-2 flex flex-wrap gap-2 items-center">
-                    <Textarea
-                      placeholder="Notes (optional)..."
-                      value={notesMap[lesson.scheduled_lesson_id] || ''}
-                      onChange={e => setNotesMap(prev => ({ ...prev, [lesson.scheduled_lesson_id]: e.target.value }))}
-                      className="min-h-[40px] h-10 resize-none text-xs flex-1 min-w-[200px]"
-                    />
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border-emerald-600/30"
-                      onClick={() => handleMarkLesson(lesson.scheduled_lesson_id, 'Taken', lesson)}
-                      disabled={markLesson.isPending}
-                    >
-                      {markLesson.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3 mr-1" />}
-                      Complete
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 border-amber-600/30"
-                      onClick={() => handleMarkLesson(lesson.scheduled_lesson_id, 'Absent', lesson)}
-                      disabled={markLesson.isPending}
-                    >
-                      <X className="w-3 h-3 mr-1" />
-                      Absent
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border-blue-600/30"
-                      onClick={() => setRescheduleLesson({
-                        scheduled_lesson_id: lesson.scheduled_lesson_id,
-                        student_id: studentId,
-                        scheduled_date: lesson.scheduled_date,
-                        scheduled_time: lesson.scheduled_time,
-                        teacher_id: teacherId || lesson.teacher_id,
-                        students: { name: studentName },
-                      })}
-                    >
-                      <RefreshCw className="w-3 h-3 mr-1" />
-                      Reschedule
-                    </Button>
-                  </div>
-                )}
-
-                {/* Future scheduled lessons - show reschedule only */}
-                {lesson.status === 'scheduled' && lesson.scheduled_date > today && (
+                {/* Reschedule button for scheduled lessons */}
+                {lesson.status === 'scheduled' && (
                   <div className="mt-2 flex gap-2">
                     <Button
                       size="sm"
