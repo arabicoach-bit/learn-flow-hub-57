@@ -20,6 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useUpdateScheduledLesson, ScheduledLesson } from '@/hooks/use-scheduled-lessons';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface UpdateLessonStatusDialogProps {
   lesson: ScheduledLesson;
