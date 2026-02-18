@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Check, X, Clock, Loader2, Users } from 'lucide-react';
+import { Check, X, Clock, Loader2, Users, Save } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
@@ -16,8 +17,9 @@ interface TrialLessonCardProps {
 }
 
 export function TrialLessonCard({ lesson, onLessonMarked }: TrialLessonCardProps) {
-  const [notes, setNotes] = useState('');
-  const [isMarking, setIsMarking] = useState(false);
+  const [notes, setNotes] = useState(lesson.notes || '');
+  const [isSavingNote, setIsSavingNote] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const queryClient = useQueryClient();
 
   const formatTime = (time: string | null) => {
@@ -29,41 +31,60 @@ export function TrialLessonCard({ lesson, onLessonMarked }: TrialLessonCardProps
     return `${hour12}:${minutes} ${ampm}`;
   };
 
-  const handleMark = async (status: 'completed' | 'cancelled') => {
-    setIsMarking(true);
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: ['teacher-todays-trial-lessons'] });
+    queryClient.invalidateQueries({ queryKey: ['teacher-pending-trial-lessons'] });
+    queryClient.invalidateQueries({ queryKey: ['teacher-all-trial-lessons'] });
+    queryClient.invalidateQueries({ queryKey: ['teacher-monthly-stats'] });
+    queryClient.invalidateQueries({ queryKey: ['teacher-live-stats'] });
+  };
+
+  const handleStatusChange = async (newStatus: string) => {
+    setIsUpdatingStatus(true);
     try {
       const { error } = await supabase
         .from('trial_lessons_log')
-        .update({ 
-          status, 
-          notes: notes || null 
-        })
+        .update({ status: newStatus })
         .eq('trial_lesson_id', lesson.trial_lesson_id);
 
       if (error) throw error;
 
-      const label = status === 'completed' ? 'Completed' : 'Absent';
-      toast.success(`Trial lesson marked as ${label}!`);
-      setNotes('');
-      
-      // Invalidate all relevant queries
-      queryClient.invalidateQueries({ queryKey: ['teacher-todays-trial-lessons'] });
-      queryClient.invalidateQueries({ queryKey: ['teacher-pending-trial-lessons'] });
-      queryClient.invalidateQueries({ queryKey: ['teacher-all-trial-lessons'] });
-      queryClient.invalidateQueries({ queryKey: ['teacher-monthly-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['teacher-live-stats'] });
+      const label = newStatus === 'completed' ? 'Completed' : newStatus === 'cancelled' ? 'Absent' : 'Scheduled';
+      toast.success(`Trial lesson marked as ${label}`);
+      invalidateAll();
       onLessonMarked?.();
     } catch (error: any) {
-      toast.error('Failed to mark trial lesson', { description: error.message });
+      toast.error('Failed to update trial lesson', { description: error.message });
     } finally {
-      setIsMarking(false);
+      setIsUpdatingStatus(false);
     }
   };
+
+  const handleSaveNote = async () => {
+    setIsSavingNote(true);
+    try {
+      const { error } = await supabase
+        .from('trial_lessons_log')
+        .update({ notes: notes || null })
+        .eq('trial_lesson_id', lesson.trial_lesson_id);
+
+      if (error) throw error;
+      toast.success('Note saved');
+      invalidateAll();
+    } catch (error: any) {
+      toast.error('Failed to save note', { description: error.message });
+    } finally {
+      setIsSavingNote(false);
+    }
+  };
+
+  const currentStatus = lesson.status === 'completed' ? 'completed' : lesson.status === 'cancelled' ? 'cancelled' : 'scheduled';
 
   return (
     <Card className="border border-purple-500/30 bg-purple-500/5">
       <CardContent className="p-4">
-        <div className="space-y-3">
+        <div className="space-y-4">
+          {/* Time and Student Info */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
@@ -83,37 +104,51 @@ export function TrialLessonCard({ lesson, onLessonMarked }: TrialLessonCardProps
             </div>
           </div>
 
+          {/* Notes Input */}
           <div className="space-y-2">
-            <Label className="text-sm text-muted-foreground">Notes (optional)</Label>
-            <Textarea
-              placeholder="Add notes about this trial lesson..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="min-h-[60px] resize-none"
-            />
+            <Label className="text-sm text-muted-foreground">Notes</Label>
+            <div className="flex gap-2">
+              <Textarea
+                placeholder="Add a comment about this trial lesson..."
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                className="min-h-[60px] resize-none flex-1"
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                className="self-end"
+                disabled={isSavingNote || !notes.trim()}
+                onClick={handleSaveNote}
+              >
+                {isSavingNote ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3 mr-1" />}
+                Save
+              </Button>
+            </div>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              className="bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border-emerald-600/30"
-              onClick={() => handleMark('completed')}
-              disabled={isMarking}
+          {/* Status Dropdown */}
+          <div className="flex flex-wrap gap-2 items-center">
+            <Select
+              value={currentStatus}
+              onValueChange={handleStatusChange}
+              disabled={isUpdatingStatus}
             >
-              {isMarking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4 mr-1" />}
-              Complete
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 border-amber-600/30"
-              onClick={() => handleMark('cancelled')}
-              disabled={isMarking}
-            >
-              <X className="w-4 h-4 mr-1" />
-              Absent
-            </Button>
+              <SelectTrigger className="w-[140px] h-8 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="scheduled">
+                  <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> Scheduled</span>
+                </SelectItem>
+                <SelectItem value="completed">
+                  <span className="flex items-center gap-1"><Check className="w-3 h-3" /> Completed</span>
+                </SelectItem>
+                <SelectItem value="cancelled">
+                  <span className="flex items-center gap-1"><X className="w-3 h-3" /> Absent</span>
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </CardContent>
