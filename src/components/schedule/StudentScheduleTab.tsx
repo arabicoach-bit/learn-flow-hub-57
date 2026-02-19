@@ -120,15 +120,9 @@ export function StudentScheduleTab({ studentId, lessonsUsed = 0, lessonsPurchase
               <p className="text-sm text-muted-foreground">Package Progress</p>
               <p className="text-2xl font-bold">{completedCount} / {totalLessons} lessons completed</p>
             </div>
-            <div className="flex gap-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-emerald-600">{completedCount}</p>
-                <p className="text-xs text-muted-foreground">Completed</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-amber-600">{scheduledCount}</p>
-                <p className="text-xs text-muted-foreground">Upcoming</p>
-              </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-emerald-600">{completedCount}</p>
+              <p className="text-xs text-muted-foreground">Completed</p>
             </div>
           </div>
           <Progress value={progressPercent} className="mt-4 h-2" />
