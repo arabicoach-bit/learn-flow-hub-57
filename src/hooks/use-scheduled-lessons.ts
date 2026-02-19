@@ -10,7 +10,7 @@ export interface ScheduledLesson {
   scheduled_date: string;
   scheduled_time: string;
   duration_minutes: number;
-  status: 'scheduled' | 'completed' | 'cancelled' | 'rescheduled';
+  status: 'scheduled' | 'completed' | 'cancelled';
   lesson_log_id: string | null;
   created_at: string;
   students?: { name: string; phone: string; status: string; wallet_balance: number } | null;
@@ -206,7 +206,7 @@ export function useCheckLessonConflict() {
         .eq('teacher_id', teacherId)
         .eq('scheduled_date', date)
         .eq('scheduled_time', time)
-        .in('status', ['scheduled', 'rescheduled']);
+        .in('status', ['scheduled']);
 
       if (excludeLessonId) {
         query = query.neq('scheduled_lesson_id', excludeLessonId);
@@ -264,12 +264,13 @@ export function useUpdateScheduledLesson() {
       if (error) throw error;
 
       // Handle wallet changes on status transitions
+      // Only 'completed' deducts from wallet. 'cancelled' (Absent) does NOT.
       if (status && oldStatus && status !== oldStatus && studentId) {
-        const wasDeducted = oldStatus === 'completed' || oldStatus === 'cancelled';
-        const shouldDeduct = status === 'completed' || status === 'cancelled';
+        const wasDeducted = oldStatus === 'completed';
+        const shouldDeduct = status === 'completed';
 
         if (!wasDeducted && shouldDeduct) {
-          // Transitioning from scheduled -> completed/absent: deduct 1
+          // Transitioning to completed: deduct 1
           const { data: student } = await supabase
             .from('students')
             .select('wallet_balance')
@@ -284,7 +285,7 @@ export function useUpdateScheduledLesson() {
               .eq('student_id', studentId);
           }
         } else if (wasDeducted && !shouldDeduct) {
-          // Transitioning from completed/absent -> scheduled: refund 1
+          // Transitioning from completed -> scheduled/absent: refund 1
           const { data: student } = await supabase
             .from('students')
             .select('wallet_balance')
@@ -299,7 +300,6 @@ export function useUpdateScheduledLesson() {
               .eq('student_id', studentId);
           }
         }
-        // If both were deducted states (completed <-> cancelled), no wallet change needed
       }
     },
     onSuccess: () => {
@@ -398,9 +398,11 @@ export function useDeleteScheduledLesson() {
 
       if (error) throw error;
 
-      // Only deduct from wallet if lesson was 'scheduled' (not yet marked).
-      // 'completed' and 'cancelled' (absent) already had wallet deducted via mark_lesson_taken.
-      if (lesson?.student_id && lesson.status === 'scheduled') {
+      // Wallet adjustments on delete:
+      // - 'scheduled': deduct 1 (removing a future lesson reduces wallet)
+      // - 'completed': refund 1 (undoing a completed lesson that had deducted)
+      // - 'cancelled' (absent): no change (absent doesn't affect wallet)
+      if (lesson?.student_id && (lesson.status === 'scheduled' || lesson.status === 'completed')) {
         const { data: student } = await supabase
           .from('students')
           .select('wallet_balance')
@@ -408,7 +410,8 @@ export function useDeleteScheduledLesson() {
           .single();
 
         if (student) {
-          const newBalance = (student.wallet_balance || 0) - 1;
+          const walletChange = lesson.status === 'scheduled' ? -1 : 1;
+          const newBalance = (student.wallet_balance || 0) + walletChange;
           const newStatus = newBalance >= 3 ? 'Active' : newBalance >= -1 ? 'Grace' : 'Blocked';
           await supabase
             .from('students')
