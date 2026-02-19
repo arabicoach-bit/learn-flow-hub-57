@@ -59,7 +59,7 @@ export function TeacherCalendar({ teacherId }: TeacherCalendarProps) {
     
     const hasScheduled = lessons.some(l => l.status === 'scheduled');
     const hasCompleted = lessons.some(l => l.status === 'completed');
-    const hasCancelled = lessons.some(l => l.status === 'cancelled' || l.status === 'rescheduled');
+    const hasCancelled = lessons.some(l => l.status === 'cancelled');
     
     return (
       <div className="flex gap-0.5 mt-0.5">
@@ -75,7 +75,6 @@ export function TeacherCalendar({ teacherId }: TeacherCalendarProps) {
       case 'scheduled': return 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30';
       case 'completed': return 'bg-primary/10 text-primary border-primary/30';
       case 'cancelled': return 'bg-destructive/10 text-destructive border-destructive/30';
-      case 'rescheduled': return 'bg-amber-500/10 text-amber-700 border-amber-500/30';
       default: return 'bg-muted';
     }
   };

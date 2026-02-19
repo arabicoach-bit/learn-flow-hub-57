@@ -185,14 +185,10 @@ export function StudentLessonHistory({ studentId, studentName, walletBalance, te
   return (
     <div className="space-y-4">
       {/* Overall Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3 text-center">
           <p className="text-lg font-bold text-emerald-400">{allStats.completed}</p>
           <p className="text-xs text-muted-foreground">Completed</p>
-        </div>
-        <div className="rounded-lg bg-blue-500/10 border border-blue-500/20 p-3 text-center">
-          <p className="text-lg font-bold text-blue-400">{allStats.scheduled}</p>
-          <p className="text-xs text-muted-foreground">Scheduled</p>
         </div>
         <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-center">
           <p className="text-lg font-bold text-red-400">{allStats.absent}</p>
@@ -207,7 +203,7 @@ export function StudentLessonHistory({ studentId, studentName, walletBalance, te
             {walletBalance <= 2 && <AlertTriangle className="w-4 h-4" />}
             {walletBalance}
           </p>
-          <p className="text-xs text-muted-foreground">Wallet</p>
+          <p className="text-xs text-muted-foreground">Wallet (Scheduled)</p>
         </div>
       </div>
 

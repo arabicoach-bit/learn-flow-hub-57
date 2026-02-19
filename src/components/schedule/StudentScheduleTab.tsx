@@ -56,9 +56,6 @@ export function StudentScheduleTab({ studentId, lessonsUsed = 0, lessonsPurchase
     if (status === 'cancelled') {
       return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" />Cancelled</Badge>;
     }
-    if (status === 'rescheduled') {
-      return <Badge className="bg-blue-500/20 text-blue-700 dark:text-blue-300"><AlertCircle className="w-3 h-3 mr-1" />Rescheduled</Badge>;
-    }
     
     // Scheduled
     if (isToday(lessonDate)) {
