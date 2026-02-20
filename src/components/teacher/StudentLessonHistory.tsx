@@ -80,7 +80,7 @@ export function StudentLessonHistory({ studentId, studentName, walletBalance, te
   const allStats = useMemo(() => {
     const all = lessons || [];
     const completed = all.filter(l => l.status === 'completed').length;
-    const absent = all.filter(l => l.status === 'cancelled').length;
+    const absent = all.filter(l => l.status === 'absent').length;
     const scheduled = all.filter(l => l.status === 'scheduled').length;
     const totalHours = all
       .filter(l => l.status === 'completed')
@@ -91,7 +91,7 @@ export function StudentLessonHistory({ studentId, studentName, walletBalance, te
   // Monthly stats
   const monthStats = useMemo(() => {
     const completed = filteredLessons.filter(l => l.status === 'completed').length;
-    const absent = filteredLessons.filter(l => l.status === 'cancelled').length;
+    const absent = filteredLessons.filter(l => l.status === 'absent').length;
     const hours = filteredLessons
       .filter(l => l.status === 'completed')
       .reduce((sum, l) => sum + (l.duration_minutes || 45) / 60, 0);
@@ -145,7 +145,7 @@ export function StudentLessonHistory({ studentId, studentName, walletBalance, te
         scheduledLessonId: lessonId,
         status: newStatus,
       });
-      toast.success(`Lesson status changed to ${newStatus === 'completed' ? 'Completed' : newStatus === 'cancelled' ? 'Absent' : 'Scheduled'}`);
+      toast.success(`Lesson status changed to ${newStatus === 'completed' ? 'Completed' : newStatus === 'absent' ? 'Absent' : 'Scheduled'}`);
       queryClient.invalidateQueries({ queryKey: ['student-all-lessons', studentId] });
       queryClient.invalidateQueries({ queryKey: ['student-lesson-notes', studentId] });
     } catch (error: any) {
@@ -225,7 +225,7 @@ export function StudentLessonHistory({ studentId, studentName, walletBalance, te
             <SelectItem value="all">All</SelectItem>
             <SelectItem value="scheduled">Scheduled</SelectItem>
             <SelectItem value="completed">Completed</SelectItem>
-            <SelectItem value="cancelled">Absent</SelectItem>
+            <SelectItem value="absent">Absent</SelectItem>
           </SelectContent>
         </Select>
         <div className="flex gap-2 text-xs items-center ml-auto text-muted-foreground">
@@ -251,7 +251,7 @@ export function StudentLessonHistory({ studentId, studentName, walletBalance, te
                 key={lesson.scheduled_lesson_id}
                 className={`rounded-lg border p-3 ${
                   lesson.status === 'completed' ? 'border-emerald-500/20 bg-emerald-500/5' :
-                  lesson.status === 'cancelled' ? 'border-red-500/20 bg-red-500/5' :
+                  lesson.status === 'absent' ? 'border-red-500/20 bg-red-500/5' :
                   'border-border/50 bg-card/50'
                 }`}
               >
@@ -296,7 +296,7 @@ export function StudentLessonHistory({ studentId, studentName, walletBalance, te
                         <SelectItem value="completed">
                           <span className="flex items-center gap-1"><Check className="w-3 h-3" /> Completed</span>
                         </SelectItem>
-                        <SelectItem value="cancelled">
+                        <SelectItem value="absent">
                           <span className="flex items-center gap-1"><X className="w-3 h-3" /> Absent</span>
                         </SelectItem>
                       </SelectContent>

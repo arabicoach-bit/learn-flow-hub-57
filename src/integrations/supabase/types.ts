@@ -593,6 +593,7 @@ export type Database = {
           class_id: string | null
           created_at: string | null
           current_package_id: string | null
+          debt_lessons: number
           gender: string | null
           name: string
           nationality: string | null
@@ -616,6 +617,7 @@ export type Database = {
           class_id?: string | null
           created_at?: string | null
           current_package_id?: string | null
+          debt_lessons?: number
           gender?: string | null
           name: string
           nationality?: string | null
@@ -639,6 +641,7 @@ export type Database = {
           class_id?: string | null
           created_at?: string | null
           current_package_id?: string | null
+          debt_lessons?: number
           gender?: string | null
           name?: string
           nationality?: string | null

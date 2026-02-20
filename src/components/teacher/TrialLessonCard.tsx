@@ -49,7 +49,7 @@ export function TrialLessonCard({ lesson, onLessonMarked }: TrialLessonCardProps
 
       if (error) throw error;
 
-      const label = newStatus === 'completed' ? 'Completed' : newStatus === 'cancelled' ? 'Absent' : 'Scheduled';
+      const label = newStatus === 'completed' ? 'Completed' : newStatus === 'absent' ? 'Absent' : 'Scheduled';
       toast.success(`Trial lesson marked as ${label}`);
       invalidateAll();
       onLessonMarked?.();
@@ -78,7 +78,7 @@ export function TrialLessonCard({ lesson, onLessonMarked }: TrialLessonCardProps
     }
   };
 
-  const currentStatus = lesson.status === 'completed' ? 'completed' : lesson.status === 'cancelled' ? 'cancelled' : 'scheduled';
+  const currentStatus = lesson.status === 'completed' ? 'completed' : lesson.status === 'absent' ? 'absent' : 'scheduled';
 
   return (
     <Card className="border border-purple-500/30 bg-purple-500/5">
@@ -144,7 +144,7 @@ export function TrialLessonCard({ lesson, onLessonMarked }: TrialLessonCardProps
                 <SelectItem value="completed">
                   <span className="flex items-center gap-1"><Check className="w-3 h-3" /> Completed</span>
                 </SelectItem>
-                <SelectItem value="cancelled">
+                <SelectItem value="absent">
                   <span className="flex items-center gap-1"><X className="w-3 h-3" /> Absent</span>
                 </SelectItem>
               </SelectContent>

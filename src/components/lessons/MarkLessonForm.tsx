@@ -20,7 +20,7 @@ interface StudentLessonStatus {
   name: string;
   wallet_balance: number;
   status: 'Active' | 'Grace' | 'Blocked';
-  lessonStatus: 'Taken' | 'Absent' | 'Cancelled' | null;
+  lessonStatus: 'Taken' | 'Absent' | null;
   selected: boolean;
 }
 
@@ -76,7 +76,7 @@ export function MarkLessonForm() {
     ));
   };
 
-  const handleStatusChange = (studentId: string, status: 'Taken' | 'Absent' | 'Cancelled') => {
+  const handleStatusChange = (studentId: string, status: 'Taken' | 'Absent') => {
     setStudentStatuses(prev => prev.map(s => 
       s.student_id === studentId ? { ...s, lessonStatus: status } : s
     ));
@@ -264,12 +264,6 @@ export function MarkLessonForm() {
                                   <RadioGroupItem value="Absent" id={`${student.student_id}-absent`} />
                                   <Label htmlFor={`${student.student_id}-absent`} className="cursor-pointer text-sm font-normal">
                                     Absent
-                                  </Label>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                  <RadioGroupItem value="Cancelled" id={`${student.student_id}-cancelled`} />
-                                  <Label htmlFor={`${student.student_id}-cancelled`} className="cursor-pointer text-sm font-normal">
-                                    Cancelled
                                   </Label>
                                 </div>
                               </RadioGroup>

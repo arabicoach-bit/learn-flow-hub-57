@@ -71,7 +71,7 @@ export default function TeacherTrialLessons() {
 
   const scheduled = allLessons?.filter(l => l.status === 'scheduled') || [];
   const completed = allLessons?.filter(l => l.status === 'completed') || [];
-  const absent = allLessons?.filter(l => l.status === 'cancelled') || [];
+  const absent = allLessons?.filter(l => l.status === 'absent') || [];
 
   const formatTime = (time: string | null) => {
     if (!time) return 'N/A';

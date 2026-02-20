@@ -38,7 +38,7 @@ export default function TeacherMarkLesson() {
           students(name, wallet_balance)
         `)
         .eq('teacher_id', teacherId)
-        .in('status', ['completed', 'cancelled'])
+        .in('status', ['completed', 'absent'])
         .order('scheduled_date', { ascending: false })
         .order('scheduled_time', { ascending: false });
 
@@ -110,7 +110,7 @@ export default function TeacherMarkLesson() {
       if (lesson.status === 'completed') {
         groups[studentId].completedCount++;
         groups[studentId].totalHours += (lesson.duration_minutes || 45) / 60;
-      } else if (lesson.status === 'cancelled') {
+      } else if (lesson.status === 'absent') {
         groups[studentId].absentCount++;
       }
     });
@@ -219,7 +219,7 @@ export default function TeacherMarkLesson() {
                 <SelectContent>
                   <SelectItem value="all">All Statuses</SelectItem>
                   <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="cancelled">Absent</SelectItem>
+                  <SelectItem value="absent">Absent</SelectItem>
                 </SelectContent>
               </Select>
             </div>

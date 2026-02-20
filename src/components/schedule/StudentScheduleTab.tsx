@@ -53,8 +53,8 @@ export function StudentScheduleTab({ studentId, lessonsUsed = 0, lessonsPurchase
     if (status === 'completed') {
       return <Badge className="bg-emerald-500/20 text-emerald-700 dark:text-emerald-300"><CheckCircle2 className="w-3 h-3 mr-1" />Completed</Badge>;
     }
-    if (status === 'cancelled') {
-      return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" />Cancelled</Badge>;
+    if (status === 'absent') {
+      return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" />Absent</Badge>;
     }
     
     // Scheduled
