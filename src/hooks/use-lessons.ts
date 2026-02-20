@@ -8,7 +8,7 @@ export interface LessonLog {
   class_id: string | null;
   teacher_id: string | null;
   student_id: string | null;
-  status: 'Taken' | 'Absent' | 'Cancelled';
+  status: 'Taken' | 'Absent';
   package_id_used: string | null;
   notes: string | null;
   created_at: string;
@@ -21,7 +21,7 @@ export interface MarkLessonInput {
   student_id: string;
   class_id: string;
   teacher_id: string;
-  status: 'Taken' | 'Absent' | 'Cancelled';
+  status: 'Taken' | 'Absent';
   notes?: string;
 }
 

@@ -137,7 +137,7 @@ export function TeacherLessonCard({ lesson, onLessonMarked, showDate, date }: Te
         scheduledLessonId: lesson.scheduled_lesson_id,
         status: newStatus,
       });
-      const label = newStatus === 'completed' ? 'Completed' : newStatus === 'cancelled' ? 'Absent' : 'Scheduled';
+      const label = newStatus === 'completed' ? 'Completed' : newStatus === 'absent' ? 'Absent' : 'Scheduled';
       toast.success(`Lesson status changed to ${label}`);
       onLessonMarked?.();
     } catch (error: any) {
@@ -295,7 +295,7 @@ export function TeacherLessonCard({ lesson, onLessonMarked, showDate, date }: Te
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-2 items-center">
               <Select
-                value={lesson.status === 'completed' ? 'completed' : lesson.status === 'cancelled' ? 'cancelled' : 'scheduled'}
+                value={lesson.status === 'completed' ? 'completed' : lesson.status === 'absent' ? 'absent' : 'scheduled'}
                 onValueChange={handleStatusChange}
                 disabled={updateLesson.isPending}
               >
@@ -309,7 +309,7 @@ export function TeacherLessonCard({ lesson, onLessonMarked, showDate, date }: Te
                   <SelectItem value="completed">
                     <span className="flex items-center gap-1"><Check className="w-3 h-3" /> Completed</span>
                   </SelectItem>
-                  <SelectItem value="cancelled">
+                  <SelectItem value="absent">
                     <span className="flex items-center gap-1"><X className="w-3 h-3" /> Absent</span>
                   </SelectItem>
                 </SelectContent>

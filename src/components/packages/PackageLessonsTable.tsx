@@ -137,7 +137,7 @@ export function PackageLessonsTable({ packageId, studentId, teacherId, lessonDur
 
   const scheduledCount = lessons?.filter(l => l.status === 'scheduled').length || 0;
   const completedCount = lessons?.filter(l => l.status === 'completed').length || 0;
-  const absentCount = lessons?.filter(l => l.status === 'cancelled').length || 0;
+  const absentCount = lessons?.filter(l => l.status === 'absent').length || 0;
   const totalHours = lessons?.reduce((sum, l) => {
     if (l.status === 'completed') return sum + (l.duration_minutes || 0) / 60;
     return sum;
@@ -191,7 +191,7 @@ export function PackageLessonsTable({ packageId, studentId, teacherId, lessonDur
             </TableHeader>
             <TableBody>
               {lessons.map((lesson, index) => (
-                <TableRow key={lesson.scheduled_lesson_id} className={lesson.status === 'cancelled' ? 'opacity-60' : ''}>
+                <TableRow key={lesson.scheduled_lesson_id} className={lesson.status === 'absent' ? 'opacity-60' : ''}>
                   <TableCell className="text-muted-foreground text-xs">{index + 1}</TableCell>
                   <TableCell className="font-medium">{getDayName(lesson.scheduled_date)}</TableCell>
                   <TableCell>{formatDate(lesson.scheduled_date)}</TableCell>
@@ -278,7 +278,7 @@ export function PackageLessonsTable({ packageId, studentId, teacherId, lessonDur
                     <SelectContent>
                       <SelectItem value="scheduled">Scheduled</SelectItem>
                       <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="cancelled">Absent</SelectItem>
+                      <SelectItem value="absent">Absent</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

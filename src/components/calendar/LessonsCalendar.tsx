@@ -65,13 +65,13 @@ export function LessonsCalendar({ teacherId, studentId, showFilters = true }: Le
     
     const hasScheduled = lessons.some(l => l.status === 'scheduled');
     const hasCompleted = lessons.some(l => l.status === 'completed');
-    const hasCancelled = lessons.some(l => l.status === 'cancelled');
+    const hasAbsent = lessons.some(l => l.status === 'absent');
     
     return (
       <div className="flex gap-0.5 mt-0.5">
         {hasScheduled && <div className="w-1.5 h-1.5 rounded-full bg-primary" />}
         {hasCompleted && <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />}
-        {hasCancelled && <div className="w-1.5 h-1.5 rounded-full bg-destructive" />}
+        {hasAbsent && <div className="w-1.5 h-1.5 rounded-full bg-destructive" />}
       </div>
     );
   };
@@ -80,7 +80,7 @@ export function LessonsCalendar({ teacherId, studentId, showFilters = true }: Le
     switch (status) {
       case 'scheduled': return 'bg-primary/10 text-primary border-primary/30';
       case 'completed': return 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30';
-      case 'cancelled': return 'bg-destructive/10 text-destructive border-destructive/30';
+      case 'absent': return 'bg-destructive/10 text-destructive border-destructive/30';
       default: return 'bg-muted';
     }
   };
@@ -170,7 +170,7 @@ export function LessonsCalendar({ teacherId, studentId, showFilters = true }: Le
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-2.5 h-2.5 rounded-full bg-destructive" />
-              <span>Cancelled</span>
+              <span>Absent</span>
             </div>
           </div>
         </CardContent>

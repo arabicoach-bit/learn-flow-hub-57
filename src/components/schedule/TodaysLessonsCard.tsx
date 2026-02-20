@@ -63,7 +63,7 @@ export function TodaysLessonsCard({ teacherId }: TodaysLessonsCardProps) {
     return now >= lessonStart && now <= lessonEnd;
   };
 
-  const handleMarkLesson = async (lessonId: string, status: 'Taken' | 'Absent' | 'Cancelled', studentStatus?: string) => {
+  const handleMarkLesson = async (lessonId: string, status: 'Taken' | 'Absent', studentStatus?: string) => {
     if (status === 'Taken' && studentStatus === 'Blocked') {
       toast.error('Cannot mark as Taken - student is blocked');
       return;
@@ -219,11 +219,11 @@ export function TodaysLessonsCard({ teacherId }: TodaysLessonsCardProps) {
                           size="sm"
                           variant="outline"
                           className="bg-neutral-500/10 border-neutral-500/30 hover:bg-neutral-500/20"
-                          onClick={() => handleMarkLesson(lesson.scheduled_lesson_id, 'Cancelled', lesson.students?.status)}
+                          onClick={() => handleMarkLesson(lesson.scheduled_lesson_id, 'Absent', lesson.students?.status)}
                           disabled={markLesson.isPending}
                         >
                           <XCircle className="w-4 h-4 mr-1" />
-                          Cancel
+                          Absent
                         </Button>
                       </div>
                     </div>

@@ -13,19 +13,17 @@ export function getStatusDisplayLabel(status: string): string {
 }
 
 export function getWalletColor(balance: number): string {
-  // Active: >= 3, Temporary stop: 2 to -1, Left: <= -2
+  // Wallet is always >= 0 now. Active: >= 3, Grace: 1-2, Warning: 0
   if (balance >= 3) return 'wallet-positive';  // Active
-  if (balance >= 0) return 'wallet-warning';   // Temporary stop (approaching limit)
-  if (balance >= -1) return 'wallet-negative'; // Temporary stop (in debt)
-  return 'wallet-critical';                     // Left (<= -2)
+  if (balance >= 1) return 'wallet-warning';   // Grace (approaching limit)
+  return 'wallet-negative';                     // Zero balance
 }
 
 export function getWalletBgColor(balance: number): string {
-  // Active: >= 3, Temporary stop: 2 to -1, Left: <= -2
+  // Wallet is always >= 0 now
   if (balance >= 3) return 'bg-emerald-500/20';  // Active
-  if (balance >= 0) return 'bg-amber-500/20';    // Temporary stop (approaching limit)
-  if (balance >= -1) return 'bg-red-500/20';     // Temporary stop (in debt)
-  return 'bg-red-900/30';                         // Left (<= -2)
+  if (balance >= 1) return 'bg-amber-500/20';    // Grace
+  return 'bg-red-500/20';                         // Zero
 }
 
 export function getStatusBadgeClass(status: string): string {
