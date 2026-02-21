@@ -51,7 +51,7 @@ export default function PackageSummaries() {
       `📊 Statistics:`,
       `   ✅ Taken: ${summary.statistics.total_taken}`,
       `   ❌ Absent: ${summary.statistics.total_absent}`,
-      `   ⏸️ Cancelled: ${summary.statistics.total_cancelled}`,
+      `   ⏸️ Other: ${summary.statistics.total_cancelled}`,
       ``,
       `📅 Lesson History:`,
       `───────────────────────────────`,
@@ -146,7 +146,7 @@ export default function PackageSummaries() {
     doc.setFont('helvetica', 'normal');
     doc.text(`Taken: ${summary.statistics.total_taken}`, 14, y);
     doc.text(`Absent: ${summary.statistics.total_absent}`, 60, y);
-    doc.text(`Cancelled: ${summary.statistics.total_cancelled}`, 110, y);
+    doc.text(`Other: ${summary.statistics.total_cancelled}`, 110, y);
     y += 12;
 
     // Lessons Table
@@ -186,7 +186,7 @@ export default function PackageSummaries() {
     switch (status) {
       case 'Taken': return <CheckCircle2 className="w-4 h-4 text-emerald-500" />;
       case 'Absent': return <XCircle className="w-4 h-4 text-destructive" />;
-      case 'Cancelled': return <Clock className="w-4 h-4 text-muted-foreground" />;
+      case 'Cancelled': return null;
       default: return null;
     }
   };
@@ -346,7 +346,7 @@ export default function PackageSummaries() {
                   </div>
                   <div className="p-4 rounded-lg bg-muted border text-center">
                     <div className="text-2xl font-bold">{summary.statistics.total_cancelled}</div>
-                    <div className="text-xs text-muted-foreground">Cancelled</div>
+                    <div className="text-xs text-muted-foreground">Other</div>
                   </div>
                 </div>
 

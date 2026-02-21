@@ -23,13 +23,13 @@ interface PackageLessonsTableProps {
 const STATUS_STYLES: Record<string, string> = {
   scheduled: 'bg-blue-500/20 text-blue-700 dark:text-blue-300',
   completed: 'status-active',
-  cancelled: 'bg-red-500/20 text-red-700 dark:text-red-300',
+  absent: 'bg-red-500/20 text-red-700 dark:text-red-300',
 };
 
 const STATUS_LABELS: Record<string, string> = {
   scheduled: 'Scheduled',
   completed: 'Completed',
-  cancelled: 'Absent',
+  absent: 'Absent',
 };
 
 function formatTime12(time: string) {
