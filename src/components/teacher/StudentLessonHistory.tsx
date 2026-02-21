@@ -198,10 +198,10 @@ export function StudentLessonHistory({ studentId, studentName, walletBalance, te
           <p className="text-lg font-bold text-purple-400">{allStats.totalHours.toFixed(1)}</p>
           <p className="text-xs text-muted-foreground">Total Hours</p>
         </div>
-        <div className={`rounded-lg p-3 text-center ${walletBalance <= 2 ? 'bg-red-500/10 border border-red-500/20' : 'bg-amber-500/10 border border-amber-500/20'}`}>
-          <p className={`text-lg font-bold flex items-center justify-center gap-1 ${walletBalance <= 2 ? 'text-red-400' : 'text-amber-400'}`}>
-            {walletBalance <= 2 && <AlertTriangle className="w-4 h-4" />}
-            {walletBalance}
+        <div className={`rounded-lg p-3 text-center ${walletBalance <= 0 ? 'bg-red-500/10 border border-red-500/20' : walletBalance <= 2 ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-emerald-500/10 border border-emerald-500/20'}`}>
+          <p className={`text-lg font-bold flex items-center justify-center gap-1 ${walletBalance <= 0 ? 'text-red-400' : walletBalance <= 2 ? 'text-amber-400' : 'text-emerald-400'}`}>
+            {walletBalance <= 0 && <AlertTriangle className="w-4 h-4" />}
+            {walletBalance <= 0 ? 'Overdue' : walletBalance}
           </p>
           <p className="text-xs text-muted-foreground">Wallet (Scheduled)</p>
         </div>

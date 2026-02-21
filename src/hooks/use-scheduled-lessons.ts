@@ -365,32 +365,8 @@ export function useAddScheduledLesson() {
 
       if (error) throw error;
 
-      // Increment wallet balance when a lesson is added
-      const { data: student } = await supabase
-        .from('students')
-        .select('wallet_balance')
-        .eq('student_id', input.student_id)
-        .single();
-
-      if (student) {
-        const wallet = student.wallet_balance || 0;
-        const debt = (student as any).debt_lessons || 0;
-        let newBalance: number, newDebt: number;
-        // Adding a lesson: if there's debt, cover it first
-        if (debt > 0) {
-          newDebt = debt - 1;
-          newBalance = wallet;
-        } else {
-          newDebt = 0;
-          newBalance = wallet + 1;
-        }
-        const newStatus = newBalance >= 3 ? 'Active' : newDebt >= 2 ? 'Blocked' : 'Grace';
-        await supabase
-          .from('students')
-          .update({ wallet_balance: newBalance, debt_lessons: newDebt, status: newStatus })
-          .eq('student_id', input.student_id);
-      }
-
+      // Adding individual lessons does NOT change wallet.
+      // Wallet only changes via: packages (+N), completed (-1), delete scheduled (-1)
       return data;
     },
     onSuccess: () => {
