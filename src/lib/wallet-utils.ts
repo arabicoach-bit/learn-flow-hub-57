@@ -12,6 +12,12 @@ export function getStatusDisplayLabel(status: string): string {
   }
 }
 
+// Show "Overdue" label when wallet is <= 0
+export function getWalletDisplayLabel(walletBalance: number): string {
+  if (walletBalance <= 0) return 'Overdue';
+  return `${walletBalance}`;
+}
+
 export function getWalletColor(balance: number): string {
   // Wallet is always >= 0 now. Active: >= 3, Grace: 1-2, Warning: 0
   if (balance >= 3) return 'wallet-positive';  // Active

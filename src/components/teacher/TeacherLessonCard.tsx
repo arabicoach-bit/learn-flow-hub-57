@@ -7,7 +7,7 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/comp
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { getWalletColor, getStatusDisplayLabel } from '@/lib/wallet-utils';
+import { getWalletColor, getStatusDisplayLabel, getWalletDisplayLabel } from '@/lib/wallet-utils';
 import { Check, X, Ban, Clock, Loader2, RefreshCw, Edit2, Save } from 'lucide-react';
 import { useMarkScheduledLesson, useUpdateScheduledLesson } from '@/hooks/use-scheduled-lessons';
 import { supabase } from '@/integrations/supabase/client';
@@ -205,7 +205,7 @@ export function TeacherLessonCard({ lesson, onLessonMarked, showDate, date }: Te
                     {lesson.student_name}
                   </span>
                   <Badge variant="outline" className={getWalletBadgeColor(lesson.wallet_balance)}>
-                    💰 {lesson.wallet_balance}
+                    💰 {getWalletDisplayLabel(lesson.wallet_balance)}
                   </Badge>
                   {lesson.program_name && (
                     <Badge variant="secondary" className="text-xs">

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { RescheduleDialog } from './RescheduleDialog';
-import { getWalletColor } from '@/lib/wallet-utils';
+import { getWalletColor, getWalletDisplayLabel } from '@/lib/wallet-utils';
 import { Clock, CheckCircle, XCircle, AlertCircle, Loader2, Ban, RefreshCw, CalendarClock } from 'lucide-react';
 import { format, parseISO, differenceInMinutes, addMinutes } from 'date-fns';
 import { toast } from 'sonner';
@@ -151,7 +151,7 @@ export function TodaysLessonsCard({ teacherId }: TodaysLessonsCardProps) {
                             <div className="flex items-center gap-2 mt-1 flex-wrap">
                               <Badge variant="outline">{lesson.classes?.name || 'No class'}</Badge>
                               <span className={`text-sm font-medium ${getWalletColor(lesson.students?.wallet_balance || 0)}`}>
-                                Wallet: {lesson.students?.wallet_balance}
+                                Wallet: {getWalletDisplayLabel(lesson.students?.wallet_balance || 0)}
                               </span>
                               {isBlocked && (
                                 <Badge variant="destructive" className="gap-1">
