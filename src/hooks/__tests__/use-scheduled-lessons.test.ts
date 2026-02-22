@@ -175,23 +175,23 @@ describe('Lesson Status System', () => {
   describe('Status Thresholds', () => {
     it('wallet >= 3 → Active', () => {
       const getStatus = (w: number, d: number) =>
-        w >= 3 ? 'Active' : d >= 2 ? 'Blocked' : 'Grace';
+        w >= 3 ? 'Active' : d >= 2 ? 'Left' : 'Temporary Stop';
       expect(getStatus(3, 0)).toBe('Active');
       expect(getStatus(10, 0)).toBe('Active');
     });
 
-    it('debt >= 2 → Blocked', () => {
+    it('debt >= 2 → Left', () => {
       const getStatus = (w: number, d: number) =>
-        w >= 3 ? 'Active' : d >= 2 ? 'Blocked' : 'Grace';
-      expect(getStatus(0, 2)).toBe('Blocked');
-      expect(getStatus(2, 3)).toBe('Blocked');
+        w >= 3 ? 'Active' : d >= 2 ? 'Left' : 'Temporary Stop';
+      expect(getStatus(0, 2)).toBe('Left');
+      expect(getStatus(2, 3)).toBe('Left');
     });
 
-    it('wallet 0-2, debt < 2 → Grace', () => {
+    it('wallet 0-2, debt < 2 → Temporary Stop', () => {
       const getStatus = (w: number, d: number) =>
-        w >= 3 ? 'Active' : d >= 2 ? 'Blocked' : 'Grace';
-      expect(getStatus(0, 0)).toBe('Grace');
-      expect(getStatus(2, 1)).toBe('Grace');
+        w >= 3 ? 'Active' : d >= 2 ? 'Left' : 'Temporary Stop';
+      expect(getStatus(0, 0)).toBe('Temporary Stop');
+      expect(getStatus(2, 1)).toBe('Temporary Stop');
     });
   });
 

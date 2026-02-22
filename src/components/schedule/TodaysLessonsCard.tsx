@@ -64,8 +64,8 @@ export function TodaysLessonsCard({ teacherId }: TodaysLessonsCardProps) {
   };
 
   const handleMarkLesson = async (lessonId: string, status: 'Taken' | 'Absent', studentStatus?: string) => {
-    if (status === 'Taken' && studentStatus === 'Blocked') {
-      toast.error('Cannot mark as Taken - student is blocked');
+    if (status === 'Taken' && studentStatus === 'Left') {
+      toast.error('Cannot mark as Taken - student has left');
       return;
     }
 
@@ -120,7 +120,7 @@ export function TodaysLessonsCard({ teacherId }: TodaysLessonsCardProps) {
             <div className="space-y-4">
               {lessons.map((lesson) => {
                 const isActive = isLessonActive(lesson.scheduled_date, lesson.scheduled_time, lesson.duration_minutes);
-                const isBlocked = lesson.students?.status === 'Blocked';
+                const isBlocked = lesson.students?.status === 'Left';
                 const timeUntil = getTimeUntilLesson(lesson.scheduled_date, lesson.scheduled_time);
 
                 return (
@@ -156,7 +156,7 @@ export function TodaysLessonsCard({ teacherId }: TodaysLessonsCardProps) {
                               {isBlocked && (
                                 <Badge variant="destructive" className="gap-1">
                                   <Ban className="w-3 h-3" />
-                                  BLOCKED
+                                  LEFT
                                 </Badge>
                               )}
                             </div>
@@ -189,7 +189,7 @@ export function TodaysLessonsCard({ teacherId }: TodaysLessonsCardProps) {
                           </TooltipTrigger>
                           {isBlocked && (
                             <TooltipContent className="bg-destructive">
-                              Student is blocked. Payment required.
+                              Student has left.
                             </TooltipContent>
                           )}
                         </Tooltip>

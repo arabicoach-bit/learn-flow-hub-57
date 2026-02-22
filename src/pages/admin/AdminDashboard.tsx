@@ -59,7 +59,7 @@ export default function AdminDashboard() {
           // Show toast notification for critical alerts
           if (payload.new?.type === 'blocked') {
             toast.error(
-              `🚫 Student ${payload.new.student_name || 'Unknown'} has been BLOCKED!`,
+              `🚫 Student ${payload.new.student_name || 'Unknown'} has LEFT!`,
               {
                 duration: 10000,
                 action: {
@@ -70,7 +70,7 @@ export default function AdminDashboard() {
             );
           } else if (payload.new?.type === 'grace_mode') {
             toast.warning(
-              `⚠️ Student ${payload.new.student_name || 'Unknown'} entered grace period`,
+              `⚠️ Student ${payload.new.student_name || 'Unknown'} entered Temporary Stop`,
               {
                 duration: 5000,
               }

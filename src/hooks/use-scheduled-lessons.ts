@@ -286,7 +286,7 @@ export function useUpdateScheduledLesson() {
               newBalance = 0;
               newDebt = debt + 1;
             }
-            const newStatus = newBalance >= 3 ? 'Active' : newDebt >= 2 ? 'Blocked' : 'Grace';
+            const newStatus = newBalance >= 3 ? 'Active' : newDebt >= 2 ? 'Left' : 'Temporary Stop';
             await supabase
               .from('students')
               .update({ wallet_balance: newBalance, debt_lessons: newDebt, status: newStatus })
@@ -310,7 +310,7 @@ export function useUpdateScheduledLesson() {
               newDebt = 0;
               newBalance = wallet + 1;
             }
-            const newStatus = newBalance >= 3 ? 'Active' : newDebt >= 2 ? 'Blocked' : 'Grace';
+            const newStatus = newBalance >= 3 ? 'Active' : newDebt >= 2 ? 'Left' : 'Temporary Stop';
             await supabase
               .from('students')
               .update({ wallet_balance: newBalance, debt_lessons: newDebt, status: newStatus })
@@ -437,7 +437,7 @@ export function useDeleteScheduledLesson() {
             }
           }
           
-          const newStatus = newBalance >= 3 ? 'Active' : newDebt >= 2 ? 'Blocked' : 'Grace';
+          const newStatus = newBalance >= 3 ? 'Active' : newDebt >= 2 ? 'Left' : 'Temporary Stop';
           await supabase
             .from('students')
             .update({ wallet_balance: newBalance, debt_lessons: newDebt, status: newStatus })

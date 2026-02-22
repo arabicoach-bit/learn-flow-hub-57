@@ -19,7 +19,7 @@ interface StudentLessonStatus {
   student_id: string;
   name: string;
   wallet_balance: number;
-  status: 'Active' | 'Grace' | 'Blocked';
+  status: 'Active' | 'Temporary Stop' | 'Left';
   lessonStatus: 'Taken' | 'Absent' | null;
   selected: boolean;
 }
@@ -63,9 +63,9 @@ export function MarkLessonForm() {
   const handleStudentSelect = (studentId: string, checked: boolean) => {
     const student = studentStatuses.find(s => s.student_id === studentId);
     
-    // Prevent selecting blocked students
-    if (student?.status === 'Blocked') {
-      toast.error(`Cannot select ${student.name} - student is BLOCKED. Contact admin.`);
+    // Prevent selecting left students
+    if (student?.status === 'Left') {
+      toast.error(`Cannot select ${student.name} - student has LEFT. Contact admin.`);
       return;
     }
     
@@ -107,17 +107,17 @@ export function MarkLessonForm() {
       return;
     }
 
-    // Check for any blocked students
-    const blockedStudents = currentStudents?.filter(s => s.status === 'Blocked') || [];
-    if (blockedStudents.length > 0) {
-      const names = blockedStudents.map(s => s.name).join(', ');
-      toast.error(`Cannot mark lessons for blocked students: ${names}`);
+    // Check for any left students
+    const leftStudents = currentStudents?.filter(s => s.status === 'Left') || [];
+    if (leftStudents.length > 0) {
+      const names = leftStudents.map(s => s.name).join(', ');
+      toast.error(`Cannot mark lessons for students who left: ${names}`);
       
-      // Update local state to reflect current blocked status
+      // Update local state to reflect current status
       setStudentStatuses(prev => prev.map(s => {
         const current = currentStudents?.find(cs => cs.student_id === s.student_id);
-        if (current && current.status === 'Blocked') {
-          return { ...s, status: 'Blocked', selected: false, lessonStatus: null };
+        if (current && current.status === 'Left') {
+          return { ...s, status: 'Left', selected: false, lessonStatus: null };
         }
         return s;
       }));
@@ -188,7 +188,7 @@ export function MarkLessonForm() {
               ) : (
                 <div className="space-y-3">
                   {studentStatuses.map((student) => {
-                    const isBlocked = student.status === 'Blocked';
+                    const isBlocked = student.status === 'Left';
                     
                     return (
                       <div 
@@ -231,13 +231,13 @@ export function MarkLessonForm() {
                                 {isBlocked && (
                                   <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-destructive/20 text-destructive">
                                     <Ban className="w-3 h-3" />
-                                    {getStatusDisplayLabel('Blocked').toUpperCase()} - Contact Admin
+                                    {getStatusDisplayLabel('Left').toUpperCase()} - Contact Admin
                                   </span>
                                 )}
-                                {student.status === 'Grace' && (
+                                {student.status === 'Temporary Stop' && (
                                   <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-500">
                                     <AlertTriangle className="w-3 h-3" />
-                                    {getStatusDisplayLabel('Grace')}
+                                    {getStatusDisplayLabel('Temporary Stop')}
                                   </span>
                                 )}
                               </label>

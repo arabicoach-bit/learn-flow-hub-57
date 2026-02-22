@@ -55,13 +55,13 @@ export function AddFreeLessonsForm({ studentId, studentName, currentWallet, onSu
 
     try {
       // Calculate new status based on new wallet balance
-      let newStatus: 'Active' | 'Grace' | 'Blocked';
+      let newStatus: 'Active' | 'Temporary Stop' | 'Left';
       if (newBalance >= 3) {
         newStatus = 'Active';
       } else if (newBalance >= -1) {
-        newStatus = 'Grace';
+        newStatus = 'Temporary Stop';
       } else {
-        newStatus = 'Blocked';
+        newStatus = 'Left';
       }
 
       // Update student wallet balance and status

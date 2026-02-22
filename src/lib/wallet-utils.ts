@@ -3,8 +3,14 @@ export function getStatusDisplayLabel(status: string): string {
   switch (status) {
     case 'Active':
       return 'Active';
+    // New canonical values
+    case 'Temporary Stop':
+      return 'Temporary Stop';
+    case 'Left':
+      return 'Left';
+    // Backwards-compat (should no longer exist in DB)
     case 'Grace':
-      return 'Temporary stop';
+      return 'Temporary Stop';
     case 'Blocked':
       return 'Left';
     default:
@@ -36,8 +42,10 @@ export function getStatusBadgeClass(status: string): string {
   switch (status) {
     case 'Active':
       return 'status-active';
+    case 'Temporary Stop':
     case 'Grace':
       return 'status-grace';
+    case 'Left':
     case 'Blocked':
       return 'status-blocked';
     case 'New':
@@ -59,8 +67,10 @@ export function getStatusColor(status: string): string {
   switch (status) {
     case 'Active':
       return 'bg-wallet-positive/20 text-wallet-positive';
+    case 'Temporary Stop':
     case 'Grace':
       return 'bg-wallet-warning/20 text-wallet-warning';
+    case 'Left':
     case 'Blocked':
       return 'bg-wallet-negative/20 text-wallet-negative';
     default:

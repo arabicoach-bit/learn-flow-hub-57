@@ -195,10 +195,10 @@ export default function Students() {
           <Select value={statusFilter || 'all'} onValueChange={(v) => setStatusFilter(v === 'all' ? '' : v)}>
             <SelectTrigger className="w-40"><SelectValue placeholder="All Status" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="Active">Active</SelectItem>
-              <SelectItem value="Grace">Temporary stop</SelectItem>
-              <SelectItem value="Blocked">Left</SelectItem>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="Active">Active</SelectItem>
+            <SelectItem value="Temporary Stop">Temporary Stop</SelectItem>
+            <SelectItem value="Left">Left</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -262,7 +262,7 @@ export default function Students() {
                         <div className="flex items-center gap-2">
                         <Select
                           value={student.status}
-                          onValueChange={(value: 'Active' | 'Grace' | 'Blocked') => {
+                          onValueChange={(value: 'Active' | 'Temporary Stop' | 'Left') => {
                             updateStudent.mutate(
                               { studentId: student.student_id, status: value },
                               {
@@ -279,11 +279,11 @@ export default function Students() {
                             <SelectItem value="Active">
                               <Badge variant="outline" className={getStatusBadgeClass('Active')}>Active</Badge>
                             </SelectItem>
-                            <SelectItem value="Grace">
-                              <Badge variant="outline" className={getStatusBadgeClass('Grace')}>{getStatusDisplayLabel('Grace')}</Badge>
+                            <SelectItem value="Temporary Stop">
+                              <Badge variant="outline" className={getStatusBadgeClass('Temporary Stop')}>{getStatusDisplayLabel('Temporary Stop')}</Badge>
                             </SelectItem>
-                            <SelectItem value="Blocked">
-                              <Badge variant="outline" className={getStatusBadgeClass('Blocked')}>{getStatusDisplayLabel('Blocked')}</Badge>
+                            <SelectItem value="Left">
+                              <Badge variant="outline" className={getStatusBadgeClass('Left')}>{getStatusDisplayLabel('Left')}</Badge>
                             </SelectItem>
                           </SelectContent>
                         </Select>
