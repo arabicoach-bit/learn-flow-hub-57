@@ -1198,7 +1198,7 @@ export type Database = {
         | "unmarked_lesson_reminder"
       package_status: "Active" | "Completed"
       payroll_status: "Draft" | "Approved" | "Paid"
-      student_status: "Active" | "Grace" | "Blocked"
+      student_status: "Active" | "Temporary Stop" | "Left"
       trial_result: "Positive" | "Very Positive" | "Neutral" | "Negative"
       trial_status: "Scheduled" | "Completed" | "Converted" | "Lost"
     }
@@ -1341,7 +1341,7 @@ export const Constants = {
       ],
       package_status: ["Active", "Completed"],
       payroll_status: ["Draft", "Approved", "Paid"],
-      student_status: ["Active", "Grace", "Blocked"],
+      student_status: ["Active", "Temporary Stop", "Left"],
       trial_result: ["Positive", "Very Positive", "Neutral", "Negative"],
       trial_status: ["Scheduled", "Completed", "Converted", "Lost"],
     },
