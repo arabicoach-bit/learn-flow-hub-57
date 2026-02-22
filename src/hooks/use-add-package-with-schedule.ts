@@ -104,7 +104,7 @@ export function useAddPackageWithSchedule() {
         .update({
           wallet_balance: newWallet,
           current_package_id: packageData.package_id,
-          status: newWallet > 0 ? 'Active' : 'Grace',
+          status: newWallet > 0 ? 'Active' : 'Temporary Stop',
           total_paid: (student.total_paid || 0) + input.amount,
           number_of_renewals: (student.number_of_renewals || 0) + 1,
           teacher_id: input.teacher_id,

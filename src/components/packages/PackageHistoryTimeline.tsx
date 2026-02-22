@@ -81,11 +81,11 @@ export function PackageHistoryTimeline({ packages, isLoading, teacherName }: Pac
                 : 0;
 
               // Determine status during this package period
-              let periodStatus: 'Active' | 'Grace' | 'Blocked' = 'Active';
+              let periodStatus: 'Active' | 'Temporary Stop' | 'Left' = 'Active';
               if (lessonsRemaining <= 0) {
-                periodStatus = 'Blocked';
+                periodStatus = 'Left';
               } else if (lessonsRemaining <= 2) {
-                periodStatus = 'Grace';
+                periodStatus = 'Temporary Stop';
               }
 
               return (
@@ -129,7 +129,7 @@ export function PackageHistoryTimeline({ packages, isLoading, teacherName }: Pac
                           {pkg.package_types?.description || '-'}
                         </p>
                       </div>
-                      <Badge className={getStatusBadgeClass(pkg.status === 'Active' ? periodStatus : 'Blocked')}>
+                      <Badge className={getStatusBadgeClass(pkg.status === 'Active' ? periodStatus : 'Left')}>
                         {getStatusDisplayLabel(pkg.status)}
                       </Badge>
                     </div>

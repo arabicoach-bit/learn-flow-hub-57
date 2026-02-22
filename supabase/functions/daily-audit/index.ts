@@ -81,8 +81,8 @@ Deno.serve(async (req) => {
         const debt = student.debt_lessons || 0;
         let expectedStatus: string;
         if (wallet >= 3) expectedStatus = 'Active';
-        else if (debt >= 2) expectedStatus = 'Blocked';
-        else expectedStatus = 'Grace';
+        else if (debt >= 2) expectedStatus = 'Left';
+        else expectedStatus = 'Temporary Stop';
         
         if (student.status !== expectedStatus) {
           issues.push(`Student "${student.name}" status mismatch: is "${student.status}", expected "${expectedStatus}" (wallet: ${wallet}, debt: ${debt})`);

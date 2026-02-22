@@ -43,8 +43,8 @@ serve(async (req) => {
 
     // Calculate stats
     const activeStudents = students?.filter(s => s.status === 'Active').length || 0;
-    const graceStudents = students?.filter(s => s.status === 'Grace').length || 0;
-    const blockedStudents = students?.filter(s => s.status === 'Blocked').length || 0;
+    const graceStudents = students?.filter(s => s.status === 'Temporary Stop').length || 0;
+    const blockedStudents = students?.filter(s => s.status === 'Left').length || 0;
     const totalStudents = students?.length || 0;
     
     const newLeads = leads?.filter(l => l.status === 'New').length || 0;
@@ -63,8 +63,8 @@ serve(async (req) => {
 Current CRM Summary:
 - Total Students: ${totalStudents}
   • Active: ${activeStudents}
-  • Grace Period: ${graceStudents}
-  • Blocked: ${blockedStudents}
+  • Temporary Stop: ${graceStudents}
+  • Left: ${blockedStudents}
   
 - Leads Pipeline:
   • New: ${newLeads}

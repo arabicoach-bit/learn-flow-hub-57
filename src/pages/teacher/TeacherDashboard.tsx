@@ -50,8 +50,8 @@ export default function TeacherDashboard() {
 
   const isLoading = todaysLoading || statsLoading || studentsLoading;
 
-  const graceStudents = students?.filter(s => s.status === 'Grace') || [];
-  const blockedStudents = students?.filter(s => s.status === 'Blocked') || [];
+  const graceStudents = students?.filter(s => s.status === 'Temporary Stop') || [];
+  const blockedStudents = students?.filter(s => s.status === 'Left') || [];
 
   const handleLessonMarked = () => {
     refetchToday();
@@ -300,16 +300,16 @@ export default function TeacherDashboard() {
                       <p className="font-medium">{student.name}</p>
                       <p className="text-sm text-muted-foreground">Wallet: {student.wallet_balance} lessons</p>
                     </div>
-                    <Badge className="status-grace">Grace Period</Badge>
+                    <Badge className="status-grace">Temporary Stop</Badge>
                   </div>
                 ))}
                 {blockedStudents.map((student) => (
                   <div key={student.student_id} className="flex items-center justify-between p-3 rounded-lg bg-red-500/10 border border-red-500/20">
                     <div>
                       <p className="font-medium">{student.name}</p>
-                      <p className="text-sm text-muted-foreground">Contact admin for payment</p>
+                      <p className="text-sm text-muted-foreground">Contact admin</p>
                     </div>
-                    <Badge className="status-blocked">Blocked</Badge>
+                    <Badge className="status-blocked">Left</Badge>
                   </div>
                 ))}
               </div>

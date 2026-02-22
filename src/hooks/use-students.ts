@@ -15,7 +15,7 @@ export interface Student {
   program_id: string | null;
   student_level: string | null;
   teacher_id: string | null;
-  status: 'Active' | 'Grace' | 'Blocked';
+  status: 'Active' | 'Temporary Stop' | 'Left';
   wallet_balance: number;
   current_package_id: string | null;
   total_paid: number | null;
@@ -52,8 +52,8 @@ export function useStudents(filters?: { status?: string; teacher_id?: string; se
         .select('*, teachers(name), programs(name)')
         .order('created_at', { ascending: false });
 
-      if (filters?.status && ['Active', 'Grace', 'Blocked'].includes(filters.status)) {
-        query = query.eq('status', filters.status as 'Active' | 'Grace' | 'Blocked');
+      if (filters?.status && ['Active', 'Temporary Stop', 'Left'].includes(filters.status)) {
+        query = query.eq('status', filters.status as 'Active' | 'Temporary Stop' | 'Left');
       }
       if (filters?.teacher_id) {
         query = query.eq('teacher_id', filters.teacher_id);
@@ -93,22 +93,24 @@ export function useCreateStudent() {
     mutationFn: async (input: CreateStudentInput) => {
       const { data: student, error: studentError } = await supabase
         .from('students')
-        .insert({
-          name: input.name,
-          phone: input.phone,
-          parent_phone: input.parent_phone || null,
-          parent_guardian_name: input.parent_guardian_name || null,
-          age: input.age || null,
-          gender: input.gender || null,
-          nationality: input.nationality || null,
-          school: input.school || null,
-          year_group: input.year_group || null,
-          program_id: input.program_id || null,
-          student_level: input.student_level || null,
-          teacher_id: input.teacher_id || null,
-          wallet_balance: input.initial_lessons || 0,
-          status: (input.initial_lessons || 0) > 0 ? 'Active' : 'Grace',
-        })
+        .insert([
+          {
+            name: input.name,
+            phone: input.phone,
+            parent_phone: input.parent_phone || null,
+            parent_guardian_name: input.parent_guardian_name || null,
+            age: input.age || null,
+            gender: input.gender || null,
+            nationality: input.nationality || null,
+            school: input.school || null,
+            year_group: input.year_group || null,
+            program_id: input.program_id || null,
+            student_level: input.student_level || null,
+            teacher_id: input.teacher_id || null,
+            wallet_balance: input.initial_lessons || 0,
+            status: (input.initial_lessons || 0) > 0 ? 'Active' : 'Temporary Stop',
+          },
+        ])
         .select()
         .single();
 
@@ -164,7 +166,7 @@ export function useUpdateStudent() {
       program_id?: string | null;
       student_level?: string | null;
       teacher_id?: string | null;
-      status?: 'Active' | 'Grace' | 'Blocked';
+      status?: 'Active' | 'Temporary Stop' | 'Left';
     }) => {
       const { error } = await supabase
         .from('students')

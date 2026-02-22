@@ -84,9 +84,9 @@ export function useStudentStats() {
       // Calculate stats
       const totalStudents = students?.length || 0;
       const activeStudents = students?.filter(s => s.status === 'Active').length || 0;
-      const graceStudents = students?.filter(s => s.status === 'Grace').length || 0;
-      const blockedStudents = students?.filter(s => s.status === 'Blocked').length || 0;
-      const temporaryStopStudents = 0; // Would need status field extension
+      const graceStudents = students?.filter(s => s.status === 'Temporary Stop').length || 0;
+      const blockedStudents = students?.filter(s => s.status === 'Left').length || 0;
+      const temporaryStopStudents = graceStudents;
 
       // Calculate outstanding balance (students with wallet_balance <= 0)
       const totalOutstandingBalance = students
@@ -189,8 +189,8 @@ export function useTeacherPerformance() {
         const stats = teacherLessonStats[teacher.teacher_id] || { count: 0, totalMinutes: 0 };
         const teacherStudents = students?.filter(s => s.teacher_id === teacher.teacher_id) || [];
         const activeTeacherStudents = teacherStudents.filter(s => s.status === 'Active');
-        const temporaryStopStudents = teacherStudents.filter(s => s.status === 'Grace').length;
-        const leftStudents = teacherStudents.filter(s => s.status === 'Blocked').length;
+        const temporaryStopStudents = teacherStudents.filter(s => s.status === 'Temporary Stop').length;
+        const leftStudents = teacherStudents.filter(s => s.status === 'Left').length;
         const trialLessons = trialStudents?.filter(t => t.teacher_id === teacher.teacher_id).length || 0;
 
         const totalTeachingHours = stats.totalMinutes / 60;

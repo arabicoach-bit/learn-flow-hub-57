@@ -383,7 +383,7 @@ export default function TeacherDetail() {
                             className={
                               student.status === 'Active'
                                 ? 'status-active'
-                                : student.status === 'Grace'
+                                : student.status === 'Temporary Stop'
                                 ? 'status-grace'
                                 : 'status-blocked'
                             }

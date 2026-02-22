@@ -33,11 +33,11 @@ export function useDashboardStats() {
         supabase
           .from('students')
           .select('student_id', { count: 'exact', head: true })
-          .eq('status', 'Grace'),
+          .eq('status', 'Temporary Stop'),
         supabase
           .from('students')
           .select('student_id', { count: 'exact', head: true })
-          .eq('status', 'Blocked'),
+          .eq('status', 'Left'),
         supabase
           .from('leads')
           .select('lead_id', { count: 'exact', head: true })

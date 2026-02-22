@@ -79,8 +79,8 @@ export default function TeacherStudents() {
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="Active">Active</SelectItem>
-                  <SelectItem value="Grace">Temporary stop</SelectItem>
-                  <SelectItem value="Blocked">Left</SelectItem>
+                  <SelectItem value="Temporary Stop">Temporary Stop</SelectItem>
+                  <SelectItem value="Left">Left</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -126,7 +126,7 @@ export default function TeacherStudents() {
                                   className={
                                     student.status === 'Active'
                                       ? 'status-active'
-                                      : student.status === 'Grace'
+                                      : student.status === 'Temporary Stop'
                                       ? 'status-grace'
                                       : 'status-blocked'
                                   }

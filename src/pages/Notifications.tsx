@@ -166,10 +166,10 @@ export default function Notifications() {
         {/* Notification Legend */}
         <div className="flex flex-wrap gap-2 text-xs">
           <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-destructive/10 text-destructive">
-            <Ban className="w-3 h-3" /> Blocked (Critical)
+            <Ban className="w-3 h-3" /> Left (Critical)
           </span>
           <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/10 text-amber-500">
-            <AlertTriangle className="w-3 h-3" /> Grace Mode (High)
+            <AlertTriangle className="w-3 h-3" /> Temporary Stop (High)
           </span>
           <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-orange-500/10 text-orange-500">
             ⏰ Unmarked Lessons (High)

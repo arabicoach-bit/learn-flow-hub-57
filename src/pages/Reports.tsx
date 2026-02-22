@@ -120,7 +120,7 @@ export default function Reports() {
                               variant="outline"
                               className={
                                 student.status === 'Active' ? 'status-active' :
-                                student.status === 'Grace' ? 'status-grace' : 'status-blocked'
+                                student.status === 'Temporary Stop' ? 'status-grace' : 'status-blocked'
                               }
                             >
                               {getStatusDisplayLabel(student.status)}

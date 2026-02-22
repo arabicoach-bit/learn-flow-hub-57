@@ -116,7 +116,7 @@ export function useActivatePackage() {
       }
 
       // 6. Update student wallet and status
-      const newStatus = newWallet > 0 ? 'Active' : 'Grace';
+      const newStatus = newWallet > 0 ? 'Active' : 'Temporary Stop';
       const { error: updateStudentError } = await supabase
         .from('students')
         .update({

@@ -48,7 +48,7 @@ export function TeacherLessonCard({ lesson, onLessonMarked, showDate, date }: Te
   const markLesson = useMarkScheduledLesson();
   const updateLesson = useUpdateScheduledLesson();
   const queryClient = useQueryClient();
-  const isBlocked = lesson.student_status === 'Blocked';
+  const isBlocked = lesson.student_status === 'Left';
   
   // Check if the lesson date is today or in the past (can mark)
   const lessonDate = date || lesson.scheduled_date || new Date().toISOString().split('T')[0];
@@ -215,7 +215,7 @@ export function TeacherLessonCard({ lesson, onLessonMarked, showDate, date }: Te
                   {isBlocked && (
                     <Badge variant="destructive" className="flex items-center gap-1">
                       <Ban className="w-3 h-3" />
-                      {getStatusDisplayLabel('Blocked')}
+                      {getStatusDisplayLabel('Left')}
                     </Badge>
                   )}
                 </div>

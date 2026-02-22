@@ -161,7 +161,7 @@ export function useDeletePackage() {
         const totalRemaining = remainingPackages.reduce((sum, p) => {
           return sum + (p.lessons_purchased - (p.lessons_used || 0));
         }, 0);
-        const newStatus = totalRemaining >= 3 ? 'Active' : totalRemaining >= -1 ? 'Grace' : 'Blocked';
+        const newStatus = totalRemaining >= 3 ? 'Active' : totalRemaining >= -1 ? 'Temporary Stop' : 'Left';
         
         await supabase
           .from('students')
