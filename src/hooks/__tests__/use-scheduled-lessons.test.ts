@@ -105,22 +105,20 @@ describe('Lesson Status System', () => {
       expect(walletAfter).toBe(walletBefore);
     });
 
-    it('deleting scheduled lesson should deduct 1 from wallet', () => {
+    it('deleting scheduled lesson should NOT change wallet', () => {
       const wallet = 3;
       const debt = 0;
-      const newWallet = wallet > 0 ? wallet - 1 : 0;
-      const newDebt = wallet > 0 ? debt : debt + 1;
-      expect(newWallet).toBe(2);
-      expect(newDebt).toBe(0);
+      // No change - lesson was never taken
+      expect(wallet).toBe(3);
+      expect(debt).toBe(0);
     });
 
-    it('deleting scheduled lesson with zero wallet should increment debt', () => {
+    it('deleting scheduled lesson with zero wallet should NOT change debt', () => {
       const wallet = 0;
       const debt = 0;
-      const newWallet = 0;
-      const newDebt = debt + 1;
-      expect(newWallet).toBe(0);
-      expect(newDebt).toBe(1);
+      // No change - lesson was never taken
+      expect(wallet).toBe(0);
+      expect(debt).toBe(0);
     });
 
     it('deleting completed lesson should refund 1 to wallet', () => {
@@ -173,25 +171,26 @@ describe('Lesson Status System', () => {
   });
 
   describe('Status Thresholds', () => {
-    it('wallet >= 3 → Active', () => {
+    it('wallet >= 1 → Active', () => {
       const getStatus = (w: number, d: number) =>
-        w >= 3 ? 'Active' : d >= 2 ? 'Left' : 'Temporary Stop';
+        w >= 1 ? 'Active' : d >= 2 ? 'Left' : 'Temporary Stop';
+      expect(getStatus(1, 0)).toBe('Active');
       expect(getStatus(3, 0)).toBe('Active');
       expect(getStatus(10, 0)).toBe('Active');
     });
 
     it('debt >= 2 → Left', () => {
       const getStatus = (w: number, d: number) =>
-        w >= 3 ? 'Active' : d >= 2 ? 'Left' : 'Temporary Stop';
+        w >= 1 ? 'Active' : d >= 2 ? 'Left' : 'Temporary Stop';
       expect(getStatus(0, 2)).toBe('Left');
-      expect(getStatus(2, 3)).toBe('Left');
+      expect(getStatus(0, 3)).toBe('Left');
     });
 
-    it('wallet 0-2, debt < 2 → Temporary Stop', () => {
+    it('wallet 0, debt < 2 → Temporary Stop', () => {
       const getStatus = (w: number, d: number) =>
-        w >= 3 ? 'Active' : d >= 2 ? 'Left' : 'Temporary Stop';
+        w >= 1 ? 'Active' : d >= 2 ? 'Left' : 'Temporary Stop';
       expect(getStatus(0, 0)).toBe('Temporary Stop');
-      expect(getStatus(2, 1)).toBe('Temporary Stop');
+      expect(getStatus(0, 1)).toBe('Temporary Stop');
     });
   });
 

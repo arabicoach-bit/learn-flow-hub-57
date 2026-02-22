@@ -63,8 +63,8 @@ export function TodaysLessonsCard({ teacherId }: TodaysLessonsCardProps) {
     return now >= lessonStart && now <= lessonEnd;
   };
 
-  const handleMarkLesson = async (lessonId: string, status: 'Taken' | 'Absent', studentStatus?: string) => {
-    if (status === 'Taken' && studentStatus === 'Left') {
+  const handleMarkLesson = async (lessonId: string, status: 'completed' | 'absent', studentStatus?: string) => {
+    if (status === 'completed' && studentStatus === 'Left') {
       toast.error('Cannot mark as Taken - student has left');
       return;
     }
@@ -179,7 +179,7 @@ export function TodaysLessonsCard({ teacherId }: TodaysLessonsCardProps) {
                                 size="sm"
                                 variant="outline"
                                 className="bg-emerald-500/10 border-emerald-500/30 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400"
-                                onClick={() => handleMarkLesson(lesson.scheduled_lesson_id, 'Taken', lesson.students?.status)}
+                                onClick={() => handleMarkLesson(lesson.scheduled_lesson_id, 'completed', lesson.students?.status)}
                                 disabled={markLesson.isPending || isBlocked}
                               >
                                 {markLesson.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-1" />}
@@ -198,7 +198,7 @@ export function TodaysLessonsCard({ teacherId }: TodaysLessonsCardProps) {
                           size="sm"
                           variant="outline"
                           className="bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400"
-                          onClick={() => handleMarkLesson(lesson.scheduled_lesson_id, 'Absent', lesson.students?.status)}
+                          onClick={() => handleMarkLesson(lesson.scheduled_lesson_id, 'absent', lesson.students?.status)}
                           disabled={markLesson.isPending}
                         >
                           <AlertCircle className="w-4 h-4 mr-1" />
@@ -219,7 +219,7 @@ export function TodaysLessonsCard({ teacherId }: TodaysLessonsCardProps) {
                           size="sm"
                           variant="outline"
                           className="bg-neutral-500/10 border-neutral-500/30 hover:bg-neutral-500/20"
-                          onClick={() => handleMarkLesson(lesson.scheduled_lesson_id, 'Absent', lesson.students?.status)}
+                          onClick={() => handleMarkLesson(lesson.scheduled_lesson_id, 'absent', lesson.students?.status)}
                           disabled={markLesson.isPending}
                         >
                           <XCircle className="w-4 h-4 mr-1" />

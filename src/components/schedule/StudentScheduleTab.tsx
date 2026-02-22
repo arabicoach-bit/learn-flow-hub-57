@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useScheduledLessons, useCancelScheduledLesson, ScheduledLesson } from '@/hooks/use-scheduled-lessons';
+import { useScheduledLessons, useMarkScheduledLessonAbsent, ScheduledLesson } from '@/hooks/use-scheduled-lessons';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -34,7 +34,7 @@ export function StudentScheduleTab({ studentId, lessonsUsed = 0, lessonsPurchase
   const [rescheduleLesson, setRescheduleLesson] = useState<ScheduledLesson | null>(null);
   const [isEditScheduleOpen, setIsEditScheduleOpen] = useState(false);
   const { data: scheduledLessons, isLoading } = useScheduledLessons({ student_id: studentId });
-  const cancelLesson = useCancelScheduledLesson();
+  const cancelLesson = useMarkScheduledLessonAbsent();
 
   const handleCancelLesson = async () => {
     if (!cancelLessonId) return;
