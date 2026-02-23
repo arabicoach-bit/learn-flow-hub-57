@@ -510,7 +510,7 @@ export type Database = {
           scheduled_date: string
           scheduled_lesson_id: string
           scheduled_time: string
-          status: string | null
+          status: string
           student_id: string | null
           teacher_id: string | null
         }
@@ -524,7 +524,7 @@ export type Database = {
           scheduled_date: string
           scheduled_lesson_id?: string
           scheduled_time: string
-          status?: string | null
+          status?: string
           student_id?: string | null
           teacher_id?: string | null
         }
@@ -538,7 +538,7 @@ export type Database = {
           scheduled_date?: string
           scheduled_lesson_id?: string
           scheduled_time?: string
-          status?: string | null
+          status?: string
           student_id?: string | null
           teacher_id?: string | null
         }
@@ -1182,6 +1182,10 @@ export type Database = {
           p_student_id: string
           p_teacher_id: string
         }
+        Returns: Json
+      }
+      recalculate_student_wallet: {
+        Args: { p_student_id: string }
         Returns: Json
       }
     }

@@ -242,14 +242,13 @@ export function useUpdateScheduledLesson() {
       duration_minutes?: number;
       status?: string;
     }) => {
-      // Get current lesson to check status transition
+      // Get current lesson for student_id
       const { data: currentLesson } = await supabase
         .from('scheduled_lessons')
-        .select('status, student_id')
+        .select('student_id')
         .eq('scheduled_lesson_id', scheduledLessonId)
         .single();
 
-      const oldStatus = currentLesson?.status;
       const studentId = currentLesson?.student_id;
 
       const updateData: Record<string, unknown> = {};
@@ -265,60 +264,9 @@ export function useUpdateScheduledLesson() {
 
       if (error) throw error;
 
-      // Handle wallet changes on status transitions (clamped to 0, debt tracking)
-      if (status && oldStatus && status !== oldStatus && studentId) {
-        const wasDeducted = oldStatus === 'completed';
-        const shouldDeduct = status === 'completed';
-
-        if (!wasDeducted && shouldDeduct) {
-          // Transitioning to completed: deduct 1 (or increment debt if wallet is 0)
-          const { data: student } = await supabase
-            .from('students')
-            .select('wallet_balance, debt_lessons')
-            .eq('student_id', studentId)
-            .single();
-          if (student) {
-            const wallet = student.wallet_balance || 0;
-            const debt = (student as any).debt_lessons || 0;
-            let newBalance: number, newDebt: number;
-            if (wallet > 0) {
-              newBalance = wallet - 1;
-              newDebt = debt;
-            } else {
-              newBalance = 0;
-              newDebt = debt + 1;
-            }
-            const newStatus = newBalance >= 1 ? 'Active' : newDebt >= 2 ? 'Left' : 'Temporary Stop';
-            await supabase
-              .from('students')
-              .update({ wallet_balance: newBalance, debt_lessons: newDebt, status: newStatus })
-              .eq('student_id', studentId);
-          }
-        } else if (wasDeducted && !shouldDeduct) {
-          // Transitioning from completed -> scheduled/absent: refund 1 (reduce debt first, then add to wallet)
-          const { data: student } = await supabase
-            .from('students')
-            .select('wallet_balance, debt_lessons')
-            .eq('student_id', studentId)
-            .single();
-          if (student) {
-            const wallet = student.wallet_balance || 0;
-            const debt = (student as any).debt_lessons || 0;
-            let newBalance: number, newDebt: number;
-            if (debt > 0) {
-              newDebt = debt - 1;
-              newBalance = wallet;
-            } else {
-              newDebt = 0;
-              newBalance = wallet + 1;
-            }
-            const newStatus = newBalance >= 1 ? 'Active' : newDebt >= 2 ? 'Left' : 'Temporary Stop';
-            await supabase
-              .from('students')
-              .update({ wallet_balance: newBalance, debt_lessons: newDebt, status: newStatus })
-              .eq('student_id', studentId);
-          }
-        }
+      // Recalculate wallet in DB (single source of truth)
+      if (studentId) {
+        await supabase.rpc('recalculate_student_wallet', { p_student_id: studentId });
       }
     },
     onSuccess: () => {
@@ -391,7 +339,7 @@ export function useDeleteScheduledLesson() {
       // Get the lesson details before deleting
       const { data: lesson } = await supabase
         .from('scheduled_lessons')
-        .select('student_id, status')
+        .select('student_id')
         .eq('scheduled_lesson_id', scheduledLessonId)
         .single();
 
@@ -403,37 +351,9 @@ export function useDeleteScheduledLesson() {
 
       if (error) throw error;
 
-      // Wallet adjustments on delete:
-      // - 'scheduled': NO change (lesson was never taken)
-      // - 'completed': refund 1 (reduce debt first, then add to wallet)
-      // - 'absent': no change
-      if (lesson?.student_id && lesson.status === 'completed') {
-        const { data: student } = await supabase
-          .from('students')
-          .select('wallet_balance, debt_lessons')
-          .eq('student_id', lesson.student_id)
-          .single();
-
-        if (student) {
-          const wallet = student.wallet_balance || 0;
-          const debt = (student as any).debt_lessons || 0;
-          let newBalance: number, newDebt: number;
-          
-          // Deleting completed: refund 1 (reduce debt first)
-          if (debt > 0) {
-            newDebt = debt - 1;
-            newBalance = wallet;
-          } else {
-            newDebt = 0;
-            newBalance = wallet + 1;
-          }
-          
-          const newStatus = newBalance >= 1 ? 'Active' : newDebt >= 2 ? 'Left' : 'Temporary Stop';
-          await supabase
-            .from('students')
-            .update({ wallet_balance: newBalance, debt_lessons: newDebt, status: newStatus })
-            .eq('student_id', lesson.student_id);
-        }
+      // Recalculate wallet in DB (single source of truth)
+      if (lesson?.student_id) {
+        await supabase.rpc('recalculate_student_wallet', { p_student_id: lesson.student_id });
       }
     },
     onSuccess: () => {
