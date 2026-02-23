@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useScheduledLessons, useMarkScheduledLessonAbsent, ScheduledLesson } from '@/hooks/use-scheduled-lessons';
+import { useScheduledLessons, useDeleteScheduledLesson, ScheduledLesson } from '@/hooks/use-scheduled-lessons';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -7,19 +7,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { 
-  AlertDialog, 
-  AlertDialogAction, 
-  AlertDialogCancel, 
-  AlertDialogContent, 
-  AlertDialogDescription, 
-  AlertDialogFooter, 
-  AlertDialogHeader, 
-  AlertDialogTitle 
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle 
 } from '@/components/ui/alert-dialog';
-import { RescheduleDialog } from './RescheduleDialog';
 import { WeeklyScheduleCard } from './WeeklyScheduleCard';
 import { EditScheduleDialog } from './EditScheduleDialog';
-import { Calendar, Clock, CheckCircle2, XCircle, AlertCircle, Loader2, CalendarClock, Pencil } from 'lucide-react';
+import { UpdateLessonStatusDialog } from './UpdateLessonStatusDialog';
+import { Calendar, Clock, CheckCircle2, XCircle, Loader2, Pencil, Trash2 } from 'lucide-react';
 import { format, parseISO, isToday, isFuture, isPast } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -30,20 +24,20 @@ interface StudentScheduleTabProps {
 }
 
 export function StudentScheduleTab({ studentId, lessonsUsed = 0, lessonsPurchased = 0 }: StudentScheduleTabProps) {
-  const [cancelLessonId, setCancelLessonId] = useState<string | null>(null);
-  const [rescheduleLesson, setRescheduleLesson] = useState<ScheduledLesson | null>(null);
+  const [deleteLessonId, setDeleteLessonId] = useState<string | null>(null);
+  const [editLesson, setEditLesson] = useState<ScheduledLesson | null>(null);
   const [isEditScheduleOpen, setIsEditScheduleOpen] = useState(false);
   const { data: scheduledLessons, isLoading } = useScheduledLessons({ student_id: studentId });
-  const cancelLesson = useMarkScheduledLessonAbsent();
+  const deleteLesson = useDeleteScheduledLesson();
 
-  const handleCancelLesson = async () => {
-    if (!cancelLessonId) return;
+  const handleDeleteLesson = async () => {
+    if (!deleteLessonId) return;
     try {
-      await cancelLesson.mutateAsync(cancelLessonId);
-      toast.success('Lesson cancelled successfully');
-      setCancelLessonId(null);
+      await deleteLesson.mutateAsync({ scheduledLessonId: deleteLessonId });
+      toast.success('Lesson deleted successfully');
+      setDeleteLessonId(null);
     } catch (error: any) {
-      toast.error(error.message || 'Failed to cancel lesson');
+      toast.error(error.message || 'Failed to delete lesson');
     }
   };
 
@@ -57,7 +51,6 @@ export function StudentScheduleTab({ studentId, lessonsUsed = 0, lessonsPurchase
       return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" />Absent</Badge>;
     }
     
-    // Scheduled
     if (isToday(lessonDate)) {
       return <Badge className="bg-amber-500/20 text-amber-700 dark:text-amber-300"><Clock className="w-3 h-3 mr-1" />Today</Badge>;
     }
@@ -80,9 +73,10 @@ export function StudentScheduleTab({ studentId, lessonsUsed = 0, lessonsPurchase
   };
 
   const completedCount = scheduledLessons?.filter(l => l.status === 'completed').length || 0;
+  const absentCount = scheduledLessons?.filter(l => l.status === 'absent').length || 0;
   const scheduledCount = scheduledLessons?.filter(l => l.status === 'scheduled').length || 0;
   const totalLessons = scheduledLessons?.length || 0;
-  const progressPercent = totalLessons > 0 ? (completedCount / totalLessons) * 100 : 0;
+  const progressPercent = totalLessons > 0 ? ((completedCount + absentCount) / totalLessons) * 100 : 0;
 
   if (isLoading) {
     return (
@@ -112,20 +106,40 @@ export function StudentScheduleTab({ studentId, lessonsUsed = 0, lessonsPurchase
         </Button>
       </div>
 
-      {/* Progress Card */}
+      {/* Statistics Card */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-center">
+          <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{completedCount}</p>
+          <p className="text-xs text-muted-foreground">Completed</p>
+        </div>
+        <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-center">
+          <p className="text-2xl font-bold text-red-600 dark:text-red-400">{absentCount}</p>
+          <p className="text-xs text-muted-foreground">Absent</p>
+        </div>
+        <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-center">
+          <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{scheduledCount}</p>
+          <p className="text-xs text-muted-foreground">Scheduled</p>
+        </div>
+        <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20 text-center">
+          <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+            {((completedCount * 0.75)).toFixed(1)}
+          </p>
+          <p className="text-xs text-muted-foreground">Total Hours</p>
+        </div>
+        <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 text-center">
+          <p className="text-2xl font-bold">{totalLessons}</p>
+          <p className="text-xs text-muted-foreground">Total Lessons</p>
+        </div>
+      </div>
+
+      {/* Progress */}
       <Card className="bg-gradient-to-r from-primary/10 to-primary/5">
         <CardContent className="pt-6">
-          <div className="flex flex-wrap gap-6 items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">Package Progress</p>
-              <p className="text-2xl font-bold">{completedCount} / {totalLessons} lessons completed</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-emerald-600">{completedCount}</p>
-              <p className="text-xs text-muted-foreground">Completed</p>
-            </div>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm text-muted-foreground">Progress</p>
+            <p className="text-sm font-bold">{completedCount + absentCount} / {totalLessons}</p>
           </div>
-          <Progress value={progressPercent} className="mt-4 h-2" />
+          <Progress value={progressPercent} className="h-2" />
         </CardContent>
       </Card>
 
@@ -134,7 +148,7 @@ export function StudentScheduleTab({ studentId, lessonsUsed = 0, lessonsPurchase
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="w-5 h-5" />
-            Scheduled Lessons
+            All Lessons
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -168,27 +182,30 @@ export function StudentScheduleTab({ studentId, lessonsUsed = 0, lessonsPurchase
                     <TableCell>{lesson.teachers?.name || '-'}</TableCell>
                     <TableCell>{getStatusBadge(lesson.status, lesson.scheduled_date)}</TableCell>
                     <TableCell>
-                      {lesson.status === 'scheduled' && isFuture(parseISO(lesson.scheduled_date)) && (
-                        <div className="flex gap-1">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="text-primary hover:text-primary"
-                            onClick={() => setRescheduleLesson(lesson)}
-                          >
-                            <CalendarClock className="w-4 h-4 mr-1" />
-                            Reschedule
-                          </Button>
+                      <div className="flex gap-1">
+                        {/* Edit button - change date/time/duration/status */}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-primary hover:text-primary"
+                          onClick={() => setEditLesson(lesson)}
+                        >
+                          <Pencil className="w-4 h-4 mr-1" />
+                          Edit
+                        </Button>
+                        {/* Delete button - only for scheduled */}
+                        {lesson.status === 'scheduled' && (
                           <Button
                             size="sm"
                             variant="ghost"
                             className="text-destructive hover:text-destructive"
-                            onClick={() => setCancelLessonId(lesson.scheduled_lesson_id)}
+                            onClick={() => setDeleteLessonId(lesson.scheduled_lesson_id)}
                           >
-                            Cancel
+                            <Trash2 className="w-4 h-4 mr-1" />
+                            Delete
                           </Button>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -198,38 +215,35 @@ export function StudentScheduleTab({ studentId, lessonsUsed = 0, lessonsPurchase
         </CardContent>
       </Card>
 
-      {/* Cancel Confirmation Dialog */}
-      <AlertDialog open={!!cancelLessonId} onOpenChange={() => setCancelLessonId(null)}>
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteLessonId} onOpenChange={() => setDeleteLessonId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Cancel Lesson?</AlertDialogTitle>
+            <AlertDialogTitle>Delete Lesson?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will cancel the scheduled lesson. This action cannot be undone.
+              This will permanently delete this scheduled lesson. The wallet will be recalculated.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Keep Lesson</AlertDialogCancel>
-            <AlertDialogAction onClick={handleCancelLesson} disabled={cancelLesson.isPending}>
-              {cancelLesson.isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Cancelling...
-                </>
+            <AlertDialogAction onClick={handleDeleteLesson} disabled={deleteLesson.isPending}>
+              {deleteLesson.isPending ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Deleting...</>
               ) : (
-                'Cancel Lesson'
+                'Delete Lesson'
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Reschedule Dialog */}
-      {rescheduleLesson && (
-        <RescheduleDialog
-          lesson={rescheduleLesson}
-          open={!!rescheduleLesson}
-          onOpenChange={(open) => !open && setRescheduleLesson(null)}
-          onSuccess={() => setRescheduleLesson(null)}
+      {/* Edit Lesson Dialog (date/time/duration/status) */}
+      {editLesson && (
+        <UpdateLessonStatusDialog
+          lesson={editLesson}
+          open={!!editLesson}
+          onOpenChange={(open) => !open && setEditLesson(null)}
+          onSuccess={() => setEditLesson(null)}
         />
       )}
 
