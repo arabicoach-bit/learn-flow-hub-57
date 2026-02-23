@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { ArrowLeft, User, Wallet, CreditCard, BookOpen, Loader2, Calendar, Plus, RefreshCw, Pencil, History, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
+import { ArrowLeft, User, Wallet, CreditCard, BookOpen, Loader2, Plus, RefreshCw, Pencil, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { getWalletColor, getStatusBadgeClass, formatCurrency, formatDate, formatDateTime, getStatusDisplayLabel } from '@/lib/wallet-utils';
 import { StudentScheduleTab } from '@/components/schedule/StudentScheduleTab';
 import { AddPackageForm } from '@/components/packages/AddPackageForm';
@@ -274,28 +274,20 @@ export default function StudentDetail() {
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Tabs */}
+        {/* Tabs - 3 tabs only: Packages (admin), Lessons, Student Info */}
         <Tabs defaultValue={defaultTab} className="space-y-4">
           <TabsList className="flex-wrap">
             <TabsTrigger value="payments" className="flex items-center gap-2">
               <CreditCard className="w-4 h-4" />
               Packages
             </TabsTrigger>
-            <TabsTrigger value="history" className="flex items-center gap-2">
-              <History className="w-4 h-4" />
-              Package History
-            </TabsTrigger>
-            <TabsTrigger value="schedule" className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              Schedule
-            </TabsTrigger>
             <TabsTrigger value="lessons" className="flex items-center gap-2">
               <BookOpen className="w-4 h-4" />
-              Lesson History
+              Lessons
             </TabsTrigger>
             <TabsTrigger value="edit" className="flex items-center gap-2">
               <User className="w-4 h-4" />
-              Edit Info
+              Student Information
             </TabsTrigger>
           </TabsList>
 
@@ -454,114 +446,54 @@ export default function StudentDetail() {
             </Card>
           </TabsContent>
 
-          {/* Package History Tab */}
-          <TabsContent value="history">
-            <PackageHistoryTimeline 
-              packages={packages} 
-              isLoading={packagesLoading} 
-              teacherName={student.teachers?.name}
-            />
-          </TabsContent>
-
-          {/* Schedule Tab */}
-          <TabsContent value="schedule">
-            <StudentScheduleTab studentId={id!} />
-          </TabsContent>
-
-          {/* Lesson History Tab */}
+          {/* Lessons Tab - Merged: Schedule + History + Stats */}
           <TabsContent value="lessons">
-            <Card className="glass-card">
+            {/* Schedule Section */}
+            <StudentScheduleTab studentId={id!} />
+
+            {/* Lesson Log History */}
+            <Card className="glass-card mt-6">
               <CardHeader>
-                <CardTitle>Lesson History & Statistics</CardTitle>
+                <CardTitle>Lesson Log History</CardTitle>
               </CardHeader>
               <CardContent>
                 {lessonsLoading ? (
                   <div className="space-y-3">
                     {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-12" />)}
                   </div>
+                ) : !lessons?.length ? (
+                  <p className="text-muted-foreground text-center py-8">No lesson history</p>
                 ) : (
-                  <>
-                    {/* Student Statistics Dashboard */}
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-                      <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-center">
-                        <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-                          {lessons?.filter(l => l.status === 'Taken').length || 0}
-                        </p>
-                        <p className="text-xs text-muted-foreground">Completed</p>
-                      </div>
-                      <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-center">
-                        <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                          {/* Show scheduled from scheduled_lessons would be ideal, using wallet as proxy */}
-                          {student.wallet_balance > 0 ? student.wallet_balance : 0}
-                        </p>
-                        <p className="text-xs text-muted-foreground">Scheduled</p>
-                      </div>
-                      <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-center">
-                        <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-                          {lessons?.filter(l => l.status === 'Absent').length || 0}
-                        </p>
-                        <p className="text-xs text-muted-foreground">Absent</p>
-                      </div>
-                      <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20 text-center">
-                        <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                          {/* Calculate total hours from completed lessons */}
-                          {((lessons?.filter(l => l.status === 'Taken').length || 0) * 0.75).toFixed(1)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">Total Hours</p>
-                      </div>
-                      <div className={`p-3 rounded-lg text-center ${
-                        (student.wallet_balance || 0) <= 2 
-                          ? 'bg-red-500/10 border border-red-500/20' 
-                          : 'bg-emerald-500/10 border border-emerald-500/20'
-                      }`}>
-                        <p className={`text-2xl font-bold ${
-                          (student.wallet_balance || 0) <= 2 
-                            ? 'text-red-600 dark:text-red-400' 
-                            : 'text-emerald-600 dark:text-emerald-400'
-                        }`}>
-                          {student.wallet_balance}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Wallet {(student.wallet_balance || 0) <= 2 && '⚠️ Low'}
-                        </p>
-                      </div>
-                    </div>
-
-                    {!lessons?.length ? (
-                      <p className="text-muted-foreground text-center py-8">No lesson history</p>
-                    ) : (
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Date</TableHead>
-                            <TableHead>Teacher</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Notes</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {lessons.map((lesson) => (
-                            <TableRow key={lesson.lesson_id}>
-                              <TableCell>{formatDateTime(lesson.date)}</TableCell>
-                              <TableCell>{lesson.teachers?.name || '-'}</TableCell>
-                              <TableCell>
-                                <Badge 
-                                  variant="outline" 
-                                  className={
-                                    lesson.status === 'Taken' ? 'status-active' :
-                                    lesson.status === 'Absent' ? 'bg-red-500/20 text-red-700 dark:text-red-300' : 'status-grace'
-                                  }
-                                >
-                                  {lesson.status === 'Taken' ? 'Completed' : lesson.status}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="max-w-[200px] truncate">{lesson.notes || '-'}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    )}
-                  </>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Teacher</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Notes</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {lessons.map((lesson) => (
+                        <TableRow key={lesson.lesson_id}>
+                          <TableCell>{formatDateTime(lesson.date)}</TableCell>
+                          <TableCell>{lesson.teachers?.name || '-'}</TableCell>
+                          <TableCell>
+                            <Badge 
+                              variant="outline" 
+                              className={
+                                lesson.status === 'Taken' ? 'status-active' :
+                                lesson.status === 'Absent' ? 'bg-red-500/20 text-red-700 dark:text-red-300' : ''
+                              }
+                            >
+                              {lesson.status === 'Taken' ? 'Completed' : lesson.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="max-w-[200px] truncate">{lesson.notes || '-'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 )}
               </CardContent>
             </Card>
