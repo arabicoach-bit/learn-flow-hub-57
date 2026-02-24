@@ -5,9 +5,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { RescheduleDialog } from './RescheduleDialog';
+import { UpdateLessonStatusDialog } from './UpdateLessonStatusDialog';
 import { getWalletColor, getWalletDisplayLabel } from '@/lib/wallet-utils';
-import { Clock, CheckCircle, XCircle, AlertCircle, Loader2, Ban, RefreshCw, CalendarClock } from 'lucide-react';
+import { Clock, CheckCircle, AlertCircle, Loader2, Ban, RefreshCw, Pencil } from 'lucide-react';
 import { format, parseISO, differenceInMinutes, addMinutes } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -17,17 +17,15 @@ interface TodaysLessonsCardProps {
 
 export function TodaysLessonsCard({ teacherId }: TodaysLessonsCardProps) {
   const [now, setNow] = useState(new Date());
-  const [rescheduleLesson, setRescheduleLesson] = useState<ScheduledLesson | null>(null);
+  const [editLesson, setEditLesson] = useState<ScheduledLesson | null>(null);
   const { data: lessons, isLoading, refetch } = useTodaysScheduledLessons(teacherId);
   const markLesson = useMarkScheduledLesson();
 
-  // Update time every minute
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 60000);
     return () => clearInterval(interval);
   }, []);
 
-  // Auto-refresh every 5 minutes
   useEffect(() => {
     const refreshInterval = setInterval(() => refetch(), 300000);
     return () => clearInterval(refreshInterval);
@@ -44,7 +42,6 @@ export function TodaysLessonsCard({ teacherId }: TodaysLessonsCardProps) {
   const getTimeUntilLesson = (date: string, time: string) => {
     const lessonDateTime = parseISO(`${date}T${time}`);
     const diffMinutes = differenceInMinutes(lessonDateTime, now);
-    
     if (diffMinutes < 0) {
       const absDiff = Math.abs(diffMinutes);
       if (absDiff < 60) return `Started ${absDiff} min ago`;
@@ -68,15 +65,9 @@ export function TodaysLessonsCard({ teacherId }: TodaysLessonsCardProps) {
       toast.error('Cannot mark as Taken - student has left');
       return;
     }
-
     try {
-      const result = await markLesson.mutateAsync({
-        scheduledLessonId: lessonId,
-        status,
-      });
-      const newWallet = typeof result === 'object' && result !== null 
-        ? (result as Record<string, unknown>).new_wallet 
-        : undefined;
+      const result = await markLesson.mutateAsync({ scheduledLessonId: lessonId, status });
+      const newWallet = typeof result === 'object' && result !== null ? (result as Record<string, unknown>).new_wallet : undefined;
       toast.success(`Lesson marked as ${status}${newWallet !== undefined ? `. New wallet: ${newWallet}` : ''}`);
     } catch (error: any) {
       toast.error(error.message || 'Failed to mark lesson');
@@ -86,13 +77,9 @@ export function TodaysLessonsCard({ teacherId }: TodaysLessonsCardProps) {
   if (isLoading) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>Today's Lessons</CardTitle>
-        </CardHeader>
+        <CardHeader><CardTitle>Today's Lessons</CardTitle></CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24" />)}
-          </div>
+          <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24" />)}</div>
         </CardContent>
       </Card>
     );
@@ -127,57 +114,38 @@ export function TodaysLessonsCard({ teacherId }: TodaysLessonsCardProps) {
                   <div
                     key={lesson.scheduled_lesson_id}
                     className={`p-4 rounded-lg border transition-all ${
-                      isActive 
-                        ? 'border-primary bg-primary/5 shadow-lg' 
-                        : isBlocked
-                        ? 'border-destructive/50 bg-destructive/5'
-                        : 'border-border/50 bg-card/50'
+                      isActive ? 'border-primary bg-primary/5 shadow-lg' : isBlocked ? 'border-destructive/50 bg-destructive/5' : 'border-border/50 bg-card/50'
                     }`}
                   >
                     <div className="flex flex-col md:flex-row md:items-center gap-4">
-                      {/* Time & Student Info */}
                       <div className="flex-1">
                         <div className="flex items-center gap-3">
                           <div className="text-center min-w-[80px]">
-                            <p className={`text-lg font-bold ${isActive ? 'text-primary' : ''}`}>
-                              {formatTime(lesson.scheduled_time)}
-                            </p>
+                            <p className={`text-lg font-bold ${isActive ? 'text-primary' : ''}`}>{formatTime(lesson.scheduled_time)}</p>
                             <p className="text-xs text-muted-foreground">{lesson.duration_minutes} min</p>
                           </div>
                           <div className="flex-1">
-                            <p className={`font-medium ${isBlocked ? 'text-muted-foreground' : ''}`}>
-                              {lesson.students?.name || 'Unknown Student'}
-                            </p>
+                            <p className={`font-medium ${isBlocked ? 'text-muted-foreground' : ''}`}>{lesson.students?.name || 'Unknown Student'}</p>
                             <div className="flex items-center gap-2 mt-1 flex-wrap">
                               <Badge variant="outline">{lesson.classes?.name || 'No class'}</Badge>
                               <span className={`text-sm font-medium ${getWalletColor(lesson.students?.wallet_balance || 0)}`}>
                                 Wallet: {getWalletDisplayLabel(lesson.students?.wallet_balance || 0)}
                               </span>
-                              {isBlocked && (
-                                <Badge variant="destructive" className="gap-1">
-                                  <Ban className="w-3 h-3" />
-                                  LEFT
-                                </Badge>
-                              )}
+                              {isBlocked && <Badge variant="destructive" className="gap-1"><Ban className="w-3 h-3" />LEFT</Badge>}
                             </div>
                           </div>
                         </div>
-
-                        {/* Time countdown */}
                         <div className={`mt-2 text-sm ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
-                          <Clock className="w-3 h-3 inline mr-1" />
-                          {timeUntil}
+                          <Clock className="w-3 h-3 inline mr-1" />{timeUntil}
                         </div>
                       </div>
 
-                      {/* Action Buttons */}
                       <div className="flex gap-2">
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <span>
                               <Button
-                                size="sm"
-                                variant="outline"
+                                size="sm" variant="outline"
                                 className="bg-emerald-500/10 border-emerald-500/30 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400"
                                 onClick={() => handleMarkLesson(lesson.scheduled_lesson_id, 'completed', lesson.students?.status)}
                                 disabled={markLesson.isPending || isBlocked}
@@ -187,16 +155,11 @@ export function TodaysLessonsCard({ teacherId }: TodaysLessonsCardProps) {
                               </Button>
                             </span>
                           </TooltipTrigger>
-                          {isBlocked && (
-                            <TooltipContent className="bg-destructive">
-                              Student has left.
-                            </TooltipContent>
-                          )}
+                          {isBlocked && <TooltipContent className="bg-destructive">Student has left.</TooltipContent>}
                         </Tooltip>
 
                         <Button
-                          size="sm"
-                          variant="outline"
+                          size="sm" variant="outline"
                           className="bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400"
                           onClick={() => handleMarkLesson(lesson.scheduled_lesson_id, 'absent', lesson.students?.status)}
                           disabled={markLesson.isPending}
@@ -206,24 +169,12 @@ export function TodaysLessonsCard({ teacherId }: TodaysLessonsCardProps) {
                         </Button>
 
                         <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setRescheduleLesson(lesson)}
+                          size="sm" variant="outline"
+                          onClick={() => setEditLesson(lesson)}
                           disabled={markLesson.isPending}
                         >
-                          <CalendarClock className="w-4 h-4 mr-1" />
-                          Reschedule
-                        </Button>
-
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="bg-neutral-500/10 border-neutral-500/30 hover:bg-neutral-500/20"
-                          onClick={() => handleMarkLesson(lesson.scheduled_lesson_id, 'absent', lesson.students?.status)}
-                          disabled={markLesson.isPending}
-                        >
-                          <XCircle className="w-4 h-4 mr-1" />
-                          Absent
+                          <Pencil className="w-4 h-4 mr-1" />
+                          Edit
                         </Button>
                       </div>
                     </div>
@@ -235,13 +186,12 @@ export function TodaysLessonsCard({ teacherId }: TodaysLessonsCardProps) {
         </CardContent>
       </Card>
 
-      {/* Reschedule Dialog */}
-      {rescheduleLesson && (
-        <RescheduleDialog
-          lesson={rescheduleLesson}
-          open={!!rescheduleLesson}
-          onOpenChange={(open) => !open && setRescheduleLesson(null)}
-          onSuccess={() => setRescheduleLesson(null)}
+      {editLesson && (
+        <UpdateLessonStatusDialog
+          lesson={editLesson}
+          open={!!editLesson}
+          onOpenChange={(open) => !open && setEditLesson(null)}
+          onSuccess={() => setEditLesson(null)}
         />
       )}
     </TooltipProvider>

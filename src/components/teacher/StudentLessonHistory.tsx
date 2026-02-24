@@ -7,11 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { RescheduleDialog } from '@/components/schedule/RescheduleDialog';
 import { useUpdateScheduledLesson } from '@/hooks/use-scheduled-lessons';
 import { toast } from 'sonner';
 import { 
-  Calendar, Clock, Check, X, RefreshCw, Edit2, Save, Loader2, 
+  Calendar, Clock, Check, X, Edit2, Save, Loader2, 
   MessageSquare, AlertTriangle, PenLine
 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
@@ -30,11 +29,9 @@ export function StudentLessonHistory({ studentId, studentName, walletBalance, te
   const [editData, setEditData] = useState({ date: '', time: '', duration: '' });
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [noteText, setNoteText] = useState('');
-  const [rescheduleLesson, setRescheduleLesson] = useState<any>(null);
   const updateLesson = useUpdateScheduledLesson();
   const queryClient = useQueryClient();
 
-  // Fetch ALL lessons for this student (scheduled + completed + cancelled)
   const { data: lessons, isLoading } = useQuery({
     queryKey: ['student-all-lessons', studentId],
     queryFn: async () => {
@@ -49,7 +46,6 @@ export function StudentLessonHistory({ studentId, studentName, walletBalance, te
     },
   });
 
-  // Fetch lesson notes
   const { data: lessonNotes } = useQuery({
     queryKey: ['student-lesson-notes', studentId],
     queryFn: async () => {
@@ -76,7 +72,6 @@ export function StudentLessonHistory({ studentId, studentName, walletBalance, te
     }) || [];
   }, [lessons, statusFilter, monthStartStr, monthEndStr]);
 
-  // Stats from ALL lessons (not filtered by month)
   const allStats = useMemo(() => {
     const all = lessons || [];
     const completed = all.filter(l => l.status === 'completed').length;
@@ -88,7 +83,6 @@ export function StudentLessonHistory({ studentId, studentName, walletBalance, te
     return { completed, absent, scheduled, totalHours };
   }, [lessons]);
 
-  // Monthly stats
   const monthStats = useMemo(() => {
     const completed = filteredLessons.filter(l => l.status === 'completed').length;
     const absent = filteredLessons.filter(l => l.status === 'absent').length;
@@ -117,7 +111,6 @@ export function StudentLessonHistory({ studentId, studentName, walletBalance, te
   };
 
   const getNotesForLesson = (lesson: any) => {
-    // Prefer notes from scheduled_lessons directly
     if (lesson.notes) return lesson.notes;
     return lessonNotes?.find(n => n.lesson_date === lesson.scheduled_date)?.notes || null;
   };
@@ -136,8 +129,6 @@ export function StudentLessonHistory({ studentId, studentName, walletBalance, te
       toast.error('Failed to save note', { description: error.message });
     }
   };
-
-  const today = new Date().toISOString().split('T')[0];
 
   const handleStatusChange = async (lessonId: string, newStatus: string) => {
     try {
@@ -244,7 +235,6 @@ export function StudentLessonHistory({ studentId, studentName, walletBalance, te
             const isEditing = editingLessonId === lesson.scheduled_lesson_id;
             const isEditingNote = editingNoteId === lesson.scheduled_lesson_id;
             const existingNote = getNotesForLesson(lesson);
-            const canMark = lesson.status === 'scheduled' && lesson.scheduled_date <= today;
 
             return (
               <div
@@ -345,44 +335,10 @@ export function StudentLessonHistory({ studentId, studentName, walletBalance, te
                     )}
                   </div>
                 )}
-
-                {/* Reschedule button for scheduled lessons */}
-                {lesson.status === 'scheduled' && (
-                  <div className="mt-2 flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border-blue-600/30"
-                      onClick={() => setRescheduleLesson({
-                        scheduled_lesson_id: lesson.scheduled_lesson_id,
-                        student_id: studentId,
-                        scheduled_date: lesson.scheduled_date,
-                        scheduled_time: lesson.scheduled_time,
-                        teacher_id: teacherId || lesson.teacher_id,
-                        students: { name: studentName },
-                      })}
-                    >
-                      <RefreshCw className="w-3 h-3 mr-1" />
-                      Reschedule
-                    </Button>
-                  </div>
-                )}
               </div>
             );
           })}
         </div>
-      )}
-
-      {rescheduleLesson && (
-        <RescheduleDialog
-          open={!!rescheduleLesson}
-          onOpenChange={(open) => !open && setRescheduleLesson(null)}
-          lesson={rescheduleLesson}
-          onSuccess={() => {
-            setRescheduleLesson(null);
-            queryClient.invalidateQueries({ queryKey: ['student-all-lessons', studentId] });
-          }}
-        />
       )}
     </div>
   );
