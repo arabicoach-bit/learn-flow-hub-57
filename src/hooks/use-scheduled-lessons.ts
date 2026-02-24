@@ -154,40 +154,7 @@ export function useMarkScheduledLessonAbsent() {
   });
 }
 
-export function useRescheduleLesson() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ 
-      scheduledLessonId, 
-      newDate, 
-      newTime 
-    }: { 
-      scheduledLessonId: string; 
-      newDate: string; 
-      newTime: string;
-    }) => {
-      // Simply update the lesson's date and time - just move it
-      const { error: updateError } = await supabase
-        .from('scheduled_lessons')
-        .update({ 
-          scheduled_date: newDate,
-          scheduled_time: newTime,
-          status: 'scheduled',
-        })
-        .eq('scheduled_lesson_id', scheduledLessonId);
-
-      if (updateError) throw updateError;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['scheduled-lessons'] });
-      queryClient.invalidateQueries({ queryKey: ['teacher-todays-lessons'] });
-      queryClient.invalidateQueries({ queryKey: ['teacher-tomorrows-lessons'] });
-      queryClient.invalidateQueries({ queryKey: ['teacher-week-lessons'] });
-      queryClient.invalidateQueries({ queryKey: ['teacher-past-7-days-unmarked'] });
-    },
-  });
-}
+// Reschedule removed - use Edit (date/time change via useUpdateScheduledLesson) instead
 
 export function useCheckLessonConflict() {
   return useMutation({

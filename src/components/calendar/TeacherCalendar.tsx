@@ -6,9 +6,8 @@ import { Button } from '@/components/ui/button';
 import { useScheduledLessons, ScheduledLesson } from '@/hooks/use-scheduled-lessons';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
-import { CalendarDays, Clock, User, CheckSquare, RefreshCw, Settings2 } from 'lucide-react';
+import { CalendarDays, Clock, User, CheckSquare, Settings2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { RescheduleDialog } from '@/components/schedule/RescheduleDialog';
 import { UpdateLessonStatusDialog } from '@/components/schedule/UpdateLessonStatusDialog';
 
 interface TeacherCalendarProps {
@@ -18,49 +17,35 @@ interface TeacherCalendarProps {
 export function TeacherCalendar({ teacherId }: TeacherCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [viewMonth, setViewMonth] = useState<Date>(new Date());
-  const [rescheduleLesson, setRescheduleLesson] = useState<ScheduledLesson | null>(null);
   const [statusLesson, setStatusLesson] = useState<ScheduledLesson | null>(null);
   const navigate = useNavigate();
 
-  const { data: scheduledLessons, isLoading } = useScheduledLessons({
-    teacher_id: teacherId,
-  });
+  const { data: scheduledLessons, isLoading } = useScheduledLessons({ teacher_id: teacherId });
 
-  // Group lessons by date for calendar highlighting
   const lessonsByDate = useMemo(() => {
     if (!scheduledLessons) return new Map<string, typeof scheduledLessons>();
-    
     const grouped = new Map<string, typeof scheduledLessons>();
     scheduledLessons.forEach((lesson) => {
       const dateKey = lesson.scheduled_date;
-      if (!grouped.has(dateKey)) {
-        grouped.set(dateKey, []);
-      }
+      if (!grouped.has(dateKey)) grouped.set(dateKey, []);
       grouped.get(dateKey)!.push(lesson);
     });
     return grouped;
   }, [scheduledLessons]);
 
-  // Get lessons for selected date
   const selectedDateLessons = useMemo(() => {
     if (!selectedDate || !scheduledLessons) return [];
     const dateKey = format(selectedDate, 'yyyy-MM-dd');
-    return (lessonsByDate.get(dateKey) || []).sort((a, b) => 
-      a.scheduled_time.localeCompare(b.scheduled_time)
-    );
+    return (lessonsByDate.get(dateKey) || []).sort((a, b) => a.scheduled_time.localeCompare(b.scheduled_time));
   }, [selectedDate, lessonsByDate, scheduledLessons]);
 
-  // Custom day content with lesson indicators
   const getDayContent = (day: Date) => {
     const dateKey = format(day, 'yyyy-MM-dd');
     const lessons = lessonsByDate.get(dateKey);
-    
     if (!lessons || lessons.length === 0) return null;
-    
     const hasScheduled = lessons.some(l => l.status === 'scheduled');
     const hasCompleted = lessons.some(l => l.status === 'completed');
     const hasAbsent = lessons.some(l => l.status === 'absent');
-    
     return (
       <div className="flex gap-0.5 mt-0.5">
         {hasScheduled && <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />}
@@ -79,7 +64,6 @@ export function TeacherCalendar({ teacherId }: TeacherCalendarProps) {
     }
   };
 
-  // Calculate stats
   const stats = useMemo(() => {
     if (!scheduledLessons) return { total: 0, scheduled: 0, completed: 0 };
     return {
@@ -93,7 +77,6 @@ export function TeacherCalendar({ teacherId }: TeacherCalendarProps) {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Calendar */}
       <Card className="lg:col-span-2 glass-card">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between flex-wrap gap-4">
@@ -138,36 +121,21 @@ export function TeacherCalendar({ teacherId }: TeacherCalendarProps) {
               }}
             />
           )}
-          {/* Legend */}
           <div className="flex gap-4 mt-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-              <span>Scheduled</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-primary" />
-              <span>Completed</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-destructive" />
-              <span>Absent</span>
-            </div>
+            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-emerald-500" /><span>Scheduled</span></div>
+            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-primary" /><span>Completed</span></div>
+            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-destructive" /><span>Absent</span></div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Selected Date Lessons */}
       <Card className="glass-card">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg">
               {selectedDate ? format(selectedDate, 'EEEE, MMMM d') : 'Select a date'}
             </CardTitle>
-            {isToday && (
-              <Badge className="bg-emerald-500/20 text-emerald-600 border-emerald-500/30">
-                Today
-              </Badge>
-            )}
+            {isToday && <Badge className="bg-emerald-500/20 text-emerald-600 border-emerald-500/30">Today</Badge>}
           </div>
         </CardHeader>
         <CardContent>
@@ -179,49 +147,23 @@ export function TeacherCalendar({ teacherId }: TeacherCalendarProps) {
           ) : (
             <div className="space-y-3 max-h-[400px] overflow-y-auto">
               {selectedDateLessons.map((lesson) => (
-                <div
-                  key={lesson.scheduled_lesson_id}
-                  className={`p-3 rounded-lg border ${getStatusColor(lesson.status || 'scheduled')}`}
-                >
+                <div key={lesson.scheduled_lesson_id} className={`p-3 rounded-lg border ${getStatusColor(lesson.status || 'scheduled')}`}>
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center gap-2">
                       <User className="w-4 h-4" />
                       <span className="font-medium">{lesson.students?.name}</span>
                     </div>
-                    <Badge variant="outline" className="capitalize text-xs">
-                      {lesson.status}
-                    </Badge>
+                    <Badge variant="outline" className="capitalize text-xs">{lesson.status}</Badge>
                   </div>
                   <div className="flex items-center gap-4 text-sm opacity-75">
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5" />
-                      {lesson.scheduled_time?.slice(0, 5)}
-                    </span>
+                    <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{lesson.scheduled_time?.slice(0, 5)}</span>
                     <span>{lesson.duration_minutes} mins</span>
-                    {lesson.classes?.name && (
-                      <span className="text-xs bg-muted px-2 py-0.5 rounded">
-                        {lesson.classes.name}
-                      </span>
-                    )}
+                    {lesson.classes?.name && <span className="text-xs bg-muted px-2 py-0.5 rounded">{lesson.classes.name}</span>}
                   </div>
                   <div className="flex gap-2 mt-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-7 text-xs"
-                      onClick={() => setRescheduleLesson(lesson)}
-                    >
-                      <RefreshCw className="w-3 h-3 mr-1" />
-                      Reschedule
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-7 text-xs"
-                      onClick={() => setStatusLesson(lesson)}
-                    >
+                    <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setStatusLesson(lesson)}>
                       <Settings2 className="w-3 h-3 mr-1" />
-                      Status
+                      Edit
                     </Button>
                   </div>
                 </div>
@@ -229,12 +171,8 @@ export function TeacherCalendar({ teacherId }: TeacherCalendarProps) {
             </div>
           )}
 
-          {/* Quick action if there are scheduled lessons */}
           {selectedDateLessons.some(l => l.status === 'scheduled') && isToday && (
-            <Button 
-              className="w-full mt-4 bg-emerald-600 hover:bg-emerald-700"
-              onClick={() => navigate('/teacher/mark-lesson')}
-            >
+            <Button className="w-full mt-4 bg-emerald-600 hover:bg-emerald-700" onClick={() => navigate('/teacher/mark-lesson')}>
               <CheckSquare className="w-4 h-4 mr-2" />
               Mark Lessons
             </Button>
@@ -242,14 +180,6 @@ export function TeacherCalendar({ teacherId }: TeacherCalendarProps) {
         </CardContent>
       </Card>
 
-      {/* Dialogs */}
-      {rescheduleLesson && (
-        <RescheduleDialog
-          lesson={rescheduleLesson}
-          open={!!rescheduleLesson}
-          onOpenChange={(open) => !open && setRescheduleLesson(null)}
-        />
-      )}
       {statusLesson && (
         <UpdateLessonStatusDialog
           lesson={statusLesson}

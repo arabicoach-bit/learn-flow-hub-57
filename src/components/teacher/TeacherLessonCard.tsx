@@ -3,16 +3,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { getWalletColor, getStatusDisplayLabel, getWalletDisplayLabel } from '@/lib/wallet-utils';
-import { Check, X, Ban, Clock, Loader2, RefreshCw, Edit2, Save } from 'lucide-react';
+import { Check, X, Ban, Clock, Loader2, Edit2, Save } from 'lucide-react';
 import { useMarkScheduledLesson, useUpdateScheduledLesson } from '@/hooks/use-scheduled-lessons';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { RescheduleDialog } from '@/components/schedule/RescheduleDialog';
 import { useQueryClient } from '@tanstack/react-query';
 
 interface TeacherLessonCardProps {
@@ -36,7 +34,6 @@ interface TeacherLessonCardProps {
 }
 
 export function TeacherLessonCard({ lesson, onLessonMarked, showDate, date }: TeacherLessonCardProps) {
-  const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedTime, setEditedTime] = useState(lesson.scheduled_time);
   const [editedDuration, setEditedDuration] = useState(lesson.duration_minutes.toString());
@@ -49,11 +46,6 @@ export function TeacherLessonCard({ lesson, onLessonMarked, showDate, date }: Te
   const updateLesson = useUpdateScheduledLesson();
   const queryClient = useQueryClient();
   const isBlocked = lesson.student_status === 'Left';
-  
-  // Check if the lesson date is today or in the past (can mark)
-  const lessonDate = date || lesson.scheduled_date || new Date().toISOString().split('T')[0];
-  const today = new Date().toISOString().split('T')[0];
-  const isFutureLesson = lessonDate > today;
 
   const formatTime = (time: string) => {
     const [hours, minutes] = time.split(':');
@@ -81,53 +73,19 @@ export function TeacherLessonCard({ lesson, onLessonMarked, showDate, date }: Te
   const handleSaveEdit = async () => {
     setIsSaving(true);
     try {
-      const { error } = await supabase
-        .from('scheduled_lessons')
-        .update({
-          scheduled_date: editedDate,
-          scheduled_time: editedTime,
-          duration_minutes: parseInt(editedDuration),
-        })
-        .eq('scheduled_lesson_id', lesson.scheduled_lesson_id);
-
-      if (error) throw error;
-
+      await updateLesson.mutateAsync({
+        scheduledLessonId: lesson.scheduled_lesson_id,
+        scheduled_date: editedDate,
+        scheduled_time: editedTime,
+        duration_minutes: parseInt(editedDuration),
+      });
       toast.success('Lesson updated successfully!');
       setIsEditing(false);
-      queryClient.invalidateQueries({ queryKey: ['teacher-todays-lessons'] });
-      queryClient.invalidateQueries({ queryKey: ['teacher-tomorrows-lessons'] });
-      queryClient.invalidateQueries({ queryKey: ['teacher-week-lessons'] });
-      queryClient.invalidateQueries({ queryKey: ['scheduled-lessons'] });
+      onLessonMarked?.();
     } catch (error: any) {
       toast.error('Failed to update lesson', { description: error.message });
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  const handleMarkLesson = async (status: 'completed' | 'absent') => {
-    if (status === 'completed' && isBlocked) {
-      toast.error('Cannot mark as Completed', {
-        description: `${lesson.student_name} is blocked. Payment required.`,
-      });
-      return;
-    }
-
-    try {
-      await markLesson.mutateAsync({
-        scheduledLessonId: lesson.scheduled_lesson_id,
-        status,
-        notes: notes || undefined,
-      });
-      
-      const statusLabel = status === 'completed' ? 'Completed' : 'Absent';
-      toast.success(`Lesson marked as ${statusLabel}!`);
-      setNotes('');
-      onLessonMarked?.();
-    } catch (error: any) {
-      toast.error('Failed to mark lesson', {
-        description: error.message,
-      });
     }
   };
 
@@ -149,200 +107,136 @@ export function TeacherLessonCard({ lesson, onLessonMarked, showDate, date }: Te
   const displayDuration = isEditing ? parseInt(editedDuration) : lesson.duration_minutes;
 
   return (
-    <TooltipProvider>
-      <Card className={`border ${isBlocked ? 'border-destructive/50 bg-destructive/5' : 'border-border/50 bg-card/50'}`}>
-        <CardContent className="p-4">
-          <div className="space-y-4">
-            {/* Time and Student Info */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  {isEditing ? (
-                    <>
-                      <Input
-                        type="date"
-                        value={editedDate}
-                        onChange={(e) => setEditedDate(e.target.value)}
-                        className="w-36 h-8"
-                      />
-                      <Input
-                        type="time"
-                        value={editedTime}
-                        onChange={(e) => setEditedTime(e.target.value)}
-                        className="w-32 h-8"
-                      />
-                      <Input
-                        type="number"
-                        value={editedDuration}
-                        onChange={(e) => setEditedDuration(e.target.value)}
-                        className="w-20 h-8"
-                        min="15"
-                        max="180"
-                        step="15"
-                      />
-                      <span className="text-sm text-muted-foreground">min</span>
-                    </>
-                  ) : (
-                    <>
-                      <Clock className="w-4 h-4 text-muted-foreground" />
-                      <span className="font-medium">
-                        {formatTime(displayTime)} - {getEndTime(displayTime, displayDuration)}
-                      </span>
-                      <Badge variant="outline" className="text-xs">
-                        {displayDuration} min
-                      </Badge>
-                    </>
-                  )}
-                  {showDate && date && (
-                    <Badge variant="secondary" className="text-xs">
-                      {new Date(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                    </Badge>
-                  )}
-                </div>
-                
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className={`font-semibold text-lg ${isBlocked ? 'text-muted-foreground' : ''}`}>
-                    {lesson.student_name}
-                  </span>
-                  <Badge variant="outline" className={getWalletBadgeColor(lesson.wallet_balance)}>
-                    💰 {getWalletDisplayLabel(lesson.wallet_balance)}
-                  </Badge>
-                  {lesson.program_name && (
-                    <Badge variant="secondary" className="text-xs">
-                      {lesson.program_name}
-                    </Badge>
-                  )}
-                  {isBlocked && (
-                    <Badge variant="destructive" className="flex items-center gap-1">
-                      <Ban className="w-3 h-3" />
-                      {getStatusDisplayLabel('Left')}
-                    </Badge>
-                  )}
-                </div>
-              </div>
-
-              {/* Edit Button */}
-              <div className="flex gap-2">
+    <Card className={`border ${isBlocked ? 'border-destructive/50 bg-destructive/5' : 'border-border/50 bg-card/50'}`}>
+      <CardContent className="p-4">
+        <div className="space-y-4">
+          {/* Time and Student Info */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
                 {isEditing ? (
-                  <Button
-                    size="sm"
-                    onClick={handleSaveEdit}
-                    disabled={isSaving}
-                    className="bg-emerald-600 hover:bg-emerald-700"
-                  >
-                    {isSaving ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Save className="w-4 h-4 mr-1" />
-                    )}
-                    Save
-                  </Button>
+                  <>
+                    <Input type="date" value={editedDate} onChange={(e) => setEditedDate(e.target.value)} className="w-36 h-8" />
+                    <Input type="time" value={editedTime} onChange={(e) => setEditedTime(e.target.value)} className="w-32 h-8" />
+                    <Input type="number" value={editedDuration} onChange={(e) => setEditedDuration(e.target.value)} className="w-20 h-8" min="15" max="180" step="15" />
+                    <span className="text-sm text-muted-foreground">min</span>
+                  </>
                 ) : (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setIsEditing(true)}
-                  >
-                    <Edit2 className="w-4 h-4 mr-1" />
-                    Edit
-                  </Button>
+                  <>
+                    <Clock className="w-4 h-4 text-muted-foreground" />
+                    <span className="font-medium">
+                      {formatTime(displayTime)} - {getEndTime(displayTime, displayDuration)}
+                    </span>
+                    <Badge variant="outline" className="text-xs">{displayDuration} min</Badge>
+                  </>
+                )}
+                {showDate && date && (
+                  <Badge variant="secondary" className="text-xs">
+                    {new Date(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                  </Badge>
+                )}
+              </div>
+              
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={`font-semibold text-lg ${isBlocked ? 'text-muted-foreground' : ''}`}>
+                  {lesson.student_name}
+                </span>
+                <Badge variant="outline" className={getWalletBadgeColor(lesson.wallet_balance)}>
+                  💰 {getWalletDisplayLabel(lesson.wallet_balance)}
+                </Badge>
+                {lesson.program_name && (
+                  <Badge variant="secondary" className="text-xs">{lesson.program_name}</Badge>
+                )}
+                {isBlocked && (
+                  <Badge variant="destructive" className="flex items-center gap-1">
+                    <Ban className="w-3 h-3" />
+                    {getStatusDisplayLabel('Left')}
+                  </Badge>
                 )}
               </div>
             </div>
 
-            {/* Notes Input */}
-            <div className="space-y-2">
-              <Label htmlFor={`notes-${lesson.scheduled_lesson_id}`} className="text-sm text-muted-foreground">
-                Notes
-              </Label>
-              <div className="flex gap-2">
-                <Textarea
-                  id={`notes-${lesson.scheduled_lesson_id}`}
-                  placeholder="Add a comment about this lesson..."
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  className="min-h-[60px] resize-none flex-1"
-                />
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="self-end"
-                  disabled={isSavingNote || !notes.trim()}
-                  onClick={async () => {
-                    setIsSavingNote(true);
-                    try {
-                      const { error } = await supabase
-                        .from('scheduled_lessons')
-                        .update({ notes })
-                        .eq('scheduled_lesson_id', lesson.scheduled_lesson_id);
-                      if (error) throw error;
-                      toast.success('Note saved');
-                      queryClient.invalidateQueries({ queryKey: ['scheduled-lessons'] });
-                      queryClient.invalidateQueries({ queryKey: ['student-all-lessons'] });
-                    } catch (err: any) {
-                      toast.error('Failed to save note', { description: err.message });
-                    } finally {
-                      setIsSavingNote(false);
-                    }
-                  }}
-                >
-                  {isSavingNote ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3 mr-1" />}
+            {/* Edit Button */}
+            <div className="flex gap-2">
+              {isEditing ? (
+                <Button size="sm" onClick={handleSaveEdit} disabled={isSaving} className="bg-emerald-600 hover:bg-emerald-700">
+                  {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
                   Save
                 </Button>
-              </div>
+              ) : (
+                <Button size="sm" variant="outline" onClick={() => setIsEditing(true)}>
+                  <Edit2 className="w-4 h-4 mr-1" />
+                  Edit
+                </Button>
+              )}
             </div>
+          </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-wrap gap-2 items-center">
-              <Select
-                value={lesson.status === 'completed' ? 'completed' : lesson.status === 'absent' ? 'absent' : 'scheduled'}
-                onValueChange={handleStatusChange}
-                disabled={updateLesson.isPending}
-              >
-                <SelectTrigger className="w-[140px] h-8 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="scheduled">
-                    <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> Scheduled</span>
-                  </SelectItem>
-                  <SelectItem value="completed">
-                    <span className="flex items-center gap-1"><Check className="w-3 h-3" /> Completed</span>
-                  </SelectItem>
-                  <SelectItem value="absent">
-                    <span className="flex items-center gap-1"><X className="w-3 h-3" /> Absent</span>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-
+          {/* Notes Input */}
+          <div className="space-y-2">
+            <Label htmlFor={`notes-${lesson.scheduled_lesson_id}`} className="text-sm text-muted-foreground">Notes</Label>
+            <div className="flex gap-2">
+              <Textarea
+                id={`notes-${lesson.scheduled_lesson_id}`}
+                placeholder="Add a comment about this lesson..."
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                className="min-h-[60px] resize-none flex-1"
+              />
               <Button
                 size="sm"
                 variant="outline"
-                className="bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border-blue-600/30"
-                onClick={() => setIsRescheduleOpen(true)}
+                className="self-end"
+                disabled={isSavingNote || !notes.trim()}
+                onClick={async () => {
+                  setIsSavingNote(true);
+                  try {
+                    const { error } = await supabase
+                      .from('scheduled_lessons')
+                      .update({ notes })
+                      .eq('scheduled_lesson_id', lesson.scheduled_lesson_id);
+                    if (error) throw error;
+                    toast.success('Note saved');
+                    queryClient.invalidateQueries({ queryKey: ['scheduled-lessons'] });
+                    queryClient.invalidateQueries({ queryKey: ['student-all-lessons'] });
+                  } catch (err: any) {
+                    toast.error('Failed to save note', { description: err.message });
+                  } finally {
+                    setIsSavingNote(false);
+                  }
+                }}
               >
-                <RefreshCw className="w-4 h-4 mr-1" />
-                Reschedule
+                {isSavingNote ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3 mr-1" />}
+                Save
               </Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
 
-      {isRescheduleOpen && (
-        <RescheduleDialog
-          open={isRescheduleOpen}
-          onOpenChange={setIsRescheduleOpen}
-          lesson={{
-            scheduled_lesson_id: lesson.scheduled_lesson_id,
-            student_id: lesson.student_id,
-            scheduled_date: date || new Date().toISOString().split('T')[0],
-            scheduled_time: lesson.scheduled_time,
-            teacher_id: (lesson as any).teacher_id,
-            students: { name: lesson.student_name },
-          } as any}
-        />
-      )}
-    </TooltipProvider>
+          {/* Status Selector Only - No Reschedule */}
+          <div className="flex flex-wrap gap-2 items-center">
+            <Select
+              value={lesson.status === 'completed' ? 'completed' : lesson.status === 'absent' ? 'absent' : 'scheduled'}
+              onValueChange={handleStatusChange}
+              disabled={updateLesson.isPending}
+            >
+              <SelectTrigger className="w-[140px] h-8 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="scheduled">
+                  <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> Scheduled</span>
+                </SelectItem>
+                <SelectItem value="completed">
+                  <span className="flex items-center gap-1"><Check className="w-3 h-3" /> Completed</span>
+                </SelectItem>
+                <SelectItem value="absent">
+                  <span className="flex items-center gap-1"><X className="w-3 h-3" /> Absent</span>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

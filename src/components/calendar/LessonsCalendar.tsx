@@ -9,8 +9,7 @@ import { useTeachers } from '@/hooks/use-teachers';
 import { useStudents } from '@/hooks/use-students';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
-import { CalendarDays, Clock, RefreshCw, Settings2 } from 'lucide-react';
-import { RescheduleDialog } from '@/components/schedule/RescheduleDialog';
+import { CalendarDays, Clock, Settings2 } from 'lucide-react';
 import { UpdateLessonStatusDialog } from '@/components/schedule/UpdateLessonStatusDialog';
 
 interface LessonsCalendarProps {
@@ -24,7 +23,6 @@ export function LessonsCalendar({ teacherId, studentId, showFilters = true }: Le
   const [filterTeacher, setFilterTeacher] = useState<string>(teacherId || 'all');
   const [filterStudent, setFilterStudent] = useState<string>(studentId || 'all');
   const [viewMonth, setViewMonth] = useState<Date>(new Date());
-  const [rescheduleLesson, setRescheduleLesson] = useState<ScheduledLesson | null>(null);
   const [statusLesson, setStatusLesson] = useState<ScheduledLesson | null>(null);
 
   const { data: teachers } = useTeachers();
@@ -34,39 +32,30 @@ export function LessonsCalendar({ teacherId, studentId, showFilters = true }: Le
     student_id: filterStudent !== 'all' ? filterStudent : undefined,
   });
 
-  // Group lessons by date for calendar highlighting
   const lessonsByDate = useMemo(() => {
     if (!scheduledLessons) return new Map<string, typeof scheduledLessons>();
-    
     const grouped = new Map<string, typeof scheduledLessons>();
     scheduledLessons.forEach((lesson) => {
       const dateKey = lesson.scheduled_date;
-      if (!grouped.has(dateKey)) {
-        grouped.set(dateKey, []);
-      }
+      if (!grouped.has(dateKey)) grouped.set(dateKey, []);
       grouped.get(dateKey)!.push(lesson);
     });
     return grouped;
   }, [scheduledLessons]);
 
-  // Get lessons for selected date
   const selectedDateLessons = useMemo(() => {
     if (!selectedDate || !scheduledLessons) return [];
     const dateKey = format(selectedDate, 'yyyy-MM-dd');
     return lessonsByDate.get(dateKey) || [];
   }, [selectedDate, lessonsByDate, scheduledLessons]);
 
-  // Custom day content with lesson indicators
   const getDayContent = (day: Date) => {
     const dateKey = format(day, 'yyyy-MM-dd');
     const lessons = lessonsByDate.get(dateKey);
-    
     if (!lessons || lessons.length === 0) return null;
-    
     const hasScheduled = lessons.some(l => l.status === 'scheduled');
     const hasCompleted = lessons.some(l => l.status === 'completed');
     const hasAbsent = lessons.some(l => l.status === 'absent');
-    
     return (
       <div className="flex gap-0.5 mt-0.5">
         {hasScheduled && <div className="w-1.5 h-1.5 rounded-full bg-primary" />}
@@ -87,7 +76,6 @@ export function LessonsCalendar({ teacherId, studentId, showFilters = true }: Le
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Calendar */}
       <Card className="lg:col-span-2 glass-card">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between flex-wrap gap-4">
@@ -98,29 +86,17 @@ export function LessonsCalendar({ teacherId, studentId, showFilters = true }: Le
             {showFilters && (
               <div className="flex gap-2 flex-wrap">
                 <Select value={filterTeacher} onValueChange={setFilterTeacher}>
-                  <SelectTrigger className="w-[160px]">
-                    <SelectValue placeholder="All Teachers" />
-                  </SelectTrigger>
+                  <SelectTrigger className="w-[160px]"><SelectValue placeholder="All Teachers" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Teachers</SelectItem>
-                    {teachers?.map((t) => (
-                      <SelectItem key={t.teacher_id} value={t.teacher_id}>
-                        {t.name}
-                      </SelectItem>
-                    ))}
+                    {teachers?.map((t) => <SelectItem key={t.teacher_id} value={t.teacher_id}>{t.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 <Select value={filterStudent} onValueChange={setFilterStudent}>
-                  <SelectTrigger className="w-[160px]">
-                    <SelectValue placeholder="All Students" />
-                  </SelectTrigger>
+                  <SelectTrigger className="w-[160px]"><SelectValue placeholder="All Students" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Students</SelectItem>
-                    {students?.map((s) => (
-                      <SelectItem key={s.student_id} value={s.student_id}>
-                        {s.name}
-                      </SelectItem>
-                    ))}
+                    {students?.map((s) => <SelectItem key={s.student_id} value={s.student_id}>{s.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -158,25 +134,14 @@ export function LessonsCalendar({ teacherId, studentId, showFilters = true }: Le
               }}
             />
           )}
-          {/* Legend */}
           <div className="flex gap-4 mt-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-primary" />
-              <span>Scheduled</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-              <span>Completed</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-destructive" />
-              <span>Absent</span>
-            </div>
+            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-primary" /><span>Scheduled</span></div>
+            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-emerald-500" /><span>Completed</span></div>
+            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-destructive" /><span>Absent</span></div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Selected Date Lessons */}
       <Card className="glass-card">
         <CardHeader>
           <CardTitle className="text-lg">
@@ -192,44 +157,22 @@ export function LessonsCalendar({ teacherId, studentId, showFilters = true }: Le
           ) : (
             <div className="space-y-3 max-h-[400px] overflow-y-auto">
               {selectedDateLessons.map((lesson) => (
-                <div
-                  key={lesson.scheduled_lesson_id}
-                  className={`p-3 rounded-lg border ${getStatusColor(lesson.status || 'scheduled')}`}
-                >
+                <div key={lesson.scheduled_lesson_id} className={`p-3 rounded-lg border ${getStatusColor(lesson.status || 'scheduled')}`}>
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="font-medium">{lesson.students?.name}</p>
                       <p className="text-sm opacity-75">{lesson.teachers?.name}</p>
                     </div>
-                    <Badge variant="outline" className="capitalize">
-                      {lesson.status}
-                    </Badge>
+                    <Badge variant="outline" className="capitalize">{lesson.status}</Badge>
                   </div>
                   <div className="flex items-center gap-4 mt-2 text-sm opacity-75">
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5" />
-                      {lesson.scheduled_time?.slice(0, 5)}
-                    </span>
+                    <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{lesson.scheduled_time?.slice(0, 5)}</span>
                     <span>{lesson.duration_minutes} mins</span>
                   </div>
                   <div className="flex gap-2 mt-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-7 text-xs"
-                      onClick={() => setRescheduleLesson(lesson)}
-                    >
-                      <RefreshCw className="w-3 h-3 mr-1" />
-                      Reschedule
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-7 text-xs"
-                      onClick={() => setStatusLesson(lesson)}
-                    >
+                    <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setStatusLesson(lesson)}>
                       <Settings2 className="w-3 h-3 mr-1" />
-                      Status
+                      Edit
                     </Button>
                   </div>
                 </div>
@@ -239,14 +182,6 @@ export function LessonsCalendar({ teacherId, studentId, showFilters = true }: Le
         </CardContent>
       </Card>
 
-      {/* Dialogs */}
-      {rescheduleLesson && (
-        <RescheduleDialog
-          lesson={rescheduleLesson}
-          open={!!rescheduleLesson}
-          onOpenChange={(open) => !open && setRescheduleLesson(null)}
-        />
-      )}
       {statusLesson && (
         <UpdateLessonStatusDialog
           lesson={statusLesson}

@@ -1,6 +1,5 @@
 import { TeacherLayout } from '@/components/layout/TeacherLayout';
 import { useAuth } from '@/contexts/AuthContext';
-import { MetricCard } from '@/components/dashboard/MetricCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,28 +8,20 @@ import {
   Calendar, 
   GraduationCap, 
   Wallet, 
-  Clock, 
   AlertTriangle,
-  TrendingUp,
-  BookOpen,
   ChevronRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { 
   useTodaysTeacherLessons, 
   useTomorrowsTeacherLessons, 
-  useWeekTeacherLessons,
-  useTeacherMonthlyStats,
   useTeacherStudents,
   usePast7DaysUnmarkedLessons
 } from '@/hooks/use-teacher-dashboard';
 import { useTodaysTrialLessons, usePendingTrialLessons } from '@/hooks/use-teacher-trial-lessons';
 import { TeacherLessonCard } from '@/components/teacher/TeacherLessonCard';
 import { TrialLessonCard } from '@/components/teacher/TrialLessonCard';
-import { TeacherSalaryCard } from '@/components/teacher/TeacherSalaryCard';
-import { formatSalary } from '@/lib/wallet-utils';
-import { format } from 'date-fns';
-import { formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { Users } from 'lucide-react';
 
 export default function TeacherDashboard() {
@@ -38,17 +29,12 @@ export default function TeacherDashboard() {
   const navigate = useNavigate();
   const teacherId = profile?.teacher_id;
 
-  // Fetch data using new hooks
   const { data: todaysLessons, isLoading: todaysLoading, refetch: refetchToday } = useTodaysTeacherLessons();
   const { data: tomorrowsLessons, isLoading: tomorrowsLoading } = useTomorrowsTeacherLessons();
-  const { data: weekLessons, isLoading: weekLoading } = useWeekTeacherLessons();
-  const { data: stats, isLoading: statsLoading } = useTeacherMonthlyStats();
   const { data: students, isLoading: studentsLoading } = useTeacherStudents();
   const { data: past7DaysLessons, isLoading: past7DaysLoading, refetch: refetchPast7Days } = usePast7DaysUnmarkedLessons();
   const { data: todaysTrialLessons, isLoading: trialTodayLoading, refetch: refetchTrialToday } = useTodaysTrialLessons();
   const { data: pendingTrialLessons, isLoading: pendingTrialLoading, refetch: refetchPendingTrial } = usePendingTrialLessons();
-
-  const isLoading = todaysLoading || statsLoading || studentsLoading;
 
   const graceStudents = students?.filter(s => s.status === 'Temporary Stop') || [];
   const blockedStudents = students?.filter(s => s.status === 'Left') || [];
@@ -60,7 +46,6 @@ export default function TeacherDashboard() {
     refetchPendingTrial();
   };
 
-  // Filter past lessons (not including today) for the "pending" section
   const today = format(new Date(), 'yyyy-MM-dd');
   const pastUnmarkedLessons = past7DaysLessons?.filter(l => l.scheduled_date < today) || [];
 
@@ -77,67 +62,24 @@ export default function TeacherDashboard() {
           </p>
         </div>
 
-        {/* Performance Stats - Real-time */}
-        <Card className="glass-card bg-gradient-to-r from-emerald-500/10 to-transparent border-emerald-500/20">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <TrendingUp className="w-5 h-5 text-emerald-500" />
-              <h2 className="font-display font-bold text-lg">My Performance This Month</h2>
-            </div>
-            {statsLoading ? (
-              <div className="grid grid-cols-3 gap-4">
-                <Skeleton className="h-20" />
-                <Skeleton className="h-20" />
-                <Skeleton className="h-20" />
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="text-center p-4 bg-background/50 rounded-lg">
-                  <BookOpen className="w-6 h-6 mx-auto text-emerald-500 mb-2" />
-                  <p className="text-3xl font-bold">{stats?.currentMonth?.lessons_taught || 0}</p>
-                  <p className="text-sm text-muted-foreground">Lessons Taught</p>
-                </div>
-                <div className="text-center p-4 bg-background/50 rounded-lg">
-                  <Clock className="w-6 h-6 mx-auto text-emerald-500 mb-2" />
-                  <p className="text-3xl font-bold">{stats?.currentMonth?.total_hours?.toFixed(1) || 0}</p>
-                  <p className="text-sm text-muted-foreground">Teaching Hours</p>
-                </div>
-                <div className="text-center p-4 bg-background/50 rounded-lg">
-                  <Wallet className="w-6 h-6 mx-auto text-emerald-500 mb-2" />
-                  <p className="text-3xl font-bold text-emerald-400">
-                    {formatSalary(stats?.currentMonth?.salary_earned || 0)}
-                  </p>
-                  <p className="text-sm text-muted-foreground">Salary Earned</p>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
         {/* Quick Actions */}
         <Card className="glass-card border-emerald-600/20">
           <CardContent className="p-6">
             <div className="flex flex-wrap gap-4">
-              <Button 
-                variant="outline"
-                onClick={() => navigate('/teacher/students')}
-              >
+              <Button variant="outline" onClick={() => navigate('/teacher/students')}>
                 <GraduationCap className="w-4 h-4 mr-2" />
                 My Students ({students?.length || 0})
               </Button>
-              <Button 
-                variant="outline"
-                onClick={() => navigate('/teacher/payroll')}
-              >
+              <Button variant="outline" onClick={() => navigate('/teacher/payroll')}>
                 <Wallet className="w-4 h-4 mr-2" />
-                View Payroll
+                View Payroll & Stats
               </Button>
             </div>
           </CardContent>
         </Card>
 
         {/* Today's Lessons */}
-        <Card className={`glass-card border-blue-500/20`}>
+        <Card className="glass-card border-blue-500/20">
           <CardHeader>
             <CardTitle className="font-display flex items-center gap-2 text-blue-400">
               <Calendar className="w-5 h-5" />
@@ -154,18 +96,10 @@ export default function TeacherDashboard() {
             ) : (todaysLessons && todaysLessons.length > 0) || (todaysTrialLessons && todaysTrialLessons.length > 0) ? (
               <div className="space-y-3">
                 {todaysLessons?.map((lesson) => (
-                  <TeacherLessonCard 
-                    key={lesson.scheduled_lesson_id} 
-                    lesson={lesson}
-                    onLessonMarked={handleLessonMarked}
-                  />
+                  <TeacherLessonCard key={lesson.scheduled_lesson_id} lesson={lesson} onLessonMarked={handleLessonMarked} />
                 ))}
                 {todaysTrialLessons?.map((lesson) => (
-                  <TrialLessonCard
-                    key={lesson.trial_lesson_id}
-                    lesson={lesson}
-                    onLessonMarked={handleLessonMarked}
-                  />
+                  <TrialLessonCard key={lesson.trial_lesson_id} lesson={lesson} onLessonMarked={handleLessonMarked} />
                 ))}
               </div>
             ) : (
@@ -177,7 +111,7 @@ export default function TeacherDashboard() {
           </CardContent>
         </Card>
 
-        {/* Past 7 Days Unmarked Lessons (regular + trial) */}
+        {/* Past 7 Days Unmarked Lessons */}
         {(pastUnmarkedLessons.length > 0 || (pendingTrialLessons && pendingTrialLessons.length > 0)) && (
           <Card className="glass-card border-orange-500/30 bg-orange-500/5">
             <CardHeader>
@@ -186,7 +120,7 @@ export default function TeacherDashboard() {
                 Pending Lessons to Mark ({pastUnmarkedLessons.length + (pendingTrialLessons?.length || 0)})
               </CardTitle>
               <p className="text-sm text-muted-foreground mt-1">
-                These lessons from the past 7 days need to be marked. They will expire after 7 days.
+                These lessons from the past 7 days need to be marked.
               </p>
             </CardHeader>
             <CardContent>
@@ -198,7 +132,6 @@ export default function TeacherDashboard() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {/* Group by date */}
                   {Object.entries(
                     pastUnmarkedLessons.reduce((acc, lesson) => {
                       const date = lesson.scheduled_date;
@@ -216,19 +149,12 @@ export default function TeacherDashboard() {
                         </Badge>
                       </div>
                       {lessons.map((lesson) => (
-                        <TeacherLessonCard 
-                          key={lesson.scheduled_lesson_id} 
-                          lesson={lesson}
-                          onLessonMarked={handleLessonMarked}
-                          showDate={false}
-                          date={lesson.scheduled_date}
-                        />
+                        <TeacherLessonCard key={lesson.scheduled_lesson_id} lesson={lesson} onLessonMarked={handleLessonMarked} showDate={false} date={lesson.scheduled_date} />
                       ))}
                     </div>
                   ))}
                 </div>
               )}
-              {/* Pending Trial Lessons */}
               {pendingTrialLessons && pendingTrialLessons.length > 0 && (
                 <div className="space-y-2 mt-4">
                   <div className="flex items-center gap-2 text-sm font-medium text-purple-400">
@@ -236,11 +162,7 @@ export default function TeacherDashboard() {
                     Pending Trial Lessons
                   </div>
                   {pendingTrialLessons.map((lesson) => (
-                    <TrialLessonCard
-                      key={lesson.trial_lesson_id}
-                      lesson={lesson}
-                      onLessonMarked={handleLessonMarked}
-                    />
+                    <TrialLessonCard key={lesson.trial_lesson_id} lesson={lesson} onLessonMarked={handleLessonMarked} />
                   ))}
                 </div>
               )}
@@ -262,15 +184,10 @@ export default function TeacherDashboard() {
             ) : tomorrowsLessons && tomorrowsLessons.length > 0 ? (
               <div className="space-y-3">
                 {tomorrowsLessons.slice(0, 4).map((lesson) => (
-                  <TeacherLessonCard 
-                    key={lesson.scheduled_lesson_id} 
-                    lesson={lesson}
-                  />
+                  <TeacherLessonCard key={lesson.scheduled_lesson_id} lesson={lesson} />
                 ))}
                 {tomorrowsLessons.length > 4 && (
-                  <p className="text-sm text-center text-muted-foreground">
-                    +{tomorrowsLessons.length - 4} more lessons
-                  </p>
+                  <p className="text-sm text-center text-muted-foreground">+{tomorrowsLessons.length - 4} more lessons</p>
                 )}
               </div>
             ) : (
@@ -278,10 +195,6 @@ export default function TeacherDashboard() {
             )}
           </CardContent>
         </Card>
-
-
-        {/* Salary Breakdown */}
-        <TeacherSalaryCard />
 
         {/* Student Alerts */}
         {(graceStudents.length > 0 || blockedStudents.length > 0) && (
