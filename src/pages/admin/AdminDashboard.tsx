@@ -14,7 +14,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { StudentStatsSection } from '@/components/dashboard/StudentStatsSection';
-import { TeacherPerformanceSection } from '@/components/dashboard/TeacherPerformanceSection';
 import { QuickStatsSection } from '@/components/dashboard/QuickStatsSection';
 import { PendingPackagesWidget } from '@/components/admin/PendingPackagesWidget';
 import { AICRMAssistant } from '@/components/admin/AICRMAssistant';
@@ -149,8 +148,18 @@ export default function AdminDashboard() {
         {/* Student Statistics Section */}
         <StudentStatsSection />
 
-        {/* Teacher Performance Section */}
-        <TeacherPerformanceSection />
+        {/* Teacher Analytics Link */}
+        <Card className="glass-card">
+          <CardContent className="pt-6 flex items-center justify-between">
+            <div>
+              <h3 className="font-display font-semibold text-lg">Teacher Performance & Payroll</h3>
+              <p className="text-sm text-muted-foreground">View all teacher analytics, hours, salaries, and student counts in one place.</p>
+            </div>
+            <Button onClick={() => navigate('/admin/payroll')} variant="outline">
+              View Analytics →
+            </Button>
+          </CardContent>
+        </Card>
 
         {/* Recent Notifications */}
         <Card className="glass-card">
