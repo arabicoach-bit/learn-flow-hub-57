@@ -126,6 +126,7 @@ export function useMarkScheduledLesson() {
       queryClient.invalidateQueries({ queryKey: ['teacher-students'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-payroll-unified'] });
       queryClient.invalidateQueries({ queryKey: ['packages'] });
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
@@ -242,12 +243,13 @@ export function useUpdateScheduledLesson() {
       queryClient.invalidateQueries({ queryKey: ['teacher-tomorrows-lessons'] });
       queryClient.invalidateQueries({ queryKey: ['teacher-week-lessons'] });
       queryClient.invalidateQueries({ queryKey: ['teacher-past-7-days-unmarked'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-monthly-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-live-stats'] });
       queryClient.invalidateQueries({ queryKey: ['students'] });
       queryClient.invalidateQueries({ queryKey: ['packages'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['teacher-live-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['teacher-monthly-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-payroll-unified'] });
     },
   });
 }
@@ -329,8 +331,11 @@ export function useDeleteScheduledLesson() {
       queryClient.invalidateQueries({ queryKey: ['teacher-tomorrows-lessons'] });
       queryClient.invalidateQueries({ queryKey: ['teacher-week-lessons'] });
       queryClient.invalidateQueries({ queryKey: ['teacher-past-7-days-unmarked'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-monthly-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-live-stats'] });
       queryClient.invalidateQueries({ queryKey: ['students'] });
       queryClient.invalidateQueries({ queryKey: ['packages'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-payroll-unified'] });
     },
   });
 }

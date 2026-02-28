@@ -84,6 +84,10 @@ export function useMarkLesson() {
       queryClient.invalidateQueries({ queryKey: ['packages'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-monthly-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-live-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-payroll-unified'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
     },
   });
 }

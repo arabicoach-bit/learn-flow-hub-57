@@ -49,6 +49,7 @@ export default function AdminPayroll() {
 
   const { data: payrollData, isLoading: payrollLoading } = useQuery({
     queryKey: ['admin-payroll-unified', period],
+    refetchInterval: 10000, // Auto-refresh every 10 seconds for real-time updates
     queryFn: async () => {
       const { start, end } = getDateRange(period);
       
