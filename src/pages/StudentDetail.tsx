@@ -20,7 +20,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { toast } from 'sonner';
 import { ArrowLeft, User, Wallet, CreditCard, BookOpen, Loader2, Plus, RefreshCw, Pencil, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { getWalletColor, getStatusBadgeClass, formatCurrency, formatDate, formatDateTime, getStatusDisplayLabel } from '@/lib/wallet-utils';
-import { StudentScheduleTab } from '@/components/schedule/StudentScheduleTab';
+import { StudentLessonsView } from '@/components/student/StudentLessonsView';
 import { AddPackageForm } from '@/components/packages/AddPackageForm';
 import { RenewPackageForm } from '@/components/packages/RenewPackageForm';
 import { EditPackageDialog } from '@/components/packages/EditPackageDialog';
@@ -65,7 +65,7 @@ export default function StudentDetail() {
     error: packagesError,
     refetch: refetchPackages,
   } = packagesQuery;
-  const { data: lessons, isLoading: lessonsLoading } = useLessons({ student_id: id });
+  const { data: _lessons } = useLessons({ student_id: id });
   const { data: teachers } = useTeachers();
   const { data: programs } = usePrograms();
   const updateStudent = useUpdateStudent();
@@ -446,57 +446,14 @@ export default function StudentDetail() {
             </Card>
           </TabsContent>
 
-          {/* Lessons Tab - Merged: Schedule + History + Stats */}
+          {/* Lessons Tab - Unified view identical for admin & teacher */}
           <TabsContent value="lessons">
-            {/* Schedule Section */}
-            <StudentScheduleTab studentId={id!} />
-
-            {/* Lesson Log History */}
-            <Card className="glass-card mt-6">
-              <CardHeader>
-                <CardTitle>Lesson Log History</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {lessonsLoading ? (
-                  <div className="space-y-3">
-                    {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-12" />)}
-                  </div>
-                ) : !lessons?.length ? (
-                  <p className="text-muted-foreground text-center py-8">No lesson history</p>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Teacher</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Notes</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {lessons.map((lesson) => (
-                        <TableRow key={lesson.lesson_id}>
-                          <TableCell>{formatDateTime(lesson.date)}</TableCell>
-                          <TableCell>{lesson.teachers?.name || '-'}</TableCell>
-                          <TableCell>
-                            <Badge 
-                              variant="outline" 
-                              className={
-                                lesson.status === 'Taken' ? 'status-active' :
-                                lesson.status === 'Absent' ? 'bg-red-500/20 text-red-700 dark:text-red-300' : ''
-                              }
-                            >
-                              {lesson.status === 'Taken' ? 'Completed' : lesson.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="max-w-[200px] truncate">{lesson.notes || '-'}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
+            <StudentLessonsView
+              studentId={id!}
+              studentName={student.name}
+              walletBalance={student.wallet_balance || 0}
+              role="admin"
+            />
           </TabsContent>
 
           {/* Edit Info Tab */}
