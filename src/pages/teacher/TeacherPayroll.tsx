@@ -119,9 +119,9 @@ export default function TeacherPayroll() {
                   <p className="text-sm text-muted-foreground mb-1">Lessons This Month</p>
                   <p className="text-3xl font-bold text-emerald-400">{lessonsCount}</p>
                 </div>
-                <div className="text-center p-4 rounded-lg bg-card/50 border border-border/50">
-                  <p className="text-sm text-muted-foreground mb-1">Rate per Hour</p>
-                  <p className="text-3xl font-bold">{formatSalary(ratePerLesson)}</p>
+                <div className="text-center p-4 rounded-lg bg-emerald-600/10 border border-emerald-600/20">
+                  <p className="text-sm text-muted-foreground mb-1">Total Hours This Month</p>
+                  <p className="text-3xl font-bold text-emerald-400">{totalHours.toFixed(1)}h</p>
                 </div>
                 <div className="text-center p-4 rounded-lg bg-emerald-600/10 border border-emerald-600/20">
                   <p className="text-sm text-muted-foreground mb-1">Estimated Earnings</p>

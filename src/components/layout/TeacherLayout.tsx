@@ -23,6 +23,7 @@ import {
   Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { TeacherStatsBar } from '@/components/teacher/TeacherStatsBar';
 
 const teacherNavItems = [
   { title: 'My Dashboard', url: '/teacher', icon: LayoutDashboard },
@@ -104,12 +105,17 @@ export function TeacherLayout({ children }: TeacherLayoutProps) {
           </div>
         </Sidebar>
         <main className="flex-1 flex flex-col">
-          <header className="h-16 border-b border-border flex items-center px-6 bg-emerald-600/5 backdrop-blur-sm sticky top-0 z-10">
-            <SidebarTrigger className="mr-4" />
-            <div className="flex-1" />
-            <Badge variant="outline" className="border-emerald-600 text-emerald-400">
-              Teacher View
-            </Badge>
+          <header className="border-b border-border flex flex-col bg-emerald-600/5 backdrop-blur-sm sticky top-0 z-10">
+            <div className="h-16 flex items-center px-6">
+              <SidebarTrigger className="mr-4" />
+              <div className="flex-1" />
+              <Badge variant="outline" className="border-emerald-600 text-emerald-400">
+                Teacher View
+              </Badge>
+            </div>
+            <div className="px-6 pb-3">
+              <TeacherStatsBar />
+            </div>
           </header>
           <div className="flex-1 p-6 overflow-auto">
             {children}
