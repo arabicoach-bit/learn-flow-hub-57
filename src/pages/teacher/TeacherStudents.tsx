@@ -12,7 +12,7 @@ import { useStudents, Student } from '@/hooks/use-students';
 import { usePrograms } from '@/hooks/use-programs';
 import { getWalletColor, getStatusDisplayLabel } from '@/lib/wallet-utils';
 import { EditStudentDialog } from '@/components/teacher/EditStudentDialog';
-import { StudentLessonHistory } from '@/components/teacher/StudentLessonHistory';
+import { StudentLessonsView } from '@/components/student/StudentLessonsView';
 import { GraduationCap, Search, Phone, ChevronDown, User, School, BookOpen, Calendar, Pencil, AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
 
@@ -177,10 +177,11 @@ export default function TeacherStudents() {
                               </TabsList>
                               
                               <TabsContent value="lessons" className="p-4 mt-0">
-                                <StudentLessonHistory 
+                                <StudentLessonsView
                                   studentId={student.student_id}
                                   studentName={student.name}
                                   walletBalance={student.wallet_balance || 0}
+                                  role="teacher"
                                   teacherId={teacherId}
                                 />
                               </TabsContent>
