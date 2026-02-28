@@ -6,8 +6,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Wallet, Calendar, DollarSign } from 'lucide-react';
-import { format, startOfMonth, endOfMonth } from 'date-fns';
+import { format } from 'date-fns';
 import { formatSalary } from '@/lib/wallet-utils';
+import { useTeacherMonthlyStats } from '@/hooks/use-teacher-dashboard';
 
 interface PayrollRecord {
   payroll_id: string;
@@ -22,6 +23,8 @@ interface PayrollRecord {
 export default function TeacherPayroll() {
   const { profile } = useAuth();
   const teacherId = profile?.teacher_id;
+
+  const { data: stats, isLoading: statsLoading } = useTeacherMonthlyStats();
 
   const { data: payrollRecords, isLoading } = useQuery({
     queryKey: ['teacher-payroll', teacherId],
@@ -39,48 +42,10 @@ export default function TeacherPayroll() {
     enabled: !!teacherId,
   });
 
-  // Calculate current month estimate
-  const currentMonthStart = format(startOfMonth(new Date()), 'yyyy-MM-dd');
-  const currentMonthEnd = format(endOfMonth(new Date()), 'yyyy-MM-dd');
-  
-  const { data: lessonsThisMonth } = useQuery({
-    queryKey: ['lessons-this-month', teacherId],
-    queryFn: async () => {
-      if (!teacherId) return [];
-      const { data, error } = await supabase
-        .from('scheduled_lessons')
-        .select('scheduled_lesson_id, duration_minutes')
-        .eq('teacher_id', teacherId)
-        .eq('status', 'completed')
-        .gte('scheduled_date', currentMonthStart)
-        .lte('scheduled_date', currentMonthEnd);
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!teacherId,
-  });
-
-  const { data: teacher } = useQuery({
-    queryKey: ['teacher', teacherId],
-    queryFn: async () => {
-      if (!teacherId) return null;
-      const { data, error } = await supabase
-        .from('teachers')
-        .select('rate_per_lesson')
-        .eq('teacher_id', teacherId)
-        .single();
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!teacherId,
-  });
-
-  const lessonsCount = lessonsThisMonth?.length || 0;
-  const ratePerLesson = teacher?.rate_per_lesson || 0;
-  const totalHours = (lessonsThisMonth || []).reduce((sum, l) => sum + ((l as any).duration_minutes || 45) / 60, 0);
-  const estimatedEarnings = totalHours * ratePerLesson;
+  const current = stats?.currentMonth;
+  const lessonsCount = current?.lessons_taught || 0;
+  const totalHours = current?.total_hours || 0;
+  const estimatedEarnings = current?.salary_earned || 0;
 
   const getStatusBadgeClass = (status: string | null) => {
     switch (status) {
@@ -111,7 +76,7 @@ export default function TeacherPayroll() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
+            {statsLoading ? (
               <Skeleton className="h-24 w-full" />
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
