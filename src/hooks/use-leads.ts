@@ -34,7 +34,7 @@ export interface CreateLeadInput {
   handled_by?: string;
 }
 
-export function useLeads(filters?: { status?: string; search?: string; trial_status?: string; date_range?: string }) {
+export function useLeads(filters?: { status?: string; search?: string; trial_status?: string; date_range?: string; date_start?: string; date_end?: string }) {
   return useQuery({
     queryKey: ['leads', filters],
     queryFn: async () => {
@@ -52,25 +52,23 @@ export function useLeads(filters?: { status?: string; search?: string; trial_sta
       if (filters?.trial_status) {
         query = query.eq('trial_status', filters.trial_status);
       }
+      // New year/month filter
+      if (filters?.date_start) {
+        query = query.gte('created_at', filters.date_start);
+      }
+      if (filters?.date_end) {
+        query = query.lte('created_at', filters.date_end + 'T23:59:59');
+      }
+      // Legacy date_range filter (kept for backward compat)
       if (filters?.date_range) {
         const now = new Date();
         let startDate: Date | null = null;
         switch (filters.date_range) {
-          case '1_week':
-            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-            break;
-          case '2_weeks':
-            startDate = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
-            break;
-          case '1_month':
-            startDate = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
-            break;
-          case '3_months':
-            startDate = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
-            break;
-          case '6_months':
-            startDate = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate());
-            break;
+          case '1_week': startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000); break;
+          case '2_weeks': startDate = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000); break;
+          case '1_month': startDate = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate()); break;
+          case '3_months': startDate = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate()); break;
+          case '6_months': startDate = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate()); break;
         }
         if (startDate) {
           query = query.gte('created_at', startDate.toISOString());

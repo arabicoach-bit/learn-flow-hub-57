@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,6 +31,7 @@ import { ConvertToStudentDialog } from '@/components/trial/ConvertToStudentDialo
 import { useToast } from '@/hooks/use-toast';
 import { exportTrialStudents, type TrialStudentExport } from '@/lib/excel-export';
 import type { Database } from '@/integrations/supabase/types';
+import { YearMonthFilter, getDefaultFilter, getFilterDateRange, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
 
 type TrialStatus = Database['public']['Enums']['trial_status'];
 type TrialResult = Database['public']['Enums']['trial_result'];
@@ -42,6 +43,7 @@ export default function TrialStudents() {
   const [editingStudent, setEditingStudent] = useState<TrialStudent | null>(null);
   const [convertingStudent, setConvertingStudent] = useState<TrialStudent | null>(null);
   const { toast } = useToast();
+  const [dateFilter, setDateFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
 
   const { data: trialStudents, isLoading, refetch } = useTrialStudents({
     status: statusFilter === 'all' ? undefined : statusFilter,
@@ -94,13 +96,25 @@ export default function TrialStudents() {
     refetch();
   };
 
-  // Stats
+  // Filter by date
+  const { startDate: filterStart, endDate: filterEnd } = getFilterDateRange(dateFilter);
+
+  const filteredTrialStudents = useMemo(() => {
+    if (!trialStudents) return [];
+    return trialStudents.filter(s => {
+      if (!filterStart || !filterEnd) return true;
+      const created = s.created_at?.slice(0, 10) || '';
+      return created >= filterStart && created <= filterEnd;
+    });
+  }, [trialStudents, filterStart, filterEnd]);
+
+  // Stats based on filtered data
   const stats = {
-    total: trialStudents?.length || 0,
-    scheduled: trialStudents?.filter(s => s.status === 'Scheduled').length || 0,
-    completed: trialStudents?.filter(s => s.status === 'Completed').length || 0,
-    converted: trialStudents?.filter(s => s.status === 'Converted').length || 0,
-    lost: trialStudents?.filter(s => s.status === 'Lost').length || 0,
+    total: filteredTrialStudents.length,
+    scheduled: filteredTrialStudents.filter(s => s.status === 'Scheduled').length,
+    completed: filteredTrialStudents.filter(s => s.status === 'Completed').length,
+    converted: filteredTrialStudents.filter(s => s.status === 'Converted').length,
+    lost: filteredTrialStudents.filter(s => s.status === 'Lost').length,
   };
 
   return (
@@ -115,6 +129,7 @@ export default function TrialStudents() {
             </p>
           </div>
           <div className="flex gap-2">
+            <YearMonthFilter value={dateFilter} onChange={setDateFilter} />
             <Button
               variant="outline"
               onClick={() => {
@@ -252,9 +267,9 @@ export default function TrialStudents() {
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
-        ) : trialStudents && trialStudents.length > 0 ? (
+        ) : filteredTrialStudents.length > 0 ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {trialStudents.map((student) => (
+            {filteredTrialStudents.map((student) => (
               <TrialStudentCard
                 key={student.trial_id}
                 student={student}

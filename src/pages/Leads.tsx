@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Plus, Search, Download, Users, Clock, CheckCircle, XCircle, DollarSign, Loader2, CalendarDays } from 'lucide-react';
+import { Plus, Search, Download, Users, Clock, CheckCircle, XCircle, DollarSign, Loader2 } from 'lucide-react';
+import { YearMonthFilter, getDefaultFilter, getFilterDateRange, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useLeads, useCreateLead, useUpdateLead, type Lead } from '@/hooks/use-leads';
 import { usePrograms } from '@/hooks/use-programs';
@@ -36,15 +37,18 @@ const followUpOptions = [
 export default function Leads() {
   const [search, setSearch] = useState('');
   const [trialStatusFilter, setTrialStatusFilter] = useState<string>('all');
-  const [dateFilter, setDateFilter] = useState<string>('all');
+  const [dateFilter, setDateFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const { toast } = useToast();
 
+  const { startDate: filterStart, endDate: filterEnd } = getFilterDateRange(dateFilter);
+
   const { data: leads, isLoading } = useLeads({
     search,
     trial_status: trialStatusFilter === 'all' ? undefined : trialStatusFilter,
-    date_range: dateFilter === 'all' ? undefined : dateFilter,
+    date_start: filterStart || undefined,
+    date_end: filterEnd || undefined,
   });
   const { data: programs } = usePrograms();
   const createLead = useCreateLead();
@@ -401,25 +405,7 @@ export default function Leads() {
               <SelectItem value="Lost">Lost</SelectItem>
             </SelectContent>
           </Select>
-          <Select
-            value={dateFilter}
-            onValueChange={setDateFilter}
-          >
-            <SelectTrigger className="w-[180px]">
-              <div className="flex items-center gap-2">
-                <CalendarDays className="w-4 h-4" />
-                <SelectValue placeholder="Date range" />
-              </div>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Time</SelectItem>
-              <SelectItem value="1_week">Last 1 Week</SelectItem>
-              <SelectItem value="2_weeks">Last 2 Weeks</SelectItem>
-              <SelectItem value="1_month">Last 1 Month</SelectItem>
-              <SelectItem value="3_months">Last 3 Months</SelectItem>
-              <SelectItem value="6_months">Last 6 Months</SelectItem>
-            </SelectContent>
-          </Select>
+          <YearMonthFilter value={dateFilter} onChange={setDateFilter} />
         </div>
 
         {/* Content - Card Grid */}
@@ -445,11 +431,11 @@ export default function Leads() {
               <Users className="w-12 h-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold mb-2">No leads found</h3>
               <p className="text-muted-foreground text-center mb-4">
-                {search || trialStatusFilter !== 'all' || dateFilter !== 'all'
-                  ? 'Try adjusting your filters'
-                  : 'Add your first lead to get started'}
-              </p>
-              {!search && trialStatusFilter === 'all' && dateFilter === 'all' && (
+                {search || trialStatusFilter !== 'all' || dateFilter.year !== null
+                   ? 'Try adjusting your filters'
+                   : 'Add your first lead to get started'}
+               </p>
+               {!search && trialStatusFilter === 'all' && dateFilter.year === null && (
                 <Button onClick={() => setIsDialogOpen(true)}>
                   <Plus className="w-4 h-4 mr-2" />
                   Add Lead

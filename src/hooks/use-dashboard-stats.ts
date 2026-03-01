@@ -10,14 +10,10 @@ export interface DashboardStats {
   todaysLessons: number;
 }
 
-export function useDashboardStats() {
+export function useDashboardStats(startDate?: string | null, endDate?: string | null) {
   return useQuery({
-    queryKey: ['dashboard-stats'],
+    queryKey: ['dashboard-stats', startDate, endDate],
     queryFn: async (): Promise<DashboardStats> => {
-      const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
       const [
         activeResult,
         graceResult,
@@ -38,18 +34,24 @@ export function useDashboardStats() {
           .from('students')
           .select('student_id', { count: 'exact', head: true })
           .eq('status', 'Left'),
-        supabase
-          .from('leads')
-          .select('lead_id', { count: 'exact', head: true })
-          .gte('created_at', startOfMonth.toISOString()),
+        // Leads filtered by date range
+        (() => {
+          let q = supabase.from('leads').select('lead_id', { count: 'exact', head: true });
+          if (startDate) q = q.gte('created_at', startDate);
+          if (endDate) q = q.lte('created_at', endDate + 'T23:59:59');
+          return q;
+        })(),
         supabase
           .from('students')
           .select('student_id', { count: 'exact', head: true })
           .lte('wallet_balance', 2),
-        supabase
-          .from('lessons_log')
-          .select('lesson_id', { count: 'exact', head: true })
-          .gte('date', startOfDay.toISOString()),
+        // Lessons filtered by date range
+        (() => {
+          let q = supabase.from('lessons_log').select('lesson_id', { count: 'exact', head: true });
+          if (startDate) q = q.gte('date', startDate);
+          if (endDate) q = q.lte('date', endDate + 'T23:59:59');
+          return q;
+        })(),
       ]);
 
       return {
