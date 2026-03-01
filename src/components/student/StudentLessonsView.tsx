@@ -24,6 +24,7 @@ import {
   MessageSquare, AlertTriangle, PenLine, Pencil, Trash2, CheckCircle2, XCircle
 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, parseISO, isToday, isFuture, isPast } from 'date-fns';
+import { YearMonthFilter, getDefaultFilter, getFilterDateRange, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
 
 interface StudentLessonsViewProps {
   studentId: string;
@@ -34,7 +35,7 @@ interface StudentLessonsViewProps {
 }
 
 export function StudentLessonsView({ studentId, studentName, walletBalance, role, teacherId }: StudentLessonsViewProps) {
-  const [selectedMonth, setSelectedMonth] = useState<string>('all');
+  const [dateFilter, setDateFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
   const [editData, setEditData] = useState({ date: '', time: '', duration: '' });
@@ -62,9 +63,14 @@ export function StudentLessonsView({ studentId, studentName, walletBalance, role
     },
   });
 
-  // All-time stats (always shown, never filtered)
+  // Stats filtered by YearMonthFilter
+  const { startDate: filterStart, endDate: filterEnd } = getFilterDateRange(dateFilter);
+
   const allStats = useMemo(() => {
-    const all = lessons || [];
+    const all = (lessons || []).filter(l => {
+      if (!filterStart || !filterEnd) return true;
+      return l.scheduled_date >= filterStart && l.scheduled_date <= filterEnd;
+    });
     const completed = all.filter(l => l.status === 'completed').length;
     const absent = all.filter(l => l.status === 'absent').length;
     const scheduled = all.filter(l => l.status === 'scheduled').length;
@@ -72,18 +78,16 @@ export function StudentLessonsView({ studentId, studentName, walletBalance, role
       .filter(l => l.status === 'completed')
       .reduce((sum, l) => sum + (l.duration_minutes || 45) / 60, 0);
     return { completed, absent, scheduled, totalHours, total: all.length };
-  }, [lessons]);
+  }, [lessons, filterStart, filterEnd]);
 
   // Filtered lessons for the list
   const filteredLessons = useMemo(() => {
     return (lessons || []).filter(l => {
       const matchesStatus = statusFilter === 'all' || l.status === statusFilter;
-      if (selectedMonth === 'all') return matchesStatus;
-      const monthStart = format(startOfMonth(new Date(selectedMonth + '-01')), 'yyyy-MM-dd');
-      const monthEnd = format(endOfMonth(new Date(selectedMonth + '-01')), 'yyyy-MM-dd');
-      return matchesStatus && l.scheduled_date >= monthStart && l.scheduled_date <= monthEnd;
+      if (!filterStart || !filterEnd) return matchesStatus;
+      return matchesStatus && l.scheduled_date >= filterStart && l.scheduled_date <= filterEnd;
     });
-  }, [lessons, statusFilter, selectedMonth]);
+  }, [lessons, statusFilter, filterStart, filterEnd]);
 
   // Month stats for the filter bar
   const filterStats = useMemo(() => {
@@ -94,16 +98,6 @@ export function StudentLessonsView({ studentId, studentName, walletBalance, role
       .reduce((sum, l) => sum + (l.duration_minutes || 45) / 60, 0);
     return { completed, absent, hours };
   }, [filteredLessons]);
-
-  const monthOptions = useMemo(() => {
-    const months = [{ value: 'all', label: 'All Time' }];
-    const now = new Date();
-    for (let i = 0; i < 12; i++) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      months.push({ value: format(d, 'yyyy-MM'), label: format(d, 'MMMM yyyy') });
-    }
-    return months;
-  }, []);
 
   const progressPercent = allStats.total > 0 ? ((allStats.completed + allStats.absent) / allStats.total) * 100 : 0;
 
@@ -199,7 +193,7 @@ export function StudentLessonsView({ studentId, studentName, walletBalance, role
         </div>
       )}
 
-      {/* All-Time Statistics — identical for both roles */}
+      {/* Statistics — filtered by YearMonthFilter */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3 text-center">
           <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{allStats.completed}</p>
@@ -235,14 +229,7 @@ export function StudentLessonsView({ studentId, studentName, walletBalance, role
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-2">
-        <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-          <SelectTrigger className="w-full sm:w-[180px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {monthOptions.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <YearMonthFilter value={dateFilter} onChange={setDateFilter} />
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-full sm:w-[140px]">
             <SelectValue />

@@ -1,8 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Users, GraduationCap, AlertTriangle, UserPlus, Wallet, Bell } from 'lucide-react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { useDashboardStats } from '@/hooks/use-dashboard-stats';
+import { YearMonthFilter, getDefaultFilter, getFilterDateRange, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
 import { useNotifications } from '@/hooks/use-notifications';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,7 +22,9 @@ import { AICRMAssistant } from '@/components/admin/AICRMAssistant';
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { data: stats, isLoading: statsLoading } = useDashboardStats();
+  const [filter, setFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
+  const { startDate, endDate } = getFilterDateRange(filter);
+  const { data: stats, isLoading: statsLoading } = useDashboardStats(startDate, endDate);
   const { data: notifications, isLoading: notificationsLoading } = useNotifications(5);
 
   // Set up real-time subscriptions for dashboard updates
@@ -93,9 +96,12 @@ export default function AdminDashboard() {
   return (
     <AdminLayout>
       <div className="space-y-8 animate-fade-in">
-        <div>
-          <h1 className="text-3xl font-display font-bold mb-2">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Welcome back! Here's your academy overview.</p>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-display font-bold mb-2">Admin Dashboard</h1>
+            <p className="text-muted-foreground">Welcome back! Here's your academy overview.</p>
+          </div>
+          <YearMonthFilter value={filter} onChange={setFilter} />
         </div>
 
         {/* KPI Metrics Grid */}
