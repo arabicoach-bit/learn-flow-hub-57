@@ -29,7 +29,6 @@ import Packages from "./pages/admin/Packages";
 import AdminPayroll from "./pages/admin/AdminPayroll";
 
 // Teacher pages
-import TeacherDashboard from "./pages/teacher/TeacherDashboard";
 import TeacherSchedule from "./pages/teacher/TeacherSchedule";
 import TeacherMarkLesson from "./pages/teacher/TeacherMarkLesson";
 import TeacherStudents from "./pages/teacher/TeacherStudents";
@@ -83,7 +82,7 @@ const AppRoutes = () => (
     <Route path="/admin/payroll" element={<ProtectedRoute allowedRoles={['admin']}><AdminPayroll /></ProtectedRoute>} />
     
     {/* Teacher routes */}
-    <Route path="/teacher" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherDashboard /></ProtectedRoute>} />
+    <Route path="/teacher" element={<Navigate to="/teacher/schedule" replace />} />
     <Route path="/teacher/schedule" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherSchedule /></ProtectedRoute>} />
     <Route path="/teacher/mark-lesson" element={<Navigate to="/teacher/students" replace />} />
     <Route path="/teacher/students" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherStudents /></ProtectedRoute>} />

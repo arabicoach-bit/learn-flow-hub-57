@@ -14,7 +14,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
-  LayoutDashboard, 
   GraduationCap, 
   Wallet, 
   LogOut,
@@ -26,7 +25,6 @@ import { cn } from '@/lib/utils';
 import { TeacherStatsBar } from '@/components/teacher/TeacherStatsBar';
 
 const teacherNavItems = [
-  { title: 'My Dashboard', url: '/teacher', icon: LayoutDashboard },
   { title: 'My Schedule', url: '/teacher/schedule', icon: CalendarDays },
   { title: 'My Students', url: '/teacher/students', icon: GraduationCap },
   { title: 'Trial Lessons', url: '/teacher/trial-lessons', icon: Users },
@@ -68,7 +66,6 @@ export function TeacherLayout({ children }: TeacherLayoutProps) {
                   <SidebarMenuButton asChild>
                     <NavLink 
                       to={item.url}
-                      end={item.url === '/teacher'}
                       className={({ isActive }) => cn(
                         "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
                         isActive 
