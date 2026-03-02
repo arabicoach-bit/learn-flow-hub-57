@@ -105,24 +105,14 @@ export function useDeletePackage() {
 
   return useMutation({
     mutationFn: async ({ packageId, studentId }: { packageId: string; studentId: string }) => {
-      // First, count how many unused scheduled lessons belong to this package
-      const { data: scheduledLessons, error: fetchError } = await supabase
-        .from('scheduled_lessons')
-        .select('scheduled_lesson_id, status')
-        .eq('package_id', packageId);
-
-      if (fetchError) throw fetchError;
-
-      // Get the package info to know lessons_purchased and lessons_used
+      // Get the package info for return value
       const { data: pkg, error: pkgError } = await supabase
         .from('packages')
-        .select('lessons_purchased, lessons_used, status')
+        .select('lessons_purchased, lessons_used')
         .eq('package_id', packageId)
         .single();
 
       if (pkgError) throw pkgError;
-
-      // Calculate wallet adjustment: remaining lessons that were credited
       const lessonsRemaining = pkg.lessons_purchased - (pkg.lessons_used || 0);
 
       // Delete all scheduled lessons for this package
@@ -149,39 +139,23 @@ export function useDeletePackage() {
 
       if (deletePackageError) throw deletePackageError;
 
-      // After deleting, check if student has any remaining active packages
+      // Update current_package_id to next active package (if any)
       const { data: remainingPackages } = await supabase
         .from('packages')
-        .select('package_id, lessons_purchased, lessons_used, status')
+        .select('package_id')
         .eq('student_id', studentId)
-        .eq('status', 'Active');
+        .eq('status', 'Active')
+        .limit(1);
 
-      if (remainingPackages && remainingPackages.length > 0) {
-        // Recalculate wallet from remaining active packages
-        const totalRemaining = remainingPackages.reduce((sum, p) => {
-          return sum + (p.lessons_purchased - (p.lessons_used || 0));
-        }, 0);
-        const newStatus = totalRemaining >= 3 ? 'Active' : totalRemaining >= -1 ? 'Temporary Stop' : 'Left';
-        
-        await supabase
-          .from('students')
-          .update({
-            wallet_balance: totalRemaining,
-            status: newStatus,
-            current_package_id: remainingPackages[0].package_id,
-          })
-          .eq('student_id', studentId);
-      } else {
-        // No active packages left — reset wallet to 0
-        await supabase
-          .from('students')
-          .update({
-            wallet_balance: 0,
-            status: 'Active',
-            current_package_id: null,
-          })
-          .eq('student_id', studentId);
-      }
+      await supabase
+        .from('students')
+        .update({
+          current_package_id: remainingPackages?.[0]?.package_id || null,
+        })
+        .eq('student_id', studentId);
+
+      // Recalculate wallet from DB (single source of truth)
+      await supabase.rpc('recalculate_student_wallet', { p_student_id: studentId });
 
       return { packageId, lessonsRemaining };
     },
