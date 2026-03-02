@@ -10,6 +10,7 @@ import { Wallet, Calendar, DollarSign } from 'lucide-react';
 import { format } from 'date-fns';
 import { formatSalary } from '@/lib/wallet-utils';
 import { YearMonthFilter, getDefaultFilter, getFilterDateRange, getFilterLabel, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
+import { useTeacherTotalHours } from '@/hooks/use-teacher-total-hours';
 
 interface PayrollRecord {
   payroll_id: string;
@@ -28,58 +29,8 @@ export default function TeacherPayroll() {
 
   const { startDate, endDate } = getFilterDateRange(filter);
 
-  // Filtered stats query
-  const { data: stats, isLoading: statsLoading } = useQuery({
-    queryKey: ['teacher-payroll-stats', teacherId, startDate, endDate],
-    queryFn: async () => {
-      if (!teacherId) return null;
-
-      // Get teacher rate
-      const { data: teacher } = await supabase
-        .from('teachers')
-        .select('rate_per_lesson')
-        .eq('teacher_id', teacherId)
-        .single();
-
-      const ratePerHour = teacher?.rate_per_lesson || 0;
-
-      // Build scheduled lessons query
-      let lessonsQuery = supabase
-        .from('scheduled_lessons')
-        .select('scheduled_lesson_id, duration_minutes')
-        .eq('teacher_id', teacherId)
-        .eq('status', 'completed');
-
-      if (startDate) lessonsQuery = lessonsQuery.gte('scheduled_date', startDate);
-      if (endDate) lessonsQuery = lessonsQuery.lte('scheduled_date', endDate);
-
-      const { data: completedLessons } = await lessonsQuery;
-
-      // Build trial lessons query
-      let trialsQuery = supabase
-        .from('trial_lessons_log')
-        .select('trial_lesson_id, duration_minutes, teacher_payment_amount')
-        .eq('teacher_id', teacherId)
-        .eq('status', 'completed');
-
-      if (startDate) trialsQuery = trialsQuery.gte('lesson_date', startDate);
-      if (endDate) trialsQuery = trialsQuery.lte('lesson_date', endDate);
-
-      const { data: trialLessons } = await trialsQuery;
-
-      const regularHours = (completedLessons || []).reduce((sum, l) => sum + (l.duration_minutes || 45) / 60, 0);
-      const trialHours = (trialLessons || []).reduce((sum, l) => sum + Math.min(l.duration_minutes || 30, 30) / 60, 0);
-      const trialSalary = (trialLessons || []).reduce((sum, l) => sum + (Number(l.teacher_payment_amount) || 0), 0);
-
-      return {
-        lessonsCount: (completedLessons?.length || 0) + (trialLessons?.length || 0),
-        totalHours: regularHours + trialHours,
-        salaryEarned: (regularHours * ratePerHour) + trialSalary,
-      };
-    },
-    enabled: !!teacherId,
-    refetchInterval: 10000,
-  });
+  // Unified hours/salary from shared hook
+  const { data: stats, isLoading: statsLoading } = useTeacherTotalHours(teacherId, startDate, endDate);
 
   // Filtered payroll history
   const { data: payrollRecords, isLoading } = useQuery({
@@ -137,7 +88,7 @@ export default function TeacherPayroll() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="text-center p-4 rounded-lg bg-emerald-600/10 border border-emerald-600/20">
                   <p className="text-sm text-muted-foreground mb-1">Lessons</p>
-                  <p className="text-3xl font-bold text-emerald-400">{stats?.lessonsCount || 0}</p>
+                  <p className="text-3xl font-bold text-emerald-400">{stats?.totalLessons || 0}</p>
                 </div>
                 <div className="text-center p-4 rounded-lg bg-emerald-600/10 border border-emerald-600/20">
                   <p className="text-sm text-muted-foreground mb-1">Total Hours</p>
@@ -145,7 +96,7 @@ export default function TeacherPayroll() {
                 </div>
                 <div className="text-center p-4 rounded-lg bg-emerald-600/10 border border-emerald-600/20">
                   <p className="text-sm text-muted-foreground mb-1">Estimated Earnings</p>
-                  <p className="text-3xl font-bold text-emerald-400">{formatSalary(stats?.salaryEarned || 0)}</p>
+                  <p className="text-3xl font-bold text-emerald-400">{formatSalary(stats?.salary || 0)}</p>
                 </div>
               </div>
             )}

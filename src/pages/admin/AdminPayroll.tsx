@@ -13,6 +13,7 @@ import { formatSalary } from '@/lib/wallet-utils';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { YearMonthFilter, getDefaultFilter, getFilterDateRange, getFilterLabel, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
+import { fetchAllTeachersTotalHours, type TeacherTotalHoursResult } from '@/hooks/use-teacher-total-hours';
 
 interface TeacherPayrollData {
   teacher_id: string;
@@ -39,87 +40,37 @@ export default function AdminPayroll() {
     queryKey: ['admin-payroll-unified', startDate, endDate],
     refetchInterval: 10000,
     queryFn: async () => {
-      // Fetch completed lessons
-      let lessonsQuery = supabase
-        .from('scheduled_lessons')
-        .select('teacher_id, duration_minutes')
-        .eq('status', 'completed');
+      const teacherIds = (teachers || []).map(t => t.teacher_id);
+      if (teacherIds.length === 0) return [];
 
-      if (startDate) lessonsQuery = lessonsQuery.gte('scheduled_date', startDate);
-      if (endDate) lessonsQuery = lessonsQuery.lte('scheduled_date', endDate);
+      // Use shared batch function for hours/salary
+      const hoursByTeacher = await fetchAllTeachersTotalHours(teacherIds, startDate, endDate);
 
-      const { data: lessons, error } = await lessonsQuery;
-      if (error) throw error;
+      // Fetch students & trial students for counts
+      const [studentsRes, trialStudentsRes] = await Promise.all([
+        supabase.from('students').select('student_id, teacher_id, status'),
+        supabase.from('trial_students').select('trial_id, teacher_id, status').eq('status', 'Scheduled'),
+      ]);
 
-      // Fetch trial lessons
-      let trialsQuery = supabase
-        .from('trial_lessons_log')
-        .select('teacher_id, duration_minutes, teacher_payment_amount')
-        .eq('status', 'completed');
+      const students = studentsRes.data || [];
+      const trialStudents = trialStudentsRes.data || [];
 
-      if (startDate) trialsQuery = trialsQuery.gte('lesson_date', startDate);
-      if (endDate) trialsQuery = trialsQuery.lte('lesson_date', endDate);
-
-      const { data: trialLessons } = await trialsQuery;
-
-      // Fetch all students for counts
-      const { data: students } = await supabase
-        .from('students')
-        .select('student_id, teacher_id, status');
-
-      // Fetch scheduled trial students
-      const { data: trialStudents } = await supabase
-        .from('trial_students')
-        .select('trial_id, teacher_id, status')
-        .eq('status', 'Scheduled');
-
-      // Aggregate lessons by teacher
-      const teacherStats: Record<string, { lessons: number; totalMinutes: number; trialHours: number; trialSalary: number }> = {};
-      lessons?.forEach((lesson) => {
-        const tid = lesson.teacher_id;
-        if (tid) {
-          if (!teacherStats[tid]) teacherStats[tid] = { lessons: 0, totalMinutes: 0, trialHours: 0, trialSalary: 0 };
-          teacherStats[tid].lessons += 1;
-          teacherStats[tid].totalMinutes += lesson.duration_minutes || 45;
-        }
-      });
-
-      // Add trial lesson stats
-      trialLessons?.forEach((tl) => {
-        const tid = tl.teacher_id;
-        if (tid) {
-          if (!teacherStats[tid]) teacherStats[tid] = { lessons: 0, totalMinutes: 0, trialHours: 0, trialSalary: 0 };
-          teacherStats[tid].lessons += 1;
-          teacherStats[tid].trialHours += Math.min(tl.duration_minutes || 30, 30) / 60;
-          teacherStats[tid].trialSalary += Number(tl.teacher_payment_amount) || 0;
-        }
-      });
-
-      // Build unified payroll data
       const payroll: TeacherPayrollData[] = (teachers || []).map(teacher => {
-        const stats = teacherStats[teacher.teacher_id] || { lessons: 0, totalMinutes: 0, trialHours: 0, trialSalary: 0 };
-        const regularHours = stats.totalMinutes / 60;
-        const totalHours = regularHours + stats.trialHours;
-        const salaryEarned = (regularHours * (teacher.rate_per_lesson || 0)) + stats.trialSalary;
-        
-        const teacherStudents = students?.filter(s => s.teacher_id === teacher.teacher_id) || [];
-        const activeCount = teacherStudents.filter(s => s.status === 'Active').length;
-        const tempStopCount = teacherStudents.filter(s => s.status === 'Temporary Stop').length;
-        const leftCount = teacherStudents.filter(s => s.status === 'Left').length;
-        const trialCount = trialStudents?.filter(t => t.teacher_id === teacher.teacher_id).length || 0;
+        const hrs = hoursByTeacher[teacher.teacher_id] || {} as TeacherTotalHoursResult;
+        const teacherStudents = students.filter(s => s.teacher_id === teacher.teacher_id);
 
         return {
           teacher_id: teacher.teacher_id,
           teacher_name: teacher.name,
           email: teacher.email || null,
-          lessons_taken: stats.lessons,
-          total_hours: totalHours,
-          rate_per_lesson: teacher.rate_per_lesson || 0,
-          salary_earned: salaryEarned,
-          active_students: activeCount,
-          temp_stop_students: tempStopCount,
-          left_students: leftCount,
-          trial_lessons: trialCount,
+          lessons_taken: hrs.totalLessons || 0,
+          total_hours: hrs.totalHours || 0,
+          rate_per_lesson: hrs.ratePerHour || 0,
+          salary_earned: hrs.salary || 0,
+          active_students: teacherStudents.filter(s => s.status === 'Active').length,
+          temp_stop_students: teacherStudents.filter(s => s.status === 'Temporary Stop').length,
+          left_students: teacherStudents.filter(s => s.status === 'Left').length,
+          trial_lessons: trialStudents.filter(t => t.teacher_id === teacher.teacher_id).length,
         };
       });
 
