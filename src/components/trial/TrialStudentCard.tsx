@@ -20,7 +20,8 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
-  UserPlus
+  UserPlus,
+  Trash2
 } from 'lucide-react';
 import type { TrialStudent } from '@/hooks/use-trial-students';
 
@@ -30,6 +31,7 @@ interface TrialStudentCardProps {
   onUpdateResult: (trialId: string, result: 'Positive' | 'Very Positive' | 'Neutral' | 'Negative') => void;
   onEdit: (student: TrialStudent) => void;
   onConvert?: (student: TrialStudent) => void;
+  onDelete?: (trialId: string) => void;
 }
 
 const statusColors = {
@@ -46,7 +48,7 @@ const resultColors = {
   Negative: 'bg-red-500/20 text-red-400',
 };
 
-export function TrialStudentCard({ student, onUpdateStatus, onUpdateResult, onEdit, onConvert }: TrialStudentCardProps) {
+export function TrialStudentCard({ student, onUpdateStatus, onUpdateResult, onEdit, onConvert, onDelete }: TrialStudentCardProps) {
   const canConvert = student.status === 'Completed' || student.status === 'Scheduled';
   
   return (
@@ -111,6 +113,18 @@ export function TrialStudentCard({ student, onUpdateStatus, onUpdateResult, onEd
                   <XCircle className="w-4 h-4 mr-2 text-red-400" />
                   Negative
                 </DropdownMenuItem>
+                {onDelete && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => onDelete(student.trial_id)}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete Trial Student
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

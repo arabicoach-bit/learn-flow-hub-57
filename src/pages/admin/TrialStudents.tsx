@@ -23,7 +23,7 @@ import {
   Loader2,
   Download
 } from 'lucide-react';
-import { useTrialStudents, useUpdateTrialStudent, type TrialStudent } from '@/hooks/use-trial-students';
+import { useTrialStudents, useUpdateTrialStudent, useDeleteTrialStudent, type TrialStudent } from '@/hooks/use-trial-students';
 import { AddTrialStudentForm } from '@/components/trial/AddTrialStudentForm';
 import { TrialStudentCard } from '@/components/trial/TrialStudentCard';
 import { EditTrialStudentDialog } from '@/components/trial/EditTrialStudentDialog';
@@ -51,6 +51,7 @@ export default function TrialStudents() {
   });
 
   const updateTrialStudent = useUpdateTrialStudent();
+  const deleteTrialStudent = useDeleteTrialStudent();
 
   const handleUpdateStatus = async (trialId: string, status: TrialStatus) => {
     try {
@@ -94,6 +95,23 @@ export default function TrialStudents() {
 
   const handleConversionSuccess = () => {
     refetch();
+  };
+
+  const handleDelete = async (trialId: string) => {
+    if (!window.confirm('Are you sure you want to delete this trial student and all associated lesson records?')) return;
+    try {
+      await deleteTrialStudent.mutateAsync(trialId);
+      toast({
+        title: 'Deleted',
+        description: 'Trial student and associated records deleted.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete trial student.',
+        variant: 'destructive',
+      });
+    }
   };
 
   // Filter by date
@@ -277,6 +295,7 @@ export default function TrialStudents() {
                 onUpdateResult={handleUpdateResult}
                 onEdit={handleEdit}
                 onConvert={handleConvert}
+                onDelete={handleDelete}
               />
             ))}
           </div>
