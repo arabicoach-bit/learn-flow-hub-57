@@ -526,7 +526,7 @@ export default function Teachers() {
                 <tr>
                   <th>Teacher</th>
                   <th className="hidden sm:table-cell">Phone</th>
-                  <th className="hidden md:table-cell">Rate/Lesson</th>
+                  <th className="hidden md:table-cell">Rate/Hour</th>
                   <th>Status</th>
                   <th className="text-right">Actions</th>
                 </tr>
