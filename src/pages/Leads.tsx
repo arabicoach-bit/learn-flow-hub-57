@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Search, Download, Users, Clock, CheckCircle, XCircle, DollarSign, Loader2 } from 'lucide-react';
+import { Plus, Search, Download, Users, Clock, CheckCircle, XCircle, DollarSign, Loader2, Percent, UserCheck } from 'lucide-react';
 import { YearMonthFilter, getDefaultFilter, getFilterDateRange, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useLeads, useCreateLead, useUpdateLead, useDeleteLead, type Lead } from '@/hooks/use-leads';
@@ -134,12 +134,16 @@ export default function Leads() {
   };
 
   // Stats based on trial_status
+  const totalLeads = leads?.length || 0;
+  const convertedCount = leads?.filter(l => l.status === 'Converted').length || 0;
   const stats = {
-    total: leads?.length || 0,
+    total: totalLeads,
     trialBooked: leads?.filter(l => l.trial_status === 'Trial Booked').length || 0,
     pending: leads?.filter(l => l.trial_status === 'Pending').length || 0,
     priceNegotiation: leads?.filter(l => l.trial_status === 'Price Negotiation').length || 0,
     lost: leads?.filter(l => l.trial_status === 'Lost').length || 0,
+    converted: convertedCount,
+    conversionRate: totalLeads > 0 ? ((convertedCount / totalLeads) * 100) : 0,
   };
 
   return (
@@ -328,7 +332,7 @@ export default function Leads() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
           <Card className="bg-card">
             <CardHeader className="pb-2">
               <CardDescription>Total Leads</CardDescription>
@@ -385,6 +389,30 @@ export default function Leads() {
               <div className="flex items-center gap-2">
                 <XCircle className="w-5 h-5 text-red-400" />
                 <span className="text-2xl font-bold">{stats.lost}</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card">
+            <CardHeader className="pb-2">
+              <CardDescription>Converted</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <UserCheck className="w-5 h-5 text-emerald-400" />
+                <span className="text-2xl font-bold">{stats.converted}</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card">
+            <CardHeader className="pb-2">
+              <CardDescription>Conversion Rate</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <Percent className="w-5 h-5 text-emerald-500" />
+                <span className="text-2xl font-bold">{stats.conversionRate.toFixed(1)}%</span>
               </div>
             </CardContent>
           </Card>
