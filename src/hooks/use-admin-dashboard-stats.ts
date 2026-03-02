@@ -101,8 +101,8 @@ export function useStudentStats() {
       // Payment status based on new wallet thresholds
       // Active: >= 3 (Paid), Grace: 2 to -1 (Due Soon), Blocked: <= -2 (Overdue)
       const paidStudents = students?.filter(s => (s.wallet_balance || 0) >= 3).length || 0;
-      const dueSoonStudents = students?.filter(s => (s.wallet_balance || 0) >= -1 && (s.wallet_balance || 0) <= 2).length || 0;
-      const overdueStudents = students?.filter(s => (s.wallet_balance || 0) <= -2).length || 0;
+      const dueSoonStudents = students?.filter(s => (s.wallet_balance || 0) >= 1 && (s.wallet_balance || 0) <= 2).length || 0;
+      const overdueStudents = students?.filter(s => (s.wallet_balance || 0) === 0).length || 0;
 
       const stats: StudentStats = {
         totalStudents,
@@ -132,12 +132,15 @@ export function useStudentStats() {
   });
 }
 
-export function useTeacherPerformance() {
+export function useTeacherPerformance(filterStartDate?: string | null, filterEndDate?: string | null) {
+  const defaultStart = format(startOfMonth(new Date()), 'yyyy-MM-dd');
+  const defaultEnd = format(endOfMonth(new Date()), 'yyyy-MM-dd');
+  const startDate = filterStartDate ?? defaultStart;
+  const endDate = filterEndDate ?? defaultEnd;
+
   return useQuery({
-    queryKey: ['admin-teacher-performance'],
+    queryKey: ['admin-teacher-performance', startDate, endDate],
     queryFn: async () => {
-      const startDate = format(startOfMonth(new Date()), 'yyyy-MM-dd');
-      const endDate = format(endOfMonth(new Date()), 'yyyy-MM-dd');
 
       // Fetch all teachers
       const { data: teachers, error: teachersError } = await supabase
