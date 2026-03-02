@@ -3,7 +3,7 @@ import { ArrowLeft, Mail, Phone, DollarSign, BookOpen, Users, Receipt, Graduatio
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useTeacher, useUpdateTeacher } from '@/hooks/use-teachers';
 
-import { useLessons } from '@/hooks/use-lessons';
+import { useScheduledLessons } from '@/hooks/use-scheduled-lessons';
 import { useStudents } from '@/hooks/use-students';
 import { useTeacherLiveStats } from '@/hooks/use-teacher-live-stats';
 import { Button } from '@/components/ui/button';
@@ -54,7 +54,7 @@ export default function TeacherDetail() {
   const { toast } = useToast();
   const { data: teacher, isLoading: teacherLoading } = useTeacher(id || '');
   
-  const { data: lessons } = useLessons({ teacher_id: id });
+  const { data: lessons } = useScheduledLessons({ teacher_id: id });
   const { data: payroll } = useTeacherPayroll(id || '');
   const { data: allStudents } = useStudents();
   const { data: liveStats, isLoading: liveStatsLoading } = useTeacherLiveStats(id || '');
@@ -429,17 +429,17 @@ export default function TeacherDetail() {
                     </tr>
                   ) : (
                     lessons.slice(0, 50).map((lesson) => (
-                      <tr key={lesson.lesson_id}>
-                        <td>{formatDate(lesson.lesson_date || lesson.date)}</td>
+                      <tr key={lesson.scheduled_lesson_id}>
+                        <td>{formatDate(lesson.scheduled_date)}</td>
                         <td>{lesson.students?.name || '-'}</td>
                         <td>{lesson.classes?.name || '-'}</td>
                         <td>
                           <Badge
                             variant="outline"
                             className={
-                              lesson.status === 'Taken'
+                              lesson.status === 'completed'
                                 ? 'bg-wallet-positive/20 text-wallet-positive'
-                                : lesson.status === 'Absent'
+                                : lesson.status === 'absent'
                                 ? 'bg-wallet-negative/20 text-wallet-negative'
                                 : 'bg-muted text-muted-foreground'
                             }

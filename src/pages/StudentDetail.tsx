@@ -3,7 +3,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useStudent, useUpdateStudent } from '@/hooks/use-students';
 import { usePackages, Package, useDeletePackage } from '@/hooks/use-packages';
-import { useLessons } from '@/hooks/use-lessons';
+
 import { useTeachers } from '@/hooks/use-teachers';
 import { usePrograms } from '@/hooks/use-programs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -65,7 +65,7 @@ export default function StudentDetail() {
     error: packagesError,
     refetch: refetchPackages,
   } = packagesQuery;
-  const { data: _lessons } = useLessons({ student_id: id });
+  
   const { data: teachers } = useTeachers();
   const { data: programs } = usePrograms();
   const updateStudent = useUpdateStudent();

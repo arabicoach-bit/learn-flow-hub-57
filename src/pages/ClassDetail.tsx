@@ -4,7 +4,7 @@ import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useClass, useUpdateClass } from '@/hooks/use-classes';
 import { useTeachers } from '@/hooks/use-teachers';
 import { useStudents } from '@/hooks/use-students';
-import { useLessons } from '@/hooks/use-lessons';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,9 +20,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 
 interface ClassLesson {
-  lesson_id: string;
-  lesson_date: string | null;
-  date: string | null;
+  scheduled_lesson_id: string;
+  scheduled_date: string;
   status: string;
   notes: string | null;
   students: { name: string; student_id: string } | null;
@@ -34,10 +33,10 @@ function useClassLessons(classId: string) {
     queryKey: ['class-lessons', classId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('lessons_log')
-        .select('lesson_id, lesson_date, date, status, notes, students(name, student_id), teachers(name)')
+        .from('scheduled_lessons')
+        .select('scheduled_lesson_id, scheduled_date, status, notes, students(name, student_id), teachers(name)')
         .eq('class_id', classId)
-        .order('lesson_date', { ascending: false });
+        .order('scheduled_date', { ascending: false });
 
       if (error) throw error;
       return data as ClassLesson[];
@@ -76,7 +75,7 @@ export default function ClassDetail() {
   // Note: Since students are directly assigned to teachers, not classes,
   // we show students whose teacher matches this class's teacher
   const enrolledStudents = allStudents?.filter(s => s.teacher_id === classData?.teacher_id) || [];
-  const takenLessons = lessons?.filter(l => l.status === 'Taken').length || 0;
+  const takenLessons = lessons?.filter(l => l.status === 'completed').length || 0;
 
   const handleSave = async () => {
     if (!id) return;
@@ -302,8 +301,8 @@ export default function ClassDetail() {
                     </tr>
                   ) : (
                     lessons.slice(0, 50).map((lesson) => (
-                      <tr key={lesson.lesson_id}>
-                        <td>{formatDate(lesson.lesson_date || lesson.date)}</td>
+                      <tr key={lesson.scheduled_lesson_id}>
+                        <td>{formatDate(lesson.scheduled_date)}</td>
                         <td
                           className="cursor-pointer hover:text-primary"
                           onClick={() => lesson.students && navigate(`/admin/students/${lesson.students.student_id}`)}
@@ -315,9 +314,9 @@ export default function ClassDetail() {
                           <Badge
                             variant="outline"
                             className={
-                              lesson.status === 'Taken'
+                              lesson.status === 'completed'
                                 ? 'bg-wallet-positive/20 text-wallet-positive'
-                                : lesson.status === 'Absent'
+                                : lesson.status === 'absent'
                                 ? 'bg-wallet-negative/20 text-wallet-negative'
                                 : 'bg-muted text-muted-foreground'
                             }

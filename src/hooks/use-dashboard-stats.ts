@@ -45,11 +45,11 @@ export function useDashboardStats(startDate?: string | null, endDate?: string | 
           .from('students')
           .select('student_id', { count: 'exact', head: true })
           .lte('wallet_balance', 2),
-        // Lessons filtered by date range
+        // Lessons filtered by date range (from scheduled_lessons)
         (() => {
-          let q = supabase.from('lessons_log').select('lesson_id', { count: 'exact', head: true });
-          if (startDate) q = q.gte('date', startDate);
-          if (endDate) q = q.lte('date', endDate + 'T23:59:59');
+          let q = supabase.from('scheduled_lessons').select('scheduled_lesson_id', { count: 'exact', head: true }).eq('status', 'completed');
+          if (startDate) q = q.gte('scheduled_date', startDate);
+          if (endDate) q = q.lte('scheduled_date', endDate);
           return q;
         })(),
       ]);
