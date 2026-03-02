@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { useNavigate, NavLink } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTeacherUnreadCount } from '@/hooks/use-notifications';
 import { 
   SidebarProvider, 
   SidebarTrigger, 
@@ -20,6 +21,7 @@ import {
   User,
   CalendarDays,
   Users,
+  Bell,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TeacherStatsBar } from '@/components/teacher/TeacherStatsBar';
@@ -28,6 +30,7 @@ const teacherNavItems = [
   { title: 'My Schedule', url: '/teacher/schedule', icon: CalendarDays },
   { title: 'My Students', url: '/teacher/students', icon: GraduationCap },
   { title: 'Trial Lessons', url: '/teacher/trial-lessons', icon: Users },
+  { title: 'Notifications', url: '/teacher/notifications', icon: Bell },
   { title: 'My Payroll', url: '/teacher/payroll', icon: Wallet },
 ];
 
@@ -38,6 +41,7 @@ interface TeacherLayoutProps {
 export function TeacherLayout({ children }: TeacherLayoutProps) {
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
+  const { data: teacherUnreadCount } = useTeacherUnreadCount(profile?.teacher_id);
 
   const handleSignOut = async () => {
     await signOut();
@@ -75,6 +79,11 @@ export function TeacherLayout({ children }: TeacherLayoutProps) {
                     >
                       <item.icon className="w-5 h-5" />
                       {item.title}
+                      {item.title === 'Notifications' && teacherUnreadCount && teacherUnreadCount > 0 && (
+                        <Badge className="ml-auto bg-destructive text-destructive-foreground">
+                          {teacherUnreadCount}
+                        </Badge>
+                      )}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
