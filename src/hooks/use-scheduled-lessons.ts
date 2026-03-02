@@ -89,13 +89,11 @@ export function useMarkScheduledLesson() {
       if (fetchError) throw fetchError;
 
       // Call mark_lesson_taken RPC
-      // Map to RPC expected values: 'Taken' or 'Absent'
-      const rpcStatus = status === 'completed' ? 'Taken' : 'Absent';
       const { data: result, error: rpcError } = await supabase.rpc('mark_lesson_taken', {
         p_student_id: scheduledLesson.student_id,
         p_class_id: scheduledLesson.class_id,
         p_teacher_id: scheduledLesson.teacher_id,
-        p_status: rpcStatus,
+        p_status: status,
         p_notes: notes || null,
       });
 
