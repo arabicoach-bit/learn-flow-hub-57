@@ -284,8 +284,9 @@ export function useAddScheduledLesson() {
 
       if (error) throw error;
 
-      // Adding individual lessons does NOT change wallet.
-      // Wallet only changes via: packages (+N), completed (-1), delete scheduled (-1)
+      // Recalculate wallet since wallet = count of 'scheduled' lessons
+      await supabase.rpc('recalculate_student_wallet', { p_student_id: input.student_id });
+
       return data;
     },
     onSuccess: () => {
@@ -294,6 +295,10 @@ export function useAddScheduledLesson() {
       queryClient.invalidateQueries({ queryKey: ['teacher-tomorrows-lessons'] });
       queryClient.invalidateQueries({ queryKey: ['teacher-week-lessons'] });
       queryClient.invalidateQueries({ queryKey: ['teacher-past-7-days-unmarked'] });
+      queryClient.invalidateQueries({ queryKey: ['students'] });
+      queryClient.invalidateQueries({ queryKey: ['student'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
     },
   });
 }
