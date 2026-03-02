@@ -1,13 +1,12 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Mail, Phone, DollarSign, BookOpen, Users, Receipt, GraduationCap, Clock, CalendarDays, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, DollarSign, GraduationCap, BookOpen, TrendingUp, Receipt } from 'lucide-react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useTeacher, useUpdateTeacher } from '@/hooks/use-teachers';
-
 import { useScheduledLessons } from '@/hooks/use-scheduled-lessons';
 import { useStudents } from '@/hooks/use-students';
-import { useTeacherLiveStats } from '@/hooks/use-teacher-live-stats';
+import { useTeacherTotalHours } from '@/hooks/use-teacher-total-hours';
 import { Button } from '@/components/ui/button';
-import { getWalletColor, getStatusDisplayLabel, getStatusBadgeClass } from '@/lib/wallet-utils';
+import { getWalletColor, getStatusDisplayLabel } from '@/lib/wallet-utils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,30 +18,82 @@ import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import { YearMonthFilter, getDefaultFilter, getFilterDateRange, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
 
-interface PayrollRecord {
-  payroll_id: string;
-  period_start: string;
-  period_end: string;
-  lessons_taken: number | null;
-  rate_per_lesson: number;
-  amount_due: number;
-  status: string | null;
-  created_at: string | null;
+interface SalaryHistoryRecord {
+  monthLabel: string;
+  monthDate: string;
+  lessons: number;
+  hours: number;
+  salary: number;
+  isPending: boolean;
 }
 
-function useTeacherPayroll(teacherId: string) {
+function useTeacherSalaryHistory(teacherId: string) {
   return useQuery({
-    queryKey: ['teacher-payroll', teacherId],
+    queryKey: ['teacher-salary-history', teacherId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('teachers_payroll')
-        .select('*')
+      const { data: lessons } = await supabase
+        .from('scheduled_lessons')
+        .select('scheduled_date, duration_minutes')
         .eq('teacher_id', teacherId)
-        .order('period_start', { ascending: false });
+        .eq('status', 'completed')
+        .order('scheduled_date', { ascending: false });
 
-      if (error) throw error;
-      return data as PayrollRecord[];
+      const { data: trials } = await supabase
+        .from('trial_lessons_log')
+        .select('lesson_date')
+        .eq('teacher_id', teacherId)
+        .eq('status', 'completed');
+
+      const { data: teacher } = await supabase
+        .from('teachers')
+        .select('rate_per_lesson')
+        .eq('teacher_id', teacherId)
+        .single();
+
+      const rate = teacher?.rate_per_lesson || 0;
+
+      const monthMap: Record<string, { monthLabel: string; monthDate: string; lessons: number; minutes: number; trialCount: number }> = {};
+
+      lessons?.forEach(l => {
+        const monthKey = l.scheduled_date.slice(0, 7);
+        const monthLabel = format(new Date(l.scheduled_date.slice(0, 7) + '-01'), 'MMM yyyy');
+        if (!monthMap[monthKey]) {
+          monthMap[monthKey] = { monthLabel, monthDate: monthKey, lessons: 0, minutes: 0, trialCount: 0 };
+        }
+        monthMap[monthKey].lessons += 1;
+        monthMap[monthKey].minutes += l.duration_minutes || 0;
+      });
+
+      trials?.forEach(t => {
+        const monthKey = t.lesson_date.slice(0, 7);
+        const monthLabel = format(new Date(t.lesson_date.slice(0, 7) + '-01'), 'MMM yyyy');
+        if (!monthMap[monthKey]) {
+          monthMap[monthKey] = { monthLabel, monthDate: monthKey, lessons: 0, minutes: 0, trialCount: 0 };
+        }
+        monthMap[monthKey].trialCount += 1;
+      });
+
+      const currentMonth = format(new Date(), 'yyyy-MM');
+
+      return Object.values(monthMap)
+        .sort((a, b) => b.monthDate.localeCompare(a.monthDate))
+        .map(m => {
+          const regularHours = m.minutes / 60;
+          const trialHours = m.trialCount * 0.5;
+          const totalHours = regularHours + trialHours;
+          const totalLessons = m.lessons + m.trialCount;
+          return {
+            monthLabel: m.monthLabel,
+            monthDate: m.monthDate,
+            lessons: totalLessons,
+            hours: totalHours,
+            salary: Math.round(totalHours * rate * 100) / 100,
+            isPending: m.monthDate === currentMonth,
+          } as SalaryHistoryRecord;
+        });
     },
     enabled: !!teacherId,
   });
@@ -53,12 +104,15 @@ export default function TeacherDetail() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { data: teacher, isLoading: teacherLoading } = useTeacher(id || '');
-  
+
   const { data: lessons } = useScheduledLessons({ teacher_id: id });
-  const { data: payroll } = useTeacherPayroll(id || '');
+  const { data: salaryHistory } = useTeacherSalaryHistory(id || '');
   const { data: allStudents } = useStudents();
-  const { data: liveStats, isLoading: liveStatsLoading } = useTeacherLiveStats(id || '');
-  
+
+  const [filter, setFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
+  const { startDate, endDate } = getFilterDateRange(filter);
+  const { data: filteredStats } = useTeacherTotalHours(id, startDate, endDate);
+
   const teacherStudents = allStudents?.filter(s => s.teacher_id === id) || [];
   const updateTeacher = useUpdateTeacher();
 
@@ -81,8 +135,6 @@ export default function TeacherDetail() {
     }
   }, [teacher]);
 
-  
-
   const handleSave = async () => {
     if (!id) return;
     try {
@@ -97,14 +149,6 @@ export default function TeacherDetail() {
       setIsEditing(false);
     } catch (error) {
       toast({ title: 'Error updating teacher', variant: 'destructive' });
-    }
-  };
-
-  const getPayrollStatusColor = (status: string | null) => {
-    switch (status) {
-      case 'Paid': return 'bg-wallet-positive/20 text-wallet-positive';
-      case 'Approved': return 'bg-wallet-warning/20 text-wallet-warning';
-      default: return 'bg-muted text-muted-foreground';
     }
   };
 
@@ -124,8 +168,8 @@ export default function TeacherDetail() {
       <AdminLayout>
         <div className="text-center py-12">
           <p className="text-muted-foreground">Teacher not found</p>
-          <Button variant="ghost" onClick={() => navigate('/admin/teachers')} className="mt-4">
-            Back to Teachers
+          <Button variant="ghost" onClick={() => navigate(-1)} className="mt-4">
+            Back
           </Button>
         </div>
       </AdminLayout>
@@ -136,7 +180,7 @@ export default function TeacherDetail() {
     <AdminLayout>
       <div className="space-y-6 animate-fade-in">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/admin/teachers')}>
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="flex-1">
@@ -153,10 +197,11 @@ export default function TeacherDetail() {
                 </span>
               )}
               <span className="flex items-center gap-1">
-                <DollarSign className="w-4 h-4" /> {formatSalary(teacher.rate_per_lesson)} / lesson
+                <DollarSign className="w-4 h-4" /> {formatSalary(teacher.rate_per_lesson)} / hour
               </span>
             </div>
           </div>
+          <YearMonthFilter value={filter} onChange={setFilter} />
           <Button variant={isEditing ? 'outline' : 'default'} onClick={() => setIsEditing(!isEditing)}>
             {isEditing ? 'Cancel' : 'Edit'}
           </Button>
@@ -171,34 +216,19 @@ export default function TeacherDetail() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Name</Label>
-                  <Input
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  />
+                  <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
                 </div>
                 <div className="space-y-2">
                   <Label>Phone</Label>
-                  <Input
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  />
+                  <Input value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
                 </div>
                 <div className="space-y-2">
                   <Label>Email</Label>
-                  <Input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  />
+                  <Input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Rate per Lesson (EGP)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={formData.rate_per_lesson}
-                    onChange={(e) => setFormData({ ...formData, rate_per_lesson: e.target.value })}
-                  />
+                  <Label>Rate per Hour (EGP)</Label>
+                  <Input type="number" step="0.01" value={formData.rate_per_lesson} onChange={(e) => setFormData({ ...formData, rate_per_lesson: e.target.value })} />
                 </div>
               </div>
               <Button onClick={handleSave} disabled={updateTeacher.isPending}>
@@ -208,8 +238,8 @@ export default function TeacherDetail() {
           </Card>
         )}
 
-        {/* Live Performance Metrics */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        {/* Performance Metrics */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card className="glass-card">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
@@ -226,38 +256,12 @@ export default function TeacherDetail() {
           <Card className="glass-card">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
-                <div className="p-3 rounded-lg bg-accent">
-                  <CalendarDays className="w-5 h-5 text-accent-foreground" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{liveStatsLoading ? '...' : liveStats?.todayLessons.length || 0}</p>
-                  <p className="text-sm text-muted-foreground">Today's Lessons</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="glass-card">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
                 <div className="p-3 rounded-lg bg-secondary">
-                  <Clock className="w-5 h-5 text-secondary-foreground" />
+                  <BookOpen className="w-5 h-5 text-secondary-foreground" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{liveStatsLoading ? '...' : `${liveStats?.weeklyHours || 0}h`}</p>
-                  <p className="text-sm text-muted-foreground">Weekly Hours</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="glass-card">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="p-3 rounded-lg bg-muted">
-                  <BookOpen className="w-5 h-5 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{liveStatsLoading ? '...' : `${liveStats?.monthlyHours || 0}h`}</p>
-                  <p className="text-sm text-muted-foreground">Monthly Hours</p>
+                  <p className="text-2xl font-bold">{filteredStats ? `${filteredStats.totalHours.toFixed(1)}h` : '...'}</p>
+                  <p className="text-sm text-muted-foreground">Hours</p>
                 </div>
               </div>
             </CardContent>
@@ -269,8 +273,8 @@ export default function TeacherDetail() {
                   <TrendingUp className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{liveStatsLoading ? '...' : liveStats?.monthlyLessonsCount || 0}</p>
-                  <p className="text-sm text-muted-foreground">Lessons This Month</p>
+                  <p className="text-2xl font-bold">{filteredStats?.totalLessons ?? '...'}</p>
+                  <p className="text-sm text-muted-foreground">Lessons</p>
                 </div>
               </div>
             </CardContent>
@@ -282,66 +286,19 @@ export default function TeacherDetail() {
                   <Receipt className="w-5 h-5 text-accent-foreground" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{liveStatsLoading ? '...' : formatSalary(liveStats?.monthlySalary || 0)}</p>
-                  <p className="text-sm text-muted-foreground">Salary This Month</p>
+                  <p className="text-2xl font-bold">{filteredStats ? formatSalary(filteredStats.salary) : '...'}</p>
+                  <p className="text-sm text-muted-foreground">Salary</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Today's Lessons */}
-        {liveStats && liveStats.todayLessons.length > 0 && (
-          <Card className="glass-card">
-            <CardHeader>
-              <CardTitle className="font-display flex items-center gap-2 text-lg">
-                <CalendarDays className="w-5 h-5" />
-                Today's Lessons
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {liveStats.todayLessons.map((lesson) => (
-                  <div key={lesson.scheduled_lesson_id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border/50">
-                    <div className="flex items-center gap-3">
-                      <div className="text-center min-w-[60px]">
-                        <p className="text-sm font-bold">{lesson.scheduled_time?.slice(0, 5)}</p>
-                        <p className="text-xs text-muted-foreground">{lesson.duration_minutes} min</p>
-                      </div>
-                      <div>
-                        <p className="font-medium">{lesson.student_name}</p>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          {lesson.program_name && <span>{lesson.program_name}</span>}
-                          {lesson.student_level && <span>• {lesson.student_level}</span>}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {lesson.wallet_balance !== null && (
-                        <span className={`text-xs font-medium px-2 py-0.5 rounded ${getWalletColor(lesson.wallet_balance)}`}>
-                          {lesson.wallet_balance} lessons
-                        </span>
-                      )}
-                      <Badge variant="outline" className={
-                        lesson.status === 'completed' ? 'bg-wallet-positive/20 text-wallet-positive' :
-                        lesson.status === 'scheduled' ? 'bg-primary/20 text-primary' :
-                        'bg-muted text-muted-foreground'
-                      }>
-                        {lesson.status === 'completed' ? 'Done' : lesson.status === 'scheduled' ? 'Pending' : lesson.status}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         <Tabs defaultValue="students" className="space-y-4">
           <TabsList>
             <TabsTrigger value="students">Students ({teacherStudents.length})</TabsTrigger>
             <TabsTrigger value="lessons">Lessons ({lessons?.length || 0})</TabsTrigger>
-            <TabsTrigger value="payroll">Payroll ({payroll?.length || 0})</TabsTrigger>
+            <TabsTrigger value="payroll">Payroll ({salaryHistory?.length || 0})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="students">
@@ -392,11 +349,7 @@ export default function TeacherDetail() {
                           </Badge>
                         </td>
                         <td>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => navigate(`/admin/students/${student.student_id}`)}
-                          >
+                          <Button variant="ghost" size="sm" onClick={() => navigate(`/admin/students/${student.student_id}`)}>
                             View
                           </Button>
                         </td>
@@ -408,7 +361,6 @@ export default function TeacherDetail() {
             </Card>
           </TabsContent>
 
-
           <TabsContent value="lessons">
             <Card className="glass-card overflow-hidden">
               <table className="data-table">
@@ -416,7 +368,7 @@ export default function TeacherDetail() {
                   <tr>
                     <th>Date</th>
                     <th>Student</th>
-                    <th>Class</th>
+                    <th>Duration</th>
                     <th>Status</th>
                   </tr>
                 </thead>
@@ -432,7 +384,7 @@ export default function TeacherDetail() {
                       <tr key={lesson.scheduled_lesson_id}>
                         <td>{formatDate(lesson.scheduled_date)}</td>
                         <td>{lesson.students?.name || '-'}</td>
-                        <td>{lesson.classes?.name || '-'}</td>
+                        <td>{lesson.duration_minutes || '-'} min</td>
                         <td>
                           <Badge
                             variant="outline"
@@ -460,36 +412,43 @@ export default function TeacherDetail() {
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Period</th>
+                    <th>Month</th>
                     <th>Lessons</th>
-                    <th>Rate</th>
-                    <th>Amount Due</th>
+                    <th>Hours</th>
+                    <th>Salary</th>
                     <th>Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {!payroll?.length ? (
+                  {!salaryHistory?.length ? (
                     <tr>
                       <td colSpan={5} className="text-center py-8 text-muted-foreground">
-                        No payroll records
+                        No salary history yet
                       </td>
                     </tr>
                   ) : (
-                    payroll.map((record) => (
-                      <tr key={record.payroll_id}>
-                        <td>
-                          {formatDate(record.period_start)} - {formatDate(record.period_end)}
-                        </td>
-                        <td>{record.lessons_taken}</td>
-                        <td>{formatSalary(record.rate_per_lesson)}</td>
-                        <td className="font-medium">{formatSalary(record.amount_due)}</td>
-                        <td>
-                          <Badge variant="outline" className={getPayrollStatusColor(record.status)}>
-                            {record.status || 'Draft'}
-                          </Badge>
-                        </td>
+                    <>
+                      {salaryHistory.map((record) => (
+                        <tr key={record.monthDate}>
+                          <td>{record.monthLabel}</td>
+                          <td>{record.lessons}</td>
+                          <td>{record.hours.toFixed(1)}h</td>
+                          <td className="font-medium">{formatSalary(record.salary)}</td>
+                          <td>
+                            <Badge variant="outline" className={record.isPending ? 'bg-wallet-warning/20 text-wallet-warning' : 'bg-wallet-positive/20 text-wallet-positive'}>
+                              {record.isPending ? '⏳ Pending' : '✅ Paid'}
+                            </Badge>
+                          </td>
+                        </tr>
+                      ))}
+                      <tr className="font-bold border-t">
+                        <td>All Time Total</td>
+                        <td>{salaryHistory.reduce((s, r) => s + r.lessons, 0)}</td>
+                        <td>{salaryHistory.reduce((s, r) => s + r.hours, 0).toFixed(1)}h</td>
+                        <td>{formatSalary(salaryHistory.reduce((s, r) => s + r.salary, 0))}</td>
+                        <td></td>
                       </tr>
-                    ))
+                    </>
                   )}
                 </tbody>
               </table>
