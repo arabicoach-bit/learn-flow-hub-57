@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TeacherPayrollReport } from '@/components/reports/TeacherPayrollReport';
 import { PackageStatsReport } from '@/components/reports/PackageStatsReport';
 import { PerformanceTrackingReport } from '@/components/reports/PerformanceTrackingReport';
+import { YearMonthFilter, getDefaultFilter, getFilterDateRange, getFilterLabel, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
 import { useStudents } from '@/hooks/use-students';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -19,13 +21,14 @@ import { useToast } from '@/hooks/use-toast';
 export default function Reports() {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [filter, setFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
+  const { startDate, endDate } = getFilterDateRange(filter);
+
   const { data: students, isLoading: studentsLoading } = useStudents();
   const { data: packages, isLoading: packagesLoading } = usePackages();
   
-  // Filter students needing renewal (wallet <= 2)
   const renewalStudents = students?.filter(s => s.wallet_balance <= 2) || [];
   
-  // Filter completed packages
   const completedPackages = packages?.filter(p => 
     p.status === 'Completed' || p.lessons_used >= p.lessons_purchased
   ) || [];
@@ -33,10 +36,20 @@ export default function Reports() {
   return (
     <AdminLayout>
       <div className="space-y-6 animate-fade-in">
-        <div>
-          <h1 className="text-3xl font-display font-bold">Reports</h1>
-          <p className="text-muted-foreground">Generate and view analytics reports</p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-display font-bold">Reports</h1>
+            <p className="text-muted-foreground">Generate and view analytics reports</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <YearMonthFilter value={filter} onChange={setFilter} />
+          </div>
         </div>
+
+        {/* Showing label */}
+        <Badge variant="secondary" className="text-sm py-1">
+          Showing: {getFilterLabel(filter)}
+        </Badge>
 
         <Tabs defaultValue="performance">
           <TabsList>
@@ -59,11 +72,11 @@ export default function Reports() {
           </TabsList>
 
           <TabsContent value="performance" className="mt-6">
-            <PerformanceTrackingReport />
+            <PerformanceTrackingReport startDate={startDate} endDate={endDate} />
           </TabsContent>
 
           <TabsContent value="statistics" className="mt-6">
-            <PackageStatsReport />
+            <PackageStatsReport startDate={startDate} endDate={endDate} />
           </TabsContent>
 
           <TabsContent value="payroll" className="mt-6">
@@ -105,18 +118,18 @@ export default function Reports() {
                           <TableCell className="font-medium">{student.name}</TableCell>
                           <TableCell>{student.phone}</TableCell>
                           <TableCell>
-                            <span 
+                            <span
                               className="font-bold px-2 py-1 rounded"
-                              style={{ 
+                              style={{
                                 backgroundColor: `hsl(${getWalletColor(student.wallet_balance)} / 0.15)`,
-                                color: `hsl(${getWalletColor(student.wallet_balance)})`
+                                color: `hsl(${getWalletColor(student.wallet_balance)})`,
                               }}
                             >
                               {student.wallet_balance}
                             </span>
                           </TableCell>
                           <TableCell>
-                            <Badge 
+                            <Badge
                               variant="outline"
                               className={
                                 student.status === 'Active' ? 'status-active' :
