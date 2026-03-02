@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,7 @@ import { WeeklyScheduleCard } from '@/components/schedule/WeeklyScheduleCard';
 import { EditScheduleDialog } from '@/components/schedule/EditScheduleDialog';
 import { UpdateLessonStatusDialog } from '@/components/schedule/UpdateLessonStatusDialog';
 import { useUpdateScheduledLesson, useDeleteScheduledLesson, ScheduledLesson } from '@/hooks/use-scheduled-lessons';
+import { useStudentLessonStats } from '@/hooks/use-student-lesson-stats';
 import { toast } from 'sonner';
 import {
   Calendar, Clock, Check, X, Edit2, Save, Loader2,
@@ -48,37 +49,10 @@ export function StudentLessonsView({ studentId, studentName, walletBalance, role
   const deleteLesson = useDeleteScheduledLesson();
   const queryClient = useQueryClient();
 
-  // Single source of truth: all scheduled_lessons for this student
-  const { data: lessons, isLoading } = useQuery({
-    queryKey: ['student-all-lessons', studentId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('scheduled_lessons')
-        .select('*, teachers(name)')
-        .eq('student_id', studentId)
-        .order('scheduled_date', { ascending: false })
-        .order('scheduled_time', { ascending: false });
-      if (error) throw error;
-      return (data || []) as ScheduledLesson[];
-    },
-  });
-
-  // Stats filtered by YearMonthFilter
   const { startDate: filterStart, endDate: filterEnd } = getFilterDateRange(dateFilter);
 
-  const allStats = useMemo(() => {
-    const all = (lessons || []).filter(l => {
-      if (!filterStart || !filterEnd) return true;
-      return l.scheduled_date >= filterStart && l.scheduled_date <= filterEnd;
-    });
-    const completed = all.filter(l => l.status === 'completed').length;
-    const absent = all.filter(l => l.status === 'absent').length;
-    const scheduled = all.filter(l => l.status === 'scheduled').length;
-    const totalHours = all
-      .filter(l => l.status === 'completed')
-      .reduce((sum, l) => sum + (l.duration_minutes || 45) / 60, 0);
-    return { completed, absent, scheduled, totalHours, total: all.length };
-  }, [lessons, filterStart, filterEnd]);
+  // Single shared hook for all stats — identical for admin & teacher
+  const { stats: allStats, lessons, isLoading } = useStudentLessonStats(studentId, filterStart, filterEnd);
 
   // Filtered lessons for the list
   const filteredLessons = useMemo(() => {
@@ -99,7 +73,8 @@ export function StudentLessonsView({ studentId, studentName, walletBalance, role
     return { completed, absent, hours };
   }, [filteredLessons]);
 
-  const progressPercent = allStats.total > 0 ? ((allStats.completed + allStats.absent) / allStats.total) * 100 : 0;
+  const totalLessons = allStats.completedCount + allStats.absentCount + allStats.scheduledCount;
+  const progressPercent = totalLessons > 0 ? ((allStats.completedCount + allStats.absentCount) / totalLessons) * 100 : 0;
 
   const formatTime = (time: string) => {
     const [hours, minutes] = time.split(':');
@@ -193,27 +168,33 @@ export function StudentLessonsView({ studentId, studentName, walletBalance, role
         </div>
       )}
 
-      {/* Statistics — filtered by YearMonthFilter */}
+      {/* Statistics — 4 stat cards identical for admin & teacher */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3 text-center">
-          <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{allStats.completed}</p>
+          <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{allStats.completedCount}</p>
           <p className="text-xs text-muted-foreground">Completed</p>
         </div>
         <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-center">
-          <p className="text-2xl font-bold text-red-600 dark:text-red-400">{allStats.absent}</p>
+          <p className="text-2xl font-bold text-red-600 dark:text-red-400">{allStats.absentCount}</p>
           <p className="text-xs text-muted-foreground">Absent</p>
+        </div>
+        <div className="rounded-lg bg-blue-500/10 border border-blue-500/20 p-3 text-center">
+          <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{allStats.scheduledCount}</p>
+          <p className="text-xs text-muted-foreground">Scheduled</p>
         </div>
         <div className="rounded-lg bg-purple-500/10 border border-purple-500/20 p-3 text-center">
           <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{allStats.totalHours.toFixed(1)}</p>
           <p className="text-xs text-muted-foreground">Total Hours</p>
         </div>
-        <div className={`rounded-lg p-3 text-center ${walletBalance <= 0 ? 'bg-red-500/10 border border-red-500/20' : walletBalance <= 2 ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-emerald-500/10 border border-emerald-500/20'}`}>
-          <p className={`text-2xl font-bold flex items-center justify-center gap-1 ${walletBalance <= 0 ? 'text-red-600 dark:text-red-400' : walletBalance <= 2 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
-            {walletBalance <= 0 && <AlertTriangle className="w-4 h-4" />}
-            {walletBalance <= 0 ? 'Overdue' : walletBalance}
-          </p>
-          <p className="text-xs text-muted-foreground">Wallet (Scheduled)</p>
-        </div>
+      </div>
+
+      {/* Wallet Balance Display */}
+      <div className={`rounded-lg p-3 flex items-center justify-between ${allStats.walletBalance <= 0 ? 'bg-red-500/10 border border-red-500/20' : allStats.walletBalance <= 2 ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-emerald-500/10 border border-emerald-500/20'}`}>
+        <span className="text-sm text-muted-foreground">Wallet Balance</span>
+        <span className={`text-lg font-bold flex items-center gap-1 ${allStats.walletBalance <= 0 ? 'text-red-600 dark:text-red-400' : allStats.walletBalance <= 2 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+          {allStats.walletBalance <= 0 && <AlertTriangle className="w-4 h-4" />}
+          {allStats.walletBalance <= 0 ? 'Overdue' : allStats.walletBalance <= 2 ? `${allStats.walletBalance} — Low Credit` : `${allStats.walletBalance} lessons remaining`}
+        </span>
       </div>
 
       {/* Progress */}
@@ -221,7 +202,7 @@ export function StudentLessonsView({ studentId, studentName, walletBalance, role
         <CardContent className="pt-6">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm text-muted-foreground">Progress</p>
-            <p className="text-sm font-bold">{allStats.completed + allStats.absent} / {allStats.total}</p>
+            <p className="text-sm font-bold">{allStats.completedCount + allStats.absentCount} / {totalLessons}</p>
           </div>
           <Progress value={progressPercent} className="h-2" />
         </CardContent>
