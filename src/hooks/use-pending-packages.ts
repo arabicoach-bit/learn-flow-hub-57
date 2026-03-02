@@ -52,12 +52,12 @@ export function useActivatePackage() {
 
   return useMutation({
     mutationFn: async (packageId: string) => {
-      // 1. Get package details with student and schedules
+      // 1. Get package details with student
       const { data: pkg, error: pkgError } = await supabase
         .from('packages')
         .select(`
           *,
-          students!packages_student_id_fkey(student_id, name, wallet_balance, teacher_id, total_paid, number_of_renewals, status)
+          students!packages_student_id_fkey(student_id, name, teacher_id, total_paid, number_of_renewals)
         `)
         .eq('package_id', packageId)
         .single();
@@ -66,17 +66,8 @@ export function useActivatePackage() {
       if (!pkg) throw new Error('Package not found');
 
       const student = pkg.students as any;
-      const currentWallet = student.wallet_balance || 0;
-      
-      // 2. Calculate debt coverage
-      let debtCovered = 0;
-      if (currentWallet < 0) {
-        debtCovered = Math.min(Math.abs(currentWallet), pkg.lessons_purchased);
-      }
-      
-      const newWallet = currentWallet + pkg.lessons_purchased;
 
-      // 3. Update package status
+      // 2. Update package status
       const { error: updatePkgError } = await supabase
         .from('packages')
         .update({
@@ -84,19 +75,18 @@ export function useActivatePackage() {
           admin_approved: true,
           approved_at: new Date().toISOString(),
           payment_received: true,
-          lessons_used: debtCovered,
         })
         .eq('package_id', packageId);
 
       if (updatePkgError) throw updatePkgError;
 
-      // 4. Get lesson schedules for this package
+      // 3. Get lesson schedules for this package
       const { data: schedules } = await supabase
         .from('lesson_schedules')
         .select('*')
         .eq('package_id', packageId);
 
-      // 5. Generate scheduled lessons if we have schedule templates and a teacher
+      // 4. Generate scheduled lessons if we have schedule templates and a teacher
       if (schedules && schedules.length > 0 && student.teacher_id && pkg.start_date) {
         const scheduleDays = schedules.map(s => ({
           day: s.day_of_week,
@@ -115,14 +105,14 @@ export function useActivatePackage() {
         });
       }
 
-      // 6. Update student wallet and status
-      const newStatus = newWallet > 0 ? 'Active' : 'Temporary Stop';
+      // 5. Recalculate wallet from DB (single source of truth)
+      await supabase.rpc('recalculate_student_wallet', { p_student_id: student.student_id });
+
+      // 6. Update student metadata (non-wallet fields)
       const { error: updateStudentError } = await supabase
         .from('students')
         .update({
-          wallet_balance: newWallet,
           current_package_id: packageId,
-          status: newStatus,
           total_paid: (student.total_paid || 0) + pkg.amount,
           number_of_renewals: (student.number_of_renewals || 0) + 1,
         })
@@ -130,16 +120,22 @@ export function useActivatePackage() {
 
       if (updateStudentError) throw updateStudentError;
 
+      // Get updated wallet for toast message
+      const { data: updatedStudent } = await supabase
+        .from('students')
+        .select('wallet_balance')
+        .eq('student_id', student.student_id)
+        .single();
+
       return {
         studentName: student.name,
-        debtCovered,
-        newWallet,
+        newWallet: updatedStudent?.wallet_balance || 0,
         lessonsScheduled: pkg.lessons_purchased,
       };
     },
     onSuccess: (data) => {
       toast.success(`Package activated for ${data.studentName}!`, {
-        description: `New balance: ${data.newWallet} lessons. ${data.debtCovered > 0 ? `Debt covered: ${data.debtCovered} lessons.` : ''}`,
+        description: `New balance: ${data.newWallet} lessons.`,
       });
       queryClient.invalidateQueries({ queryKey: ['pending-packages'] });
       queryClient.invalidateQueries({ queryKey: ['packages'] });
