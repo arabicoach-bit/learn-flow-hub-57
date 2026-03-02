@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { usePackages, usePackageSummary, PackageSummary } from '@/hooks/use-package-summary';
+import { usePackages, usePackageSummary, useAutoCompletePackages, PackageSummary } from '@/hooks/use-package-summary';
 import { formatCurrency, formatDate } from '@/lib/wallet-utils';
 import { FileText, Download, Copy, Search, Loader2, CheckCircle2, XCircle, Clock, Package } from 'lucide-react';
 import { toast } from 'sonner';
@@ -33,6 +33,13 @@ export default function PackageSummaries() {
     search: searchQuery || undefined,
   });
   const { data: summary, isLoading: summaryLoading } = usePackageSummary(selectedPackageId);
+  const autoComplete = useAutoCompletePackages();
+
+  // Auto-run package completion check on page load (silent)
+  useEffect(() => {
+    autoComplete.mutate(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (summary) {
@@ -387,6 +394,19 @@ export default function PackageSummaries() {
                   <SelectItem value="Active">Active</SelectItem>
                 </SelectContent>
               </Select>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => autoComplete.mutate(false)}
+                disabled={autoComplete.isPending}
+                className="gap-2 text-amber-600 border-amber-500/30 hover:bg-amber-500/10"
+              >
+                {autoComplete.isPending
+                  ? <Loader2 className="w-4 h-4 animate-spin" />
+                  : <CheckCircle2 className="w-4 h-4" />
+                }
+                Check & Complete Packages
+              </Button>
             </div>
           </CardContent>
         </Card>
