@@ -58,29 +58,25 @@ export default function AdminDashboard() {
           table: 'notifications',
         },
         (payload: any) => {
-          // Show toast notification for critical alerts
-          if (payload.new?.type === 'blocked') {
-            toast.error(
-              `🚫 Student ${payload.new.student_name || 'Unknown'} has LEFT!`,
-              {
-                duration: 10000,
-                action: {
-                  label: 'View',
-                  onClick: () => navigate('/notifications'),
-                },
-              }
-            );
-          } else if (payload.new?.type === 'grace_mode') {
-            toast.warning(
-              `⚠️ Student ${payload.new.student_name || 'Unknown'} entered Temporary Stop`,
-              {
-                duration: 5000,
-              }
-            );
+          const type = payload.new?.type;
+          const studentName = payload.new?.student_name || 'Unknown';
+          
+          if (type === 'blocked') {
+            toast.error(`🚫 Student ${studentName} has LEFT!`, { duration: 10000, action: { label: 'View', onClick: () => navigate('/admin/notifications') } });
+          } else if (type === 'grace_mode') {
+            toast.warning(`⚠️ Student ${studentName} entered Temporary Stop`, { duration: 5000 });
+          } else if (type === 'lesson_completed') {
+            toast.success(`✅ Lesson: ${studentName}`, { duration: 4000 });
+          } else if (type === 'trial_completed') {
+            toast.info(`🎓 Trial done: ${studentName} - update result!`, { duration: 6000 });
+          } else if (type === 'new_package') {
+            toast.success(`📦 New package: ${studentName}`, { duration: 4000 });
+          } else if (type === 'low_balance') {
+            toast.warning(`⚠️ Low credit: ${studentName}`, { duration: 5000 });
           }
           
-          // Refresh notifications list
           queryClient.invalidateQueries({ queryKey: ['notifications'] });
+          queryClient.invalidateQueries({ queryKey: ['notifications-all'] });
           queryClient.invalidateQueries({ queryKey: ['notifications-unread-count'] });
         }
       )
@@ -174,7 +170,7 @@ export default function AdminDashboard() {
               <Bell className="w-5 h-5" />
               Recent Notifications
             </CardTitle>
-            <Button variant="ghost" size="sm" onClick={() => navigate('/notifications')}>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/admin/notifications')}>
               View All
             </Button>
           </CardHeader>
@@ -193,7 +189,7 @@ export default function AdminDashboard() {
                   return (
                     <div
                       key={notification.notification_id}
-                      onClick={() => navigate('/notifications')}
+                      onClick={() => navigate('/admin/notifications')}
                       className={`p-4 rounded-lg border transition-all cursor-pointer hover:shadow-md ${
                         notification.is_read
                           ? 'bg-muted/30 border-border/50'

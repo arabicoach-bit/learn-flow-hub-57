@@ -21,7 +21,7 @@ import TeacherDetail from "./pages/TeacherDetail";
 
 import Reports from "./pages/Reports";
 
-import Notifications from "./pages/Notifications";
+import AdminNotifications from "./pages/admin/Notifications";
 import PackageSummaries from "./pages/admin/PackageSummaries";
 import TrialStudents from "./pages/admin/TrialStudents";
 import Leads from "./pages/Leads";
@@ -34,6 +34,7 @@ import TeacherSchedule from "./pages/teacher/TeacherSchedule";
 import TeacherStudents from "./pages/teacher/TeacherStudents";
 import TeacherPayroll from "./pages/teacher/TeacherPayroll";
 import TeacherTrialLessons from "./pages/teacher/TeacherTrialLessons";
+import TeacherNotifications from "./pages/teacher/TeacherNotifications";
 
 import NotFound from "./pages/NotFound";
 
@@ -74,7 +75,7 @@ const AppRoutes = () => (
     
     <Route path="/admin/reports" element={<ProtectedRoute allowedRoles={['admin']}><Reports /></ProtectedRoute>} />
     
-    <Route path="/admin/notifications" element={<ProtectedRoute allowedRoles={['admin']}><Notifications /></ProtectedRoute>} />
+    <Route path="/admin/notifications" element={<ProtectedRoute allowedRoles={['admin']}><AdminNotifications /></ProtectedRoute>} />
     <Route path="/admin/reports/package-summaries" element={<ProtectedRoute allowedRoles={['admin']}><PackageSummaries /></ProtectedRoute>} />
     <Route path="/admin/trial-students" element={<ProtectedRoute allowedRoles={['admin']}><TrialStudents /></ProtectedRoute>} />
     <Route path="/admin/leads" element={<ProtectedRoute allowedRoles={['admin']}><Leads /></ProtectedRoute>} />
@@ -88,6 +89,7 @@ const AppRoutes = () => (
     <Route path="/teacher/students" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherStudents /></ProtectedRoute>} />
     <Route path="/teacher/payroll" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherPayroll /></ProtectedRoute>} />
     <Route path="/teacher/trial-lessons" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherTrialLessons /></ProtectedRoute>} />
+    <Route path="/teacher/notifications" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherNotifications /></ProtectedRoute>} />
     
     {/* Fallback */}
     <Route path="*" element={<NotFound />} />
