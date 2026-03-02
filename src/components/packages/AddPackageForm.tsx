@@ -249,7 +249,7 @@ export function AddPackageForm({ studentId, studentName, currentWallet, onSucces
             <CardTitle className="text-lg flex items-center gap-2"><Calendar className="w-5 h-5" />Weekly Schedule</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-end gap-3">
               <div className="w-full sm:w-48">
                 <Label>Day</Label>
                 <Select value={newDay.toString()} onValueChange={(v) => setNewDay(parseInt(v))}>
@@ -257,16 +257,17 @@ export function AddPackageForm({ studentId, studentName, currentWallet, onSucces
                   <SelectContent>{DAYS_OF_WEEK.map((day) => <SelectItem key={day.value} value={day.value.toString()}>{day.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div className="flex flex-row gap-2 w-full sm:w-auto">
-                <div className="flex-1">
-                  <Label>Time</Label>
-                  <div className="relative">
-                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input type="time" value={newTime} onChange={(e) => setNewTime(e.target.value)} className="pl-10" />
-                  </div>
+              <div className="w-full sm:flex-1">
+                <Label>Time</Label>
+                <div className="relative">
+                  <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input type="time" value={newTime} onChange={(e) => setNewTime(e.target.value)} className="pl-10" />
                 </div>
-                <Button type="button" onClick={addScheduleDay} size="icon" className="shrink-0 h-12 w-12 sm:h-10 sm:w-10 mt-auto"><Plus className="w-4 h-4" /></Button>
               </div>
+              <Button type="button" onClick={addScheduleDay} className="w-full sm:w-10 sm:h-10 sm:p-0">
+                <Plus className="w-4 h-4 sm:mr-0 mr-2" />
+                <span className="sm:hidden">Add to Schedule</span>
+              </Button>
             </div>
 
             {weeklySchedule.length > 0 ? (
