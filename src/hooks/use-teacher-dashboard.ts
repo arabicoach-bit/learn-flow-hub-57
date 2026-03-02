@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { format, startOfMonth, endOfMonth, subMonths, subDays } from 'date-fns';
+import { fetchTeacherTotalHours } from '@/hooks/use-teacher-total-hours';
 
 export interface TeacherLesson {
   scheduled_lesson_id: string;
@@ -63,7 +64,7 @@ export function useTodaysTeacherLessons() {
         student_name: lesson.students?.name || 'Unknown',
         wallet_balance: lesson.students?.wallet_balance || 0,
         student_status: lesson.students?.status || 'Active',
-        scheduled_date: format(new Date(), 'yyyy-MM-dd'), // Today's date
+        scheduled_date: format(new Date(), 'yyyy-MM-dd'),
         scheduled_time: lesson.scheduled_time,
         duration_minutes: lesson.duration_minutes,
         status: lesson.status,
@@ -72,7 +73,7 @@ export function useTodaysTeacherLessons() {
       })) as TeacherLesson[];
     },
     enabled: !!teacherId,
-    refetchInterval: 60000, // Refresh every minute
+    refetchInterval: 60000,
   });
 }
 
@@ -125,7 +126,7 @@ export function usePast7DaysUnmarkedLessons() {
       })) as (TeacherLesson & { scheduled_date: string })[];
     },
     enabled: !!teacherId,
-    refetchInterval: 60000, // Refresh every minute
+    refetchInterval: 60000,
   });
 }
 
@@ -166,7 +167,7 @@ export function useTomorrowsTeacherLessons() {
         student_name: lesson.students?.name || 'Unknown',
         wallet_balance: lesson.students?.wallet_balance || 0,
         student_status: lesson.students?.status || 'Active',
-        scheduled_date: format(tomorrow, 'yyyy-MM-dd'), // Tomorrow's date
+        scheduled_date: format(tomorrow, 'yyyy-MM-dd'),
         scheduled_time: lesson.scheduled_time,
         duration_minutes: lesson.duration_minutes,
         status: lesson.status,
@@ -175,7 +176,7 @@ export function useTomorrowsTeacherLessons() {
       })) as TeacherLesson[];
     },
     enabled: !!teacherId,
-    refetchInterval: 300000, // Refresh every 5 minutes
+    refetchInterval: 300000,
   });
 }
 
@@ -229,7 +230,7 @@ export function useWeekTeacherLessons() {
       })) as (TeacherLesson & { scheduled_date: string })[];
     },
     enabled: !!teacherId,
-    refetchInterval: 300000, // Refresh every 5 minutes
+    refetchInterval: 300000,
   });
 }
 
@@ -250,107 +251,35 @@ export function useTeacherMonthlyStats() {
       const lastMonthStart = format(startOfMonth(lastMonthDate), 'yyyy-MM-dd');
       const lastMonthEnd = format(endOfMonth(lastMonthDate), 'yyyy-MM-dd');
 
-      // Get teacher rate (this is now hourly rate)
-      const { data: teacher } = await supabase
-        .from('teachers')
-        .select('rate_per_lesson, name')
-        .eq('teacher_id', teacherId)
-        .single();
-
-      const ratePerHour = teacher?.rate_per_lesson || 0;
-
-      // Get current month completed lessons from scheduled_lessons (reliable source for duration)
-      const { data: currentMonthCompleted } = await supabase
-        .from('scheduled_lessons')
-        .select('scheduled_lesson_id, duration_minutes')
-        .eq('teacher_id', teacherId)
-        .eq('status', 'completed')
-        .gte('scheduled_date', currentMonthStart)
-        .lte('scheduled_date', currentMonthEnd);
-
-      // Get last month completed lessons
-      const { data: lastMonthCompleted } = await supabase
-        .from('scheduled_lessons')
-        .select('scheduled_lesson_id, duration_minutes')
-        .eq('teacher_id', teacherId)
-        .eq('status', 'completed')
-        .gte('scheduled_date', lastMonthStart)
-        .lte('scheduled_date', lastMonthEnd);
-
-      // Get current month completed trial lessons
-      const { data: currentMonthTrials } = await supabase
-        .from('trial_lessons_log')
-        .select('trial_lesson_id, duration_minutes, teacher_payment_amount')
-        .eq('teacher_id', teacherId)
-        .eq('status', 'completed')
-        .gte('lesson_date', currentMonthStart)
-        .lte('lesson_date', currentMonthEnd);
-
-      // Get last month completed trial lessons
-      const { data: lastMonthTrials } = await supabase
-        .from('trial_lessons_log')
-        .select('trial_lesson_id, duration_minutes, teacher_payment_amount')
-        .eq('teacher_id', teacherId)
-        .eq('status', 'completed')
-        .gte('lesson_date', lastMonthStart)
-        .lte('lesson_date', lastMonthEnd);
-
-      // Calculate hours from actual lesson durations
-      const currentHours = (currentMonthCompleted || []).reduce((total, lesson) => {
-        return total + (lesson.duration_minutes || 45) / 60;
-      }, 0);
-
-      const lastHours = (lastMonthCompleted || []).reduce((total, lesson) => {
-        return total + (lesson.duration_minutes || 45) / 60;
-      }, 0);
-
-      // Trial lesson hours (always 30 min max)
-      const currentTrialHours = (currentMonthTrials || []).reduce((total, lesson) => {
-        return total + Math.min(lesson.duration_minutes || 30, 30) / 60;
-      }, 0);
-
-      const lastTrialHours = (lastMonthTrials || []).reduce((total, lesson) => {
-        return total + Math.min(lesson.duration_minutes || 30, 30) / 60;
-      }, 0);
-
-      // Trial lesson salary (use pre-calculated teacher_payment_amount)
-      const currentTrialSalary = (currentMonthTrials || []).reduce((total, lesson) => {
-        return total + (lesson.teacher_payment_amount || 0);
-      }, 0);
-
-      const lastTrialSalary = (lastMonthTrials || []).reduce((total, lesson) => {
-        return total + (lesson.teacher_payment_amount || 0);
-      }, 0);
-
-      const currentLessonsCount = (currentMonthCompleted?.length || 0) + (currentMonthTrials?.length || 0);
-      const lastLessonsCount = (lastMonthCompleted?.length || 0) + (lastMonthTrials?.length || 0);
-
-      const totalCurrentHours = currentHours + currentTrialHours;
-      const totalLastHours = lastHours + lastTrialHours;
+      // Use shared calculation for both months
+      const [current, last] = await Promise.all([
+        fetchTeacherTotalHours(teacherId, currentMonthStart, currentMonthEnd),
+        fetchTeacherTotalHours(teacherId, lastMonthStart, lastMonthEnd),
+      ]);
 
       return {
         currentMonth: {
           teacher_id: teacherId,
-          teacher_name: teacher?.name || 'Unknown',
-          rate_per_lesson: ratePerHour,
+          teacher_name: '',
+          rate_per_lesson: current.ratePerHour,
           month: format(now, 'MMMM yyyy'),
-          lessons_taught: currentLessonsCount,
-          total_hours: totalCurrentHours,
-          salary_earned: (currentHours * ratePerHour) + currentTrialSalary,
+          lessons_taught: current.totalLessons,
+          total_hours: current.totalHours,
+          salary_earned: current.salary,
         },
         lastMonth: {
           teacher_id: teacherId,
-          teacher_name: teacher?.name || 'Unknown',
-          rate_per_lesson: ratePerHour,
+          teacher_name: '',
+          rate_per_lesson: last.ratePerHour,
           month: format(lastMonthDate, 'MMMM yyyy'),
-          lessons_taught: lastLessonsCount,
-          total_hours: totalLastHours,
-          salary_earned: (lastHours * ratePerHour) + lastTrialSalary,
+          lessons_taught: last.totalLessons,
+          total_hours: last.totalHours,
+          salary_earned: last.salary,
         },
       };
     },
     enabled: !!teacherId,
-    refetchInterval: 5000, // Refresh every 5 seconds for real-time updates
+    refetchInterval: 5000,
   });
 }
 

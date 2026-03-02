@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { startOfMonth, endOfMonth, format } from 'date-fns';
+import { fetchAllTeachersTotalHours } from '@/hooks/use-teacher-total-hours';
 
 export interface StudentStats {
   totalStudents: number;
@@ -147,15 +148,12 @@ export function useTeacherPerformance() {
 
       if (teachersError) throw teachersError;
 
-      // Fetch completed lessons from scheduled_lessons (only completed count toward salary)
-      const { data: completedLessons, error: lessonsError } = await supabase
-        .from('scheduled_lessons')
-        .select('teacher_id, duration_minutes')
-        .eq('status', 'completed')
-        .gte('scheduled_date', startDate)
-        .lte('scheduled_date', endDate);
+      const teacherIds = (teachers || []).map(t => t.teacher_id);
 
-      if (lessonsError) throw lessonsError;
+      // Use shared batch calculation
+      const hoursByTeacher = teacherIds.length > 0
+        ? await fetchAllTeachersTotalHours(teacherIds, startDate, endDate)
+        : {};
 
       // Fetch students per teacher
       const { data: students, error: studentsError } = await supabase
@@ -172,29 +170,11 @@ export function useTeacherPerformance() {
 
       if (trialError) throw trialError;
 
-      // Aggregate completed lessons per teacher
-      const teacherLessonStats: Record<string, { count: number; totalMinutes: number }> = {};
-      completedLessons?.forEach(l => {
-        if (l.teacher_id) {
-          if (!teacherLessonStats[l.teacher_id]) {
-            teacherLessonStats[l.teacher_id] = { count: 0, totalMinutes: 0 };
-          }
-          teacherLessonStats[l.teacher_id].count += 1;
-          teacherLessonStats[l.teacher_id].totalMinutes += l.duration_minutes || 45;
-        }
-      });
-
       // Calculate performance for each teacher
       const performance: TeacherPerformance[] = teachers?.map((teacher) => {
-        const stats = teacherLessonStats[teacher.teacher_id] || { count: 0, totalMinutes: 0 };
+        const hrs = hoursByTeacher[teacher.teacher_id] || { totalHours: 0, totalLessons: 0, salary: 0 };
         const teacherStudents = students?.filter(s => s.teacher_id === teacher.teacher_id) || [];
-        const activeTeacherStudents = teacherStudents.filter(s => s.status === 'Active');
-        const temporaryStopStudents = teacherStudents.filter(s => s.status === 'Temporary Stop').length;
-        const leftStudents = teacherStudents.filter(s => s.status === 'Left').length;
         const trialLessons = trialStudents?.filter(t => t.teacher_id === teacher.teacher_id).length || 0;
-
-        const totalTeachingHours = stats.totalMinutes / 60;
-        const salary = totalTeachingHours * (teacher.rate_per_lesson || 0);
 
         return {
           teacher_id: teacher.teacher_id,
@@ -202,12 +182,12 @@ export function useTeacherPerformance() {
           email: teacher.email,
           rate_per_lesson: teacher.rate_per_lesson || 0,
           is_active: teacher.is_active ?? true,
-          totalTeachingHours,
-          lessonsThisMonth: stats.count,
-          salary,
-          activeStudents: activeTeacherStudents.length,
-          temporaryStopStudents,
-          leftStudents,
+          totalTeachingHours: hrs.totalHours,
+          lessonsThisMonth: hrs.totalLessons,
+          salary: hrs.salary,
+          activeStudents: teacherStudents.filter(s => s.status === 'Active').length,
+          temporaryStopStudents: teacherStudents.filter(s => s.status === 'Temporary Stop').length,
+          leftStudents: teacherStudents.filter(s => s.status === 'Left').length,
           trialLessons,
         };
       }) || [];
