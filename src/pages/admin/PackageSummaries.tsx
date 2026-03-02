@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,8 +10,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { usePackages, usePackageSummary, PackageSummary } from '@/hooks/use-package-summary';
 import { formatCurrency, formatDate } from '@/lib/wallet-utils';
-import { FileText, Download, Copy, Search, Loader2, CheckCircle2, XCircle, Clock, MessageCircle } from 'lucide-react';
+import { FileText, Download, Copy, Search, Loader2, CheckCircle2, XCircle, Clock, Package } from 'lucide-react';
 import { toast } from 'sonner';
+import { format, addDays } from 'date-fns';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -20,12 +21,31 @@ export default function PackageSummaries() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [nextPackage, setNextPackage] = useState({
+    startDate: '',
+    lessons: '',
+    duration: '',
+    fees: '',
+  });
 
   const { data: packages, isLoading } = usePackages({ 
     status: statusFilter || undefined,
     search: searchQuery || undefined,
   });
   const { data: summary, isLoading: summaryLoading } = usePackageSummary(selectedPackageId);
+
+  useEffect(() => {
+    if (summary) {
+      setNextPackage({
+        startDate: summary.completed_date
+          ? format(addDays(new Date(summary.completed_date), 1), 'yyyy-MM-dd')
+          : '',
+        lessons: summary.lessons_purchased.toString(),
+        duration: summary.lessons[0]?.duration_minutes?.toString() || '45',
+        fees: summary.amount.toString(),
+      });
+    }
+  }, [summary]);
 
   const handleViewSummary = (packageId: string) => {
     setSelectedPackageId(packageId);
@@ -40,6 +60,7 @@ export default function PackageSummaries() {
       `👤 Student: ${summary.student_name}`,
       `📞 Phone: ${summary.student_phone}`,
       summary.parent_phone ? `👨‍👩‍👧 Parent: ${summary.parent_phone}` : '',
+      summary.teacher_name ? `👩‍🏫 Teacher: ${summary.teacher_name}` : '',
       ``,
       `💰 Package Details:`,
       `   Amount Paid: ${formatCurrency(summary.amount)}`,
@@ -49,9 +70,8 @@ export default function PackageSummaries() {
       summary.completed_date ? `   Completed: ${formatDate(summary.completed_date)}` : '',
       ``,
       `📊 Statistics:`,
-      `   ✅ Taken: ${summary.statistics.total_taken}`,
+      `   ✅ Completed: ${summary.statistics.total_taken}`,
       `   ❌ Absent: ${summary.statistics.total_absent}`,
-      `   ⏸️ Other: ${summary.statistics.total_cancelled}`,
       ``,
       `📅 Lesson History:`,
       `───────────────────────────────`,
@@ -59,13 +79,21 @@ export default function PackageSummaries() {
 
     if (summary.lessons.length > 0) {
       summary.lessons.forEach((lesson, idx) => {
-        const statusIcon = lesson.status === 'completed' ? '✅' : lesson.status === 'absent' ? '❌' : '⏸️';
+        const statusIcon = lesson.status === 'completed' ? '✅' : lesson.status === 'absent' ? '❌' : '🕐';
         lines.push(`${idx + 1}. ${lesson.date ? formatDate(lesson.date) : 'N/A'} - ${statusIcon} ${lesson.status}`);
-        lines.push(`   Class: ${lesson.class_name} | Teacher: ${lesson.teacher_name}`);
+        lines.push(`   Time: ${lesson.scheduled_time?.slice(0, 5) || '-'} | Duration: ${lesson.duration_minutes || '-'} min`);
         if (lesson.notes) lines.push(`   Notes: ${lesson.notes}`);
       });
     } else {
-      lines.push(`   No lessons recorded for this package.`);
+      lines.push(`   No lessons recorded.`);
+    }
+
+    if (nextPackage.startDate || nextPackage.lessons) {
+      lines.push(``, `📦 Next Package Proposal:`);
+      if (nextPackage.startDate) lines.push(`   Start Date: ${nextPackage.startDate}`);
+      if (nextPackage.lessons) lines.push(`   Lessons: ${nextPackage.lessons}`);
+      if (nextPackage.duration) lines.push(`   Duration: ${nextPackage.duration} min`);
+      if (nextPackage.fees) lines.push(`   Fees: AED ${nextPackage.fees}`);
     }
 
     lines.push(``, `═══════════════════════════════`);
@@ -81,104 +109,232 @@ export default function PackageSummaries() {
     toast.success('Summary copied to clipboard!');
   };
 
-  const handleWhatsApp = () => {
-    if (!summary) return;
-    const text = generateSummaryText(summary);
-    const phone = summary.parent_phone || summary.student_phone;
-    const cleanPhone = phone.replace(/\D/g, '');
-    const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
-    window.open(url, '_blank');
-  };
-
-  const handleExportPDF = () => {
+  const handleExportPDF = (np: typeof nextPackage) => {
     if (!summary) return;
 
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
+    const navy: [number, number, number] = [45, 53, 97];
+    const gold: [number, number, number] = [245, 197, 24];
+    const lightGray: [number, number, number] = [248, 249, 250];
+    const darkText: [number, number, number] = [26, 26, 46];
 
-    // Header
+    // ── HEADER WITH LOGO ──
+    try {
+      const img = new Image();
+      img.src = '/oac-logo.png';
+      doc.addImage(img, 'PNG', 14, 8, 35, 35);
+    } catch (e) {
+      // Logo may not load in all environments
+    }
+
     doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
-    doc.text('Package Completion Summary', pageWidth / 2, 20, { align: 'center' });
+    doc.setTextColor(...navy);
+    doc.text('OAC Academy', 55, 20);
 
-    // Student Info
-    doc.setFontSize(12);
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
-    let y = 35;
+    doc.setTextColor(...gold);
+    doc.text('Online Arabic Courses', 55, 28);
 
+    doc.setFontSize(9);
+    doc.setTextColor(128, 128, 128);
+    doc.text('Package Summary Report', 55, 35);
+
+    // Gold line
+    doc.setDrawColor(...gold);
+    doc.setLineWidth(1.5);
+    doc.line(14, 48, pageWidth - 14, 48);
+
+    let y = 55;
+
+    // ── STUDENT INFO ──
+    doc.setFillColor(...navy);
+    doc.rect(14, y, pageWidth - 28, 8, 'F');
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
-    doc.text('Student Information', 14, y);
-    y += 8;
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Name: ${summary.student_name}`, 14, y);
-    y += 6;
-    doc.text(`Phone: ${summary.student_phone}`, 14, y);
-    y += 6;
-    if (summary.parent_phone) {
-      doc.text(`Parent Phone: ${summary.parent_phone}`, 14, y);
-      y += 6;
-    }
+    doc.setTextColor(255, 255, 255);
+    doc.text('Student Information', 18, y + 6);
+    y += 14;
 
-    // Package Details
-    y += 6;
-    doc.setFont('helvetica', 'bold');
-    doc.text('Package Details', 14, y);
-    y += 8;
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Amount Paid: ${formatCurrency(summary.amount)}`, 14, y);
-    y += 6;
-    doc.text(`Lessons Purchased: ${summary.lessons_purchased}`, 14, y);
-    y += 6;
-    doc.text(`Lessons Used: ${summary.lessons_used}`, 14, y);
-    y += 6;
-    doc.text(`Payment Date: ${summary.payment_date ? formatDate(summary.payment_date) : 'N/A'}`, 14, y);
-    y += 6;
-    if (summary.completed_date) {
-      doc.text(`Completed Date: ${formatDate(summary.completed_date)}`, 14, y);
-      y += 6;
-    }
+    doc.setTextColor(...darkText);
 
-    // Statistics
+    const infoLine = (label: string, value: string, x: number, yPos: number) => {
+      doc.setFont('helvetica', 'bold');
+      doc.text(label, x, yPos);
+      doc.setFont('helvetica', 'normal');
+      doc.text(value, x + doc.getTextWidth(label) + 2, yPos);
+    };
+
+    infoLine('Student Name: ', summary.student_name, 18, y);
+    infoLine('Teacher: ', summary.teacher_name || 'N/A', 110, y);
     y += 6;
-    doc.setFont('helvetica', 'bold');
-    doc.text('Attendance Statistics', 14, y);
-    y += 8;
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Taken: ${summary.statistics.total_taken}`, 14, y);
-    doc.text(`Absent: ${summary.statistics.total_absent}`, 60, y);
-    doc.text(`Other: ${summary.statistics.total_cancelled}`, 110, y);
+    infoLine('Phone: ', summary.student_phone, 18, y);
+    infoLine('Program: ', summary.program_name || 'N/A', 110, y);
+    y += 6;
+    infoLine('Parent Phone: ', summary.parent_phone || 'N/A', 18, y);
+    infoLine('Level: ', summary.student_level || 'N/A', 110, y);
     y += 12;
 
-    // Lessons Table
+    // ── PACKAGE DETAILS ──
+    doc.setFillColor(...navy);
+    doc.rect(14, y, pageWidth - 28, 8, 'F');
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(255, 255, 255);
+    doc.text('Package Details', 18, y + 6);
+    y += 14;
+
+    doc.setFontSize(9);
+    doc.setTextColor(...darkText);
+
+    const firstLessonDate = summary.lessons.length > 0 && summary.lessons[0].date
+      ? formatDate(summary.lessons[0].date) : 'N/A';
+
+    infoLine('Package Start: ', firstLessonDate, 18, y);
+    infoLine('Package End: ', summary.completed_date ? formatDate(summary.completed_date) : 'N/A', 110, y);
+    y += 6;
+    infoLine('Lessons Purchased: ', summary.lessons_purchased.toString(), 18, y);
+    infoLine('Amount Paid: ', `AED ${summary.amount.toLocaleString()}`, 110, y);
+    y += 6;
+    infoLine('Lessons Completed: ', summary.statistics.total_taken.toString(), 18, y);
+    infoLine('Lessons Absent: ', summary.statistics.total_absent.toString(), 110, y);
+    y += 12;
+
+    // ── ATTENDANCE SUMMARY BOXES ──
+    const boxW = (pageWidth - 28 - 8) / 3;
+    const boxH = 22;
+
+    // Completed box
+    doc.setFillColor(220, 252, 231);
+    doc.setDrawColor(34, 197, 94);
+    doc.setLineWidth(0.5);
+    doc.rect(14, y, boxW, boxH, 'FD');
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(34, 197, 94);
+    doc.text(summary.statistics.total_taken.toString(), 14 + boxW / 2, y + 10, { align: 'center' });
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Lessons Completed', 14 + boxW / 2, y + 17, { align: 'center' });
+
+    // Absent box
+    const box2X = 14 + boxW + 4;
+    doc.setFillColor(254, 226, 226);
+    doc.setDrawColor(239, 68, 68);
+    doc.rect(box2X, y, boxW, boxH, 'FD');
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(239, 68, 68);
+    doc.text(summary.statistics.total_absent.toString(), box2X + boxW / 2, y + 10, { align: 'center' });
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Lessons Absent', box2X + boxW / 2, y + 17, { align: 'center' });
+
+    // Attendance rate box
+    const box3X = box2X + boxW + 4;
+    const attendanceRate = summary.lessons_purchased > 0
+      ? Math.round((summary.statistics.total_taken / summary.lessons_purchased) * 100)
+      : 0;
+    doc.setFillColor(219, 234, 254);
+    doc.setDrawColor(59, 130, 246);
+    doc.rect(box3X, y, boxW, boxH, 'FD');
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(59, 130, 246);
+    doc.text(`${attendanceRate}%`, box3X + boxW / 2, y + 10, { align: 'center' });
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Attendance Rate', box3X + boxW / 2, y + 17, { align: 'center' });
+
+    y += boxH + 10;
+
+    // ── LESSON RECORD TABLE ──
     if (summary.lessons.length > 0) {
+      doc.setFontSize(11);
       doc.setFont('helvetica', 'bold');
-      doc.text('Lesson History', 14, y);
+      doc.setTextColor(...navy);
+      doc.text('Lesson Record', 14, y);
       y += 4;
 
       autoTable(doc, {
         startY: y,
-        head: [['#', 'Date', 'Class', 'Teacher', 'Status', 'Notes']],
+        head: [['#', 'Date', 'Time', 'Duration', 'Status', 'Notes']],
         body: summary.lessons.map((lesson, idx) => [
           idx + 1,
           lesson.date ? formatDate(lesson.date) : 'N/A',
-          lesson.class_name,
-          lesson.teacher_name,
-          lesson.status,
+          lesson.scheduled_time?.slice(0, 5) || '-',
+          lesson.duration_minutes ? `${lesson.duration_minutes} min` : '-',
+          lesson.status === 'completed' ? '✅ Completed' :
+          lesson.status === 'absent' ? '❌ Absent' : '🕐 Scheduled',
           lesson.notes || '-',
         ]),
-        styles: { fontSize: 9 },
-        headStyles: { fillColor: [59, 130, 246] },
+        headStyles: { fillColor: navy, textColor: [255, 255, 255], fontSize: 9, fontStyle: 'bold' },
+        bodyStyles: { fontSize: 8, textColor: darkText },
+        alternateRowStyles: { fillColor: lightGray },
+        columnStyles: {
+          0: { cellWidth: 10 },
+          1: { cellWidth: 28 },
+          2: { cellWidth: 20 },
+          3: { cellWidth: 22 },
+          4: { cellWidth: 30 },
+          5: { cellWidth: 'auto' },
+        },
+        styles: { fontSize: 8 },
       });
+
+      y = (doc as any).lastAutoTable?.finalY || y + 10;
+      y += 8;
     }
 
-    // Footer
-    const finalY = (doc as any).lastAutoTable?.finalY || y + 10;
-    doc.setFontSize(10);
-    doc.setTextColor(128);
-    doc.text(`Generated on ${new Date().toLocaleDateString()}`, pageWidth / 2, finalY + 15, { align: 'center' });
+    // ── NEXT PACKAGE PROPOSAL ──
+    if (np.startDate || np.lessons || np.fees) {
+      // Check if we need a new page
+      if (y > 240) {
+        doc.addPage();
+        y = 20;
+      }
 
-    // Save
-    doc.save(`package_summary_${summary.student_name.replace(/\s+/g, '_')}_${summary.package_id.slice(0, 8)}.pdf`);
+      doc.setFillColor(...gold);
+      doc.rect(14, y, pageWidth - 28, 8, 'F');
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...navy);
+      doc.text('Next Package Proposal', 18, y + 6);
+      y += 12;
+
+      doc.setFillColor(255, 248, 220);
+      doc.setDrawColor(...gold);
+      doc.setLineWidth(0.5);
+      doc.rect(14, y, pageWidth - 28, 20, 'FD');
+
+      doc.setFontSize(9);
+      doc.setTextColor(...darkText);
+      infoLine('📅 Start Date: ', np.startDate || 'TBD', 18, y + 7);
+      infoLine('📚 Number of Lessons: ', np.lessons || 'TBD', 18, y + 14);
+      infoLine('⏱ Duration per Lesson: ', np.duration ? `${np.duration} min` : 'TBD', 110, y + 7);
+      infoLine('💰 Package Fees: ', np.fees ? `AED ${Number(np.fees).toLocaleString()}` : 'TBD', 110, y + 14);
+
+      y += 28;
+    }
+
+    // ── FOOTER ──
+    const footerY = Math.max(y + 10, doc.internal.pageSize.getHeight() - 20);
+    doc.setDrawColor(...gold);
+    doc.setLineWidth(0.5);
+    doc.line(14, footerY, pageWidth - 14, footerY);
+
+    doc.setFontSize(8);
+    doc.setTextColor(128, 128, 128);
+    doc.setFont('helvetica', 'italic');
+    doc.text('Thank you for choosing OAC Academy', 14, footerY + 6);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Generated: ${format(new Date(), 'dd MMM yyyy')}`, pageWidth - 14, footerY + 6, { align: 'right' });
+
+    doc.save(`OAC_Summary_${summary.student_name.replace(/\s+/g, '_')}_${format(new Date(), 'MMM_yyyy')}.pdf`);
     toast.success('PDF exported successfully!');
   };
 
@@ -186,8 +342,17 @@ export default function PackageSummaries() {
     switch (status) {
       case 'completed': return <CheckCircle2 className="w-4 h-4 text-emerald-500" />;
       case 'absent': return <XCircle className="w-4 h-4 text-destructive" />;
-      case 'scheduled': return null;
+      case 'scheduled': return <Clock className="w-4 h-4 text-blue-500" />;
       default: return null;
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'completed': return 'Completed';
+      case 'absent': return 'Absent';
+      case 'scheduled': return 'Scheduled';
+      default: return status;
     }
   };
 
@@ -249,6 +414,7 @@ export default function PackageSummaries() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Student</TableHead>
+                      <TableHead>Teacher</TableHead>
                       <TableHead>Lessons</TableHead>
                       <TableHead>Amount</TableHead>
                       <TableHead>Status</TableHead>
@@ -261,6 +427,9 @@ export default function PackageSummaries() {
                       <TableRow key={pkg.package_id}>
                         <TableCell className="font-medium">
                           {pkg.students?.name || 'Unknown'}
+                        </TableCell>
+                        <TableCell>
+                          {(pkg.students as any)?.teachers?.name || '-'}
                         </TableCell>
                         <TableCell>
                           {pkg.lessons_used} / {pkg.lessons_purchased}
@@ -316,9 +485,10 @@ export default function PackageSummaries() {
                     <div><span className="text-muted-foreground">Name:</span> {summary.student_name}</div>
                     <div><span className="text-muted-foreground">Phone:</span> {summary.student_phone}</div>
                     {summary.parent_phone && (
-                      <div className="col-span-2">
-                        <span className="text-muted-foreground">Parent:</span> {summary.parent_phone}
-                      </div>
+                      <div><span className="text-muted-foreground">Parent:</span> {summary.parent_phone}</div>
+                    )}
+                    {summary.teacher_name && (
+                      <div><span className="text-muted-foreground">Teacher:</span> {summary.teacher_name}</div>
                     )}
                   </div>
                 </div>
@@ -344,9 +514,13 @@ export default function PackageSummaries() {
                     <div className="text-2xl font-bold text-destructive">{summary.statistics.total_absent}</div>
                     <div className="text-xs text-muted-foreground">Absent</div>
                   </div>
-                  <div className="p-4 rounded-lg bg-muted border text-center">
-                    <div className="text-2xl font-bold">{summary.statistics.total_cancelled}</div>
-                    <div className="text-xs text-muted-foreground">Other</div>
+                  <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20 text-center">
+                    <div className="text-2xl font-bold text-blue-500">
+                      {summary.lessons_purchased > 0
+                        ? Math.round((summary.statistics.total_taken / summary.lessons_purchased) * 100)
+                        : 0}%
+                    </div>
+                    <div className="text-xs text-muted-foreground">Attendance</div>
                   </div>
                 </div>
 
@@ -360,9 +534,10 @@ export default function PackageSummaries() {
                           <TableRow>
                             <TableHead>#</TableHead>
                             <TableHead>Date</TableHead>
-                            <TableHead>Class</TableHead>
-                            <TableHead>Teacher</TableHead>
+                            <TableHead>Time</TableHead>
+                            <TableHead>Duration</TableHead>
                             <TableHead>Status</TableHead>
+                            <TableHead>Notes</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -370,14 +545,15 @@ export default function PackageSummaries() {
                             <TableRow key={idx}>
                               <TableCell>{idx + 1}</TableCell>
                               <TableCell>{lesson.date ? formatDate(lesson.date) : 'N/A'}</TableCell>
-                              <TableCell>{lesson.class_name}</TableCell>
-                              <TableCell>{lesson.teacher_name}</TableCell>
+                              <TableCell>{lesson.scheduled_time?.slice(0, 5) || '-'}</TableCell>
+                              <TableCell>{lesson.duration_minutes ? `${lesson.duration_minutes} min` : '-'}</TableCell>
                               <TableCell>
                                 <div className="flex items-center gap-1">
                                   {getStatusIcon(lesson.status)}
-                                  <span>{lesson.status}</span>
+                                  <span>{getStatusLabel(lesson.status)}</span>
                                 </div>
                               </TableCell>
+                              <TableCell className="max-w-[120px] truncate">{lesson.notes || '-'}</TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
@@ -386,22 +562,59 @@ export default function PackageSummaries() {
                   </div>
                 )}
 
+                {/* Next Package Proposal */}
+                <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                  <h3 className="font-semibold mb-1 flex items-center gap-2">
+                    <Package className="w-4 h-4" />
+                    Next Package Proposal
+                  </h3>
+                  <p className="text-xs text-muted-foreground mb-3">Auto-filled from current package. Edit before exporting.</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs text-muted-foreground">Start Date</label>
+                      <Input
+                        type="date"
+                        value={nextPackage.startDate}
+                        onChange={(e) => setNextPackage(p => ({ ...p, startDate: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground">Number of Lessons</label>
+                      <Input
+                        type="number"
+                        value={nextPackage.lessons}
+                        onChange={(e) => setNextPackage(p => ({ ...p, lessons: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground">Duration (minutes)</label>
+                      <Input
+                        type="number"
+                        value={nextPackage.duration}
+                        onChange={(e) => setNextPackage(p => ({ ...p, duration: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground">Package Fees (AED)</label>
+                      <Input
+                        type="number"
+                        value={nextPackage.fees}
+                        onChange={(e) => setNextPackage(p => ({ ...p, fees: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 {/* Actions */}
                 <div className="flex flex-wrap gap-2 pt-4 border-t">
+                  <Button onClick={() => handleExportPDF(nextPackage)} className="bg-[#2D3561] hover:bg-[#2D3561]/90">
+                    <Download className="w-4 h-4 mr-2" />
+                    Export PDF
+                  </Button>
                   <Button onClick={handleCopySummary} variant="outline">
                     <Copy className="w-4 h-4 mr-2" />
                     Copy Text
                   </Button>
-                  <Button onClick={handleExportPDF}>
-                    <Download className="w-4 h-4 mr-2" />
-                    Export PDF
-                  </Button>
-                  {(summary.parent_phone || summary.student_phone) && (
-                    <Button onClick={handleWhatsApp} variant="outline" className="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600">
-                      <MessageCircle className="w-4 h-4 mr-2" />
-                      Send via WhatsApp
-                    </Button>
-                  )}
                 </div>
               </div>
             ) : (
