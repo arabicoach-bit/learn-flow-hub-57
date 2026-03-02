@@ -11,28 +11,21 @@ import {
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 
 const chartConfig = {
-  newPackages: {
-    label: 'New Packages',
-    color: 'hsl(var(--primary))',
-  },
-  completedPackages: {
-    label: 'Completed',
-    color: 'hsl(var(--chart-2))',
-  },
-  renewals: {
-    label: 'Renewals',
-    color: 'hsl(var(--chart-3))',
-  },
-  revenue: {
-    label: 'Revenue',
-    color: 'hsl(var(--chart-4))',
-  },
+  newPackages: { label: 'New Packages', color: 'hsl(var(--primary))' },
+  completedPackages: { label: 'Completed', color: 'hsl(var(--chart-2))' },
+  renewals: { label: 'Renewals', color: 'hsl(var(--chart-3))' },
+  revenue: { label: 'Revenue', color: 'hsl(var(--chart-4))' },
 };
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))'];
 
-export function PackageStatsReport() {
-  const { data: stats, isLoading } = usePackageStats();
+interface PackageStatsReportProps {
+  startDate: string | null;
+  endDate: string | null;
+}
+
+export function PackageStatsReport({ startDate, endDate }: PackageStatsReportProps) {
+  const { data: stats, isLoading } = usePackageStats(startDate, endDate);
 
   if (isLoading) {
     return (
