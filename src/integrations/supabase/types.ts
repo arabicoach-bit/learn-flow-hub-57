@@ -90,13 +90,6 @@ export type Database = {
             foreignKeyName: "classes_teacher_id_fkey"
             columns: ["teacher_id"]
             isOneToOne: false
-            referencedRelation: "teacher_monthly_stats"
-            referencedColumns: ["teacher_id"]
-          },
-          {
-            foreignKeyName: "classes_teacher_id_fkey"
-            columns: ["teacher_id"]
-            isOneToOne: false
             referencedRelation: "teachers"
             referencedColumns: ["teacher_id"]
           },
@@ -191,88 +184,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "packages"
             referencedColumns: ["package_id"]
-          },
-        ]
-      }
-      lessons_log: {
-        Row: {
-          class_id: string | null
-          created_at: string | null
-          date: string | null
-          lesson_date: string | null
-          lesson_id: string
-          notes: string | null
-          package_id_used: string | null
-          status: Database["public"]["Enums"]["lesson_status"]
-          student_id: string | null
-          teacher_id: string | null
-        }
-        Insert: {
-          class_id?: string | null
-          created_at?: string | null
-          date?: string | null
-          lesson_date?: string | null
-          lesson_id?: string
-          notes?: string | null
-          package_id_used?: string | null
-          status: Database["public"]["Enums"]["lesson_status"]
-          student_id?: string | null
-          teacher_id?: string | null
-        }
-        Update: {
-          class_id?: string | null
-          created_at?: string | null
-          date?: string | null
-          lesson_date?: string | null
-          lesson_id?: string
-          notes?: string | null
-          package_id_used?: string | null
-          status?: Database["public"]["Enums"]["lesson_status"]
-          student_id?: string | null
-          teacher_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "lessons_log_class_id_fkey"
-            columns: ["class_id"]
-            isOneToOne: false
-            referencedRelation: "classes"
-            referencedColumns: ["class_id"]
-          },
-          {
-            foreignKeyName: "lessons_log_package_id_used_fkey"
-            columns: ["package_id_used"]
-            isOneToOne: false
-            referencedRelation: "packages"
-            referencedColumns: ["package_id"]
-          },
-          {
-            foreignKeyName: "lessons_log_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "students"
-            referencedColumns: ["student_id"]
-          },
-          {
-            foreignKeyName: "lessons_log_teacher_id_fkey"
-            columns: ["teacher_id"]
-            isOneToOne: false
-            referencedRelation: "teacher_monthly_performance"
-            referencedColumns: ["teacher_id"]
-          },
-          {
-            foreignKeyName: "lessons_log_teacher_id_fkey"
-            columns: ["teacher_id"]
-            isOneToOne: false
-            referencedRelation: "teacher_monthly_stats"
-            referencedColumns: ["teacher_id"]
-          },
-          {
-            foreignKeyName: "lessons_log_teacher_id_fkey"
-            columns: ["teacher_id"]
-            isOneToOne: false
-            referencedRelation: "teachers"
-            referencedColumns: ["teacher_id"]
           },
         ]
       }
@@ -484,13 +395,6 @@ export type Database = {
             foreignKeyName: "profiles_teacher_id_fkey"
             columns: ["teacher_id"]
             isOneToOne: false
-            referencedRelation: "teacher_monthly_stats"
-            referencedColumns: ["teacher_id"]
-          },
-          {
-            foreignKeyName: "profiles_teacher_id_fkey"
-            columns: ["teacher_id"]
-            isOneToOne: false
             referencedRelation: "teachers"
             referencedColumns: ["teacher_id"]
           },
@@ -572,13 +476,6 @@ export type Database = {
             referencedColumns: ["class_id"]
           },
           {
-            foreignKeyName: "scheduled_lessons_lesson_log_id_fkey"
-            columns: ["lesson_log_id"]
-            isOneToOne: false
-            referencedRelation: "lessons_log"
-            referencedColumns: ["lesson_id"]
-          },
-          {
             foreignKeyName: "scheduled_lessons_package_id_fkey"
             columns: ["package_id"]
             isOneToOne: false
@@ -597,13 +494,6 @@ export type Database = {
             columns: ["teacher_id"]
             isOneToOne: false
             referencedRelation: "teacher_monthly_performance"
-            referencedColumns: ["teacher_id"]
-          },
-          {
-            foreignKeyName: "scheduled_lessons_teacher_id_fkey"
-            columns: ["teacher_id"]
-            isOneToOne: false
-            referencedRelation: "teacher_monthly_stats"
             referencedColumns: ["teacher_id"]
           },
           {
@@ -721,13 +611,6 @@ export type Database = {
             foreignKeyName: "students_teacher_id_fkey"
             columns: ["teacher_id"]
             isOneToOne: false
-            referencedRelation: "teacher_monthly_stats"
-            referencedColumns: ["teacher_id"]
-          },
-          {
-            foreignKeyName: "students_teacher_id_fkey"
-            columns: ["teacher_id"]
-            isOneToOne: false
             referencedRelation: "teachers"
             referencedColumns: ["teacher_id"]
           },
@@ -833,13 +716,6 @@ export type Database = {
             foreignKeyName: "teachers_payroll_teacher_id_fkey"
             columns: ["teacher_id"]
             isOneToOne: false
-            referencedRelation: "teacher_monthly_stats"
-            referencedColumns: ["teacher_id"]
-          },
-          {
-            foreignKeyName: "teachers_payroll_teacher_id_fkey"
-            columns: ["teacher_id"]
-            isOneToOne: false
             referencedRelation: "teachers"
             referencedColumns: ["teacher_id"]
           },
@@ -891,13 +767,6 @@ export type Database = {
             columns: ["teacher_id"]
             isOneToOne: false
             referencedRelation: "teacher_monthly_performance"
-            referencedColumns: ["teacher_id"]
-          },
-          {
-            foreignKeyName: "trial_lessons_log_teacher_id_fkey"
-            columns: ["teacher_id"]
-            isOneToOne: false
-            referencedRelation: "teacher_monthly_stats"
             referencedColumns: ["teacher_id"]
           },
           {
@@ -1033,13 +902,6 @@ export type Database = {
             foreignKeyName: "trial_students_teacher_id_fkey"
             columns: ["teacher_id"]
             isOneToOne: false
-            referencedRelation: "teacher_monthly_stats"
-            referencedColumns: ["teacher_id"]
-          },
-          {
-            foreignKeyName: "trial_students_teacher_id_fkey"
-            columns: ["teacher_id"]
-            isOneToOne: false
             referencedRelation: "teachers"
             referencedColumns: ["teacher_id"]
           },
@@ -1080,18 +942,6 @@ export type Database = {
         }
         Relationships: []
       }
-      teacher_monthly_stats: {
-        Row: {
-          lessons_taught: number | null
-          month: string | null
-          rate_per_lesson: number | null
-          salary_earned: number | null
-          teacher_id: string | null
-          teacher_name: string | null
-          total_hours: number | null
-        }
-        Relationships: []
-      }
       teacher_todays_lessons: {
         Row: {
           duration_minutes: number | null
@@ -1120,13 +970,6 @@ export type Database = {
             columns: ["teacher_id"]
             isOneToOne: false
             referencedRelation: "teacher_monthly_performance"
-            referencedColumns: ["teacher_id"]
-          },
-          {
-            foreignKeyName: "scheduled_lessons_teacher_id_fkey"
-            columns: ["teacher_id"]
-            isOneToOne: false
-            referencedRelation: "teacher_monthly_stats"
             referencedColumns: ["teacher_id"]
           },
           {
@@ -1172,13 +1015,6 @@ export type Database = {
             foreignKeyName: "scheduled_lessons_teacher_id_fkey"
             columns: ["teacher_id"]
             isOneToOne: false
-            referencedRelation: "teacher_monthly_stats"
-            referencedColumns: ["teacher_id"]
-          },
-          {
-            foreignKeyName: "scheduled_lessons_teacher_id_fkey"
-            columns: ["teacher_id"]
-            isOneToOne: false
             referencedRelation: "teachers"
             referencedColumns: ["teacher_id"]
           },
@@ -1213,13 +1049,6 @@ export type Database = {
             columns: ["teacher_id"]
             isOneToOne: false
             referencedRelation: "teacher_monthly_performance"
-            referencedColumns: ["teacher_id"]
-          },
-          {
-            foreignKeyName: "scheduled_lessons_teacher_id_fkey"
-            columns: ["teacher_id"]
-            isOneToOne: false
-            referencedRelation: "teacher_monthly_stats"
             referencedColumns: ["teacher_id"]
           },
           {

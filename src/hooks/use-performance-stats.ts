@@ -90,13 +90,13 @@ export function usePerformanceStats(period: TimePeriod = 'month', periodsToShow 
             .gte('created_at', startStr)
             .lte('created_at', endStr),
 
-          // Lessons delivered in this period
+          // Lessons delivered in this period (from scheduled_lessons)
           supabase
-            .from('lessons_log')
-            .select('lesson_id, status')
-            .gte('date', startStr)
-            .lte('date', endStr)
-            .eq('status', 'Taken'),
+            .from('scheduled_lessons')
+            .select('scheduled_lesson_id, status')
+            .gte('scheduled_date', startStr.split('T')[0])
+            .lte('scheduled_date', endStr.split('T')[0])
+            .eq('status', 'completed'),
 
           // Trial lessons in this period
           supabase

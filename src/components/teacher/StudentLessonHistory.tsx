@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+// lessons_log removed - all data comes from scheduled_lessons
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -46,18 +47,7 @@ export function StudentLessonHistory({ studentId, studentName, walletBalance, te
     },
   });
 
-  const { data: lessonNotes } = useQuery({
-    queryKey: ['student-lesson-notes', studentId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('lessons_log')
-        .select('lesson_id, lesson_date, status, notes')
-        .eq('student_id', studentId)
-        .order('lesson_date', { ascending: false });
-      if (error) throw error;
-      return data || [];
-    },
-  });
+  // Notes are now stored directly in scheduled_lessons
 
   const monthStart = startOfMonth(new Date(selectedMonth + '-01'));
   const monthEnd = endOfMonth(monthStart);
@@ -111,8 +101,7 @@ export function StudentLessonHistory({ studentId, studentName, walletBalance, te
   };
 
   const getNotesForLesson = (lesson: any) => {
-    if (lesson.notes) return lesson.notes;
-    return lessonNotes?.find(n => n.lesson_date === lesson.scheduled_date)?.notes || null;
+    return lesson.notes || null;
   };
 
   const handleSaveNote = async (lessonId: string) => {
@@ -138,7 +127,7 @@ export function StudentLessonHistory({ studentId, studentName, walletBalance, te
       });
       toast.success(`Lesson status changed to ${newStatus === 'completed' ? 'Completed' : newStatus === 'absent' ? 'Absent' : 'Scheduled'}`);
       queryClient.invalidateQueries({ queryKey: ['student-all-lessons', studentId] });
-      queryClient.invalidateQueries({ queryKey: ['student-lesson-notes', studentId] });
+      
     } catch (error: any) {
       toast.error(error.message || 'Failed to update status');
     }

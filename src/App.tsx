@@ -30,7 +30,7 @@ import AdminPayroll from "./pages/admin/AdminPayroll";
 
 // Teacher pages
 import TeacherSchedule from "./pages/teacher/TeacherSchedule";
-import TeacherMarkLesson from "./pages/teacher/TeacherMarkLesson";
+
 import TeacherStudents from "./pages/teacher/TeacherStudents";
 import TeacherPayroll from "./pages/teacher/TeacherPayroll";
 import TeacherTrialLessons from "./pages/teacher/TeacherTrialLessons";
