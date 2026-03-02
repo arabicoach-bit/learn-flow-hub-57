@@ -88,7 +88,7 @@ export function formatCurrency(amount: number, currency: 'AED' | 'EGP' = 'AED'):
 }
 
 export function formatSalary(amount: number): string {
-  return formatCurrency(amount, 'EGP');
+  return formatCurrency(amount, 'AED');
 }
 
 export function formatDate(date: string | Date): string {

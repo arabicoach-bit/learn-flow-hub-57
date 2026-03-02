@@ -1,4 +1,4 @@
-import { Home, GraduationCap, UserCheck, FileText, Settings, Bell } from 'lucide-react';
+import { Home, GraduationCap, UserCheck, FileText, Bell } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useUnreadNotificationsCount } from '@/hooks/use-notifications';
 import {
@@ -17,7 +17,6 @@ const navItems = [
   { title: 'Students', url: '/students', icon: GraduationCap },
   { title: 'Teachers', url: '/teachers', icon: UserCheck },
   { title: 'Reports', url: '/reports', icon: FileText },
-  { title: 'Settings', url: '/settings', icon: Settings },
 ];
 
 export function AppSidebar() {

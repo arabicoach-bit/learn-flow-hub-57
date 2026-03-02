@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, Search, UserPlus, Mail, Key, UserX, UserCheck, Trash2, Edit, MoreVertical, Users, Filter } from 'lucide-react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useTeachers, useUpdateTeacher, Teacher } from '@/hooks/use-teachers';
-import { useClasses } from '@/hooks/use-classes';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -21,7 +21,6 @@ import { z } from 'zod';
 // Extended teacher type with profile info
 interface TeacherWithProfile extends Teacher {
   user_id?: string;
-  classes_count?: number;
 }
 
 // Form validation schema
@@ -39,7 +38,7 @@ export default function Teachers() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { data: teachers, isLoading, refetch } = useTeachers();
-  const { data: classes } = useClasses();
+  
   const updateTeacher = useUpdateTeacher();
 
   // Dialog states
@@ -60,7 +59,6 @@ export default function Teachers() {
     phone: '',
     email: '',
     rate_per_lesson: '',
-    class_ids: [] as string[],
   });
 
   // Form state for editing teacher
@@ -92,7 +90,7 @@ export default function Teachers() {
   }, [teachers, searchQuery, statusFilter]);
 
   const resetAddForm = () => {
-    setFormData({ name: '', phone: '', email: '', rate_per_lesson: '', class_ids: [] });
+    setFormData({ name: '', phone: '', email: '', rate_per_lesson: '' });
   };
 
   const extractFunctionErrorMessage = async (fnError: unknown): Promise<string> => {
@@ -210,7 +208,6 @@ export default function Teachers() {
           email: normalizedEmail,
           phone: formData.phone?.trim() || undefined,
           rate_per_lesson: parsedRate,
-          class_ids: formData.class_ids.length > 0 ? formData.class_ids : undefined,
         },
       });
 
@@ -681,26 +678,6 @@ export default function Teachers() {
                 />
               </div>
             </div>
-            {classes && classes.length > 0 && (
-              <div className="space-y-2">
-                <Label>Assign Classes (Optional)</Label>
-                <Select
-                  value={formData.class_ids[0] || ''}
-                  onValueChange={(value) => setFormData({ ...formData, class_ids: value ? [value] : [] })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a class" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {classes.map((cls) => (
-                      <SelectItem key={cls.class_id} value={cls.class_id}>
-                        {cls.name} {cls.schedule ? `(${cls.schedule})` : ''}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
             <DialogFooter className="gap-2 sm:gap-0">
               <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                 Cancel
@@ -811,7 +788,7 @@ export default function Teachers() {
               <p className="text-sm">This will:</p>
               <ul className="text-sm list-disc list-inside space-y-1">
                 <li>Remove teacher account permanently</li>
-                <li>Unassign from all classes</li>
+                <li>Unassign from all students</li>
                 <li>Keep historical lesson records (for audit trail)</li>
               </ul>
               <p className="text-sm font-medium text-destructive">This action cannot be undone.</p>
