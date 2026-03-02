@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { TeacherLayout } from '@/components/layout/TeacherLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { TrialLessonCard } from '@/components/teacher/TrialLessonCard';
 import { format } from 'date-fns';
+import { YearMonthFilter, getDefaultFilter, getFilterDateRange, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
 
 interface TrialLessonRow {
   trial_lesson_id: string;
@@ -22,16 +24,17 @@ interface TrialLessonRow {
   trial_students: { name: string } | null;
 }
 
-function useTeacherAllTrialLessons() {
+function useTeacherAllTrialLessons(filter: YearMonthFilterValue) {
   const { profile } = useAuth();
   const teacherId = profile?.teacher_id;
+  const { startDate, endDate } = getFilterDateRange(filter);
 
   return useQuery({
-    queryKey: ['teacher-all-trial-lessons', teacherId],
+    queryKey: ['teacher-all-trial-lessons', teacherId, startDate, endDate],
     queryFn: async () => {
       if (!teacherId) return [];
 
-      const { data, error } = await supabase
+      let query = supabase
         .from('trial_lessons_log')
         .select(`
           trial_lesson_id,
@@ -47,6 +50,10 @@ function useTeacherAllTrialLessons() {
         .eq('teacher_id', teacherId)
         .order('lesson_date', { ascending: false });
 
+      if (startDate) query = query.gte('lesson_date', startDate);
+      if (endDate) query = query.lte('lesson_date', endDate);
+
+      const { data, error } = await query;
       if (error) throw error;
 
       return (data || []).map((lesson: any) => ({
@@ -67,7 +74,8 @@ function useTeacherAllTrialLessons() {
 }
 
 export default function TeacherTrialLessons() {
-  const { data: allLessons, isLoading, refetch } = useTeacherAllTrialLessons();
+  const [filter, setFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
+  const { data: allLessons, isLoading, refetch } = useTeacherAllTrialLessons(filter);
 
   const scheduled = allLessons?.filter(l => l.status === 'scheduled') || [];
   const completed = allLessons?.filter(l => l.status === 'completed') || [];
@@ -103,11 +111,14 @@ export default function TeacherTrialLessons() {
   return (
     <TeacherLayout>
       <div className="space-y-6 animate-fade-in">
-        <div>
-          <h1 className="text-3xl font-display font-bold mb-2">Trial Lessons</h1>
-          <p className="text-muted-foreground">
-            View and manage trial lessons assigned to you by the admin.
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div>
+            <h1 className="text-3xl font-display font-bold mb-2">Trial Lessons</h1>
+            <p className="text-muted-foreground">
+              View and manage trial lessons assigned to you by the admin.
+            </p>
+          </div>
+          <YearMonthFilter value={filter} onChange={setFilter} />
         </div>
 
         {/* Summary Cards */}
