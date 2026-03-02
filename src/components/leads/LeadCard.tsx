@@ -17,6 +17,7 @@ import {
   User,
   MessageSquare,
   Tag,
+  Trash2,
 } from 'lucide-react';
 import type { Lead } from '@/hooks/use-leads';
 
@@ -25,6 +26,7 @@ interface LeadCardProps {
   onUpdateTrialStatus: (leadId: string, trialStatus: string) => void;
   onUpdateFollowUp: (leadId: string, followUp: string) => void;
   onEdit: (lead: Lead) => void;
+  onDelete?: (leadId: string) => void;
 }
 
 const trialStatusColors: Record<string, string> = {
@@ -61,7 +63,7 @@ const followUpOptions = [
   'F.7 – Arabic Challenge',
 ];
 
-export function LeadCard({ lead, onUpdateTrialStatus, onUpdateFollowUp, onEdit }: LeadCardProps) {
+export function LeadCard({ lead, onUpdateTrialStatus, onUpdateFollowUp, onEdit, onDelete }: LeadCardProps) {
   return (
     <Card className="bg-card border-border hover:border-primary/30 transition-colors">
       <CardHeader className="pb-2">
@@ -109,6 +111,18 @@ export function LeadCard({ lead, onUpdateTrialStatus, onUpdateFollowUp, onEdit }
                     {option}
                   </DropdownMenuItem>
                 ))}
+                {onDelete && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => onDelete(lead.lead_id)}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete Lead
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Plus, Search, Download, Users, Clock, CheckCircle, XCircle, DollarSign, Loader2 } from 'lucide-react';
 import { YearMonthFilter, getDefaultFilter, getFilterDateRange, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
 import { AdminLayout } from '@/components/layout/AdminLayout';
-import { useLeads, useCreateLead, useUpdateLead, type Lead } from '@/hooks/use-leads';
+import { useLeads, useCreateLead, useUpdateLead, useDeleteLead, type Lead } from '@/hooks/use-leads';
 import { usePrograms } from '@/hooks/use-programs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -53,6 +53,17 @@ export default function Leads() {
   const { data: programs } = usePrograms();
   const createLead = useCreateLead();
   const updateLead = useUpdateLead();
+  const deleteLead = useDeleteLead();
+
+  const handleDeleteLead = async (leadId: string) => {
+    if (!window.confirm('Are you sure you want to delete this lead?')) return;
+    try {
+      await deleteLead.mutateAsync(leadId);
+      toast({ title: 'Deleted', description: 'Lead deleted successfully.' });
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to delete lead.', variant: 'destructive' });
+    }
+  };
 
   const [formData, setFormData] = useState({
     name: '',
@@ -422,6 +433,7 @@ export default function Leads() {
                 onUpdateTrialStatus={handleUpdateTrialStatus}
                 onUpdateFollowUp={handleUpdateFollowUp}
                 onEdit={setEditingLead}
+                onDelete={handleDeleteLead}
               />
             ))}
           </div>

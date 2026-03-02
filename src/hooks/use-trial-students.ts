@@ -301,6 +301,12 @@ export function useDeleteTrialStudent() {
 
   return useMutation({
     mutationFn: async (trialId: string) => {
+      // First delete associated trial_lessons_log entries
+      await supabase
+        .from('trial_lessons_log')
+        .delete()
+        .eq('trial_student_id', trialId);
+
       const { error } = await supabase
         .from('trial_students')
         .delete()
@@ -310,6 +316,42 @@ export function useDeleteTrialStudent() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trial-students'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-all-trial-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-todays-trial-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-pending-trial-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-total-hours'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-live-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-monthly-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-teacher-performance'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-payroll-unified'] });
+    },
+  });
+}
+
+export function useDeleteTrialLesson() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (trialLessonId: string) => {
+      const { error } = await supabase
+        .from('trial_lessons_log')
+        .delete()
+        .eq('trial_lesson_id', trialLessonId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['trial-students'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-all-trial-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-todays-trial-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-pending-trial-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-total-hours'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-live-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-monthly-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-teacher-performance'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-payroll-unified'] });
     },
   });
 }
