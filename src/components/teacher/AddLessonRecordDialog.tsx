@@ -28,7 +28,7 @@ export function AddLessonRecordDialog({ open, onOpenChange, student }: AddLesson
   const [lessonDate, setLessonDate] = useState(new Date().toISOString().split('T')[0]);
   const [lessonTime, setLessonTime] = useState('09:00');
   const [duration, setDuration] = useState('30');
-  const [status, setStatus] = useState<'Taken' | 'Absent'>('Taken');
+  const [status, setStatus] = useState<'completed' | 'absent'>('completed');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -65,7 +65,7 @@ export function AddLessonRecordDialog({ open, onOpenChange, student }: AddLesson
 
       // Reset form
       setNotes('');
-      setStatus('Taken');
+      setStatus('completed');
       onOpenChange(false);
     } catch (error: any) {
       toast.error('Failed to add lesson record', { description: error.message });
@@ -118,13 +118,13 @@ export function AddLessonRecordDialog({ open, onOpenChange, student }: AddLesson
             </div>
             <div className="space-y-2">
               <Label>Status</Label>
-              <Select value={status} onValueChange={(v) => setStatus(v as 'Taken' | 'Absent')}>
+              <Select value={status} onValueChange={(v) => setStatus(v as 'completed' | 'absent')}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Taken">Completed</SelectItem>
-                  <SelectItem value="Absent">Absent</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="absent">Absent</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -62,7 +62,7 @@ export function TodaysLessonsCard({ teacherId }: TodaysLessonsCardProps) {
 
   const handleMarkLesson = async (lessonId: string, status: 'completed' | 'absent', studentStatus?: string) => {
     if (status === 'completed' && studentStatus === 'Left') {
-      toast.error('Cannot mark as Taken - student has left');
+      toast.error('Cannot mark as completed - student has left');
       return;
     }
     try {

@@ -16,7 +16,7 @@ export interface PackageSummary {
     date: string;
     class_name: string;
     teacher_name: string;
-    status: 'Taken' | 'Absent' | 'Cancelled';
+    status: 'completed' | 'absent' | 'scheduled';
     notes: string | null;
   }[];
   statistics: {

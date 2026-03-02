@@ -59,7 +59,7 @@ export default function PackageSummaries() {
 
     if (summary.lessons.length > 0) {
       summary.lessons.forEach((lesson, idx) => {
-        const statusIcon = lesson.status === 'Taken' ? '✅' : lesson.status === 'Absent' ? '❌' : '⏸️';
+        const statusIcon = lesson.status === 'completed' ? '✅' : lesson.status === 'absent' ? '❌' : '⏸️';
         lines.push(`${idx + 1}. ${lesson.date ? formatDate(lesson.date) : 'N/A'} - ${statusIcon} ${lesson.status}`);
         lines.push(`   Class: ${lesson.class_name} | Teacher: ${lesson.teacher_name}`);
         if (lesson.notes) lines.push(`   Notes: ${lesson.notes}`);
@@ -184,9 +184,9 @@ export default function PackageSummaries() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'Taken': return <CheckCircle2 className="w-4 h-4 text-emerald-500" />;
-      case 'Absent': return <XCircle className="w-4 h-4 text-destructive" />;
-      case 'Cancelled': return null;
+      case 'completed': return <CheckCircle2 className="w-4 h-4 text-emerald-500" />;
+      case 'absent': return <XCircle className="w-4 h-4 text-destructive" />;
+      case 'scheduled': return null;
       default: return null;
     }
   };
@@ -338,7 +338,7 @@ export default function PackageSummaries() {
                 <div className="grid grid-cols-3 gap-4">
                   <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-center">
                     <div className="text-2xl font-bold text-emerald-500">{summary.statistics.total_taken}</div>
-                    <div className="text-xs text-muted-foreground">Taken</div>
+                    <div className="text-xs text-muted-foreground">Completed</div>
                   </div>
                   <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-center">
                     <div className="text-2xl font-bold text-destructive">{summary.statistics.total_absent}</div>
