@@ -97,7 +97,6 @@ export function useActivatePackage() {
           p_package_id: packageId,
           p_student_id: student.student_id,
           p_teacher_id: student.teacher_id,
-          p_class_id: null,
           p_start_date: pkg.start_date,
           p_total_lessons: pkg.lessons_purchased,
           p_lesson_duration: pkg.lesson_duration || 45,

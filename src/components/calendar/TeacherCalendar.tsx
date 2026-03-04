@@ -158,7 +158,7 @@ export function TeacherCalendar({ teacherId }: TeacherCalendarProps) {
                   <div className="flex items-center gap-4 text-sm opacity-75">
                     <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{lesson.scheduled_time?.slice(0, 5)}</span>
                     <span>{lesson.duration_minutes} mins</span>
-                    {lesson.classes?.name && <span className="text-xs bg-muted px-2 py-0.5 rounded">{lesson.classes.name}</span>}
+                    
                   </div>
                   <div className="flex gap-2 mt-2">
                     <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setStatusLesson(lesson)}>

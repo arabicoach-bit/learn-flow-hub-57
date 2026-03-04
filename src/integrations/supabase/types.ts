@@ -1072,7 +1072,7 @@ export type Database = {
       }
       generate_package_schedule: {
         Args: {
-          p_class_id: string
+          p_class_id?: string
           p_lesson_duration: number
           p_package_id: string
           p_schedule_days: Json
@@ -1097,7 +1097,6 @@ export type Database = {
       }
       mark_lesson_taken: {
         Args: {
-          p_class_id: string
           p_notes?: string
           p_status: string
           p_student_id: string
@@ -1113,7 +1112,7 @@ export type Database = {
     Enums: {
       app_role: "admin" | "teacher"
       lead_status: "New" | "Contacted" | "Interested" | "Converted" | "Lost"
-      lesson_status: "Taken" | "Absent" | "Cancelled"
+      lesson_status: "completed" | "absent" | "scheduled"
       notification_type:
         | "low_balance"
         | "grace_mode"
@@ -1259,7 +1258,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "teacher"],
       lead_status: ["New", "Contacted", "Interested", "Converted", "Lost"],
-      lesson_status: ["Taken", "Absent", "Cancelled"],
+      lesson_status: ["completed", "absent", "scheduled"],
       notification_type: [
         "low_balance",
         "grace_mode",
