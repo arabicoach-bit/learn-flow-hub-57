@@ -11,7 +11,6 @@ interface CreateTeacherRequest {
   email: string;
   phone?: string;
   rate_per_lesson: number;
-  class_ids?: string[];
 }
 
 interface ResetPasswordRequest {
@@ -216,15 +215,7 @@ serve(async (req: Request) => {
         console.error('Role insert error:', roleInsertError);
       }
 
-      // 5. Assign classes if provided
-      if (body.class_ids && body.class_ids.length > 0) {
-        for (const classId of body.class_ids) {
-          await supabaseAdmin
-            .from('classes')
-            .update({ teacher_id: teacher.teacher_id })
-            .eq('class_id', classId);
-        }
-      }
+
 
       // 6. Log audit action
       await supabaseAdmin.from('audit_logs').insert({
@@ -341,8 +332,8 @@ serve(async (req: Request) => {
 
       // Check if teacher has lessons
       const { data: lessons } = await supabaseAdmin
-        .from('lessons_log')
-        .select('lesson_id')
+        .from('scheduled_lessons')
+        .select('scheduled_lesson_id')
         .eq('teacher_id', body.teacher_id)
         .limit(1);
 
@@ -361,12 +352,6 @@ serve(async (req: Request) => {
         await supabaseAdmin.auth.admin.deleteUser(body.user_id);
       } else {
         // Hard delete
-        // Unassign from classes first
-        await supabaseAdmin
-          .from('classes')
-          .update({ teacher_id: null })
-          .eq('teacher_id', body.teacher_id);
-
         // Delete teacher record
         await supabaseAdmin
           .from('teachers')

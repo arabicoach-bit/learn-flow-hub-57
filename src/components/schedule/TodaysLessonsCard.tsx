@@ -127,7 +127,6 @@ export function TodaysLessonsCard({ teacherId }: TodaysLessonsCardProps) {
                           <div className="flex-1">
                             <p className={`font-medium ${isBlocked ? 'text-muted-foreground' : ''}`}>{lesson.students?.name || 'Unknown Student'}</p>
                             <div className="flex items-center gap-2 mt-1 flex-wrap">
-                              <Badge variant="outline">{lesson.classes?.name || 'No class'}</Badge>
                               <span className={`text-sm font-medium ${getWalletColor(lesson.students?.wallet_balance || 0)}`}>
                                 Wallet: {getWalletDisplayLabel(lesson.students?.wallet_balance || 0)}
                               </span>
@@ -151,7 +150,7 @@ export function TodaysLessonsCard({ teacherId }: TodaysLessonsCardProps) {
                                 disabled={markLesson.isPending || isBlocked}
                               >
                                 {markLesson.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-1" />}
-                                Taken
+                                Completed
                               </Button>
                             </span>
                           </TooltipTrigger>

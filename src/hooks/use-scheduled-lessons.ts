@@ -6,7 +6,6 @@ export interface ScheduledLesson {
   package_id: string | null;
   student_id: string | null;
   teacher_id: string | null;
-  class_id: string | null;
   scheduled_date: string;
   scheduled_time: string;
   duration_minutes: number;
@@ -15,7 +14,6 @@ export interface ScheduledLesson {
   created_at: string;
   students?: { name: string; phone: string; status: string; wallet_balance: number } | null;
   teachers?: { name: string } | null;
-  classes?: { name: string } | null;
 }
 
 export function useScheduledLessons(filters?: { 
@@ -30,7 +28,7 @@ export function useScheduledLessons(filters?: {
     queryFn: async () => {
       let query = supabase
         .from('scheduled_lessons')
-        .select('*, students(name, phone, status, wallet_balance), teachers(name), classes(name)')
+        .select('*, students(name, phone, status, wallet_balance), teachers(name)')
         .order('scheduled_date', { ascending: true })
         .order('scheduled_time', { ascending: true });
 
@@ -91,7 +89,6 @@ export function useMarkScheduledLesson() {
       // Call mark_lesson_taken RPC
       const { data: result, error: rpcError } = await supabase.rpc('mark_lesson_taken', {
         p_student_id: scheduledLesson.student_id,
-        p_class_id: scheduledLesson.class_id,
         p_teacher_id: scheduledLesson.teacher_id,
         p_status: status,
         p_notes: notes || null,
@@ -260,7 +257,6 @@ export function useAddScheduledLesson() {
       package_id: string;
       student_id: string;
       teacher_id: string;
-      class_id?: string | null;
       scheduled_date: string;
       scheduled_time: string;
       duration_minutes: number;
@@ -271,7 +267,6 @@ export function useAddScheduledLesson() {
           package_id: input.package_id,
           student_id: input.student_id,
           teacher_id: input.teacher_id,
-          class_id: input.class_id || null,
           scheduled_date: input.scheduled_date,
           scheduled_time: input.scheduled_time,
           duration_minutes: input.duration_minutes,

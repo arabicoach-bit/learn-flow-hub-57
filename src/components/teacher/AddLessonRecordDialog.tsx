@@ -18,7 +18,6 @@ interface AddLessonRecordDialogProps {
   student: {
     student_id: string;
     name: string;
-    class_id?: string | null;
   };
 }
 
@@ -41,7 +40,6 @@ export function AddLessonRecordDialog({ open, onOpenChange, student }: AddLesson
       // Call mark_lesson_taken RPC (updates packages + wallet)
       const { error } = await supabase.rpc('mark_lesson_taken', {
         p_student_id: student.student_id,
-        p_class_id: student.class_id || profile.teacher_id, // fallback
         p_teacher_id: profile.teacher_id,
         p_status: status,
         p_notes: notes || null,

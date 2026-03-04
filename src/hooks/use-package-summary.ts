@@ -25,9 +25,9 @@ export interface PackageSummary {
     scheduled_time: string | null;
   }[];
   statistics: {
-    total_taken: number;
+    total_completed: number;
     total_absent: number;
-    total_cancelled: number;
+    total_scheduled: number;
   };
 }
 
@@ -118,9 +118,9 @@ export function usePackageSummary(packageId: string | null) {
         }));
         // Recalculate statistics from enriched data
         summary.statistics = {
-          total_taken: summary.lessons.filter(l => l.status === 'completed').length,
+          total_completed: summary.lessons.filter(l => l.status === 'completed').length,
           total_absent: summary.lessons.filter(l => l.status === 'absent').length,
-          total_cancelled: summary.lessons.filter(l => l.status !== 'completed' && l.status !== 'absent' && l.status !== 'scheduled').length,
+          total_scheduled: summary.lessons.filter(l => l.status === 'scheduled').length,
         };
       }
 

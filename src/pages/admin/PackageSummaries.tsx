@@ -77,7 +77,7 @@ export default function PackageSummaries() {
       summary.completed_date ? `   Completed: ${formatDate(summary.completed_date)}` : '',
       ``,
       `📊 Statistics:`,
-      `   ✅ Completed: ${summary.statistics.total_taken}`,
+      `   ✅ Completed: ${summary.statistics.total_completed}`,
       `   ❌ Absent: ${summary.statistics.total_absent}`,
       ``,
       `📅 Lesson History:`,
@@ -207,7 +207,7 @@ export default function PackageSummaries() {
     infoLine('Lessons Purchased: ', summary.lessons_purchased.toString(), 18, y);
     infoLine('Amount Paid: ', `AED ${summary.amount.toLocaleString()}`, 110, y);
     y += 6;
-    infoLine('Lessons Completed: ', summary.statistics.total_taken.toString(), 18, y);
+    infoLine('Lessons Completed: ', summary.statistics.total_completed.toString(), 18, y);
     infoLine('Lessons Absent: ', summary.statistics.total_absent.toString(), 110, y);
     y += 12;
 
@@ -223,7 +223,7 @@ export default function PackageSummaries() {
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(34, 197, 94);
-    doc.text(summary.statistics.total_taken.toString(), 14 + boxW / 2, y + 10, { align: 'center' });
+    doc.text(summary.statistics.total_completed.toString(), 14 + boxW / 2, y + 10, { align: 'center' });
     doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
     doc.text('Lessons Completed', 14 + boxW / 2, y + 17, { align: 'center' });
@@ -244,7 +244,7 @@ export default function PackageSummaries() {
     // Attendance rate box
     const box3X = box2X + boxW + 4;
     const attendanceRate = summary.lessons_purchased > 0
-      ? Math.round((summary.statistics.total_taken / summary.lessons_purchased) * 100)
+      ? Math.round((summary.statistics.total_completed / summary.lessons_purchased) * 100)
       : 0;
     doc.setFillColor(219, 234, 254);
     doc.setDrawColor(59, 130, 246);
@@ -527,7 +527,7 @@ export default function PackageSummaries() {
                 {/* Statistics */}
                 <div className="grid grid-cols-3 gap-4">
                   <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-center">
-                    <div className="text-2xl font-bold text-emerald-500">{summary.statistics.total_taken}</div>
+                    <div className="text-2xl font-bold text-emerald-500">{summary.statistics.total_completed}</div>
                     <div className="text-xs text-muted-foreground">Completed</div>
                   </div>
                   <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-center">
@@ -537,7 +537,7 @@ export default function PackageSummaries() {
                   <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20 text-center">
                     <div className="text-2xl font-bold text-blue-500">
                       {summary.lessons_purchased > 0
-                        ? Math.round((summary.statistics.total_taken / summary.lessons_purchased) * 100)
+                        ? Math.round((summary.statistics.total_completed / summary.lessons_purchased) * 100)
                         : 0}%
                     </div>
                     <div className="text-xs text-muted-foreground">Attendance</div>

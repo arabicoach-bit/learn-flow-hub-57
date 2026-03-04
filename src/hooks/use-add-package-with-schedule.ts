@@ -77,7 +77,6 @@ export function useAddPackageWithSchedule() {
           p_package_id: packageData.package_id,
           p_student_id: input.student_id,
           p_teacher_id: input.teacher_id,
-          p_class_id: null,
           p_start_date: input.start_date,
           p_total_lessons: input.lessons_purchased,
           p_lesson_duration: input.lesson_duration,
