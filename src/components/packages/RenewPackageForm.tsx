@@ -384,6 +384,57 @@ export function RenewPackageForm({
                 )}
               />
             </div>
+
+            {/* Payment Status */}
+            <div className="border-t pt-4 mt-4">
+              <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                <DollarSign className="w-4 h-4" />
+                Payment Information
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="payment_status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Payment Status</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select payment status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Pending">⏳ Pending — Not received yet</SelectItem>
+                          <SelectItem value="Paid">✅ Paid — Already received</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        {paymentStatus === 'Pending'
+                          ? 'You can add amount when payment is received'
+                          : 'Enter the amount received'}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {paymentStatus === 'Paid' && (
+                  <FormField
+                    control={form.control}
+                    name="payment_date"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Payment Date</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+              </div>
+            </div>
           </CardContent>
         </Card>
 
