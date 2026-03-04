@@ -48,6 +48,8 @@ const renewalFormSchema = z.object({
   start_date: z.string().min(1, 'Start date is required'),
   teacher_id: z.string().min(1, 'Teacher is required'),
   use_previous_schedule: z.boolean().default(true),
+  payment_status: z.string().default('Pending'),
+  payment_date: z.string().optional(),
 });
 
 type RenewalFormValues = z.infer<typeof renewalFormSchema>;
