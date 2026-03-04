@@ -113,6 +113,7 @@ export function RenewPackageForm({
   const usePreviousSchedule = form.watch('use_previous_schedule');
   const selectedDescription = form.watch('package_description');
   const selectedPackage = PACKAGE_DESCRIPTIONS.find(p => p.value === selectedDescription);
+  const paymentStatus = form.watch('payment_status');
 
   // Auto-update duration when package description changes
   const handlePackageChange = (value: string) => {
