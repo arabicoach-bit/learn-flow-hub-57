@@ -105,6 +105,8 @@ export function RenewPackageForm({
       start_date: new Date().toISOString().split('T')[0],
       teacher_id: teacherId || '',
       use_previous_schedule: true,
+      payment_status: 'Pending',
+      payment_date: new Date().toISOString().split('T')[0],
     },
   });
 
