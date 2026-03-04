@@ -274,6 +274,7 @@ export type Database = {
           payment_date: string | null
           payment_proof: string | null
           payment_received: boolean | null
+          payment_status: string
           schedule_generated: boolean | null
           start_date: string | null
           status: Database["public"]["Enums"]["package_status"] | null
@@ -296,6 +297,7 @@ export type Database = {
           payment_date?: string | null
           payment_proof?: string | null
           payment_received?: boolean | null
+          payment_status?: string
           schedule_generated?: boolean | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["package_status"] | null
@@ -318,6 +320,7 @@ export type Database = {
           payment_date?: string | null
           payment_proof?: string | null
           payment_received?: boolean | null
+          payment_status?: string
           schedule_generated?: boolean | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["package_status"] | null
