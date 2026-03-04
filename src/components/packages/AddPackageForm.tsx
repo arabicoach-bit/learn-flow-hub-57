@@ -8,9 +8,10 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { useTeachers } from '@/hooks/use-teachers';
 import { useAddPackageWithSchedule, WeeklyScheduleDay } from '@/hooks/use-add-package-with-schedule';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Loader2, Plus, X, Calendar, Clock, DollarSign, BookOpen } from 'lucide-react';
 
@@ -43,6 +44,8 @@ const packageFormSchema = z.object({
   lesson_duration: z.number().min(15, 'Minimum 15 minutes'),
   start_date: z.string().min(1, 'Start date is required'),
   teacher_id: z.string().min(1, 'Teacher is required'),
+  payment_status: z.string().default('Pending'),
+  payment_date: z.string().optional(),
 });
 
 type PackageFormValues = z.infer<typeof packageFormSchema>;
@@ -72,11 +75,14 @@ export function AddPackageForm({ studentId, studentName, currentWallet, onSucces
       lesson_duration: 45,
       start_date: new Date().toISOString().split('T')[0],
       teacher_id: '',
+      payment_status: 'Pending',
+      payment_date: new Date().toISOString().split('T')[0],
     },
   });
 
   const selectedDescription = form.watch('package_description');
   const selectedPackage = PACKAGE_DESCRIPTIONS.find(p => p.value === selectedDescription);
+  const paymentStatus = form.watch('payment_status');
 
   // Auto-update duration when package description changes
   const handlePackageChange = (value: string) => {
@@ -84,7 +90,6 @@ export function AddPackageForm({ studentId, studentName, currentWallet, onSucces
     const pkg = PACKAGE_DESCRIPTIONS.find(p => p.value === value);
     if (pkg) {
       form.setValue('lesson_duration', pkg.duration);
-      // Calculate lessons for 4 weeks
       form.setValue('lessons_purchased', pkg.lessonsPerWeek * 4);
     }
   };
@@ -118,6 +123,18 @@ export function AddPackageForm({ studentId, studentName, currentWallet, onSucces
         teacher_id: values.teacher_id,
         weekly_schedule: weeklySchedule,
       });
+
+      // Update payment_status on the created package
+      if (result.package) {
+        await supabase
+          .from('packages')
+          .update({
+            payment_status: values.payment_status,
+            payment_received: values.payment_status === 'Paid',
+            payment_date: values.payment_status === 'Paid' ? values.payment_date : null,
+          })
+          .eq('package_id', result.package.package_id);
+      }
 
       const scheduledCount = typeof result.generatedSchedule === 'object' && result.generatedSchedule !== null
         ? (result.generatedSchedule as Record<string, unknown>).lessons_scheduled as number
@@ -187,22 +204,6 @@ export function AddPackageForm({ studentId, studentName, currentWallet, onSucces
             />
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <FormField
-                control={form.control}
-                name="amount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Payment Amount</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input type="number" step="0.01" className="pl-10" {...field} onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
               <FormField control={form.control} name="lessons_purchased" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Total Lessons</FormLabel>
@@ -224,6 +225,73 @@ export function AddPackageForm({ studentId, studentName, currentWallet, onSucces
                   <FormMessage />
                 </FormItem>
               )} />
+            </div>
+
+            {/* Payment Status */}
+            <div className="border-t pt-4 mt-4">
+              <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                <DollarSign className="w-4 h-4" />
+                Payment Information
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="payment_status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Payment Status</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select payment status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Pending">⏳ Pending — Not received yet</SelectItem>
+                          <SelectItem value="Paid">✅ Paid — Already received</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        {paymentStatus === 'Pending'
+                          ? 'You can add amount when payment is received'
+                          : 'Enter the amount received'}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="amount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Amount (AED){paymentStatus === 'Paid' ? ' *' : ''}</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">AED</span>
+                          <Input type="number" step="0.01" className="pl-12" {...field} onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {paymentStatus === 'Paid' && (
+                  <FormField
+                    control={form.control}
+                    name="payment_date"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Payment Date</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
