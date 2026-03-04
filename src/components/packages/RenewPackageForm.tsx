@@ -199,6 +199,18 @@ export function RenewPackageForm({
         weekly_schedule: weeklySchedule,
       });
 
+      // Update payment_status on the created package
+      if (result.package) {
+        await supabase
+          .from('packages')
+          .update({
+            payment_status: values.payment_status,
+            payment_received: values.payment_status === 'Paid',
+            payment_date: values.payment_status === 'Paid' ? values.payment_date : null,
+          })
+          .eq('package_id', result.package.package_id);
+      }
+
       const scheduledCount = typeof result.generatedSchedule === 'object' && result.generatedSchedule !== null
         ? (result.generatedSchedule as Record<string, unknown>).lessons_scheduled as number
         : values.lessons_purchased;
