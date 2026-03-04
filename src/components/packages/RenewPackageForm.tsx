@@ -48,6 +48,8 @@ const renewalFormSchema = z.object({
   start_date: z.string().min(1, 'Start date is required'),
   teacher_id: z.string().min(1, 'Teacher is required'),
   use_previous_schedule: z.boolean().default(true),
+  payment_status: z.string().default('Pending'),
+  payment_date: z.string().optional(),
 });
 
 type RenewalFormValues = z.infer<typeof renewalFormSchema>;
@@ -103,12 +105,15 @@ export function RenewPackageForm({
       start_date: new Date().toISOString().split('T')[0],
       teacher_id: teacherId || '',
       use_previous_schedule: true,
+      payment_status: 'Pending',
+      payment_date: new Date().toISOString().split('T')[0],
     },
   });
 
   const usePreviousSchedule = form.watch('use_previous_schedule');
   const selectedDescription = form.watch('package_description');
   const selectedPackage = PACKAGE_DESCRIPTIONS.find(p => p.value === selectedDescription);
+  const paymentStatus = form.watch('payment_status');
 
   // Auto-update duration when package description changes
   const handlePackageChange = (value: string) => {
@@ -193,6 +198,18 @@ export function RenewPackageForm({
         teacher_id: values.teacher_id,
         weekly_schedule: weeklySchedule,
       });
+
+      // Update payment_status on the created package
+      if (result.package) {
+        await supabase
+          .from('packages')
+          .update({
+            payment_status: values.payment_status,
+            payment_received: values.payment_status === 'Paid',
+            payment_date: values.payment_status === 'Paid' ? values.payment_date : null,
+          })
+          .eq('package_id', result.package.package_id);
+      }
 
       const scheduledCount = typeof result.generatedSchedule === 'object' && result.generatedSchedule !== null
         ? (result.generatedSchedule as Record<string, unknown>).lessons_scheduled as number
@@ -366,6 +383,57 @@ export function RenewPackageForm({
                   </FormItem>
                 )}
               />
+            </div>
+
+            {/* Payment Status */}
+            <div className="border-t pt-4 mt-4">
+              <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                <DollarSign className="w-4 h-4" />
+                Payment Information
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="payment_status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Payment Status</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select payment status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Pending">⏳ Pending — Not received yet</SelectItem>
+                          <SelectItem value="Paid">✅ Paid — Already received</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        {paymentStatus === 'Pending'
+                          ? 'You can add amount when payment is received'
+                          : 'Enter the amount received'}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {paymentStatus === 'Paid' && (
+                  <FormField
+                    control={form.control}
+                    name="payment_date"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Payment Date</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>

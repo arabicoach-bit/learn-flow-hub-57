@@ -23,6 +23,8 @@ export interface Package {
   schedule_generated: boolean | null;
   is_renewal: boolean | null;
   status: 'Active' | 'Completed';
+  payment_status: string;
+  payment_received: boolean | null;
   completed_date: string | null;
   created_at: string;
   students?: { name: string } | null;
