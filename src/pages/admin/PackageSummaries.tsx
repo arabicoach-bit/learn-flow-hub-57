@@ -187,9 +187,17 @@ export default function PackageSummaries() {
     };
 
     infoLine('Student Name: ', summary.student_name, 18, y);
-    infoLine('Teacher: ', summary.teacher_name || 'N/A', 110, y);
+    infoLine('Teacher: ', summary.teacher_name || summary.lessons[0]?.teacher_name || 'N/A', 110, y);
     y += 6;
     infoLine('Phone: ', summary.student_phone, 18, y);
+    y += 6;
+    const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const scheduleText = summary.weekly_schedule?.length > 0
+      ? summary.weekly_schedule
+          .map(s => `${dayNames[s.day_of_week]} ${s.time_slot?.slice(0,5)}`)
+          .join('  |  ')
+      : 'N/A';
+    infoLine('Schedule: ', scheduleText, 18, y);
     y += 12;
 
     // ── PACKAGE DETAILS ──
@@ -215,58 +223,73 @@ export default function PackageSummaries() {
     infoLine('Package Start: ', firstLessonDate, 18, y);
     infoLine('Package End: ', endDate, 110, y);
     y += 6;
-    infoLine('Description: ', (summary as any).description || 'N/A', 18, y);
+    infoLine('Description: ', summary.description || 'N/A', 18, y);
     y += 6;
-    infoLine('Lessons Completed: ', summary.statistics.total_completed.toString(), 18, y);
-    infoLine('Lessons Absent: ', summary.statistics.total_absent.toString(), 110, y);
+    const scheduleText2 = summary.weekly_schedule?.length > 0
+      ? summary.weekly_schedule
+          .map(s => `${dayNames[s.day_of_week]} ${s.time_slot?.slice(0,5)}`)
+          .join('  |  ')
+      : 'N/A';
+    infoLine('Weekly Schedule: ', scheduleText2, 18, y);
     y += 12;
 
     // ── ATTENDANCE SUMMARY BOXES ──
-    const boxW = (pageWidth - 28 - 8) / 3;
-    const boxH = 22;
+    const totalLessons = summary.lessons.length;
+    const completedCount = summary.statistics.total_completed;
+    const absentCount = summary.statistics.total_absent;
+    const scheduledCount = summary.lessons.filter(l => l.status === 'scheduled').length;
+    const totalDone = completedCount + absentCount;
+    const completedPct = totalDone > 0 ? Math.round(completedCount / totalDone * 100) : 0;
+    const absentPct = totalDone > 0 ? Math.round(absentCount / totalDone * 100) : 0;
+    const scheduledPct = totalLessons > 0 ? Math.round(scheduledCount / totalLessons * 100) : 0;
 
-    // Completed box
+    const boxW = (pageWidth - 28 - 8) / 3;
+    const boxH = 24;
+
+    // Green - Completed
     doc.setFillColor(220, 252, 231);
     doc.setDrawColor(34, 197, 94);
     doc.setLineWidth(0.5);
     doc.rect(14, y, boxW, boxH, 'FD');
-    doc.setFontSize(16);
+    doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(34, 197, 94);
-    doc.text(summary.statistics.total_completed.toString(), 14 + boxW / 2, y + 10, { align: 'center' });
+    doc.text(`${completedCount}`, 14 + boxW/2, y + 9, { align: 'center' });
+    doc.setFontSize(8);
+    doc.text(`${completedPct}%`, 14 + boxW/2, y + 15, { align: 'center' });
     doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
-    doc.text('Lessons Completed', 14 + boxW / 2, y + 17, { align: 'center' });
+    doc.text('Completed', 14 + boxW/2, y + 21, { align: 'center' });
 
-    // Absent box
-    const box2X = 14 + boxW + 4;
+    // Red - Absent
+    const b2x = 14 + boxW + 4;
     doc.setFillColor(254, 226, 226);
     doc.setDrawColor(239, 68, 68);
-    doc.rect(box2X, y, boxW, boxH, 'FD');
-    doc.setFontSize(16);
+    doc.rect(b2x, y, boxW, boxH, 'FD');
+    doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(239, 68, 68);
-    doc.text(summary.statistics.total_absent.toString(), box2X + boxW / 2, y + 10, { align: 'center' });
+    doc.text(`${absentCount}`, b2x + boxW/2, y + 9, { align: 'center' });
+    doc.setFontSize(8);
+    doc.text(`${absentPct}%`, b2x + boxW/2, y + 15, { align: 'center' });
     doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
-    doc.text('Lessons Absent', box2X + boxW / 2, y + 17, { align: 'center' });
+    doc.text('Absent', b2x + boxW/2, y + 21, { align: 'center' });
 
-    // Attendance rate box
-    const box3X = box2X + boxW + 4;
-    const totalDone = summary.statistics.total_completed + summary.statistics.total_absent;
-    const attendanceRate = totalDone > 0
-      ? Math.round((summary.statistics.total_completed / totalDone) * 100)
-      : 0;
+    // Blue - Scheduled
+    const b3x = b2x + boxW + 4;
     doc.setFillColor(219, 234, 254);
     doc.setDrawColor(59, 130, 246);
-    doc.rect(box3X, y, boxW, boxH, 'FD');
-    doc.setFontSize(16);
+    doc.rect(b3x, y, boxW, boxH, 'FD');
+    doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(59, 130, 246);
-    doc.text(`${attendanceRate}%`, box3X + boxW / 2, y + 10, { align: 'center' });
+    doc.text(`${scheduledCount}`, b3x + boxW/2, y + 9, { align: 'center' });
+    doc.setFontSize(8);
+    doc.text(`${scheduledPct}%`, b3x + boxW/2, y + 15, { align: 'center' });
     doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
-    doc.text('Attendance Rate', box3X + boxW / 2, y + 17, { align: 'center' });
+    doc.text('Scheduled', b3x + boxW/2, y + 21, { align: 'center' });
 
     y += boxH + 10;
 
@@ -306,37 +329,6 @@ export default function PackageSummaries() {
 
       y = (doc as any).lastAutoTable?.finalY || y + 10;
       y += 8;
-    }
-
-    // ── NEXT PACKAGE PROPOSAL ──
-    if (np.startDate || np.lessons || np.fees) {
-      // Check if we need a new page
-      if (y > 240) {
-        doc.addPage();
-        y = 20;
-      }
-
-      doc.setFillColor(...gold);
-      doc.rect(14, y, pageWidth - 28, 8, 'F');
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(...navy);
-      doc.text('Next Package Proposal', 18, y + 6);
-      y += 12;
-
-      doc.setFillColor(255, 248, 220);
-      doc.setDrawColor(...gold);
-      doc.setLineWidth(0.5);
-      doc.rect(14, y, pageWidth - 28, 20, 'FD');
-
-      doc.setFontSize(9);
-      doc.setTextColor(...darkText);
-      infoLine('📅 Start Date: ', np.startDate || 'TBD', 18, y + 7);
-      infoLine('📚 Number of Lessons: ', np.lessons || 'TBD', 18, y + 14);
-      infoLine('⏱ Duration per Lesson: ', np.duration ? `${np.duration} min` : 'TBD', 110, y + 7);
-      infoLine('💰 Package Fees: ', np.fees ? `AED ${Number(np.fees).toLocaleString()}` : 'TBD', 110, y + 14);
-
-      y += 28;
     }
 
     // ── FOOTER ──
