@@ -16,6 +16,11 @@ export interface PackageSummary {
   teacher_name: string | null;
   program_name: string | null;
   student_level: string | null;
+  description: string | null;
+  weekly_schedule: {
+    day_of_week: number;
+    time_slot: string;
+  }[];
   lessons: {
     date: string;
     teacher_name: string;
@@ -127,16 +132,30 @@ export function usePackageSummary(packageId: string | null) {
       // Enrich with student details
       const { data: pkgData } = await supabase
         .from('packages')
-        .select('students(teacher_id, student_level, program_id, teachers(name), programs(name))')
+        .select(`
+          description,
+          students(
+            teacher_id,
+            teachers(name)
+          )
+        `)
         .eq('package_id', packageId)
         .single();
 
       if (pkgData) {
         const student = (pkgData as any).students;
         summary.teacher_name = student?.teachers?.name || null;
-        summary.program_name = student?.programs?.name || null;
-        summary.student_level = student?.student_level || null;
+        summary.description = (pkgData as any).description || null;
       }
+
+      // Fetch weekly schedule
+      const { data: scheduleData } = await supabase
+        .from('lesson_schedules')
+        .select('day_of_week, time_slot')
+        .eq('package_id', packageId)
+        .order('day_of_week');
+
+      summary.weekly_schedule = scheduleData || [];
 
       return summary;
     },
