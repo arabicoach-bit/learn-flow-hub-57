@@ -116,7 +116,7 @@ export default function PackageSummaries() {
     toast.success('Summary copied to clipboard!');
   };
 
-  const handleExportPDF = (np: typeof nextPackage) => {
+  const handleExportPDF = async (np: typeof nextPackage) => {
     if (!summary) return;
 
     const doc = new jsPDF();
@@ -127,13 +127,23 @@ export default function PackageSummaries() {
     const darkText: [number, number, number] = [26, 26, 46];
 
     // ── HEADER WITH LOGO ──
-    try {
-      const img = new Image();
-      img.src = '/oac-logo.png';
-      doc.addImage(img, 'PNG', 14, 8, 35, 35);
-    } catch (e) {
-      // Logo may not load in all environments
-    }
+    const loadImage = (src: string): Promise<string> =>
+      new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          canvas.getContext('2d')?.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL('image/png'));
+        };
+        img.onerror = () => resolve('');
+        img.src = src;
+      });
+
+    const logoData = await loadImage('/oac-logo.png');
+    if (logoData) doc.addImage(logoData, 'PNG', 14, 8, 35, 35);
 
     doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
@@ -180,10 +190,6 @@ export default function PackageSummaries() {
     infoLine('Teacher: ', summary.teacher_name || 'N/A', 110, y);
     y += 6;
     infoLine('Phone: ', summary.student_phone, 18, y);
-    infoLine('Program: ', summary.program_name || 'N/A', 110, y);
-    y += 6;
-    infoLine('Parent Phone: ', summary.parent_phone || 'N/A', 18, y);
-    infoLine('Level: ', summary.student_level || 'N/A', 110, y);
     y += 12;
 
     // ── PACKAGE DETAILS ──
@@ -201,11 +207,15 @@ export default function PackageSummaries() {
     const firstLessonDate = summary.lessons.length > 0 && summary.lessons[0].date
       ? formatDate(summary.lessons[0].date) : 'N/A';
 
+    const lastLesson = [...summary.lessons]
+      .filter(l => l.status !== 'scheduled')
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+    const endDate = lastLesson ? formatDate(lastLesson.date) : 'N/A';
+
     infoLine('Package Start: ', firstLessonDate, 18, y);
-    infoLine('Package End: ', summary.completed_date ? formatDate(summary.completed_date) : 'N/A', 110, y);
+    infoLine('Package End: ', endDate, 110, y);
     y += 6;
-    infoLine('Lessons Purchased: ', summary.lessons_purchased.toString(), 18, y);
-    infoLine('Amount Paid: ', `AED ${summary.amount.toLocaleString()}`, 110, y);
+    infoLine('Description: ', (summary as any).description || 'N/A', 18, y);
     y += 6;
     infoLine('Lessons Completed: ', summary.statistics.total_completed.toString(), 18, y);
     infoLine('Lessons Absent: ', summary.statistics.total_absent.toString(), 110, y);
@@ -276,8 +286,8 @@ export default function PackageSummaries() {
           lesson.date ? formatDate(lesson.date) : 'N/A',
           lesson.scheduled_time?.slice(0, 5) || '-',
           lesson.duration_minutes ? `${lesson.duration_minutes} min` : '-',
-          lesson.status === 'completed' ? '✅ Completed' :
-          lesson.status === 'absent' ? '❌ Absent' : '🕐 Scheduled',
+          lesson.status === 'completed' ? 'Completed' :
+          lesson.status === 'absent' ? 'Absent' : 'Scheduled',
           lesson.notes || '-',
         ]),
         headStyles: { fillColor: navy, textColor: [255, 255, 255], fontSize: 9, fontStyle: 'bold' },
