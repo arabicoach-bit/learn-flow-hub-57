@@ -21,12 +21,6 @@ export default function PackageSummaries() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [nextPackage, setNextPackage] = useState({
-    startDate: '',
-    lessons: '',
-    duration: '',
-    fees: '',
-  });
 
   const { data: packages, isLoading } = usePackages({ 
     status: statusFilter || undefined,
@@ -41,18 +35,6 @@ export default function PackageSummaries() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    if (summary) {
-      setNextPackage({
-        startDate: summary.completed_date
-          ? format(addDays(new Date(summary.completed_date), 1), 'yyyy-MM-dd')
-          : '',
-        lessons: summary.lessons_purchased.toString(),
-        duration: summary.lessons[0]?.duration_minutes?.toString() || '45',
-        fees: summary.amount.toString(),
-      });
-    }
-  }, [summary]);
 
   const handleViewSummary = (packageId: string) => {
     setSelectedPackageId(packageId);
@@ -95,13 +77,6 @@ export default function PackageSummaries() {
       lines.push(`   No lessons recorded.`);
     }
 
-    if (nextPackage.startDate || nextPackage.lessons) {
-      lines.push(``, `📦 Next Package Proposal:`);
-      if (nextPackage.startDate) lines.push(`   Start Date: ${nextPackage.startDate}`);
-      if (nextPackage.lessons) lines.push(`   Lessons: ${nextPackage.lessons}`);
-      if (nextPackage.duration) lines.push(`   Duration: ${nextPackage.duration} min`);
-      if (nextPackage.fees) lines.push(`   Fees: AED ${nextPackage.fees}`);
-    }
 
     lines.push(``, `═══════════════════════════════`);
     lines.push(`Generated on ${new Date().toLocaleDateString()}`);
@@ -116,7 +91,7 @@ export default function PackageSummaries() {
     toast.success('Summary copied to clipboard!');
   };
 
-  const handleExportPDF = async (np: typeof nextPackage) => {
+  const handleExportPDF = async () => {
     if (!summary) return;
 
     const doc = new jsPDF();
@@ -585,52 +560,9 @@ export default function PackageSummaries() {
                   </div>
                 )}
 
-                {/* Next Package Proposal */}
-                <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                  <h3 className="font-semibold mb-1 flex items-center gap-2">
-                    <Package className="w-4 h-4" />
-                    Next Package Proposal
-                  </h3>
-                  <p className="text-xs text-muted-foreground mb-3">Auto-filled from current package. Edit before exporting.</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-xs text-muted-foreground">Start Date</label>
-                      <Input
-                        type="date"
-                        value={nextPackage.startDate}
-                        onChange={(e) => setNextPackage(p => ({ ...p, startDate: e.target.value }))}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-muted-foreground">Number of Lessons</label>
-                      <Input
-                        type="number"
-                        value={nextPackage.lessons}
-                        onChange={(e) => setNextPackage(p => ({ ...p, lessons: e.target.value }))}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-muted-foreground">Duration (minutes)</label>
-                      <Input
-                        type="number"
-                        value={nextPackage.duration}
-                        onChange={(e) => setNextPackage(p => ({ ...p, duration: e.target.value }))}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-muted-foreground">Package Fees (AED)</label>
-                      <Input
-                        type="number"
-                        value={nextPackage.fees}
-                        onChange={(e) => setNextPackage(p => ({ ...p, fees: e.target.value }))}
-                      />
-                    </div>
-                  </div>
-                </div>
-
                 {/* Actions */}
                 <div className="flex flex-wrap gap-2 pt-4 border-t">
-                  <Button onClick={() => handleExportPDF(nextPackage)} className="bg-[#2D3561] hover:bg-[#2D3561]/90">
+                  <Button onClick={() => handleExportPDF()} className="bg-[#2D3561] hover:bg-[#2D3561]/90">
                     <Download className="w-4 h-4 mr-2" />
                     Export PDF
                   </Button>
