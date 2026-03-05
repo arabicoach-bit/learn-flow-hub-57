@@ -243,8 +243,9 @@ export default function PackageSummaries() {
 
     // Attendance rate box
     const box3X = box2X + boxW + 4;
-    const attendanceRate = summary.lessons_purchased > 0
-      ? Math.round((summary.statistics.total_completed / summary.lessons_purchased) * 100)
+    const totalDone = summary.statistics.total_completed + summary.statistics.total_absent;
+    const attendanceRate = totalDone > 0
+      ? Math.round((summary.statistics.total_completed / totalDone) * 100)
       : 0;
     doc.setFillColor(219, 234, 254);
     doc.setDrawColor(59, 130, 246);
