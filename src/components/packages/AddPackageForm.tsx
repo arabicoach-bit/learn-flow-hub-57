@@ -126,12 +126,22 @@ export function AddPackageForm({ studentId, studentName, currentWallet, onSucces
 
       // Update payment_status on the created package
       if (result.package) {
+        const descLabel = PACKAGE_DESCRIPTIONS.find(
+          p => p.value === values.package_description
+        )?.label || null;
+
         await supabase
           .from('packages')
           .update({
             payment_status: values.payment_status,
             payment_received: values.payment_status === 'Paid',
-            payment_date: values.payment_status === 'Paid' ? values.payment_date : null,
+            payment_date: values.payment_status === 'Paid' 
+              ? values.payment_date : null,
+            paid_date: values.payment_status === 'Paid'
+              ? new Date().toISOString() : null,
+            due_date: values.payment_status === 'Pending'
+              ? values.start_date : null,
+            description: descLabel,
           })
           .eq('package_id', result.package.package_id);
       }
