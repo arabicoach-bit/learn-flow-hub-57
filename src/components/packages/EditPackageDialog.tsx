@@ -192,8 +192,7 @@ export function EditPackageDialog({ package_, open, onOpenChange, onSuccess }: E
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
+          <div className="space-y-2">
               <Label htmlFor="start_date">Start Date</Label>
               <Input
                 id="start_date"
@@ -201,33 +200,65 @@ export function EditPackageDialog({ package_, open, onOpenChange, onSuccess }: E
                 value={formData.start_date}
                 onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
               />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="next_payment_date">Next Payment Date</Label>
-              <Input
-                id="next_payment_date"
-                type="date"
-                value={formData.next_payment_date}
-                onChange={(e) => setFormData({ ...formData, next_payment_date: e.target.value })}
-              />
-            </div>
           </div>
 
           <div className="space-y-2">
-            <Label>Status</Label>
-            <Select 
-              value={formData.status} 
-              onValueChange={(v: 'Active' | 'Completed') => setFormData({ ...formData, status: v })}
+            <Label>Package Status</Label>
+            <Select
+              value={formData.status}
+              onValueChange={(v: 'Running' | 'Completed') =>
+                setFormData({ ...formData, status: v })}
             >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
+              <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="Active">Active</SelectItem>
+                <SelectItem value="Running">Running</SelectItem>
                 <SelectItem value="Completed">Completed</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="border-t pt-4 space-y-3">
+            <Label className="text-sm font-medium">Payment</Label>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Payment Status</Label>
+                <Select
+                  value={formData.payment_status}
+                  onValueChange={(v) => setFormData({
+                    ...formData, payment_status: v
+                  })}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                    <SelectItem value="Paid">Paid</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>
+                  {formData.payment_status === 'Paid'
+                    ? 'Paid Date' : 'Due Date'}
+                </Label>
+                <Input
+                  type="date"
+                  value={formData.payment_status === 'Paid'
+                    ? formData.paid_date
+                    : formData.due_date}
+                  onChange={(e) =>
+                    formData.payment_status === 'Paid'
+                      ? setFormData({
+                          ...formData,
+                          paid_date: e.target.value
+                        })
+                      : setFormData({
+                          ...formData,
+                          due_date: e.target.value
+                        })
+                  }
+                />
+              </div>
+            </div>
           </div>
 
           <DialogFooter>
