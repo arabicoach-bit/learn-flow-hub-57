@@ -29,8 +29,10 @@ export function EditPackageDialog({ package_, open, onOpenChange, onSuccess }: E
     lessons_used: '',
     lesson_duration: '',
     start_date: '',
-    next_payment_date: '',
-    status: 'Active' as 'Active' | 'Completed',
+    status: 'Running' as 'Running' | 'Completed',
+    payment_status: 'Pending',
+    due_date: '',
+    paid_date: '',
   });
 
   useEffect(() => {
@@ -42,8 +44,16 @@ export function EditPackageDialog({ package_, open, onOpenChange, onSuccess }: E
         lessons_used: (package_.lessons_used || 0).toString(),
         lesson_duration: (package_.lesson_duration || '').toString(),
         start_date: package_.start_date || '',
-        next_payment_date: package_.next_payment_date || '',
-        status: package_.status || 'Active',
+        status: (package_.status === 'Active' 
+          ? 'Running' : package_.status) as 
+          'Running' | 'Completed',
+        payment_status: (package_ as any)
+          .payment_status || 'Pending',
+        due_date: (package_ as any).due_date || '',
+        paid_date: (package_ as any).paid_date
+          ? new Date((package_ as any).paid_date)
+              .toISOString().split('T')[0]
+          : '',
       });
     }
   }, [package_]);
@@ -61,8 +71,14 @@ export function EditPackageDialog({ package_, open, onOpenChange, onSuccess }: E
           lessons_used: parseInt(data.lessons_used),
           lesson_duration: data.lesson_duration ? parseInt(data.lesson_duration) : null,
           start_date: data.start_date || null,
-          next_payment_date: data.next_payment_date || null,
-          status: data.status,
+          status: data.status === 'Running' ? 'Active' : data.status,
+          payment_status: data.payment_status,
+          due_date: data.payment_status === 'Pending'
+            ? data.due_date || null : null,
+          paid_date: data.payment_status === 'Paid'
+            && data.paid_date
+              ? new Date(data.paid_date).toISOString()
+              : null,
         })
         .eq('package_id', package_.package_id);
       
