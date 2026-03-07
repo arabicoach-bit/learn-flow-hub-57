@@ -86,6 +86,7 @@ export default function Packages() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [teacherFilter, setTeacherFilter] = useState('all');
   const [paymentFilter, setPaymentFilter] = useState('all');
+  const [editPackage, setEditPackage] = useState<Package | null>(null);
 
   // Edit Payment Dialog state
   const [isEditPaymentOpen, setIsEditPaymentOpen] = useState(false);
