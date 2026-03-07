@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Package as PackageIcon, FileSpreadsheet, Search, Filter, CheckCircle, Pencil, FileText } from 'lucide-react';
 import { usePackages, type Package } from '@/hooks/use-packages';
+import { EditPackageDialog } from '@/components/packages/EditPackageDialog';
 import { useTeachers } from '@/hooks/use-teachers';
 import { formatCurrency } from '@/lib/wallet-utils';
 import { format } from 'date-fns';
