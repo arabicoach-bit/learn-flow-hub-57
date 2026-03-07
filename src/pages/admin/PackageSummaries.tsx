@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,6 +22,7 @@ export default function PackageSummaries() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchParams] = useSearchParams();
 
   const { data: packages, isLoading } = usePackages({ 
     status: statusFilter || undefined,
@@ -34,6 +36,14 @@ export default function PackageSummaries() {
     autoComplete.mutate(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const packageId = searchParams.get('package');
+    if (packageId) {
+      setSelectedPackageId(packageId);
+      setIsModalOpen(true);
+    }
+  }, [searchParams]);
 
 
   const handleViewSummary = (packageId: string) => {

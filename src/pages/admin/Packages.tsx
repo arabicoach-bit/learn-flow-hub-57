@@ -46,9 +46,13 @@ function LessonsCell({ packageId, total }: {
   );
 }
 
-function WalletCell({ packageId, total }: { 
+function WalletCell({
+  packageId, total, status, onComplete
+}: {
   packageId: string;
   total: number;
+  status: string;
+  onComplete: () => void;
 }) {
   const [used, setUsed] = useState<number | null>(null);
   useEffect(() => {
@@ -57,19 +61,31 @@ function WalletCell({ packageId, total }: {
       .select('scheduled_lesson_id', { count: 'exact', head: true })
       .eq('package_id', packageId)
       .in('status', ['completed', 'absent'])
-      .then(({ count: c }) => setUsed(c ?? 0));
-  }, [packageId]);
+      .then(async ({ count: c }) => {
+        const usedCount = c ?? 0;
+        setUsed(usedCount);
+        const remaining = Math.max(0, total - usedCount);
+        if (remaining === 0 && status !== 'Completed') {
+          await supabase
+            .from('packages')
+            .update({
+              status: 'Completed',
+              completed_date: new Date().toISOString()
+            })
+            .eq('package_id', packageId);
+          onComplete();
+        }
+      });
+  }, [packageId, total, status]);
   if (used === null) return (
     <TableCell className="text-center text-muted-foreground">...</TableCell>
   );
-  const remaining = Math.max(0, total - (used ?? 0));
+  const remaining = Math.max(0, total - used);
   return (
     <TableCell className="text-center">
-      <span className={
-        remaining <= 2
-          ? 'text-red-500 font-bold'
-          : 'text-emerald-500 font-medium'
-      }>
+      <span className={remaining <= 2
+        ? 'text-red-500 font-bold'
+        : 'text-emerald-500 font-medium'}>
         {remaining}
       </span>
     </TableCell>
@@ -131,6 +147,8 @@ export default function Packages() {
     .filter(p => p.is_renewal).length;
   const newCount = filteredPackages
     .filter(p => !p.is_renewal).length;
+  const completedCount = filteredPackages
+    .filter(p => p.status === 'Completed').length;
 
   const handleExport = () => {
     if (filteredPackages.length > 0) exportPackages(filteredPackages);
@@ -150,13 +168,14 @@ export default function Packages() {
 
   const handleMarkPaid = async (pkg: Package) => {
     try {
+      const now = new Date().toISOString();
       const { error } = await supabase
         .from('packages')
         .update({
           payment_status: 'Paid',
           payment_received: true,
-          paid_date: new Date().toISOString(),
-          payment_date: new Date().toISOString(),
+          paid_date: now,
+          payment_date: now,
         })
         .eq('package_id', pkg.package_id);
 
@@ -164,7 +183,9 @@ export default function Packages() {
       queryClient.invalidateQueries({ queryKey: ['packages'] });
       toast.success(`Marked as Paid for ${pkg.students?.name}`);
     } catch (error: any) {
-      toast.error('Failed to update payment', { description: error.message });
+      toast.error('Failed to update payment', {
+        description: error.message
+      });
     }
   };
 
@@ -211,43 +232,35 @@ export default function Packages() {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-2xl font-bold text-emerald-600">{formatCurrency(paidRev)}</div>
-              <p className="text-sm text-muted-foreground">Total Revenue</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-2xl font-bold text-amber-600">{formatCurrency(pendingRev)}</div>
-              <p className="text-sm text-muted-foreground">Pending Payments</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-2xl font-bold text-green-600">{runningCount}</div>
-              <p className="text-sm text-muted-foreground">Running</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-2xl font-bold">{filteredPackages.length}</div>
-              <p className="text-sm text-muted-foreground">Total Packages</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-2xl font-bold text-blue-600">{renewalCount}</div>
-              <p className="text-sm text-muted-foreground">Renewals</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-2xl font-bold text-purple-600">{newCount}</div>
-              <p className="text-sm text-muted-foreground">New</p>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Card><CardContent className="pt-4 pb-3">
+            <div className="text-xl font-bold text-emerald-600">{formatCurrency(paidRev)}</div>
+            <p className="text-xs text-muted-foreground">Total Revenue</p>
+          </CardContent></Card>
+          <Card><CardContent className="pt-4 pb-3">
+            <div className="text-xl font-bold text-amber-600">{formatCurrency(pendingRev)}</div>
+            <p className="text-xs text-muted-foreground">Pending Payments</p>
+          </CardContent></Card>
+          <Card><CardContent className="pt-4 pb-3">
+            <div className="text-xl font-bold text-green-600">{runningCount}</div>
+            <p className="text-xs text-muted-foreground">Running</p>
+          </CardContent></Card>
+          <Card><CardContent className="pt-4 pb-3">
+            <div className="text-xl font-bold text-slate-500">{completedCount}</div>
+            <p className="text-xs text-muted-foreground">Completed</p>
+          </CardContent></Card>
+          <Card><CardContent className="pt-4 pb-3">
+            <div className="text-xl font-bold">{filteredPackages.length}</div>
+            <p className="text-xs text-muted-foreground">Total Packages</p>
+          </CardContent></Card>
+          <Card><CardContent className="pt-4 pb-3">
+            <div className="text-xl font-bold text-blue-600">{renewalCount}</div>
+            <p className="text-xs text-muted-foreground">Renewals</p>
+          </CardContent></Card>
+          <Card><CardContent className="pt-4 pb-3">
+            <div className="text-xl font-bold text-purple-600">{newCount}</div>
+            <p className="text-xs text-muted-foreground">New</p>
+          </CardContent></Card>
         </div>
 
         {/* Filters */}
@@ -367,9 +380,12 @@ export default function Packages() {
                         <LessonsCell 
                           packageId={pkg.package_id}
                           total={pkg.lessons_purchased} />
-                        <WalletCell 
+                        <WalletCell
                           packageId={pkg.package_id}
-                          total={pkg.lessons_purchased} />
+                          total={pkg.lessons_purchased}
+                          status={pkg.status}
+                          onComplete={() => queryClient.invalidateQueries({ queryKey: ['packages'] })}
+                        />
                         <TableCell className="text-center">
                           <div className="flex flex-col items-center gap-0.5">
                             {pkg.payment_status === 'Paid' ? (
