@@ -322,6 +322,7 @@ export default function Packages() {
                       <TableHead>Teacher</TableHead>
                       <TableHead>Start</TableHead>
                       <TableHead>Plan</TableHead>
+                      <TableHead>Description</TableHead>
                       <TableHead className="text-center">Status</TableHead>
                       <TableHead className="text-center">Lessons</TableHead>
                       <TableHead className="text-center">Wallet</TableHead>
@@ -353,6 +354,10 @@ export default function Packages() {
                         </TableCell>
                         <TableCell>
                           {pkg.package_types?.name || 'Custom'}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground max-w-[120px] truncate"
+                          title={(pkg as any).description || ''}>
+                          {(pkg as any).description || '—'}
                         </TableCell>
                         <TableCell className="text-center">
                           <Badge variant={pkg.status === 'Active' ? 'default' : 'secondary'} className={pkg.status === 'Active' ? 'bg-green-600' : ''}>
