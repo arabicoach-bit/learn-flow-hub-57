@@ -359,10 +359,12 @@ export default function Packages() {
                             {pkg.status === 'Active' ? 'Running' : pkg.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-center">
-                          {pkg.lessons_used || 0}/{pkg.lessons_purchased}
-                        </TableCell>
-                        <WalletCell packageId={pkg.package_id} />
+                        <LessonsCell 
+                          packageId={pkg.package_id}
+                          total={pkg.lessons_purchased} />
+                        <WalletCell 
+                          packageId={pkg.package_id}
+                          total={pkg.lessons_purchased} />
                         <TableCell className="text-center">
                           <div className="flex flex-col items-center gap-0.5">
                             {pkg.payment_status === 'Paid' ? (
