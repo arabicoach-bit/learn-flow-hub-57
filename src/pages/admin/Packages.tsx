@@ -506,6 +506,16 @@ export default function Packages() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <EditPackageDialog
+        package_={editPackage}
+        open={!!editPackage}
+        onOpenChange={(open) => !open && setEditPackage(null)}
+        onSuccess={() => {
+          setEditPackage(null);
+          queryClient.invalidateQueries({ queryKey: ['packages'] });
+        }}
+      />
     </AdminLayout>
   );
 }
