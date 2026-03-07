@@ -131,6 +131,8 @@ export default function Packages() {
     .filter(p => p.is_renewal).length;
   const newCount = filteredPackages
     .filter(p => !p.is_renewal).length;
+  const completedCount = filteredPackages
+    .filter(p => p.status === 'Completed').length;
 
   const handleExport = () => {
     if (filteredPackages.length > 0) exportPackages(filteredPackages);
