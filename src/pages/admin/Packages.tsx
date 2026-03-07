@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Package as PackageIcon, FileSpreadsheet, Search, Filter, CheckCircle, Pencil, FileText } from 'lucide-react';
 import { usePackages, type Package } from '@/hooks/use-packages';
+import { EditPackageDialog } from '@/components/packages/EditPackageDialog';
 import { useTeachers } from '@/hooks/use-teachers';
 import { formatCurrency } from '@/lib/wallet-utils';
 import { format } from 'date-fns';
@@ -22,21 +23,55 @@ import { toast } from 'sonner';
 
 type StatusFilter = 'all' | 'Active' | 'Completed';
 
-function WalletCell({ packageId }: { packageId: string }) {
-  const [count, setCount] = useState<number | null>(null);
-
+function LessonsCell({ packageId, total }: { 
+  packageId: string;
+  total: number;
+}) {
+  const [used, setUsed] = useState<number | null>(null);
   useEffect(() => {
     supabase
       .from('scheduled_lessons')
       .select('scheduled_lesson_id', { count: 'exact', head: true })
       .eq('package_id', packageId)
-      .eq('status', 'scheduled')
-      .then(({ count: c }) => setCount(c ?? 0));
+      .in('status', ['completed', 'absent'])
+      .then(({ count: c }) => setUsed(c ?? 0));
   }, [packageId]);
+  if (used === null) return (
+    <TableCell className="text-center text-muted-foreground">...</TableCell>
+  );
+  return (
+    <TableCell className="text-center font-medium text-sm">
+      {used}/{total}
+    </TableCell>
+  );
+}
 
+function WalletCell({ packageId, total }: { 
+  packageId: string;
+  total: number;
+}) {
+  const [used, setUsed] = useState<number | null>(null);
+  useEffect(() => {
+    supabase
+      .from('scheduled_lessons')
+      .select('scheduled_lesson_id', { count: 'exact', head: true })
+      .eq('package_id', packageId)
+      .in('status', ['completed', 'absent'])
+      .then(({ count: c }) => setUsed(c ?? 0));
+  }, [packageId]);
+  if (used === null) return (
+    <TableCell className="text-center text-muted-foreground">...</TableCell>
+  );
+  const remaining = Math.max(0, total - (used ?? 0));
   return (
     <TableCell className="text-center">
-      {count === null ? '...' : count}
+      <span className={
+        remaining <= 2
+          ? 'text-red-500 font-bold'
+          : 'text-emerald-500 font-medium'
+      }>
+        {remaining}
+      </span>
     </TableCell>
   );
 }
@@ -51,6 +86,7 @@ export default function Packages() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [teacherFilter, setTeacherFilter] = useState('all');
   const [paymentFilter, setPaymentFilter] = useState('all');
+  const [editPackage, setEditPackage] = useState<Package | null>(null);
 
   // Edit Payment Dialog state
   const [isEditPaymentOpen, setIsEditPaymentOpen] = useState(false);
@@ -323,10 +359,12 @@ export default function Packages() {
                             {pkg.status === 'Active' ? 'Running' : pkg.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-center">
-                          {pkg.lessons_used || 0}/{pkg.lessons_purchased}
-                        </TableCell>
-                        <WalletCell packageId={pkg.package_id} />
+                        <LessonsCell 
+                          packageId={pkg.package_id}
+                          total={pkg.lessons_purchased} />
+                        <WalletCell 
+                          packageId={pkg.package_id}
+                          total={pkg.lessons_purchased} />
                         <TableCell className="text-center">
                           <div className="flex flex-col items-center gap-0.5">
                             {pkg.payment_status === 'Paid' ? (
@@ -374,7 +412,10 @@ export default function Packages() {
                               size="icon"
                               variant="ghost"
                               className="h-8 w-8"
-                              onClick={(e) => { e.stopPropagation(); handleOpenEditPayment(pkg); }}
+                              onClick={(e) => { 
+                                e.stopPropagation(); 
+                                setEditPackage(pkg); 
+                              }}
                             >
                               <Pencil className="w-4 h-4" />
                             </Button>
@@ -466,6 +507,16 @@ export default function Packages() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <EditPackageDialog
+        package_={editPackage}
+        open={!!editPackage}
+        onOpenChange={(open) => !open && setEditPackage(null)}
+        onSuccess={() => {
+          setEditPackage(null);
+          queryClient.invalidateQueries({ queryKey: ['packages'] });
+        }}
+      />
     </AdminLayout>
   );
 }
