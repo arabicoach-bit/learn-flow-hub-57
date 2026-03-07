@@ -213,43 +213,35 @@ export default function Packages() {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-2xl font-bold text-emerald-600">{formatCurrency(paidRev)}</div>
-              <p className="text-sm text-muted-foreground">Total Revenue</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-2xl font-bold text-amber-600">{formatCurrency(pendingRev)}</div>
-              <p className="text-sm text-muted-foreground">Pending Payments</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-2xl font-bold text-green-600">{runningCount}</div>
-              <p className="text-sm text-muted-foreground">Running</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-2xl font-bold">{filteredPackages.length}</div>
-              <p className="text-sm text-muted-foreground">Total Packages</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-2xl font-bold text-blue-600">{renewalCount}</div>
-              <p className="text-sm text-muted-foreground">Renewals</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-2xl font-bold text-purple-600">{newCount}</div>
-              <p className="text-sm text-muted-foreground">New</p>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Card><CardContent className="pt-4 pb-3">
+            <div className="text-xl font-bold text-emerald-600">{formatCurrency(paidRev)}</div>
+            <p className="text-xs text-muted-foreground">Total Revenue</p>
+          </CardContent></Card>
+          <Card><CardContent className="pt-4 pb-3">
+            <div className="text-xl font-bold text-amber-600">{formatCurrency(pendingRev)}</div>
+            <p className="text-xs text-muted-foreground">Pending Payments</p>
+          </CardContent></Card>
+          <Card><CardContent className="pt-4 pb-3">
+            <div className="text-xl font-bold text-green-600">{runningCount}</div>
+            <p className="text-xs text-muted-foreground">Running</p>
+          </CardContent></Card>
+          <Card><CardContent className="pt-4 pb-3">
+            <div className="text-xl font-bold text-slate-500">{completedCount}</div>
+            <p className="text-xs text-muted-foreground">Completed</p>
+          </CardContent></Card>
+          <Card><CardContent className="pt-4 pb-3">
+            <div className="text-xl font-bold">{filteredPackages.length}</div>
+            <p className="text-xs text-muted-foreground">Total Packages</p>
+          </CardContent></Card>
+          <Card><CardContent className="pt-4 pb-3">
+            <div className="text-xl font-bold text-blue-600">{renewalCount}</div>
+            <p className="text-xs text-muted-foreground">Renewals</p>
+          </CardContent></Card>
+          <Card><CardContent className="pt-4 pb-3">
+            <div className="text-xl font-bold text-purple-600">{newCount}</div>
+            <p className="text-xs text-muted-foreground">New</p>
+          </CardContent></Card>
         </div>
 
         {/* Filters */}
