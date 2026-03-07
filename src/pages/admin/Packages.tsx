@@ -355,6 +355,10 @@ export default function Packages() {
                         <TableCell>
                           {pkg.package_types?.name || 'Custom'}
                         </TableCell>
+                        <TableCell className="text-xs text-muted-foreground max-w-[120px] truncate"
+                          title={(pkg as any).description || ''}>
+                          {(pkg as any).description || '—'}
+                        </TableCell>
                         <TableCell className="text-center">
                           <Badge variant={pkg.status === 'Active' ? 'default' : 'secondary'} className={pkg.status === 'Active' ? 'bg-green-600' : ''}>
                             {pkg.status === 'Active' ? 'Running' : pkg.status}
