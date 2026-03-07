@@ -67,7 +67,7 @@ export function useRecentPackages(limit = 20) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('packages')
-        .select('*, students!packages_student_id_fkey(name), package_types(name, description)')
+        .select('*, students!packages_student_id_fkey(name, teacher_id, teachers(name)), package_types(name, description)')
         .order('created_at', { ascending: false })
         .limit(limit);
 
