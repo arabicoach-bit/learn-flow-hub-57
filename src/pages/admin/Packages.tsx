@@ -322,6 +322,7 @@ export default function Packages() {
                       <TableHead>Teacher</TableHead>
                       <TableHead>Start</TableHead>
                       <TableHead>Plan</TableHead>
+                      <TableHead>Description</TableHead>
                       <TableHead className="text-center">Status</TableHead>
                       <TableHead className="text-center">Lessons</TableHead>
                       <TableHead className="text-center">Wallet</TableHead>
