@@ -27,7 +27,11 @@ export interface Package {
   payment_received: boolean | null;
   completed_date: string | null;
   created_at: string;
-  students?: { name: string } | null;
+  students?: { 
+    name: string;
+    teacher_id: string | null;
+    teachers?: { name: string } | null;
+  } | null;
   package_types?: { name: string; description: string | null } | null;
 }
 
