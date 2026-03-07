@@ -152,13 +152,14 @@ export default function Packages() {
 
   const handleMarkPaid = async (pkg: Package) => {
     try {
+      const now = new Date().toISOString();
       const { error } = await supabase
         .from('packages')
         .update({
           payment_status: 'Paid',
           payment_received: true,
-          paid_date: new Date().toISOString(),
-          payment_date: new Date().toISOString(),
+          paid_date: now,
+          payment_date: now,
         })
         .eq('package_id', pkg.package_id);
 
@@ -166,7 +167,9 @@ export default function Packages() {
       queryClient.invalidateQueries({ queryKey: ['packages'] });
       toast.success(`Marked as Paid for ${pkg.students?.name}`);
     } catch (error: any) {
-      toast.error('Failed to update payment', { description: error.message });
+      toast.error('Failed to update payment', {
+        description: error.message
+      });
     }
   };
 
