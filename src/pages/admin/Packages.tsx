@@ -380,9 +380,12 @@ export default function Packages() {
                         <LessonsCell 
                           packageId={pkg.package_id}
                           total={pkg.lessons_purchased} />
-                        <WalletCell 
+                        <WalletCell
                           packageId={pkg.package_id}
-                          total={pkg.lessons_purchased} />
+                          total={pkg.lessons_purchased}
+                          status={pkg.status}
+                          onComplete={() => queryClient.invalidateQueries({ queryKey: ['packages'] })}
+                        />
                         <TableCell className="text-center">
                           <div className="flex flex-col items-center gap-0.5">
                             {pkg.payment_status === 'Paid' ? (

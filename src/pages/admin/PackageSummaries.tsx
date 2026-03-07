@@ -37,6 +37,14 @@ export default function PackageSummaries() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    const packageId = searchParams.get('package');
+    if (packageId) {
+      setSelectedPackageId(packageId);
+      setIsModalOpen(true);
+    }
+  }, [searchParams]);
+
 
   const handleViewSummary = (packageId: string) => {
     setSelectedPackageId(packageId);
