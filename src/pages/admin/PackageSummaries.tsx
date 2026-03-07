@@ -22,6 +22,7 @@ export default function PackageSummaries() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchParams] = useSearchParams();
 
   const { data: packages, isLoading } = usePackages({ 
     status: statusFilter || undefined,
