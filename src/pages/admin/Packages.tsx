@@ -412,8 +412,10 @@ export default function Packages() {
                               size="icon"
                               variant="ghost"
                               className="h-8 w-8"
-                              onClick={(e) => { e.stopPropagation(); handleOpenEditPayment(pkg); }}
-                            >
+                              onClick={(e) => { 
+                                e.stopPropagation(); 
+                                setEditPackage(pkg); 
+                              }}
                               <Pencil className="w-4 h-4" />
                             </Button>
                             <Button
