@@ -23,21 +23,55 @@ import { toast } from 'sonner';
 
 type StatusFilter = 'all' | 'Active' | 'Completed';
 
-function WalletCell({ packageId }: { packageId: string }) {
-  const [count, setCount] = useState<number | null>(null);
-
+function LessonsCell({ packageId, total }: { 
+  packageId: string;
+  total: number;
+}) {
+  const [used, setUsed] = useState<number | null>(null);
   useEffect(() => {
     supabase
       .from('scheduled_lessons')
       .select('scheduled_lesson_id', { count: 'exact', head: true })
       .eq('package_id', packageId)
-      .eq('status', 'scheduled')
-      .then(({ count: c }) => setCount(c ?? 0));
+      .in('status', ['completed', 'absent'])
+      .then(({ count: c }) => setUsed(c ?? 0));
   }, [packageId]);
+  if (used === null) return (
+    <TableCell className="text-center text-muted-foreground">...</TableCell>
+  );
+  return (
+    <TableCell className="text-center font-medium text-sm">
+      {used}/{total}
+    </TableCell>
+  );
+}
 
+function WalletCell({ packageId, total }: { 
+  packageId: string;
+  total: number;
+}) {
+  const [used, setUsed] = useState<number | null>(null);
+  useEffect(() => {
+    supabase
+      .from('scheduled_lessons')
+      .select('scheduled_lesson_id', { count: 'exact', head: true })
+      .eq('package_id', packageId)
+      .in('status', ['completed', 'absent'])
+      .then(({ count: c }) => setUsed(c ?? 0));
+  }, [packageId]);
+  if (used === null) return (
+    <TableCell className="text-center text-muted-foreground">...</TableCell>
+  );
+  const remaining = Math.max(0, total - (used ?? 0));
   return (
     <TableCell className="text-center">
-      {count === null ? '...' : count}
+      <span className={
+        remaining <= 2
+          ? 'text-red-500 font-bold'
+          : 'text-emerald-500 font-medium'
+      }>
+        {remaining}
+      </span>
     </TableCell>
   );
 }
