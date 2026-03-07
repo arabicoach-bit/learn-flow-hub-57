@@ -416,6 +416,7 @@ export default function Packages() {
                                 e.stopPropagation(); 
                                 setEditPackage(pkg); 
                               }}
+                            >
                               <Pencil className="w-4 h-4" />
                             </Button>
                             <Button
