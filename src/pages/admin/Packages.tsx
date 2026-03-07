@@ -46,9 +46,13 @@ function LessonsCell({ packageId, total }: {
   );
 }
 
-function WalletCell({ packageId, total }: { 
+function WalletCell({
+  packageId, total, status, onComplete
+}: {
   packageId: string;
   total: number;
+  status: string;
+  onComplete: () => void;
 }) {
   const [used, setUsed] = useState<number | null>(null);
   useEffect(() => {
@@ -57,19 +61,31 @@ function WalletCell({ packageId, total }: {
       .select('scheduled_lesson_id', { count: 'exact', head: true })
       .eq('package_id', packageId)
       .in('status', ['completed', 'absent'])
-      .then(({ count: c }) => setUsed(c ?? 0));
-  }, [packageId]);
+      .then(async ({ count: c }) => {
+        const usedCount = c ?? 0;
+        setUsed(usedCount);
+        const remaining = Math.max(0, total - usedCount);
+        if (remaining === 0 && status !== 'Completed') {
+          await supabase
+            .from('packages')
+            .update({
+              status: 'Completed',
+              completed_date: new Date().toISOString()
+            })
+            .eq('package_id', packageId);
+          onComplete();
+        }
+      });
+  }, [packageId, total, status]);
   if (used === null) return (
     <TableCell className="text-center text-muted-foreground">...</TableCell>
   );
-  const remaining = Math.max(0, total - (used ?? 0));
+  const remaining = Math.max(0, total - used);
   return (
     <TableCell className="text-center">
-      <span className={
-        remaining <= 2
-          ? 'text-red-500 font-bold'
-          : 'text-emerald-500 font-medium'
-      }>
+      <span className={remaining <= 2
+        ? 'text-red-500 font-bold'
+        : 'text-emerald-500 font-medium'}>
         {remaining}
       </span>
     </TableCell>
