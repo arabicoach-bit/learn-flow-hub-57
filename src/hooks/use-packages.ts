@@ -47,7 +47,7 @@ export function usePackages(studentId?: string) {
     queryFn: async () => {
       let query = supabase
         .from('packages')
-        .select('*, students!packages_student_id_fkey(name), package_types(name, description)')
+        .select('*, students!packages_student_id_fkey(name, teacher_id, teachers(name)), package_types(name, description)')
         .order('created_at', { ascending: false });
 
       if (studentId) {
