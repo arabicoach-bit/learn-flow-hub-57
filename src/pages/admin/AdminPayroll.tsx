@@ -25,6 +25,9 @@ interface TeacherPayrollData {
   total_hours: number;
   rate_per_lesson: number;
   salary_earned: number;
+  bonus: number;
+  bonus_notes: string | null;
+  total_pay: number;
   active_students: number;
   temp_stop_students: number;
   left_students: number;
