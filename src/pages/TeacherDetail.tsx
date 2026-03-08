@@ -763,93 +763,147 @@ export default function TeacherDetail() {
           {/* ── Tab D: Trial Lessons ── */}
           <TabsContent value="trials">
             <div className="space-y-4">
-              {/* Trial Stats Cards */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <Card>
-                  <CardContent className="pt-4 pb-3 px-4">
-                    <div className="flex items-center gap-2">
-                      <GraduationCap className="w-4 h-4 text-primary" />
-                      <div>
-                        <p className="text-xl font-bold">{trialStats.total}</p>
-                        <p className="text-xs text-muted-foreground">Total Trials</p>
-                      </div>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <YearMonthFilter value={trialFilter} onChange={setTrialFilter} />
+              </div>
+
+              {/* Summary Cards - matching teacher view */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card className="border-purple-500/20 bg-purple-500/5">
+                  <CardContent className="p-4 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                      <Clock className="w-5 h-5 text-purple-400" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{trialStats.scheduled}</p>
+                      <p className="text-sm text-muted-foreground">Scheduled</p>
                     </div>
                   </CardContent>
                 </Card>
-                <Card>
-                  <CardContent className="pt-4 pb-3 px-4">
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-500" />
-                      <div>
-                        <p className="text-xl font-bold">{trialStats.completed}</p>
-                        <p className="text-xs text-muted-foreground">Completed</p>
-                      </div>
+                <Card className="border-emerald-500/20 bg-emerald-500/5">
+                  <CardContent className="p-4 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                      <Check className="w-5 h-5 text-emerald-400" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{trialStats.completed}</p>
+                      <p className="text-sm text-muted-foreground">Completed</p>
                     </div>
                   </CardContent>
                 </Card>
-                <Card>
-                  <CardContent className="pt-4 pb-3 px-4">
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-amber-500" />
-                      <div>
-                        <p className="text-xl font-bold">{trialStats.scheduled}</p>
-                        <p className="text-xs text-muted-foreground">Scheduled</p>
-                      </div>
+                <Card className="border-amber-500/20 bg-amber-500/5">
+                  <CardContent className="p-4 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
+                      <X className="w-5 h-5 text-amber-400" />
                     </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="pt-4 pb-3 px-4">
-                    <div className="flex items-center gap-2">
-                      <X className="w-4 h-4 text-destructive" />
-                      <div>
-                        <p className="text-xl font-bold">{trialStats.absent}</p>
-                        <p className="text-xs text-muted-foreground">Absent</p>
-                      </div>
+                    <div>
+                      <p className="text-2xl font-bold">{trialStats.absent}</p>
+                      <p className="text-sm text-muted-foreground">Absent</p>
                     </div>
                   </CardContent>
                 </Card>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-                <YearMonthFilter value={trialFilter} onChange={setTrialFilter} />
-                <Select value={trialStatusFilter} onValueChange={setTrialStatusFilter}>
-                  <SelectTrigger className="w-[150px]">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    <SelectItem value="scheduled">Scheduled</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="absent">Absent</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <Card className="overflow-hidden">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      <th>Time</th>
-                      <th>Student</th>
-                      <th>Phone</th>
-                      <th>Duration</th>
-                      <th>Status</th>
-                      <th>Notes</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {!filteredTrials.length ? (
-                      <tr><td colSpan={8} className="text-center py-8 text-muted-foreground">No trial lessons found</td></tr>
+              {filteredTrials.length === 0 ? (
+                <Card className="glass-card">
+                  <CardContent className="py-16 text-center">
+                    <GraduationCap className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No Trial Lessons Found</h3>
+                    <p className="text-muted-foreground">No trial lessons match the current filters.</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Tabs defaultValue="scheduled" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="scheduled">
+                      Scheduled ({filteredTrials.filter((t: any) => t.status === 'scheduled').length})
+                    </TabsTrigger>
+                    <TabsTrigger value="completed">
+                      Completed ({filteredTrials.filter((t: any) => t.status === 'completed').length})
+                    </TabsTrigger>
+                    <TabsTrigger value="absent">
+                      Absent ({filteredTrials.filter((t: any) => t.status === 'absent').length})
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="scheduled" className="space-y-3 mt-4">
+                    {filteredTrials.filter((t: any) => t.status === 'scheduled').length === 0 ? (
+                      <Card>
+                        <CardContent className="py-8 text-center text-muted-foreground">
+                          No scheduled trial lessons.
+                        </CardContent>
+                      </Card>
                     ) : (
-                      filteredTrials.map((trial: any) => (
-                        <TrialLessonRow key={trial.trial_lesson_id} trial={trial} />
+                      filteredTrials.filter((t: any) => t.status === 'scheduled').map((trial: any) => (
+                        <div key={trial.trial_lesson_id} className="space-y-1">
+                          <p className="text-xs text-muted-foreground ml-1">
+                            {format(new Date(trial.lesson_date), 'EEEE, MMMM d, yyyy')}
+                          </p>
+                          <AdminTrialLessonCard trial={trial} />
+                        </div>
                       ))
                     )}
-                  </tbody>
-                </table>
-              </Card>
+                  </TabsContent>
+
+                  <TabsContent value="completed" className="space-y-3 mt-4">
+                    {filteredTrials.filter((t: any) => t.status === 'completed').length === 0 ? (
+                      <Card>
+                        <CardContent className="py-8 text-center text-muted-foreground">
+                          No completed trial lessons yet.
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      filteredTrials.filter((t: any) => t.status === 'completed').map((trial: any) => (
+                        <Card key={trial.trial_lesson_id} className="border-emerald-500/20">
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="font-semibold">{trial.trial_students?.name || '-'}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {format(new Date(trial.lesson_date), 'MMM d, yyyy')} • {formatTrialTime(trial.lesson_time)} • {trial.duration_minutes} min
+                                </p>
+                                {trial.notes && (
+                                  <p className="text-sm text-muted-foreground mt-1 italic">"{trial.notes}"</p>
+                                )}
+                              </div>
+                              <Badge className="bg-emerald-500/20 text-emerald-400">Completed</Badge>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="absent" className="space-y-3 mt-4">
+                    {filteredTrials.filter((t: any) => t.status === 'absent').length === 0 ? (
+                      <Card>
+                        <CardContent className="py-8 text-center text-muted-foreground">
+                          No absent trial lessons.
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      filteredTrials.filter((t: any) => t.status === 'absent').map((trial: any) => (
+                        <Card key={trial.trial_lesson_id} className="border-amber-500/20">
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="font-semibold">{trial.trial_students?.name || '-'}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {format(new Date(trial.lesson_date), 'MMM d, yyyy')} • {formatTrialTime(trial.lesson_time)} • {trial.duration_minutes} min
+                                </p>
+                                {trial.notes && (
+                                  <p className="text-sm text-muted-foreground mt-1 italic">"{trial.notes}"</p>
+                                )}
+                              </div>
+                              <Badge className="bg-amber-500/20 text-amber-400">Absent</Badge>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))
+                    )}
+                  </TabsContent>
+                </Tabs>
+              )}
             </div>
           </TabsContent>
         </Tabs>
