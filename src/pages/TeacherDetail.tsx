@@ -142,10 +142,6 @@ export default function TeacherDetail() {
   const { data: filteredStats } = useTeacherTotalHours(id, payrollRange.startDate, payrollRange.endDate);
   const { data: salaryHistory } = useTeacherSalaryHistory(id || '');
 
-  const [trialFilter, setTrialFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
-  const trialRange = getFilterDateRange(trialFilter);
-  const { data: trialLessons } = useAdminTeacherTrialLessons(id, trialRange.startDate, trialRange.endDate);
-  const [trialStatusFilter, setTrialStatusFilter] = useState<string>('all');
 
   const teacherStudents = allStudents?.filter(s => s.teacher_id === id) || [];
 
@@ -161,7 +157,6 @@ export default function TeacherDetail() {
       const matchesSearch = s.name.toLowerCase().includes(studentSearch.toLowerCase()) ||
         s.phone.includes(studentSearch);
       const matchesStatus = studentStatusFilter === 'all' || s.status === studentStatusFilter;
-      // Filter by created_at date range
       const createdAt = s.created_at ? new Date(s.created_at) : null;
       const matchesDate = !createdAt || (
         (!studentRange.startDate || createdAt >= new Date(studentRange.startDate)) &&
@@ -170,24 +165,6 @@ export default function TeacherDetail() {
       return matchesSearch && matchesStatus && matchesDate;
     });
   }, [teacherStudents, studentSearch, studentStatusFilter, studentRange.startDate, studentRange.endDate]);
-
-  // Filtered trial lessons
-  const filteredTrials = useMemo(() => {
-    if (!trialLessons) return [];
-    if (trialStatusFilter === 'all') return trialLessons;
-    return trialLessons.filter((t: any) => t.status?.toLowerCase() === trialStatusFilter.toLowerCase());
-  }, [trialLessons, trialStatusFilter]);
-
-  // Trial stats
-  const trialStats = useMemo(() => {
-    if (!trialLessons) return { total: 0, completed: 0, scheduled: 0, absent: 0 };
-    return {
-      total: trialLessons.length,
-      completed: trialLessons.filter((t: any) => t.status === 'completed').length,
-      scheduled: trialLessons.filter((t: any) => t.status === 'scheduled').length,
-      absent: trialLessons.filter((t: any) => t.status === 'absent').length,
-    };
-  }, [trialLessons]);
 
   // Edit teacher state
   const updateTeacher = useUpdateTeacher();
