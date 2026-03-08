@@ -19,7 +19,7 @@ import StudentDetail from "./pages/StudentDetail";
 import Teachers from "./pages/Teachers";
 import TeacherDetail from "./pages/TeacherDetail";
 
-import Reports from "./pages/Reports";
+
 
 import AdminNotifications from "./pages/admin/Notifications";
 import TrialStudents from "./pages/admin/TrialStudents";
