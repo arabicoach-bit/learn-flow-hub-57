@@ -73,7 +73,6 @@ export function NotificationCard({ notification }: NotificationCardProps) {
   };
 
   const studentName = notification.student_name || 'Student';
-  const details = parseNotificationDetails(notification.message);
 
   // Build share message from enriched data when available, fallback to legacy
   const shareMessage = useMemo(() => {
