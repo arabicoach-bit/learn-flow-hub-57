@@ -62,7 +62,13 @@ export default function Students() {
     name: '',
     phone: '',
     parent_guardian_name: '',
-    program: '',
+    age: '',
+    gender: '',
+    nationality: '',
+    school: '',
+    year_group: '',
+    program_id: '',
+    student_level: '',
     teacher_id: '',
   });
 
