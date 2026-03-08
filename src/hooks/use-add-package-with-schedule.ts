@@ -25,7 +25,7 @@ export function useAddPackageWithSchedule() {
       // 1. Get current student data
       const { data: student, error: studentError } = await supabase
         .from('students')
-        .select('number_of_renewals, total_paid')
+        .select('number_of_renewals, total_paid, name, wallet_balance')
         .eq('student_id', input.student_id)
         .single();
 

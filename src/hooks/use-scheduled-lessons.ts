@@ -205,14 +205,38 @@ export function useUpdateScheduledLesson() {
       duration_minutes?: number;
       status?: string;
     }) => {
-      // Get current lesson for student_id
-      const { data: currentLesson } = await supabase
+      // Get current lesson details
+      const { data: currentLesson, error: currentLessonError } = await supabase
         .from('scheduled_lessons')
-        .select('student_id')
+        .select('student_id, teacher_id, status, notes')
         .eq('scheduled_lesson_id', scheduledLessonId)
         .single();
 
+      if (currentLessonError) throw currentLessonError;
+
       const studentId = currentLesson?.student_id;
+
+      // Use unified RPC path for marking scheduled lessons as completed/absent
+      // so wallet/package/notifications stay in sync
+      if (
+        status &&
+        ['completed', 'absent'].includes(status) &&
+        currentLesson?.status === 'scheduled' &&
+        currentLesson.status !== status
+      ) {
+        if (!currentLesson.student_id || !currentLesson.teacher_id) {
+          throw new Error('Missing student or teacher on scheduled lesson');
+        }
+
+        const { error: rpcError } = await supabase.rpc('mark_lesson_taken', {
+          p_student_id: currentLesson.student_id,
+          p_teacher_id: currentLesson.teacher_id,
+          p_status: status,
+          p_notes: currentLesson.notes || null,
+        });
+
+        if (rpcError) throw rpcError;
+      }
 
       const updateData: Record<string, unknown> = {};
       if (scheduled_date !== undefined) updateData.scheduled_date = scheduled_date;
