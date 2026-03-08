@@ -124,27 +124,7 @@ function useAdminTeacherTodayLessons(teacherId: string | undefined) {
   });
 }
 
-// ── Trial lessons hook for admin context ──
-function useAdminTeacherTrialLessons(teacherId: string | undefined, startDate: string | null, endDate: string | null) {
-  return useQuery({
-    queryKey: ['admin-teacher-trial-lessons', teacherId, startDate, endDate],
-    queryFn: async () => {
-      let query = supabase
-        .from('trial_lessons_log')
-        .select('*, trial_students!trial_lessons_log_trial_student_id_fkey(name, phone)')
-        .eq('teacher_id', teacherId!)
-        .order('lesson_date', { ascending: false });
-
-      if (startDate) query = query.gte('lesson_date', startDate);
-      if (endDate) query = query.lte('lesson_date', endDate);
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!teacherId,
-  });
-}
+// ── Trial lessons hook removed — now using TrialLessonCalendar component ──
 
 export default function TeacherDetail() {
   const { id } = useParams<{ id: string }>();
