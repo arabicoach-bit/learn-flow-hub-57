@@ -318,7 +318,6 @@ export default function StudentDetail() {
       setEditForm({
         name: student.name,
         phone: student.phone,
-        parent_phone: student.parent_phone || '',
         parent_guardian_name: student.parent_guardian_name || '',
         age: student.age?.toString() || '',
         gender: student.gender || '',
