@@ -27,6 +27,7 @@ export interface TrialStudent {
   teacher_payment_amount: number | null;
   admin_payment_amount: number | null;
   status: TrialStatus;
+  conversion_status: TrialConversionStatus;
   trial_result: TrialResult | null;
   notes: string | null;
   handled_by: string | null;
