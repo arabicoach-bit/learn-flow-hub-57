@@ -199,6 +199,38 @@ export default function Students() {
           </div>
         </div>
 
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Card><CardContent className="pt-4 pb-3">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-muted-foreground" />
+              <div className="text-xl font-bold">{totalStudents}</div>
+            </div>
+            <p className="text-xs text-muted-foreground">Total Students</p>
+          </CardContent></Card>
+          <Card><CardContent className="pt-4 pb-3">
+            <div className="flex items-center gap-2">
+              <UserCheck className="h-4 w-4 text-emerald-600" />
+              <div className="text-xl font-bold text-emerald-600">{activeCount}</div>
+            </div>
+            <p className="text-xs text-muted-foreground">Active</p>
+          </CardContent></Card>
+          <Card><CardContent className="pt-4 pb-3">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-red-600" />
+              <div className="text-xl font-bold text-red-600">{overdueCount}</div>
+            </div>
+            <p className="text-xs text-muted-foreground">Overdue</p>
+          </CardContent></Card>
+          <Card><CardContent className="pt-4 pb-3">
+            <div className="flex items-center gap-2">
+              <PauseCircle className="h-4 w-4 text-amber-600" />
+              <div className="text-xl font-bold text-amber-600">{tempStopCount}</div>
+            </div>
+            <p className="text-xs text-muted-foreground">Temporary Stop</p>
+          </CardContent></Card>
+        </div>
+
         {/* Filters */}
         <div className="flex gap-4 flex-wrap items-center">
           <div className="relative flex-1 max-w-sm">
