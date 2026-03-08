@@ -84,24 +84,28 @@ export function YearMonthFilter({ value, onChange }: YearMonthFilterProps) {
         </SelectContent>
       </Select>
 
-      {!isAllTime && (
-        <Select
-          value={value.month === null ? 'all' : value.month.toString()}
-          onValueChange={(v) => {
-            onChange({ ...value, month: v === 'all' ? null : parseInt(v) });
-          }}
-        >
-          <SelectTrigger className="w-[130px] h-8 text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Months</SelectItem>
-            {MONTHS.map((m, i) => (
-              <SelectItem key={i} value={i.toString()}>{m}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )}
+      <Select
+        value={isAllTime ? 'all' : (value.month === null ? 'all' : value.month.toString())}
+        onValueChange={(v) => {
+          if (v === 'all') {
+            onChange({ ...value, month: null });
+          } else {
+            // If currently "All Time", set year to current year when picking a month
+            const year = value.year ?? new Date().getFullYear();
+            onChange({ year, month: parseInt(v) });
+          }
+        }}
+      >
+        <SelectTrigger className="w-[130px] h-8 text-xs">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Months</SelectItem>
+          {MONTHS.map((m, i) => (
+            <SelectItem key={i} value={i.toString()}>{m}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
       {!isAllTime && (
         <Button
