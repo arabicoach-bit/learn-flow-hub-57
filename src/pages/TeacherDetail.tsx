@@ -27,6 +27,7 @@ import { YearMonthFilter, getDefaultFilter, getFilterDateRange, type YearMonthFi
 import { LessonCard } from '@/components/schedule/LessonCard';
 import { EditStudentDialog } from '@/components/teacher/EditStudentDialog';
 import { toast as sonnerToast } from 'sonner';
+import { TeacherCalendar } from '@/components/calendar/TeacherCalendar';
 
 // ── Salary history hook ──
 interface SalaryHistoryRecord {
