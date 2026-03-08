@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Mail, Phone, DollarSign, GraduationCap, BookOpen, TrendingUp, Receipt, Users, UserCheck, PauseCircle, UserX, Search, Clock, Check, X, Save, Loader2, Edit2 } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, DollarSign, GraduationCap, BookOpen, TrendingUp, Receipt, Users, UserCheck, PauseCircle, UserX, Search, Clock, Check, X, Loader2, Edit2 } from 'lucide-react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useTeacher, useUpdateTeacher } from '@/hooks/use-teachers';
 import { useStudents } from '@/hooks/use-students';
