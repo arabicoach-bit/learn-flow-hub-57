@@ -615,10 +615,6 @@ export default function StudentDetail() {
                         <p className="font-medium">{student.teachers?.name || '-'}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Teacher</p>
-                        <p className="font-medium">{student.teachers?.name || '-'}</p>
-                      </div>
-                      <div>
                         <p className="text-sm text-muted-foreground">Total Paid</p>
                         <p className="font-medium">{formatCurrency(student.total_paid || 0)}</p>
                       </div>
