@@ -40,11 +40,13 @@ type TrialResult = Database['public']['Enums']['trial_result'];
 export default function TrialStudents() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<TrialStatus | 'all'>('all');
+  const [teacherFilter, setTeacherFilter] = useState<string>('all');
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<TrialStudent | null>(null);
   const [convertingStudent, setConvertingStudent] = useState<TrialStudent | null>(null);
   const { toast } = useToast();
   const [dateFilter, setDateFilter] = useState<YearMonthFilterValue>({ year: null, month: null });
+  const { data: teachers } = useTeachers();
 
   const { data: trialStudents, isLoading, refetch } = useTrialStudents({
     status: statusFilter === 'all' ? undefined : statusFilter,
