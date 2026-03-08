@@ -114,7 +114,7 @@ export function formatLessonShareMessage(studentName: string, data: LessonShareD
   if (data.duration_minutes) msg += `⏱️ Duration: ${data.duration_minutes} min\n`;
   if (data.notes && data.notes !== '-') msg += `📝 Notes: ${data.notes}\n`;
   if (data.wallet_balance !== null && data.wallet_balance !== undefined) {
-    msg += `📚 Remaining: ${data.wallet_balance} lessons\n`;
+    msg += `💰 Wallet: ${data.wallet_balance} lessons\n`;
   }
   msg += `\nThank you!`;
   return msg;
@@ -154,7 +154,7 @@ export function formatWhatsAppMessage(type: string, studentName: string, message
         `✅ Lesson Completed\n` +
         (details.teacher ? `👨‍🏫 Teacher: ${details.teacher}\n` : '') +
         (details.notes && details.notes !== '-' ? `📝 Notes: ${details.notes}\n` : '') +
-        (details.remaining ? `📚 ${details.remaining}\n` : '') +
+        (details.remaining ? `💰 Wallet: ${details.remaining}\n` : '') +
         `\nThank you!`;
     
     case 'trial_completed':
