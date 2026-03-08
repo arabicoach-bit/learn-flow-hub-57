@@ -61,10 +61,19 @@ export default function Leads() {
     }
   };
 
+  const handleUpdateLeadStatus = async (leadId: string, status: string) => {
+    try {
+      await updateLead.mutateAsync({ leadId, status: status as Lead['status'] });
+      toast({ title: 'Lead status updated', description: `Lead marked as ${status}.` });
+    } catch {
+      toast({ title: 'Error', description: 'Failed to update lead status.', variant: 'destructive' });
+    }
+  };
+
   const handleUpdateTrialStatus = async (leadId: string, trialStatus: string) => {
     try {
-      await updateLead.mutateAsync({ leadId, trial_status: trialStatus });
-      toast({ title: 'Trial status updated', description: `Lead marked as ${trialStatus}.` });
+      await updateLead.mutateAsync({ leadId, trial_status: trialStatus || undefined });
+      toast({ title: 'Trial status updated', description: trialStatus ? `Lead marked as ${trialStatus}.` : 'Trial status cleared.' });
     } catch {
       toast({ title: 'Error', description: 'Failed to update trial status.', variant: 'destructive' });
     }
@@ -72,8 +81,13 @@ export default function Leads() {
 
   const handleUpdateFollowUp = async (leadId: string, followUp: string) => {
     try {
-      await updateLead.mutateAsync({ leadId, follow_up: followUp });
-      toast({ title: 'Follow-up updated', description: `Follow-up set to ${followUp}.` });
+      const today = new Date().toISOString().split('T')[0];
+      await updateLead.mutateAsync({ 
+        leadId, 
+        follow_up: followUp || undefined,
+        last_contact_date: followUp ? today : undefined,
+      });
+      toast({ title: 'Follow-up updated', description: followUp ? `Follow-up set to ${followUp}.` : 'Follow-up cleared.' });
     } catch {
       toast({ title: 'Error', description: 'Failed to update follow-up.', variant: 'destructive' });
     }
