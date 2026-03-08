@@ -159,14 +159,14 @@ export default function QuarterAnalysis() {
         ) : data ? (
           <>
             {/* STUDENT KPIs */}
-            <SectionHeader title="Student KPIs" icon={<GraduationCap className="w-5 h-5" />} />
+            <SectionHeader title="Students" emoji="👩‍🎓" theme="students" />
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              <KPICard title="Total Students" value={data.students.totalStudents} icon={<Users className="w-5 h-5" />} />
-              <KPICard title="Active Students" value={data.students.activeStudents} icon={<CheckCircle className="w-5 h-5" />} variant="success" />
-              <KPICard title="Temporary Stop" value={data.students.temporaryStop} icon={<AlertTriangle className="w-5 h-5" />} variant="warning" />
-              <KPICard title="Left Students" value={data.students.leftStudents} icon={<XCircle className="w-5 h-5" />} variant="danger" />
-              <KPICard title="New Students" value={data.students.newStudents} icon={<UserCheck className="w-5 h-5" />} variant="success" />
-              <KPICard title="Retention Rate" value={data.students.retentionRate} icon={<TrendingUp className="w-5 h-5" />} suffix="%" variant={data.students.retentionRate >= 80 ? 'success' : 'warning'} />
+              <KPICard title="Total Students" value={data.students.totalStudents} icon={<Users className="w-5 h-5" />} theme="students" />
+              <KPICard title="Active Students" value={data.students.activeStudents} icon={<CheckCircle className="w-5 h-5" />} variant="success" theme="students" />
+              <KPICard title="Temporary Stop" value={data.students.temporaryStop} icon={<AlertTriangle className="w-5 h-5" />} variant="warning" theme="students" />
+              <KPICard title="Left Students" value={data.students.leftStudents} icon={<XCircle className="w-5 h-5" />} variant="danger" theme="students" />
+              <KPICard title="New Students" value={data.students.newStudents} icon={<UserCheck className="w-5 h-5" />} variant="success" theme="students" />
+              <KPICard title="Retention Rate" value={data.students.retentionRate} icon={<TrendingUp className="w-5 h-5" />} suffix="%" variant={data.students.retentionRate >= 80 ? 'success' : 'warning'} theme="students" />
             </div>
             {comparePrevious && prevData && (
               <ComparisonRow
