@@ -287,7 +287,6 @@ export default function StudentDetail() {
   const [editForm, setEditForm] = useState({
     name: '',
     phone: '',
-    parent_phone: '',
     parent_guardian_name: '',
     age: '',
     gender: '',
