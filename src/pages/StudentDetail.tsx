@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { YearMonthFilter, getDefaultFilter, getFilterDateRange } from '@/components/shared/YearMonthFilter';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { AdminLayout } from '@/components/layout/AdminLayout';
-import { useStudent, useUpdateStudent } from '@/hooks/use-students';
+import { useStudent } from '@/hooks/use-students';
 import { usePackages, Package, useDeletePackage } from '@/hooks/use-packages';
 
 import { useTeachers } from '@/hooks/use-teachers';
