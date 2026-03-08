@@ -156,9 +156,16 @@ export function LessonCard({ lesson, onUpdated, showDate, readOnly, onDelete }: 
             )}
           </div>
           {!readOnly && (
-            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setEditLesson(true)}>
-              <Pencil className="w-3.5 h-3.5" /> Edit
-            </Button>
+            <div className="flex items-center gap-1.5">
+              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setEditLesson(true)}>
+                <Pencil className="w-3.5 h-3.5" /> Edit
+              </Button>
+              {onDelete && lesson.status === 'scheduled' && (
+                <Button size="sm" variant="outline" className="gap-1.5 text-destructive hover:text-destructive" onClick={() => onDelete(lesson.scheduled_lesson_id)}>
+                  <Trash2 className="w-3.5 h-3.5" />
+                </Button>
+              )}
+            </div>
           )}
         </div>
 
