@@ -99,7 +99,7 @@ export default function AdminNotifications() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{lessonCount}</p>
-                <p className="text-xs text-muted-foreground">Lessons</p>
+                <p className="text-xs text-muted-foreground">Completed Lessons</p>
               </div>
             </CardContent>
           </Card>
