@@ -23,6 +23,7 @@ export interface Package {
   schedule_generated: boolean | null;
   is_renewal: boolean | null;
   status: 'Active' | 'Completed';
+  description: string | null;
   payment_status: string;
   payment_received: boolean | null;
   completed_date: string | null;
