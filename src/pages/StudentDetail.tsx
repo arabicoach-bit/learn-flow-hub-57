@@ -295,54 +295,7 @@ export default function StudentDetail() {
     refetch: refetchPackages,
   } = packagesQuery;
   
-  const { data: teachers } = useTeachers();
-  const { data: programs } = usePrograms();
-  const updateStudent = useUpdateStudent();
   const deletePackage = useDeletePackage();
-
-  const startEditing = () => {
-    if (student) {
-      setEditForm({
-        name: student.name,
-        phone: student.phone,
-        parent_guardian_name: student.parent_guardian_name || '',
-        age: student.age?.toString() || '',
-        gender: student.gender || '',
-        nationality: student.nationality || '',
-        school: student.school || '',
-        year_group: student.year_group || '',
-        program_id: student.program_id || '',
-        student_level: student.student_level || '',
-        teacher_id: student.teacher_id || '',
-      });
-      setIsEditing(true);
-    }
-  };
-
-  const handleSave = async () => {
-    if (!id) return;
-    
-    try {
-      await updateStudent.mutateAsync({
-        studentId: id,
-        name: editForm.name,
-        phone: editForm.phone,
-        parent_guardian_name: editForm.parent_guardian_name || null,
-        age: editForm.age ? parseInt(editForm.age) : null,
-        gender: editForm.gender || null,
-        nationality: editForm.nationality || null,
-        school: editForm.school || null,
-        year_group: editForm.year_group || null,
-        program_id: editForm.program_id || null,
-        student_level: editForm.student_level || null,
-        teacher_id: editForm.teacher_id || null,
-      });
-      toast.success('Student updated successfully');
-      setIsEditing(false);
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to update student');
-    }
-  };
 
   if (studentLoading) {
     return (
