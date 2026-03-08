@@ -1171,7 +1171,7 @@ export default function Packages() {
                                   {lesson.status === 'completed' ? <CheckCircle2 className="w-3 h-3 text-emerald-500" /> :
                                    lesson.status === 'absent' ? <XCircle className="w-3 h-3 text-destructive" /> :
                                    <Clock className="w-3 h-3 text-blue-500" />}
-                                  <span>{lesson.status === 'completed' ? 'Completed' : lesson.status === 'absent' ? 'Absent' : 'Upcoming'}</span>
+                                  <span>{lesson.status === 'completed' ? 'Completed' : lesson.status === 'absent' ? 'Absent' : 'Scheduled'}</span>
                                 </div>
                               </TableCell>
                               <TableCell className="max-w-[100px] truncate">{lesson.notes || ''}</TableCell>
