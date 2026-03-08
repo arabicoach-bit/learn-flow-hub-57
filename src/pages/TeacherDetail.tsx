@@ -475,7 +475,10 @@ export default function TeacherDetail() {
           <TabsList>
             <TabsTrigger value="students">Students ({totalStudents})</TabsTrigger>
             <TabsTrigger value="payroll">Payroll</TabsTrigger>
-            <TabsTrigger value="today">Today's Lessons ({todayLessons?.length || 0})</TabsTrigger>
+            <TabsTrigger value="calendar">
+              <CalendarDays className="w-4 h-4 mr-1" />
+              Lessons Calendar
+            </TabsTrigger>
             <TabsTrigger value="trials">Trial Lessons ({trialStats.total})</TabsTrigger>
           </TabsList>
 
