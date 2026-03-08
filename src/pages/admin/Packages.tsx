@@ -250,10 +250,9 @@ export default function Packages() {
     if (endDate) msg += `🏁 *End:* ${endDate}\n`;
     msg += `\n`;
     msg += `📊 *Attendance Summary*\n`;
-    msg += `✅ Completed: ${completedCount2}\n`;
-    msg += `❌ Absent: ${absentCount}\n`;
-    msg += `🕐 Upcoming: ${scheduledCount}\n`;
-    msg += `📈 Attendance Rate: ${attendanceRate}%\n`;
+    msg += `✅ Completed: ${completedCount2} (${totalLessons > 0 ? Math.round((completedCount2 / totalLessons) * 100) : 0}%)\n`;
+    msg += `❌ Absent: ${absentCount} (${totalLessons > 0 ? Math.round((absentCount / totalLessons) * 100) : 0}%)\n`;
+    msg += `🕐 Scheduled: ${scheduledCount} (${totalLessons > 0 ? Math.round((scheduledCount / totalLessons) * 100) : 0}%)\n`;
     msg += `\n`;
 
     if (s.lessons.length > 0) {
