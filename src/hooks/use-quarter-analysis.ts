@@ -231,7 +231,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
           const d = new Date(t.created_at!);
           return d.getMonth() + 1 === mr.month && d.getFullYear() === mr.year;
         });
-        const mConverted = mTrials.filter(t => t.status === 'Converted' || (t as any).conversion_status === 'Converted').length;
+        const mConverted = mTrials.filter(t => t.conversion_status === 'Converted').length;
 
         return {
           monthLabel: mr.label,
