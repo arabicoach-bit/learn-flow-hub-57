@@ -185,6 +185,10 @@ export default function Leads() {
           lead={editingLead} open={!!editingLead}
           onOpenChange={(open) => !open && setEditingLead(null)}
         />
+        <ConvertLeadToTrialDialog
+          lead={convertingLead} open={!!convertingLead}
+          onOpenChange={(open) => !open && setConvertingLead(null)}
+        />
       </div>
     </AdminLayout>
   );
