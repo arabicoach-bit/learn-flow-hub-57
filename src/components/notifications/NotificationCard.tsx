@@ -139,12 +139,12 @@ export function NotificationCard({ notification }: NotificationCardProps) {
                 <span className="font-medium">{packageDetails.lesson_duration} min</span>
               </>
             )}
-            {packageDetails.lessonsPerWeek && (
+            {packageDetails.lessons_per_week && (
               <>
                 <span className="text-muted-foreground flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5" /> Per Week
                 </span>
-                <span className="font-medium">{packageDetails.lessonsPerWeek}x/week</span>
+                <span className="font-medium">{packageDetails.lessons_per_week}x/week</span>
               </>
             )}
             {packageDetails.start_date && (
