@@ -171,7 +171,7 @@ export default function TeacherDetail() {
   // Students tab filters
   const [studentSearch, setStudentSearch] = useState('');
   const [studentStatusFilter, setStudentStatusFilter] = useState<string>('all');
-  const [studentFilter, setStudentFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
+  const [studentFilter, setStudentFilter] = useState<YearMonthFilterValue>({ year: null, month: null });
   const studentRange = getFilterDateRange(studentFilter);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
 
