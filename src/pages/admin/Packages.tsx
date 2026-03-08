@@ -1136,7 +1136,7 @@ export default function Packages() {
                     <div className="flex items-center gap-4 text-[10px] text-muted-foreground pt-1">
                       <div className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-sm bg-emerald-500" /> Completed</div>
                       <div className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-sm bg-destructive" /> Absent</div>
-                      <div className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-sm bg-blue-400" /> Upcoming</div>
+                      <div className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-sm bg-blue-400" /> Scheduled</div>
                     </div>
                   </div>
                 )}
