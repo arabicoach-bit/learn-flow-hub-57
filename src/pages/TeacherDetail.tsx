@@ -29,6 +29,7 @@ import { LessonCard } from '@/components/schedule/LessonCard';
 import { EditStudentDialog } from '@/components/teacher/EditStudentDialog';
 import { toast as sonnerToast } from 'sonner';
 import { TeacherCalendar } from '@/components/calendar/TeacherCalendar';
+import { TrialLessonCalendar } from '@/components/calendar/TrialLessonCalendar';
 
 // ── Salary history hook ──
 interface SalaryHistoryRecord {
