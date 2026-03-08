@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { getWalletColor, getWalletDisplayLabel } from '@/lib/wallet-utils';
-import { Clock, CheckCircle, XCircle, Pencil, Save, Loader2 } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, Pencil, Save, Loader2, Trash2 } from 'lucide-react';
 import { useMarkScheduledLesson } from '@/hooks/use-scheduled-lessons';
 import { UpdateLessonStatusDialog } from './UpdateLessonStatusDialog';
 import { supabase } from '@/integrations/supabase/client';
@@ -37,6 +37,8 @@ interface LessonCardProps {
   showDate?: boolean;
   /** Hide action buttons (for read-only calendar views) */
   readOnly?: boolean;
+  /** Optional delete handler — shows a delete button when provided */
+  onDelete?: (scheduledLessonId: string) => void;
 }
 
 function formatTime12(time: string) {
@@ -68,7 +70,7 @@ function getStatusStyle(status: string) {
   }
 }
 
-export function LessonCard({ lesson, onUpdated, showDate, readOnly }: LessonCardProps) {
+export function LessonCard({ lesson, onUpdated, showDate, readOnly, onDelete }: LessonCardProps) {
   const markLesson = useMarkScheduledLesson();
   const queryClient = useQueryClient();
   const [notes, setNotes] = useState(lesson.notes || '');
@@ -154,9 +156,16 @@ export function LessonCard({ lesson, onUpdated, showDate, readOnly }: LessonCard
             )}
           </div>
           {!readOnly && (
-            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setEditLesson(true)}>
-              <Pencil className="w-3.5 h-3.5" /> Edit
-            </Button>
+            <div className="flex items-center gap-1.5">
+              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setEditLesson(true)}>
+                <Pencil className="w-3.5 h-3.5" /> Edit
+              </Button>
+              {onDelete && lesson.status === 'scheduled' && (
+                <Button size="sm" variant="outline" className="gap-1.5 text-destructive hover:text-destructive" onClick={() => onDelete(lesson.scheduled_lesson_id)}>
+                  <Trash2 className="w-3.5 h-3.5" />
+                </Button>
+              )}
+            </div>
           )}
         </div>
 
