@@ -130,11 +130,11 @@ export default function AdminPayroll() {
   const exportToCSV = () => {
     if (!payrollData || payrollData.length === 0) return;
     
-    const headers = ['Teacher', 'Rate/Hr (EGP)', 'Lessons', 'Hours', 'Salary (EGP)', 'Active', 'Temp Stopped', 'Left', 'Trial Lessons'];
+    const headers = ['Teacher', 'Rate/Hr (EGP)', 'Lessons', 'Hours', 'Salary (EGP)', 'Bonus (EGP)', 'Total Pay (EGP)', 'Active', 'Temp Stopped', 'Left', 'Trial Lessons'];
     const rows = payrollData.map(t => [
       t.teacher_name, t.rate_per_lesson.toString(), t.lessons_taken.toString(),
-      t.total_hours.toFixed(2), t.salary_earned.toFixed(2), t.active_students.toString(),
-      t.temp_stop_students.toString(), t.left_students.toString(), t.trial_lessons.toString(),
+      t.total_hours.toFixed(2), t.salary_earned.toFixed(2), t.bonus.toFixed(2), t.total_pay.toFixed(2),
+      t.active_students.toString(), t.temp_stop_students.toString(), t.left_students.toString(), t.trial_lessons.toString(),
     ]);
     
     const csvContent = [headers, ...rows].map(row => row.join(',')).join('\n');
