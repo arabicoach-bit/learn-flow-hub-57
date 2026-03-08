@@ -42,6 +42,7 @@ type TrialConversionStatus = 'Pending' | 'Converted' | 'Lost';
 export default function TrialStudents() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<TrialStatus | 'all'>('all');
+  const [conversionFilter, setConversionFilter] = useState<TrialConversionStatus | 'all'>('all');
   const [teacherFilter, setTeacherFilter] = useState<string>('all');
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<TrialStudent | null>(null);
