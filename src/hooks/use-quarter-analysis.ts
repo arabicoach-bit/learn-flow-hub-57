@@ -193,7 +193,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         supabase.from('scheduled_lessons').select('scheduled_lesson_id, status, teacher_id, duration_minutes, scheduled_date')
           .gte('scheduled_date', startDate)
           .lte('scheduled_date', endDate),
-        supabase.from('trial_students').select('trial_id, status, teacher_id, created_at')
+        supabase.from('trial_students').select('trial_id, status, conversion_status, teacher_id, created_at')
           .gte('created_at', startDate)
           .lte('created_at', endDate + 'T23:59:59'),
         supabase.from('teachers').select('teacher_id, name, rate_per_lesson, is_active')
