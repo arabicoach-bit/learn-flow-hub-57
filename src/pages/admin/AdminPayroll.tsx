@@ -101,9 +101,31 @@ export default function AdminPayroll() {
   const totalLessons = payrollData?.reduce((sum, t) => sum + t.lessons_taken, 0) || 0;
   const totalHours = payrollData?.reduce((sum, t) => sum + t.total_hours, 0) || 0;
   const totalSalary = payrollData?.reduce((sum, t) => sum + t.salary_earned, 0) || 0;
+  const totalBonus = payrollData?.reduce((sum, t) => sum + t.bonus, 0) || 0;
+  const totalPay = payrollData?.reduce((sum, t) => sum + t.total_pay, 0) || 0;
   const totalActiveStudents = payrollData?.reduce((sum, t) => sum + t.active_students, 0) || 0;
   const totalTrialLessons = payrollData?.reduce((sum, t) => sum + t.trial_lessons, 0) || 0;
   const activeTeachers = payrollData?.filter(t => t.lessons_taken > 0).length || 0;
+
+  const saveBonus = async (teacherId: string) => {
+    const amount = parseFloat(bonusValue) || 0;
+    try {
+      const { error } = await supabase
+        .from('teacher_bonuses')
+        .upsert({
+          teacher_id: teacherId,
+          month_year: monthYear,
+          amount,
+          notes: bonusNotes || null,
+        }, { onConflict: 'teacher_id,month_year' });
+      if (error) throw error;
+      toast.success('Bonus saved');
+      setEditingBonus(null);
+      queryClient.invalidateQueries({ queryKey: ['admin-payroll-unified'] });
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to save bonus');
+    }
+  };
 
   const exportToCSV = () => {
     if (!payrollData || payrollData.length === 0) return;
