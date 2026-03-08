@@ -1028,8 +1028,7 @@ export default function Packages() {
             const completedPct = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
             const absentPct = totalLessons > 0 ? Math.round((absentLessons / totalLessons) * 100) : 0;
             const scheduledPct = totalLessons > 0 ? Math.round((scheduledLessons / totalLessons) * 100) : 0;
-            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const summaryDayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
             const descText = summary.description
               || (summaryPkg ? (filteredPackages.find(p => p.package_id === summaryPkg) as any)?.description : null)
