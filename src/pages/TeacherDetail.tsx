@@ -8,6 +8,7 @@ import { useTeacherTotalHours } from '@/hooks/use-teacher-total-hours';
 import { Button } from '@/components/ui/button';
 import { getWalletColor, getStatusDisplayLabel, formatSalary, formatDate, getWalletDisplayLabel } from '@/lib/wallet-utils';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
