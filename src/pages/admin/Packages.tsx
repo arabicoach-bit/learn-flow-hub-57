@@ -10,14 +10,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Package as PackageIcon, FileSpreadsheet, Search, Filter, CheckCircle, Pencil, FileText } from 'lucide-react';
-import { Copy, Loader2, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { Copy, Loader2, CheckCircle2, XCircle, Clock, Download } from 'lucide-react';
 import { usePackages, type Package } from '@/hooks/use-packages';
-import { usePackageSummary, PackageSummary } from '@/hooks/use-package-summary';
+import { usePackageSummary } from '@/hooks/use-package-summary';
+import type { PackageSummary } from '@/hooks/use-package-summary';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { EditPackageDialog } from '@/components/packages/EditPackageDialog';
 import { useTeachers } from '@/hooks/use-teachers';
-import { formatCurrency } from '@/lib/wallet-utils';
+import { formatCurrency, formatDate } from '@/lib/wallet-utils';
 import { format } from 'date-fns';
 import { exportPackages } from '@/lib/excel-export';
 import { YearMonthFilter, getDefaultFilter, getFilterDateRange, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
@@ -221,60 +222,29 @@ export default function Packages() {
     }
   };
 
-  const generateSummaryText = (s: PackageSummary): string => {
-    const lines = [
-      `📋 PACKAGE COMPLETION SUMMARY`,
-      `═══════════════════════════════`,
-      ``,
-      `👤 Student: ${s.student_name}`,
-      `📞 Phone: ${s.student_phone}`,
-      s.parent_phone ? `👨‍👩‍👧 Parent: ${s.parent_phone}` : '',
-      s.teacher_name ? `👩‍🏫 Teacher: ${s.teacher_name}` : '',
-      ``,
-      `💰 Package Details:`,
-      `   Amount Paid: ${formatCurrency(s.amount)}`,
-      `   Lessons Purchased: ${s.lessons_purchased}`,
-      `   Lessons Used: ${s.lessons_used}`,
-      `   Payment Date: ${s.payment_date ? format(new Date(s.payment_date), 'dd MMM yyyy') : 'N/A'}`,
-      s.completed_date ? `   Completed: ${format(new Date(s.completed_date), 'dd MMM yyyy')}` : '',
-      ``,
-      `📊 Statistics:`,
-      `   ✅ Completed: ${s.statistics.total_completed}`,
-      `   ❌ Absent: ${s.statistics.total_absent}`,
-      ``,
-      `📅 Lesson History:`,
-      `───────────────────────────────`,
-    ];
-    if (s.lessons.length > 0) {
-      s.lessons.forEach((lesson, idx) => {
-        const statusIcon = lesson.status === 'completed' ? '✅' : lesson.status === 'absent' ? '❌' : '🕐';
-        lines.push(`${idx + 1}. ${lesson.date ? format(new Date(lesson.date), 'dd MMM yyyy') : 'N/A'} - ${statusIcon} ${lesson.status}`);
-        lines.push(`   Time: ${lesson.scheduled_time?.slice(0, 5) || '-'} | Duration: ${lesson.duration_minutes || '-'} min`);
-        if (lesson.notes) lines.push(`   Notes: ${lesson.notes}`);
-      });
-    } else {
-      lines.push(`   No lessons recorded.`);
-    }
-    lines.push(``, `═══════════════════════════════`);
-    lines.push(`Generated on ${new Date().toLocaleDateString()}`);
-    return lines.filter(l => l !== '').join('\n');
-  };
+
 
   const handleCopySummary = async () => {
     if (!summary) return;
-    const text = generateSummaryText(summary);
-    await navigator.clipboard.writeText(text);
-    toast.success('Summary copied to clipboard!');
+    const lines = [
+      `Student: ${summary.student_name}`,
+      `Teacher: ${summary.teacher_name || 'N/A'}`,
+      `Phone: ${summary.student_phone}`,
+      `Completed: ${summary.statistics.total_completed}`,
+      `Absent: ${summary.statistics.total_absent}`,
+    ];
+    await navigator.clipboard.writeText(lines.join('\n'));
+    toast.success('Copied to clipboard!');
   };
 
-  const handleSummaryExportPDF = async () => {
+  const handleExportPDF = async () => {
     if (!summary) return;
+
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
-    const navy: [number, number, number] = [45, 53, 97];
-    const gold: [number, number, number] = [245, 197, 24];
-    const lightGray: [number, number, number] = [248, 249, 250];
-    const darkText: [number, number, number] = [26, 26, 46];
+    const navy: [number,number,number] = [45, 53, 97];
+    const gold: [number,number,number] = [245, 197, 24];
+    const darkText: [number,number,number] = [26, 26, 46];
 
     const loadImage = (src: string): Promise<string> =>
       new Promise((resolve) => {
@@ -298,10 +268,12 @@ export default function Packages() {
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...navy);
     doc.text('OAC Academy', 55, 20);
+
     doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...gold);
     doc.text('Online Arabic Courses', 55, 28);
+
     doc.setFontSize(9);
     doc.setTextColor(128, 128, 128);
     doc.text('Package Summary Report', 55, 35);
@@ -310,8 +282,17 @@ export default function Packages() {
     doc.setLineWidth(1.5);
     doc.line(14, 48, pageWidth - 14, 48);
 
-    let y = 55;
+    const reportMonth = format(new Date(), 'MMM yyyy');
+    doc.setFontSize(8);
+    doc.setTextColor(128, 128, 128);
+    doc.text(
+      `Report Period: ${reportMonth}   |   Generated: ${format(new Date(), 'dd MMM yyyy, HH:mm')}`,
+      pageWidth / 2, 53, { align: 'center' }
+    );
 
+    let y = 60;
+
+    // Student Info
     doc.setFillColor(...navy);
     doc.rect(14, y, pageWidth - 28, 8, 'F');
     doc.setFontSize(10);
@@ -320,29 +301,29 @@ export default function Packages() {
     doc.text('Student Information', 18, y + 6);
     y += 14;
 
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...darkText);
-
     const infoLine = (label: string, value: string, x: number, yPos: number) => {
+      doc.setFontSize(9);
       doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...darkText);
       doc.text(label, x, yPos);
       doc.setFont('helvetica', 'normal');
       doc.text(value, x + doc.getTextWidth(label) + 2, yPos);
     };
 
-    infoLine('Student Name: ', summary.student_name, 18, y);
-    infoLine('Teacher: ', summary.teacher_name || summary.lessons[0]?.teacher_name || 'N/A', 110, y);
-    y += 6;
-    infoLine('Phone: ', summary.student_phone, 18, y);
-    y += 6;
     const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
     const scheduleText = summary.weekly_schedule?.length > 0
       ? summary.weekly_schedule.map(s => `${dayNames[s.day_of_week]} ${s.time_slot?.slice(0,5)}`).join('  |  ')
       : 'N/A';
+
+    infoLine('Student Name: ', summary.student_name, 18, y);
+    infoLine('Teacher: ', summary.teacher_name || 'N/A', 110, y);
+    y += 6;
+    infoLine('Phone: ', summary.student_phone, 18, y);
+    y += 6;
     infoLine('Schedule: ', scheduleText, 18, y);
     y += 12;
 
+    // Package Details
     doc.setFillColor(...navy);
     doc.rect(14, y, pageWidth - 28, 8, 'F');
     doc.setFontSize(10);
@@ -351,34 +332,35 @@ export default function Packages() {
     doc.text('Package Details', 18, y + 6);
     y += 14;
 
-    doc.setFontSize(9);
-    doc.setTextColor(...darkText);
-
     const firstLessonDate = summary.lessons.length > 0 && summary.lessons[0].date
-      ? format(new Date(summary.lessons[0].date), 'dd MMM yyyy') : 'N/A';
-    const lastLesson = [...summary.lessons]
-      .filter(l => l.status !== 'scheduled')
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
-    const endDate = lastLesson ? format(new Date(lastLesson.date), 'dd MMM yyyy') : 'N/A';
+      ? formatDate(summary.lessons[0].date) : 'N/A';
 
-    infoLine('Package Start: ', firstLessonDate, 18, y);
-    infoLine('Package End: ', endDate, 110, y);
+    const lastLesson = [...summary.lessons]
+      .filter(l => l.date)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+    const endDateVal = lastLesson ? formatDate(lastLesson.date) : 'N/A';
+
+    const descText = summary.description
+      || (summaryPkg
+        ? (filteredPackages.find(p => p.package_id === summaryPkg) as any)?.description
+        : null)
+      || 'N/A';
+
+    infoLine('Start Date: ', firstLessonDate, 18, y);
+    infoLine('End Date: ', endDateVal, 110, y);
     y += 6;
-    infoLine('Description: ', summary.description || 'N/A', 18, y);
+    infoLine('Description: ', descText, 18, y);
     y += 6;
-    const scheduleText2 = summary.weekly_schedule?.length > 0
-      ? summary.weekly_schedule.map(s => `${dayNames[s.day_of_week]} ${s.time_slot?.slice(0,5)}`).join('  |  ')
-      : 'N/A';
-    infoLine('Weekly Schedule: ', scheduleText2, 18, y);
+    infoLine('Weekly Schedule: ', scheduleText, 18, y);
     y += 12;
 
+    // Stats boxes
     const totalLessons = summary.lessons.length;
     const completedCount2 = summary.statistics.total_completed;
     const absentCount = summary.statistics.total_absent;
     const scheduledCount = summary.lessons.filter(l => l.status === 'scheduled').length;
-    const totalDone = completedCount2 + absentCount;
-    const completedPct = totalDone > 0 ? Math.round(completedCount2 / totalDone * 100) : 0;
-    const absentPct = totalDone > 0 ? Math.round(absentCount / totalDone * 100) : 0;
+    const completedPct = totalLessons > 0 ? Math.round(completedCount2 / totalLessons * 100) : 0;
+    const absentPct = totalLessons > 0 ? Math.round(absentCount / totalLessons * 100) : 0;
     const scheduledPct = totalLessons > 0 ? Math.round(scheduledCount / totalLessons * 100) : 0;
 
     const boxW = (pageWidth - 28 - 8) / 3;
@@ -424,10 +406,11 @@ export default function Packages() {
     doc.text(`${scheduledPct}%`, b3x + boxW/2, y + 15, { align: 'center' });
     doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
-    doc.text('Scheduled', b3x + boxW/2, y + 21, { align: 'center' });
+    doc.text('Upcoming', b3x + boxW/2, y + 21, { align: 'center' });
 
     y += boxH + 10;
 
+    // Lesson Record
     if (summary.lessons.length > 0) {
       doc.setFontSize(11);
       doc.setFont('helvetica', 'bold');
@@ -440,24 +423,91 @@ export default function Packages() {
         head: [['#', 'Date', 'Time', 'Duration', 'Status', 'Notes']],
         body: summary.lessons.map((lesson, idx) => [
           idx + 1,
-          lesson.date ? format(new Date(lesson.date), 'dd MMM yyyy') : 'N/A',
+          lesson.date ? formatDate(lesson.date) : 'N/A',
           lesson.scheduled_time?.slice(0, 5) || '-',
           lesson.duration_minutes ? `${lesson.duration_minutes} min` : '-',
-          lesson.status === 'completed' ? 'Completed' : lesson.status === 'absent' ? 'Absent' : 'Scheduled',
-          lesson.notes || '-',
+          lesson.status === 'completed' ? 'Completed' : lesson.status === 'absent' ? 'Absent' : 'Upcoming',
+          lesson.notes?.trim() || '',
         ]),
-        headStyles: { fillColor: navy, textColor: [255, 255, 255], fontSize: 9, fontStyle: 'bold' },
-        bodyStyles: { fontSize: 8, textColor: darkText },
-        alternateRowStyles: { fillColor: lightGray },
-        columnStyles: { 0: { cellWidth: 10 }, 1: { cellWidth: 28 }, 2: { cellWidth: 20 }, 3: { cellWidth: 22 }, 4: { cellWidth: 30 }, 5: { cellWidth: 'auto' } },
-        styles: { fontSize: 8 },
+        headStyles: {
+          fillColor: navy,
+          textColor: [255, 255, 255],
+          fontSize: 9,
+          fontStyle: 'bold',
+          cellPadding: 4,
+        },
+        bodyStyles: {
+          fontSize: 8.5,
+          textColor: darkText,
+          cellPadding: 4,
+          minCellHeight: 10,
+        },
+        alternateRowStyles: {
+          fillColor: [248, 249, 252],
+        },
+        columnStyles: {
+          0: { cellWidth: 10, fontStyle: 'bold', halign: 'center' },
+          1: { cellWidth: 30, fontStyle: 'bold' },
+          2: { cellWidth: 18, halign: 'center' },
+          3: { cellWidth: 22, halign: 'center' },
+          4: { cellWidth: 28 },
+          5: { cellWidth: 'auto' },
+        },
+        didParseCell: (data) => {
+          if (data.column.index === 4 && data.section === 'body') {
+            data.cell.text = [];
+          }
+        },
+        didDrawCell: (data) => {
+          if (data.column.index === 4 && data.section === 'body') {
+            const status = data.cell.raw as string;
+            const color: [number,number,number] =
+              status === 'Completed' ? [22, 163, 74]
+              : status === 'Absent' ? [220, 38, 38]
+              : [37, 99, 235];
+            doc.setTextColor(...color);
+            doc.setFontSize(8.5);
+            doc.setFont('helvetica', 'bold');
+            doc.text(status, data.cell.x + 2, data.cell.y + data.cell.height / 2 + 3);
+            doc.setTextColor(...darkText);
+            doc.setFont('helvetica', 'normal');
+          }
+        },
+        styles: {
+          overflow: 'linebreak',
+          lineColor: [226, 232, 240],
+          lineWidth: 0.1,
+        },
       });
 
       y = (doc as any).lastAutoTable?.finalY || y + 10;
       y += 8;
     }
 
-    const footerY = Math.max(y + 10, doc.internal.pageSize.getHeight() - 20);
+    // Teacher Notes
+    const lessonNotes = summary.lessons
+      .filter(l => l.notes?.trim())
+      .map((l, i) => `${i + 1}. ${l.date ? formatDate(l.date) : ''}: ${l.notes}`);
+
+    if (lessonNotes.length > 0) {
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...navy);
+      doc.text('Teacher Notes', 14, y);
+      y += 6;
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...darkText);
+      lessonNotes.forEach(note => {
+        const lines = doc.splitTextToSize(note, pageWidth - 28);
+        doc.text(lines, 14, y);
+        y += lines.length * 5;
+      });
+      y += 6;
+    }
+
+    // Footer
+    const footerY = Math.max(y + 10, doc.internal.pageSize.getHeight() - 25);
     doc.setDrawColor(...gold);
     doc.setLineWidth(0.5);
     doc.line(14, footerY, pageWidth - 14, footerY);
@@ -467,9 +517,11 @@ export default function Packages() {
     doc.text('Thank you for choosing OAC Academy', 14, footerY + 6);
     doc.setFont('helvetica', 'normal');
     doc.text(`Generated: ${format(new Date(), 'dd MMM yyyy')}`, pageWidth - 14, footerY + 6, { align: 'right' });
+    doc.setFontSize(7);
+    doc.text('This report excludes financial information.', 14, footerY + 12);
 
-    doc.save(`OAC_Summary_${summary.student_name.replace(/\s+/g, '_')}_${format(new Date(), 'MMM_yyyy')}.pdf`);
-    toast.success('PDF exported successfully!');
+    doc.save(`${summary.student_name.replace(/\s+/g, '_')}_${format(new Date(), 'MMM_yyyy')}.pdf`);
+    toast.success('PDF exported!');
   };
 
   return (
@@ -799,123 +851,100 @@ export default function Packages() {
 
       {/* Package Summary Dialog */}
       <Dialog open={!!summaryPkg} onOpenChange={(o) => !o && setSummaryPkg(null)}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <FileText className="w-5 h-5" />
-                Package Summary
-              </DialogTitle>
-            </DialogHeader>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              Package Summary
+            </DialogTitle>
+          </DialogHeader>
 
-            {summaryLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              </div>
-            ) : summary ? (
-              <div className="space-y-6">
-                {/* Student Info */}
-                <div className="p-4 rounded-lg bg-muted/30 border">
-                  <h3 className="font-semibold mb-2">Student Information</h3>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div><span className="text-muted-foreground">Name:</span> {summary.student_name}</div>
-                    <div><span className="text-muted-foreground">Phone:</span> {summary.student_phone}</div>
-                    {summary.parent_phone && (
-                      <div><span className="text-muted-foreground">Parent:</span> {summary.parent_phone}</div>
-                    )}
-                    {summary.teacher_name && (
-                      <div><span className="text-muted-foreground">Teacher:</span> {summary.teacher_name}</div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Package Details */}
-                <div className="p-4 rounded-lg bg-muted/30 border">
-                  <h3 className="font-semibold mb-2">Package Details</h3>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div><span className="text-muted-foreground">Amount:</span> {formatCurrency(summary.amount)}</div>
-                    <div><span className="text-muted-foreground">Lessons:</span> {summary.lessons_used}/{summary.lessons_purchased}</div>
-                    <div><span className="text-muted-foreground">Payment:</span> {summary.payment_date ? format(new Date(summary.payment_date), 'dd MMM yyyy') : 'N/A'}</div>
-                    <div><span className="text-muted-foreground">Completed:</span> {summary.completed_date ? format(new Date(summary.completed_date), 'dd MMM yyyy') : 'N/A'}</div>
-                  </div>
-                </div>
-
-                {/* Statistics */}
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-center">
-                    <div className="text-2xl font-bold text-emerald-500">{summary.statistics.total_completed}</div>
-                    <div className="text-xs text-muted-foreground">Completed</div>
-                  </div>
-                  <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-center">
-                    <div className="text-2xl font-bold text-destructive">{summary.statistics.total_absent}</div>
-                    <div className="text-xs text-muted-foreground">Absent</div>
-                  </div>
-                  <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20 text-center">
-                    <div className="text-2xl font-bold text-blue-500">
-                      {summary.lessons_purchased > 0
-                        ? Math.round((summary.statistics.total_completed / summary.lessons_purchased) * 100)
-                        : 0}%
-                    </div>
-                    <div className="text-xs text-muted-foreground">Attendance</div>
-                  </div>
-                </div>
-
-                {/* Lessons Table */}
-                {summary.lessons.length > 0 && (
-                  <div>
-                    <h3 className="font-semibold mb-2">Lesson History</h3>
-                    <div className="overflow-x-auto rounded-lg border">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>#</TableHead>
-                            <TableHead>Date</TableHead>
-                            <TableHead>Time</TableHead>
-                            <TableHead>Duration</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Notes</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {summary.lessons.map((lesson, idx) => (
-                            <TableRow key={idx}>
-                              <TableCell>{idx + 1}</TableCell>
-                              <TableCell>{lesson.date ? format(new Date(lesson.date), 'dd MMM yyyy') : 'N/A'}</TableCell>
-                              <TableCell>{lesson.scheduled_time?.slice(0, 5) || '-'}</TableCell>
-                              <TableCell>{lesson.duration_minutes ? `${lesson.duration_minutes} min` : '-'}</TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-1">
-                                  {lesson.status === 'completed' ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> :
-                                   lesson.status === 'absent' ? <XCircle className="w-4 h-4 text-destructive" /> :
-                                   <Clock className="w-4 h-4 text-blue-500" />}
-                                  <span>{lesson.status === 'completed' ? 'Completed' : lesson.status === 'absent' ? 'Absent' : 'Scheduled'}</span>
-                                </div>
-                              </TableCell>
-                              <TableCell className="max-w-[120px] truncate">{lesson.notes || '-'}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </div>
-                )}
-
-                {/* Actions */}
-                <div className="flex flex-wrap gap-2 pt-4 border-t">
-                  <Button onClick={handleSummaryExportPDF} className="bg-[#2D3561] hover:bg-[#2D3561]/90">
-                    <FileText className="w-4 h-4 mr-2" />
-                    Export PDF
-                  </Button>
-                  <Button onClick={handleCopySummary} variant="outline">
-                    <Copy className="w-4 h-4 mr-2" />
-                    Copy Text
-                  </Button>
+          {summaryLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : summary ? (
+            <div className="space-y-6">
+              {/* Student Info */}
+              <div className="p-4 rounded-lg bg-muted/30 border">
+                <div className="space-y-1 text-sm">
+                  <div><span className="font-semibold text-muted-foreground">Student:</span> {summary.student_name}</div>
+                  <div><span className="font-semibold text-muted-foreground">Teacher:</span> {summary.teacher_name || '—'}</div>
+                  <div><span className="font-semibold text-muted-foreground">Phone:</span> {summary.student_phone}</div>
+                  <div><span className="font-semibold text-muted-foreground">Description:</span> {summary.description || (summaryPkg ? (filteredPackages.find(p => p.package_id === summaryPkg) as any)?.description : null) || '—'}</div>
                 </div>
               </div>
-            ) : (
-              <p className="text-center text-muted-foreground py-8">Summary not found</p>
-            )}
-          </DialogContent>
-        </Dialog>
+
+              {/* Statistics */}
+              <div className="grid grid-cols-3 gap-4">
+                <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-center">
+                  <div className="text-2xl font-bold text-emerald-500">{summary.statistics.total_completed}</div>
+                  <div className="text-xs text-muted-foreground">Completed</div>
+                </div>
+                <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-center">
+                  <div className="text-2xl font-bold text-destructive">{summary.statistics.total_absent}</div>
+                  <div className="text-xs text-muted-foreground">Absent</div>
+                </div>
+                <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20 text-center">
+                  <div className="text-2xl font-bold text-blue-500">{summary.lessons.filter(l => l.status === 'scheduled').length}</div>
+                  <div className="text-xs text-muted-foreground">Upcoming</div>
+                </div>
+              </div>
+
+              {/* Lessons Table */}
+              {summary.lessons.length > 0 && (
+                <div className="overflow-x-auto rounded-lg border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>#</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Time</TableHead>
+                        <TableHead>Duration</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Notes</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {summary.lessons.map((lesson, idx) => (
+                        <TableRow key={idx}>
+                          <TableCell>{idx + 1}</TableCell>
+                          <TableCell>{lesson.date ? formatDate(lesson.date) : 'N/A'}</TableCell>
+                          <TableCell>{lesson.scheduled_time?.slice(0, 5) || '-'}</TableCell>
+                          <TableCell>{lesson.duration_minutes ? `${lesson.duration_minutes}m` : '-'}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              {lesson.status === 'completed' ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> :
+                               lesson.status === 'absent' ? <XCircle className="w-4 h-4 text-destructive" /> :
+                               <Clock className="w-4 h-4 text-blue-500" />}
+                              <span>{lesson.status === 'completed' ? 'Done' : lesson.status === 'absent' ? 'Absent' : 'Upcoming'}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="max-w-[120px] truncate">{lesson.notes || ''}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex flex-wrap gap-2 pt-4 border-t">
+                <Button onClick={handleExportPDF} className="bg-[#2D3561] hover:bg-[#2D3561]/90">
+                  <Download className="w-4 h-4 mr-2" />
+                  Export PDF
+                </Button>
+                <Button onClick={handleCopySummary} variant="outline">
+                  <Copy className="w-4 h-4 mr-2" />
+                  Copy
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center text-muted-foreground py-8">Summary not found</div>
+          )}
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 }
