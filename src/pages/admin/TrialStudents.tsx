@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { format } from 'date-fns';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,8 +11,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { 
   Plus, 
   Search, 
@@ -22,7 +37,11 @@ import {
   UserCheck,
   Loader2,
   Download,
-  TrendingUp
+  TrendingUp,
+  MoreVertical,
+  UserPlus,
+  Trash2,
+  AlertCircle
 } from 'lucide-react';
 import { useTrialStudents, useUpdateTrialStudent, useDeleteTrialStudent, type TrialStudent } from '@/hooks/use-trial-students';
 import { useTeachers } from '@/hooks/use-teachers';
@@ -364,26 +383,162 @@ export default function TrialStudents() {
           </Select>
         </div>
 
-        {/* Content */}
+        {/* Content - Table */}
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
         ) : filteredTrialStudents.length > 0 ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredTrialStudents.map((student) => (
-              <TrialStudentCard
-                key={student.trial_id}
-                student={student}
-                onUpdateStatus={handleUpdateStatus}
-                onUpdateConversion={handleUpdateConversion}
-                onUpdateResult={handleUpdateResult}
-                onEdit={handleEdit}
-                onConvert={handleConvert}
-                onDelete={handleDelete}
-              />
-            ))}
-          </div>
+          <Card className="bg-card">
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[50px]">#</TableHead>
+                      <TableHead>Student</TableHead>
+                      <TableHead>Phone</TableHead>
+                      <TableHead>Program</TableHead>
+                      <TableHead>Teacher</TableHead>
+                      <TableHead>Trial Date</TableHead>
+                      <TableHead>Attendance</TableHead>
+                      <TableHead>Conversion</TableHead>
+                      <TableHead>Result</TableHead>
+                      <TableHead>Notes</TableHead>
+                      <TableHead className="w-[60px]">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredTrialStudents.map((student, index) => (
+                      <TableRow key={student.trial_id} className="hover:bg-muted/50">
+                        <TableCell className="text-muted-foreground text-xs">{index + 1}</TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{student.name}</p>
+                            {student.parent_guardian_name && (
+                              <p className="text-xs text-muted-foreground">{student.parent_guardian_name}</p>
+                            )}
+                            {student.age && (
+                              <p className="text-xs text-muted-foreground">{student.age} yrs{student.gender ? ` • ${student.gender}` : ''}</p>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm">{student.phone}</TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            {student.interested_program && <p>{student.interested_program}</p>}
+                            {student.student_level && <p className="text-xs text-muted-foreground">{student.student_level}</p>}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm">{student.teachers?.name || '—'}</TableCell>
+                        <TableCell>
+                          {student.trial_date ? (
+                            <div className="text-sm">
+                              <p>{format(new Date(student.trial_date), 'MMM d, yyyy')}</p>
+                              {student.trial_time && <p className="text-xs text-muted-foreground">{student.trial_time}</p>}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={
+                            student.status === 'Scheduled' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
+                            student.status === 'Completed' ? 'bg-green-500/20 text-green-400 border-green-500/30' :
+                            'bg-orange-500/20 text-orange-400 border-orange-500/30'
+                          }>
+                            {student.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={
+                            student.conversion_status === 'Converted' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
+                            student.conversion_status === 'Lost' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
+                            'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                          }>
+                            {student.conversion_status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {student.trial_result ? (
+                            <Badge className={
+                              student.trial_result === 'Very Positive' ? 'bg-emerald-500/20 text-emerald-400' :
+                              student.trial_result === 'Positive' ? 'bg-green-500/20 text-green-400' :
+                              student.trial_result === 'Neutral' ? 'bg-amber-500/20 text-amber-400' :
+                              'bg-red-500/20 text-red-400'
+                            }>
+                              {student.trial_result}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {student.notes ? (
+                            <p className="text-xs text-muted-foreground max-w-[150px] truncate" title={student.notes}>{student.notes}</p>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleEdit(student)}>
+                                Edit Details
+                              </DropdownMenuItem>
+                              {student.conversion_status === 'Pending' && student.status !== 'Absent' && (
+                                <DropdownMenuItem onClick={() => handleConvert(student)} className="text-primary">
+                                  <UserPlus className="w-4 h-4 mr-2" />
+                                  Convert to Student
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuSeparator />
+                              <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Attendance</div>
+                              <DropdownMenuItem onClick={() => handleUpdateStatus(student.trial_id, 'Scheduled' as any)}>Scheduled</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleUpdateStatus(student.trial_id, 'Completed' as any)}>Completed</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleUpdateStatus(student.trial_id, 'Absent' as any)}>Absent</DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Conversion</div>
+                              <DropdownMenuItem onClick={() => handleUpdateConversion(student.trial_id, 'Pending')}>Pending</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleUpdateConversion(student.trial_id, 'Converted')}>Converted</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleUpdateConversion(student.trial_id, 'Lost')}>Lost</DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Result</div>
+                              <DropdownMenuItem onClick={() => handleUpdateResult(student.trial_id, 'Very Positive')}>
+                                <CheckCircle className="w-4 h-4 mr-2 text-emerald-400" /> Very Positive
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleUpdateResult(student.trial_id, 'Positive')}>
+                                <CheckCircle className="w-4 h-4 mr-2 text-green-400" /> Positive
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleUpdateResult(student.trial_id, 'Neutral')}>
+                                <AlertCircle className="w-4 h-4 mr-2 text-amber-400" /> Neutral
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleUpdateResult(student.trial_id, 'Negative')}>
+                                <XCircle className="w-4 h-4 mr-2 text-red-400" /> Negative
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => handleDelete(student.trial_id)}
+                                className="text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
         ) : (
           <Card className="bg-card">
             <CardContent className="flex flex-col items-center justify-center py-12">
