@@ -265,7 +265,7 @@ export default function Students() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
           <Card><CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4 text-muted-foreground" />
@@ -293,6 +293,20 @@ export default function Students() {
               <div className="text-xl font-bold text-amber-600">{tempStopCount}</div>
             </div>
             <p className="text-xs text-muted-foreground">Temporary Stop</p>
+          </CardContent></Card>
+          <Card><CardContent className="pt-4 pb-3">
+            <div className="flex items-center gap-2">
+              <XCircle className="h-4 w-4 text-red-500" />
+              <div className="text-xl font-bold text-red-500">{leftCount}</div>
+            </div>
+            <p className="text-xs text-muted-foreground">Left</p>
+          </CardContent></Card>
+          <Card><CardContent className="pt-4 pb-3">
+            <div className="flex items-center gap-2">
+              <Percent className="h-4 w-4 text-blue-500" />
+              <div className="text-xl font-bold text-blue-500">{retentionRate}%</div>
+            </div>
+            <p className="text-xs text-muted-foreground">Retention Rate</p>
           </CardContent></Card>
         </div>
 
