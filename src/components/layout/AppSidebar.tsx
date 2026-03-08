@@ -14,7 +14,7 @@ import {
 
 const navItems = [
   { title: 'Dashboard', url: '/', icon: Home },
-  { title: 'Students', url: '/students', icon: GraduationCap },
+  { title: 'OAC Students', url: '/students', icon: GraduationCap },
   { title: 'Teachers', url: '/teachers', icon: UserCheck },
   { title: 'Reports', url: '/reports', icon: FileText },
 ];
