@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Mail, Phone, DollarSign, GraduationCap, BookOpen, TrendingUp, Receipt, Users, UserCheck, PauseCircle, UserX, Search, Clock, Check, X, Loader2, Edit2, Key, Trash2, MoreVertical, Pencil, Eye, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, DollarSign, GraduationCap, BookOpen, TrendingUp, Receipt, Users, UserCheck, PauseCircle, UserX, Search, Clock, Check, X, Loader2, Edit2, Key, Trash2, MoreVertical, Pencil, Eye, ChevronRight, CalendarDays } from 'lucide-react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useTeacher, useUpdateTeacher } from '@/hooks/use-teachers';
 import { useStudents, useUpdateStudent, Student } from '@/hooks/use-students';
@@ -27,6 +27,7 @@ import { YearMonthFilter, getDefaultFilter, getFilterDateRange, type YearMonthFi
 import { LessonCard } from '@/components/schedule/LessonCard';
 import { EditStudentDialog } from '@/components/teacher/EditStudentDialog';
 import { toast as sonnerToast } from 'sonner';
+import { TeacherCalendar } from '@/components/calendar/TeacherCalendar';
 
 // ── Salary history hook ──
 interface SalaryHistoryRecord {
@@ -152,7 +153,7 @@ export default function TeacherDetail() {
 
   const { data: allStudents } = useStudents();
   const { data: programs } = usePrograms();
-  const { data: todayLessons, refetch: refetchToday } = useAdminTeacherTodayLessons(id);
+  
 
   const [payrollFilter, setPayrollFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
   const payrollRange = getFilterDateRange(payrollFilter);
@@ -169,6 +170,8 @@ export default function TeacherDetail() {
   // Students tab filters
   const [studentSearch, setStudentSearch] = useState('');
   const [studentStatusFilter, setStudentStatusFilter] = useState<string>('all');
+  const [studentFilter, setStudentFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
+  const studentRange = getFilterDateRange(studentFilter);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
 
   const filteredStudents = useMemo(() => {
@@ -176,9 +179,15 @@ export default function TeacherDetail() {
       const matchesSearch = s.name.toLowerCase().includes(studentSearch.toLowerCase()) ||
         s.phone.includes(studentSearch);
       const matchesStatus = studentStatusFilter === 'all' || s.status === studentStatusFilter;
-      return matchesSearch && matchesStatus;
+      // Filter by created_at date range
+      const createdAt = s.created_at ? new Date(s.created_at) : null;
+      const matchesDate = !createdAt || (
+        (!studentRange.startDate || createdAt >= new Date(studentRange.startDate)) &&
+        (!studentRange.endDate || createdAt <= new Date(studentRange.endDate + 'T23:59:59'))
+      );
+      return matchesSearch && matchesStatus && matchesDate;
     });
-  }, [teacherStudents, studentSearch, studentStatusFilter]);
+  }, [teacherStudents, studentSearch, studentStatusFilter, studentRange.startDate, studentRange.endDate]);
 
   // Filtered trial lessons
   const filteredTrials = useMemo(() => {
@@ -474,7 +483,10 @@ export default function TeacherDetail() {
           <TabsList>
             <TabsTrigger value="students">Students ({totalStudents})</TabsTrigger>
             <TabsTrigger value="payroll">Payroll</TabsTrigger>
-            <TabsTrigger value="today">Today's Lessons ({todayLessons?.length || 0})</TabsTrigger>
+            <TabsTrigger value="calendar">
+              <CalendarDays className="w-4 h-4 mr-1" />
+              Lessons Calendar
+            </TabsTrigger>
             <TabsTrigger value="trials">Trial Lessons ({trialStats.total})</TabsTrigger>
           </TabsList>
 
@@ -564,6 +576,7 @@ export default function TeacherDetail() {
                     <SelectItem value="Left">Left</SelectItem>
                   </SelectContent>
                 </Select>
+                <YearMonthFilter value={studentFilter} onChange={setStudentFilter} />
               </div>
               <Card className="overflow-hidden">
                 <div className="overflow-x-auto">
@@ -742,81 +755,9 @@ export default function TeacherDetail() {
             </div>
           </TabsContent>
 
-          {/* ── Tab C: Today's Lessons ── */}
-          <TabsContent value="today">
-            <div className="space-y-4">
-              <Collapsible defaultOpen>
-                <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors w-full py-2">
-                  <ChevronRight className="w-4 h-4 transition-transform data-[state=open]:rotate-90" />
-                  Today's Statistics
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2">
-                    <Card>
-                      <CardContent className="pt-4 pb-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <BookOpen className="w-4 h-4 text-primary" />
-                          <div>
-                            <p className="text-xl font-bold">{todayLessons?.length || 0}</p>
-                            <p className="text-xs text-muted-foreground">Total</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="pt-4 pb-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <Check className="w-4 h-4 text-emerald-500" />
-                          <div>
-                            <p className="text-xl font-bold">{todayLessons?.filter((l: any) => l.status === 'completed').length || 0}</p>
-                            <p className="text-xs text-muted-foreground">Completed</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="pt-4 pb-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-amber-500" />
-                          <div>
-                            <p className="text-xl font-bold">{todayLessons?.filter((l: any) => l.status === 'scheduled').length || 0}</p>
-                            <p className="text-xs text-muted-foreground">Pending</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="pt-4 pb-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <X className="w-4 h-4 text-destructive" />
-                          <div>
-                            <p className="text-xl font-bold">{todayLessons?.filter((l: any) => l.status === 'absent').length || 0}</p>
-                            <p className="text-xs text-muted-foreground">Absent</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-
-              {!todayLessons?.length ? (
-                <Card className="p-8 text-center text-muted-foreground">
-                  <Clock className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                  No lessons scheduled for today
-                </Card>
-              ) : (
-                <div className="space-y-4">
-                  {todayLessons.map((lesson: any) => (
-                    <LessonCard
-                      key={lesson.scheduled_lesson_id}
-                      lesson={lesson}
-                      onUpdated={() => refetchToday()}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
+          {/* ── Tab C: Lessons Calendar ── */}
+          <TabsContent value="calendar">
+            {id && <TeacherCalendar teacherId={id} />}
           </TabsContent>
 
           {/* ── Tab D: Trial Lessons ── */}
