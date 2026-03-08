@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { ExternalLink, Copy, Check, MessageCircle, Calendar, BookOpen, Clock, RefreshCw, FileText, StickyNote } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,8 @@ import {
   getNotificationStyles,
   parseNotificationDetails,
   formatWhatsAppMessage,
+  formatLessonShareMessage,
+  formatPackageShareMessage,
 } from '@/lib/notification-utils';
 import { usePackageNotificationDetails, formatSchedule } from '@/hooks/use-package-notification-details';
 import { useLessonNotificationDetails } from '@/hooks/use-lesson-notification-details';
