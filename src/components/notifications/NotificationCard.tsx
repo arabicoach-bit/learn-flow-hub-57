@@ -197,7 +197,7 @@ export function NotificationCard({ notification }: NotificationCardProps) {
   const handleNavigate = () => {
     if (!notification.is_read) markRead.mutate(notification.notification_id);
     if (!notification.related_id) return;
-    navigate(notification.type === 'trial_completed' ? '/admin/trial-students' : `/students/${notification.related_id}`);
+    navigate(notification.type === 'trial_completed' ? '/admin/trial-students' : `/admin/students/${notification.related_id}`);
   };
 
   const navigateLabel = notification.type === 'trial_completed' ? 'Go to Trial' : 'Go to Student';

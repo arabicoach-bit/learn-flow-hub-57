@@ -50,7 +50,7 @@ const Index = () => {
               <Button 
                 size="lg" 
                 className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 rounded-full px-6"
-                onClick={() => navigate('/students')}
+                onClick={() => navigate('/admin/students')}
               >
                 View Students
                 <ArrowRight className="w-4 h-4" />
@@ -59,7 +59,7 @@ const Index = () => {
                 variant="outline" 
                 size="lg"
                 className="gap-2 rounded-full border-border/60 hover:bg-muted/50"
-                onClick={() => navigate('/reports')}
+                onClick={() => navigate('/admin/quarter-analysis')}
               >
                 <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
                   <Play className="w-3 h-3 text-primary fill-primary" />
@@ -155,7 +155,7 @@ const Index = () => {
               <CardTitle className="font-display">Recent Notifications</CardTitle>
               <p className="text-sm text-muted-foreground mt-1">Stay updated with the latest activities</p>
             </div>
-            <Button variant="outline" size="sm" onClick={() => navigate('/notifications')}>
+            <Button variant="outline" size="sm" onClick={() => navigate('/admin/notifications')}>
               View All
             </Button>
           </CardHeader>

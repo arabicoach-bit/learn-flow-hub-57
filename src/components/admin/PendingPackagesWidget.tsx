@@ -91,7 +91,7 @@ export function PendingPackagesWidget() {
             <Button
               variant="ghost"
               className="w-full text-amber-400 hover:text-amber-300"
-              onClick={() => navigate('/admin/pending-packages')}
+              onClick={() => navigate('/admin/packages')}
             >
               View All Pending Packages ({pendingPackages.length})
             </Button>
