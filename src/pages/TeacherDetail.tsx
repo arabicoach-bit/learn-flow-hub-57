@@ -639,7 +639,7 @@ export default function TeacherDetail() {
                             </td>
                             <td>
                               <span className={`font-medium ${getWalletColor(student.wallet_balance || 0)}`}>
-                                {getWalletDisplayLabel(student.wallet_balance || 0)}
+                                {student.status === 'Active' ? getWalletDisplayLabel(student.wallet_balance || 0) : (student.wallet_balance || 0)}
                               </span>
                             </td>
                             <td className="text-right">
