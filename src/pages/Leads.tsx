@@ -22,6 +22,7 @@ export default function Leads() {
   const [followUpFilter, setFollowUpFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState<YearMonthFilterValue>({ year: null, month: null });
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
+  const [convertingLead, setConvertingLead] = useState<Lead | null>(null);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const { toast } = useToast();
 
