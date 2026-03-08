@@ -20,6 +20,7 @@ import type { Database } from '@/integrations/supabase/types';
 
 type TrialStatus = Database['public']['Enums']['trial_status'];
 type TrialResult = Database['public']['Enums']['trial_result'];
+type TrialConversionStatus = 'Pending' | 'Converted' | 'Lost';
 
 interface EditTrialStudentDialogProps {
   student: TrialStudent | null;
@@ -47,6 +48,7 @@ export function EditTrialStudentDialog({ student, open, onOpenChange }: EditTria
     trial_date: '',
     trial_time: '',
     status: '' as TrialStatus | '',
+    conversion_status: '' as TrialConversionStatus | '',
     trial_result: '' as TrialResult | '',
     notes: '',
     handled_by: '',
@@ -69,6 +71,7 @@ export function EditTrialStudentDialog({ student, open, onOpenChange }: EditTria
         trial_date: student.trial_date || '',
         trial_time: student.trial_time || '',
         status: student.status || '',
+        conversion_status: student.conversion_status || '',
         trial_result: student.trial_result || '',
         notes: student.notes || '',
         handled_by: student.handled_by || '',
@@ -96,6 +99,7 @@ export function EditTrialStudentDialog({ student, open, onOpenChange }: EditTria
         trial_date: formData.trial_date || undefined,
         trial_time: formData.trial_time || undefined,
         status: formData.status as TrialStatus || undefined,
+        conversion_status: formData.conversion_status as TrialConversionStatus || undefined,
         trial_result: formData.trial_result as TrialResult || undefined,
         notes: formData.notes || undefined,
         handled_by: formData.handled_by || undefined,
@@ -289,7 +293,7 @@ export function EditTrialStudentDialog({ student, open, onOpenChange }: EditTria
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
+                <Label htmlFor="status">Attendance Status</Label>
                 <Select
                   value={formData.status}
                   onValueChange={(value) => setFormData({ ...formData, status: value as TrialStatus })}
@@ -300,6 +304,21 @@ export function EditTrialStudentDialog({ student, open, onOpenChange }: EditTria
                   <SelectContent>
                     <SelectItem value="Scheduled">Scheduled</SelectItem>
                     <SelectItem value="Completed">Completed</SelectItem>
+                    <SelectItem value="Absent">Absent</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="conversion_status">Conversion Status</Label>
+                <Select
+                  value={formData.conversion_status}
+                  onValueChange={(value) => setFormData({ ...formData, conversion_status: value as TrialConversionStatus })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select conversion" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Pending">Pending</SelectItem>
                     <SelectItem value="Converted">Converted</SelectItem>
                     <SelectItem value="Lost">Lost</SelectItem>
                   </SelectContent>

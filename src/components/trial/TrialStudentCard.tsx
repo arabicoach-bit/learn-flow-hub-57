@@ -27,7 +27,8 @@ import type { TrialStudent } from '@/hooks/use-trial-students';
 
 interface TrialStudentCardProps {
   student: TrialStudent;
-  onUpdateStatus: (trialId: string, status: 'Scheduled' | 'Completed' | 'Converted' | 'Lost') => void;
+  onUpdateStatus: (trialId: string, status: 'Scheduled' | 'Completed' | 'Absent') => void;
+  onUpdateConversion: (trialId: string, conversion: 'Pending' | 'Converted' | 'Lost') => void;
   onUpdateResult: (trialId: string, result: 'Positive' | 'Very Positive' | 'Neutral' | 'Negative') => void;
   onEdit: (student: TrialStudent) => void;
   onConvert?: (student: TrialStudent) => void;
@@ -37,6 +38,11 @@ interface TrialStudentCardProps {
 const statusColors = {
   Scheduled: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
   Completed: 'bg-green-500/20 text-green-400 border-green-500/30',
+  Absent: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+};
+
+const conversionColors = {
+  Pending: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
   Converted: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
   Lost: 'bg-red-500/20 text-red-400 border-red-500/30',
 };
@@ -48,8 +54,8 @@ const resultColors = {
   Negative: 'bg-red-500/20 text-red-400',
 };
 
-export function TrialStudentCard({ student, onUpdateStatus, onUpdateResult, onEdit, onConvert, onDelete }: TrialStudentCardProps) {
-  const canConvert = student.status === 'Completed' || student.status === 'Scheduled';
+export function TrialStudentCard({ student, onUpdateStatus, onUpdateConversion, onUpdateResult, onEdit, onConvert, onDelete }: TrialStudentCardProps) {
+  const canConvert = student.conversion_status === 'Pending' && student.status !== 'Absent';
   
   return (
     <Card className="bg-card border-border hover:border-primary/30 transition-colors">
@@ -64,8 +70,11 @@ export function TrialStudentCard({ student, onUpdateStatus, onUpdateResult, onEd
             )}
           </div>
           <div className="flex items-center gap-2">
-            <Badge className={statusColors[student.status]}>
+            <Badge className={statusColors[student.status as keyof typeof statusColors] || statusColors.Scheduled}>
               {student.status}
+            </Badge>
+            <Badge className={conversionColors[student.conversion_status]}>
+              {student.conversion_status}
             </Badge>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -84,19 +93,29 @@ export function TrialStudentCard({ student, onUpdateStatus, onUpdateResult, onEd
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Attendance</div>
                 <DropdownMenuItem onClick={() => onUpdateStatus(student.trial_id, 'Scheduled')}>
                   Mark as Scheduled
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onUpdateStatus(student.trial_id, 'Completed')}>
                   Mark as Completed
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onUpdateStatus(student.trial_id, 'Converted')}>
-                  Mark as Converted
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onUpdateStatus(student.trial_id, 'Lost')}>
-                  Mark as Lost
+                <DropdownMenuItem onClick={() => onUpdateStatus(student.trial_id, 'Absent')}>
+                  Mark as Absent
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Conversion</div>
+                <DropdownMenuItem onClick={() => onUpdateConversion(student.trial_id, 'Pending')}>
+                  Pending
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onUpdateConversion(student.trial_id, 'Converted')}>
+                  Converted
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onUpdateConversion(student.trial_id, 'Lost')}>
+                  Lost
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Trial Result</div>
                 <DropdownMenuItem onClick={() => onUpdateResult(student.trial_id, 'Very Positive')}>
                   <CheckCircle className="w-4 h-4 mr-2 text-emerald-400" />
                   Very Positive

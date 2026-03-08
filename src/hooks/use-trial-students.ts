@@ -4,6 +4,7 @@ import type { Database } from '@/integrations/supabase/types';
 
 type TrialStatus = Database['public']['Enums']['trial_status'];
 type TrialResult = Database['public']['Enums']['trial_result'];
+type TrialConversionStatus = 'Pending' | 'Converted' | 'Lost';
 
 export interface TrialStudent {
   trial_id: string;
@@ -26,6 +27,7 @@ export interface TrialStudent {
   teacher_payment_amount: number | null;
   admin_payment_amount: number | null;
   status: TrialStatus;
+  conversion_status: TrialConversionStatus;
   trial_result: TrialResult | null;
   notes: string | null;
   handled_by: string | null;
@@ -69,6 +71,7 @@ export interface UpdateTrialStudentInput {
   trial_date?: string;
   trial_time?: string;
   status?: TrialStatus;
+  conversion_status?: TrialConversionStatus;
   trial_result?: TrialResult;
   notes?: string;
   handled_by?: string;
@@ -77,7 +80,7 @@ export interface UpdateTrialStudentInput {
   registration_date?: string;
 }
 
-export function useTrialStudents(filters?: { status?: TrialStatus; teacher_id?: string; search?: string }) {
+export function useTrialStudents(filters?: { status?: TrialStatus; conversion_status?: TrialConversionStatus; teacher_id?: string; search?: string }) {
   return useQuery({
     queryKey: ['trial-students', filters],
     queryFn: async () => {
@@ -88,6 +91,9 @@ export function useTrialStudents(filters?: { status?: TrialStatus; teacher_id?: 
 
       if (filters?.status) {
         query = query.eq('status', filters.status);
+      }
+      if (filters?.conversion_status) {
+        query = query.eq('conversion_status', filters.conversion_status);
       }
       if (filters?.teacher_id) {
         query = query.eq('teacher_id', filters.teacher_id);

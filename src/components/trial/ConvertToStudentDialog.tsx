@@ -96,7 +96,8 @@ export function ConvertToStudentDialog({
       // Update the trial student to mark as converted
       await updateTrialStudent.mutateAsync({
         trial_id: trialStudent.trial_id,
-        status: 'Converted',
+        status: 'Completed' as any,
+        conversion_status: 'Converted' as any,
         converted_student_id: newStudent.student_id,
         registration_date: new Date().toISOString().split('T')[0],
       });

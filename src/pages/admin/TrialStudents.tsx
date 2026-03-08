@@ -37,10 +37,12 @@ import { YearMonthFilter, getDefaultFilter, getFilterDateRange, type YearMonthFi
 
 type TrialStatus = Database['public']['Enums']['trial_status'];
 type TrialResult = Database['public']['Enums']['trial_result'];
+type TrialConversionStatus = 'Pending' | 'Converted' | 'Lost';
 
 export default function TrialStudents() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<TrialStatus | 'all'>('all');
+  const [conversionFilter, setConversionFilter] = useState<TrialConversionStatus | 'all'>('all');
   const [teacherFilter, setTeacherFilter] = useState<string>('all');
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<TrialStudent | null>(null);
@@ -76,16 +78,18 @@ export default function TrialStudents() {
   const handleUpdateResult = async (trialId: string, result: TrialResult) => {
     try {
       await updateTrialStudent.mutateAsync({ trial_id: trialId, trial_result: result });
-      toast({
-        title: 'Result updated',
-        description: `Trial result set to ${result}.`,
-      });
+      toast({ title: 'Result updated', description: `Trial result set to ${result}.` });
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to update result.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: 'Failed to update result.', variant: 'destructive' });
+    }
+  };
+
+  const handleUpdateConversion = async (trialId: string, conversion: TrialConversionStatus) => {
+    try {
+      await updateTrialStudent.mutateAsync({ trial_id: trialId, conversion_status: conversion } as any);
+      toast({ title: 'Conversion updated', description: `Conversion status set to ${conversion}.` });
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to update conversion status.', variant: 'destructive' });
     }
   };
 
@@ -129,21 +133,24 @@ export default function TrialStudents() {
         if (created < filterStart || created > filterEnd) return false;
       }
       if (teacherFilter !== 'all' && s.teacher_id !== teacherFilter) return false;
+      if (conversionFilter !== 'all' && s.conversion_status !== conversionFilter) return false;
       return true;
     });
-  }, [trialStudents, filterStart, filterEnd, teacherFilter]);
+  }, [trialStudents, filterStart, filterEnd, teacherFilter, conversionFilter]);
 
   // Stats based on filtered data
   const stats = {
     total: filteredTrialStudents.length,
     scheduled: filteredTrialStudents.filter(s => s.status === 'Scheduled').length,
     completed: filteredTrialStudents.filter(s => s.status === 'Completed').length,
-    converted: filteredTrialStudents.filter(s => s.status === 'Converted').length,
-    lost: filteredTrialStudents.filter(s => s.status === 'Lost').length,
+    absent: filteredTrialStudents.filter(s => s.status === 'Absent').length,
+    converted: filteredTrialStudents.filter(s => s.conversion_status === 'Converted').length,
+    pending: filteredTrialStudents.filter(s => s.conversion_status === 'Pending').length,
+    lost: filteredTrialStudents.filter(s => s.conversion_status === 'Lost').length,
   };
 
-  const conversionRate = (stats.completed + stats.converted + stats.lost) > 0
-    ? ((stats.converted / (stats.completed + stats.converted + stats.lost)) * 100).toFixed(1)
+  const conversionRate = (stats.converted + stats.lost) > 0
+    ? ((stats.converted / (stats.converted + stats.lost)) * 100).toFixed(1)
     : '0.0';
 
   return (
@@ -200,79 +207,106 @@ export default function TrialStudents() {
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-          <Card className="bg-card">
-            <CardHeader className="pb-2">
-              <CardDescription>Total Trials</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-primary" />
-                <span className="text-2xl font-bold">{stats.total}</span>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Stats Cards - Attendance */}
+        <div>
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Attendance</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card className="bg-card">
+              <CardHeader className="pb-2">
+                <CardDescription>Total Trials</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  <Users className="w-5 h-5 text-primary" />
+                  <span className="text-2xl font-bold">{stats.total}</span>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-card">
+              <CardHeader className="pb-2">
+                <CardDescription>Scheduled</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-blue-400" />
+                  <span className="text-2xl font-bold">{stats.scheduled}</span>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-card">
+              <CardHeader className="pb-2">
+                <CardDescription>Completed</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-green-400" />
+                  <span className="text-2xl font-bold">{stats.completed}</span>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-card">
+              <CardHeader className="pb-2">
+                <CardDescription>Absent</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  <XCircle className="w-5 h-5 text-orange-400" />
+                  <span className="text-2xl font-bold">{stats.absent}</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
 
-          <Card className="bg-card">
-            <CardHeader className="pb-2">
-              <CardDescription>Scheduled</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <Clock className="w-5 h-5 text-blue-400" />
-                <span className="text-2xl font-bold">{stats.scheduled}</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card">
-            <CardHeader className="pb-2">
-              <CardDescription>Completed</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-green-400" />
-                <span className="text-2xl font-bold">{stats.completed}</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card">
-            <CardHeader className="pb-2">
-              <CardDescription>Converted</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <UserCheck className="w-5 h-5 text-emerald-400" />
-                <span className="text-2xl font-bold">{stats.converted}</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card">
-            <CardHeader className="pb-2">
-              <CardDescription>Lost</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <XCircle className="w-5 h-5 text-red-400" />
-                <span className="text-2xl font-bold">{stats.lost}</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card">
-            <CardHeader className="pb-2">
-              <CardDescription>Conversion Rate</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-primary" />
-                <span className="text-2xl font-bold">{conversionRate}%</span>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Stats Cards - Conversion */}
+        <div>
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Conversion</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card className="bg-card">
+              <CardHeader className="pb-2">
+                <CardDescription>Pending</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-amber-400" />
+                  <span className="text-2xl font-bold">{stats.pending}</span>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-card">
+              <CardHeader className="pb-2">
+                <CardDescription>Converted</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  <UserCheck className="w-5 h-5 text-emerald-400" />
+                  <span className="text-2xl font-bold">{stats.converted}</span>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-card">
+              <CardHeader className="pb-2">
+                <CardDescription>Lost</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  <XCircle className="w-5 h-5 text-red-400" />
+                  <span className="text-2xl font-bold">{stats.lost}</span>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-card">
+              <CardHeader className="pb-2">
+                <CardDescription>Conversion Rate</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-primary" />
+                  <span className="text-2xl font-bold">{conversionRate}%</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
         {/* Filters */}
@@ -291,12 +325,25 @@ export default function TrialStudents() {
             onValueChange={(v) => setStatusFilter(v as TrialStatus | 'all')}
           >
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by status" />
+              <SelectValue placeholder="Attendance" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="all">All Attendance</SelectItem>
               <SelectItem value="Scheduled">Scheduled</SelectItem>
               <SelectItem value="Completed">Completed</SelectItem>
+              <SelectItem value="Absent">Absent</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
+            value={conversionFilter}
+            onValueChange={(v) => setConversionFilter(v as TrialConversionStatus | 'all')}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Conversion" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Conversion</SelectItem>
+              <SelectItem value="Pending">Pending</SelectItem>
               <SelectItem value="Converted">Converted</SelectItem>
               <SelectItem value="Lost">Lost</SelectItem>
             </SelectContent>
@@ -329,6 +376,7 @@ export default function TrialStudents() {
                 key={student.trial_id}
                 student={student}
                 onUpdateStatus={handleUpdateStatus}
+                onUpdateConversion={handleUpdateConversion}
                 onUpdateResult={handleUpdateResult}
                 onEdit={handleEdit}
                 onConvert={handleConvert}
