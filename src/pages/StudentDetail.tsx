@@ -58,7 +58,7 @@ function StudentPackagesTab({
   const [pkgSearch, setPkgSearch] = React.useState('');
   const [pkgStatusFilter, setPkgStatusFilter] = React.useState('all');
   const [pkgPaymentFilter, setPkgPaymentFilter] = React.useState('all');
-  const [pkgFilter, setPkgFilter] = React.useState({ year: 'all' as const, month: 'all' as const });
+  const [pkgFilter, setPkgFilter] = React.useState<YearMonthFilterValue>({ year: null, month: null });
   const [nextLessons, setNextLessons] = React.useState<Record<string, string | null>>({});
   const [lessonCounts, setLessonCounts] = React.useState<Record<string, number>>({});
   const [endDates, setEndDates] = React.useState<Record<string, string | null>>({});
