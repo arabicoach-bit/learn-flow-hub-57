@@ -189,7 +189,7 @@ function StudentPackagesTab({
                     <TableHead>Next Lesson</TableHead>
                     <TableHead>Payment</TableHead>
                     <TableHead>Amount</TableHead>
-                    <TableHead>Kind</TableHead>
+                    
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
