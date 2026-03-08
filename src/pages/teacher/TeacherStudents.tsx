@@ -63,7 +63,7 @@ export default function TeacherStudents() {
       const matchesSearch = student.name.toLowerCase().includes(search.toLowerCase()) ||
         student.phone.includes(search);
       const matchesStatus = !statusFilter || student.status === statusFilter;
-      const matchesProgram = !programFilter || student.program_id === programFilter;
+      
       const createdAt = student.created_at ? new Date(student.created_at) : null;
       const matchesDate = !createdAt || (
         (!studentRange.startDate || createdAt >= new Date(studentRange.startDate)) &&
