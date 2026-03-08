@@ -193,7 +193,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         supabase.from('scheduled_lessons').select('scheduled_lesson_id, status, teacher_id, duration_minutes, scheduled_date')
           .gte('scheduled_date', startDate)
           .lte('scheduled_date', endDate),
-        supabase.from('trial_students').select('trial_id, status, teacher_id, created_at')
+        supabase.from('trial_students').select('trial_id, status, conversion_status, teacher_id, created_at')
           .gte('created_at', startDate)
           .lte('created_at', endDate + 'T23:59:59'),
         supabase.from('teachers').select('teacher_id, name, rate_per_lesson, is_active')
@@ -231,7 +231,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
           const d = new Date(t.created_at!);
           return d.getMonth() + 1 === mr.month && d.getFullYear() === mr.year;
         });
-        const mConverted = mTrials.filter(t => t.status === 'Converted').length;
+        const mConverted = mTrials.filter(t => t.conversion_status === 'Converted').length;
 
         return {
           monthLabel: mr.label,
@@ -271,7 +271,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
       const absentLessons = lessons.filter(l => l.status === 'absent').length;
       const scheduledLessons = lessons.filter(l => l.status === 'scheduled').length;
       const trialLessonsCount = trials.length;
-      const convertedTrials = trials.filter(t => t.status === 'Converted').length;
+      const convertedTrials = trials.filter(t => t.conversion_status === 'Converted').length;
       const trialConversionRate = trialLessonsCount > 0 ? (convertedTrials / trialLessonsCount) * 100 : 0;
 
       // ===== TEACHER KPIs with monthly breakdown =====
@@ -311,7 +311,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         if (t.teacher_id) {
           if (!trialsByTeacher[t.teacher_id]) trialsByTeacher[t.teacher_id] = { conducted: 0, converted: 0 };
           trialsByTeacher[t.teacher_id].conducted++;
-          if (t.status === 'Converted') trialsByTeacher[t.teacher_id].converted++;
+          if (t.conversion_status === 'Converted') trialsByTeacher[t.teacher_id].converted++;
         }
       });
 
@@ -324,7 +324,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
           if (!monthlyTrialsByTeacher[t.teacher_id]) monthlyTrialsByTeacher[t.teacher_id] = {};
           if (!monthlyTrialsByTeacher[t.teacher_id][mLabel]) monthlyTrialsByTeacher[t.teacher_id][mLabel] = { conducted: 0, converted: 0 };
           monthlyTrialsByTeacher[t.teacher_id][mLabel].conducted++;
-          if (t.status === 'Converted') monthlyTrialsByTeacher[t.teacher_id][mLabel].converted++;
+          if (t.conversion_status === 'Converted') monthlyTrialsByTeacher[t.teacher_id][mLabel].converted++;
         }
       });
 
