@@ -293,7 +293,7 @@ export function EditTrialStudentDialog({ student, open, onOpenChange }: EditTria
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
+                <Label htmlFor="status">Attendance Status</Label>
                 <Select
                   value={formData.status}
                   onValueChange={(value) => setFormData({ ...formData, status: value as TrialStatus })}
@@ -304,6 +304,21 @@ export function EditTrialStudentDialog({ student, open, onOpenChange }: EditTria
                   <SelectContent>
                     <SelectItem value="Scheduled">Scheduled</SelectItem>
                     <SelectItem value="Completed">Completed</SelectItem>
+                    <SelectItem value="Absent">Absent</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="conversion_status">Conversion Status</Label>
+                <Select
+                  value={formData.conversion_status}
+                  onValueChange={(value) => setFormData({ ...formData, conversion_status: value as TrialConversionStatus })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select conversion" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Pending">Pending</SelectItem>
                     <SelectItem value="Converted">Converted</SelectItem>
                     <SelectItem value="Lost">Lost</SelectItem>
                   </SelectContent>
