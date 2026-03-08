@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
-  Users, GraduationCap, Package, BookOpen, UserCheck, TrendingUp, TrendingDown,
+  Users, Package, BookOpen, UserCheck, TrendingUp, TrendingDown,
   DollarSign, Clock, AlertTriangle, CheckCircle, XCircle, Calendar, BarChart3
 } from 'lucide-react';
 import {
