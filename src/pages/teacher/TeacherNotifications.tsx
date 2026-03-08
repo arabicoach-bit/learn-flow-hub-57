@@ -135,9 +135,9 @@ export default function TeacherNotifications() {
               <TabsTrigger value="all" className="text-xs h-7 gap-1">
                 <Filter className="w-3 h-3" /> All
               </TabsTrigger>
-              <TabsTrigger value="lesson_completed" className="text-xs h-7">✅ Lessons</TabsTrigger>
+              <TabsTrigger value="lesson_completed" className="text-xs h-7">✅ Completed</TabsTrigger>
               <TabsTrigger value="trial_completed" className="text-xs h-7">🎓 Trials</TabsTrigger>
-              <TabsTrigger value="new_package" className="text-xs h-7">📦 Packages</TabsTrigger>
+              <TabsTrigger value="new_package" className="text-xs h-7">📦 New Packages</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
