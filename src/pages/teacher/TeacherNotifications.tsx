@@ -120,7 +120,7 @@ export default function TeacherNotifications() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{packageCount}</p>
-                <p className="text-xs text-muted-foreground">Packages</p>
+                <p className="text-xs text-muted-foreground">New Packages</p>
               </div>
             </CardContent>
           </Card>
