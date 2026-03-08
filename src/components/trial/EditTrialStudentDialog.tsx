@@ -48,6 +48,7 @@ export function EditTrialStudentDialog({ student, open, onOpenChange }: EditTria
     trial_date: '',
     trial_time: '',
     status: '' as TrialStatus | '',
+    conversion_status: '' as TrialConversionStatus | '',
     trial_result: '' as TrialResult | '',
     notes: '',
     handled_by: '',
