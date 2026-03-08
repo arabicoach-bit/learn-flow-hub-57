@@ -58,7 +58,7 @@ function isOverdue(dateStr: string | null): boolean {
   return isPast(d) && !isToday(d);
 }
 
-export function LeadCard({ lead, onUpdateTrialStatus, onUpdateFollowUp, onEdit, onDelete }: LeadCardProps) {
+export function LeadCard({ lead, onUpdateTrialStatus, onUpdateFollowUp, onEdit, onDelete, onConvertToTrial }: LeadCardProps) {
   const overdue = isOverdue(lead.next_followup_date);
 
   return (
