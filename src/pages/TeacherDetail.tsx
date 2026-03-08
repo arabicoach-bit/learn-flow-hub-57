@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Mail, Phone, DollarSign, GraduationCap, BookOpen, TrendingUp, Receipt, Users, UserCheck, PauseCircle, UserX, Search, Clock, Check, X, Save, Loader2, Edit2 } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, DollarSign, GraduationCap, BookOpen, TrendingUp, Receipt, Users, UserCheck, PauseCircle, UserX, Search, Clock, Check, X, Loader2, Edit2 } from 'lucide-react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useTeacher, useUpdateTeacher } from '@/hooks/use-teachers';
 import { useStudents } from '@/hooks/use-students';
@@ -21,6 +21,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { YearMonthFilter, getDefaultFilter, getFilterDateRange, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
 import { useMarkScheduledLesson, useUpdateScheduledLesson } from '@/hooks/use-scheduled-lessons';
+import { LessonCard } from '@/components/schedule/LessonCard';
 import { toast as sonnerToast } from 'sonner';
 
 // ── Salary history hook ──
@@ -529,29 +530,28 @@ export default function TeacherDetail() {
 
           {/* ── Tab C: Today's Lessons ── */}
           <TabsContent value="today">
-            <Card className="overflow-hidden">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Time</th>
-                    <th>Student</th>
-                    <th>Duration</th>
-                    <th>Status</th>
-                    <th>Notes</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {!todayLessons?.length ? (
-                    <tr><td colSpan={6} className="text-center py-8 text-muted-foreground">No lessons scheduled for today</td></tr>
-                  ) : (
-                    todayLessons.map((lesson: any) => (
-                      <TodayLessonRow key={lesson.scheduled_lesson_id} lesson={lesson} onUpdated={refetchToday} />
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </Card>
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Clock className="w-5 h-5 text-primary" />
+                Today's Lessons ({todayLessons?.length || 0})
+              </h3>
+              {!todayLessons?.length ? (
+                <Card className="p-8 text-center text-muted-foreground">
+                  <Clock className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                  No lessons scheduled for today
+                </Card>
+              ) : (
+                <div className="space-y-4">
+                  {todayLessons.map((lesson: any) => (
+                    <LessonCard
+                      key={lesson.scheduled_lesson_id}
+                      lesson={lesson}
+                      onUpdated={() => refetchToday()}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           </TabsContent>
 
           {/* ── Tab D: Trial Lessons ── */}
@@ -604,94 +604,7 @@ export default function TeacherDetail() {
   );
 }
 
-// ── Today Lesson Row with inline actions ──
-function TodayLessonRow({ lesson, onUpdated }: { lesson: any; onUpdated: () => void }) {
-  const markLesson = useMarkScheduledLesson();
-  const updateLesson = useUpdateScheduledLesson();
-  const queryClient = useQueryClient();
-  const [notes, setNotes] = useState(lesson.notes || '');
-  const [isSavingNote, setIsSavingNote] = useState(false);
 
-  const formatTime = (time: string) => {
-    if (!time) return '-';
-    const [hours, minutes] = time.split(':');
-    const hour = parseInt(hours);
-    const ampm = hour >= 12 ? 'PM' : 'AM';
-    const hour12 = hour % 12 || 12;
-    return `${hour12}:${minutes} ${ampm}`;
-  };
-
-  const handleMark = async (status: 'completed' | 'absent') => {
-    try {
-      await markLesson.mutateAsync({
-        scheduledLessonId: lesson.scheduled_lesson_id,
-        status,
-        notes: notes || undefined,
-      });
-      sonnerToast.success(`Lesson marked as ${status}`);
-      onUpdated();
-    } catch (err: any) {
-      sonnerToast.error('Failed to mark lesson', { description: err.message });
-    }
-  };
-
-  const handleSaveNote = async () => {
-    setIsSavingNote(true);
-    try {
-      const { error } = await supabase
-        .from('scheduled_lessons')
-        .update({ notes })
-        .eq('scheduled_lesson_id', lesson.scheduled_lesson_id);
-      if (error) throw error;
-      sonnerToast.success('Note saved');
-      queryClient.invalidateQueries({ queryKey: ['admin-teacher-today-lessons'] });
-    } catch (err: any) {
-      sonnerToast.error('Failed to save note', { description: err.message });
-    } finally {
-      setIsSavingNote(false);
-    }
-  };
-
-  const statusBadgeClass = lesson.status === 'completed'
-    ? 'bg-emerald-500/20 text-emerald-600 border-emerald-500/30'
-    : lesson.status === 'absent'
-    ? 'bg-red-500/20 text-red-600 border-red-500/30'
-    : 'bg-muted text-muted-foreground';
-
-  return (
-    <tr>
-      <td className="font-medium">{formatTime(lesson.scheduled_time)}</td>
-      <td>{lesson.students?.name || '-'}</td>
-      <td>{lesson.duration_minutes} min</td>
-      <td><Badge variant="outline" className={statusBadgeClass}>{lesson.status}</Badge></td>
-      <td>
-        <div className="flex gap-1 items-center max-w-[200px]">
-          <Input
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Notes..."
-            className="h-7 text-xs"
-          />
-          <Button size="icon" variant="ghost" className="h-7 w-7" disabled={isSavingNote} onClick={handleSaveNote}>
-            {isSavingNote ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
-          </Button>
-        </div>
-      </td>
-      <td>
-        {lesson.status === 'scheduled' && (
-          <div className="flex gap-1">
-            <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => handleMark('completed')} disabled={markLesson.isPending}>
-              <Check className="w-3 h-3" /> Done
-            </Button>
-            <Button size="sm" variant="outline" className="h-7 text-xs gap-1 text-destructive" onClick={() => handleMark('absent')} disabled={markLesson.isPending}>
-              <X className="w-3 h-3" /> Absent
-            </Button>
-          </div>
-        )}
-      </td>
-    </tr>
-  );
-}
 
 // ── Trial Lesson Row with inline actions ──
 function TrialLessonRow({ trial }: { trial: any }) {

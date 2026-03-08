@@ -2,13 +2,11 @@ import { useState, useMemo } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { useScheduledLessons, ScheduledLesson } from '@/hooks/use-scheduled-lessons';
+import { useScheduledLessons } from '@/hooks/use-scheduled-lessons';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
-import { CalendarDays, Clock, User, CheckSquare, Settings2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { UpdateLessonStatusDialog } from '@/components/schedule/UpdateLessonStatusDialog';
+import { CalendarDays } from 'lucide-react';
+import { LessonCard } from '@/components/schedule/LessonCard';
 
 interface TeacherCalendarProps {
   teacherId: string;
@@ -17,10 +15,8 @@ interface TeacherCalendarProps {
 export function TeacherCalendar({ teacherId }: TeacherCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [viewMonth, setViewMonth] = useState<Date>(new Date());
-  const [statusLesson, setStatusLesson] = useState<ScheduledLesson | null>(null);
-  const navigate = useNavigate();
 
-  const { data: scheduledLessons, isLoading } = useScheduledLessons({ teacher_id: teacherId });
+  const { data: scheduledLessons, isLoading, refetch } = useScheduledLessons({ teacher_id: teacherId });
 
   const lessonsByDate = useMemo(() => {
     if (!scheduledLessons) return new Map<string, typeof scheduledLessons>();
@@ -53,15 +49,6 @@ export function TeacherCalendar({ teacherId }: TeacherCalendarProps) {
         {hasAbsent && <div className="w-1.5 h-1.5 rounded-full bg-destructive" />}
       </div>
     );
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'scheduled': return 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30';
-      case 'completed': return 'bg-primary/10 text-primary border-primary/30';
-      case 'absent': return 'bg-destructive/10 text-destructive border-destructive/30';
-      default: return 'bg-muted';
-    }
   };
 
   const stats = useMemo(() => {
@@ -145,48 +132,18 @@ export function TeacherCalendar({ teacherId }: TeacherCalendarProps) {
               <p>No lessons scheduled</p>
             </div>
           ) : (
-            <div className="space-y-3 max-h-[400px] overflow-y-auto">
+            <div className="space-y-3 max-h-[500px] overflow-y-auto">
               {selectedDateLessons.map((lesson) => (
-                <div key={lesson.scheduled_lesson_id} className={`p-3 rounded-lg border ${getStatusColor(lesson.status || 'scheduled')}`}>
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="flex items-center gap-2">
-                      <User className="w-4 h-4" />
-                      <span className="font-medium">{lesson.students?.name}</span>
-                    </div>
-                    <Badge variant="outline" className="capitalize text-xs">{lesson.status}</Badge>
-                  </div>
-                  <div className="flex items-center gap-4 text-sm opacity-75">
-                    <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{lesson.scheduled_time?.slice(0, 5)}</span>
-                    <span>{lesson.duration_minutes} mins</span>
-                    
-                  </div>
-                  <div className="flex gap-2 mt-2">
-                    <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setStatusLesson(lesson)}>
-                      <Settings2 className="w-3 h-3 mr-1" />
-                      Edit
-                    </Button>
-                  </div>
-                </div>
+                <LessonCard
+                  key={lesson.scheduled_lesson_id}
+                  lesson={lesson}
+                  onUpdated={() => refetch()}
+                />
               ))}
             </div>
           )}
-
-          {selectedDateLessons.some(l => l.status === 'scheduled') && isToday && (
-            <Button className="w-full mt-4 bg-emerald-600 hover:bg-emerald-700" onClick={() => navigate('/teacher/mark-lesson')}>
-              <CheckSquare className="w-4 h-4 mr-2" />
-              Mark Lessons
-            </Button>
-          )}
         </CardContent>
       </Card>
-
-      {statusLesson && (
-        <UpdateLessonStatusDialog
-          lesson={statusLesson}
-          open={!!statusLesson}
-          onOpenChange={(open) => !open && setStatusLesson(null)}
-        />
-      )}
     </div>
   );
 }
