@@ -197,6 +197,7 @@ function StudentPackagesTab({
                   <TableRow>
                     <TableHead className="w-10"></TableHead>
                     <TableHead>Start</TableHead>
+                    <TableHead>End</TableHead>
                     <TableHead>Plan</TableHead>
                     <TableHead>Description</TableHead>
                     <TableHead>Status</TableHead>
