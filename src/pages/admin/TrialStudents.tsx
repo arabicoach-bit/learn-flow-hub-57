@@ -37,6 +37,7 @@ import { YearMonthFilter, getDefaultFilter, getFilterDateRange, type YearMonthFi
 
 type TrialStatus = Database['public']['Enums']['trial_status'];
 type TrialResult = Database['public']['Enums']['trial_result'];
+type TrialConversionStatus = 'Pending' | 'Converted' | 'Lost';
 
 export default function TrialStudents() {
   const [search, setSearch] = useState('');
