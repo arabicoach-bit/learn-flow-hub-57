@@ -446,7 +446,7 @@ export default function TeacherDetail() {
               <CalendarDays className="w-4 h-4 mr-1" />
               Lessons Calendar
             </TabsTrigger>
-            <TabsTrigger value="trials">Trial Lessons ({trialStats.total})</TabsTrigger>
+            <TabsTrigger value="trials">Trial Lessons</TabsTrigger>
           </TabsList>
 
           {/* ── Tab A: Students ── */}
