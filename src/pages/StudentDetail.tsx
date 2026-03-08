@@ -583,10 +583,6 @@ export default function StudentDetail() {
                         <p className="font-medium">{student.parent_guardian_name || '-'}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Parent Phone</p>
-                        <p className="font-medium">{student.parent_phone || '-'}</p>
-                      </div>
-                      <div>
                         <p className="text-sm text-muted-foreground">Age</p>
                         <p className="font-medium">{student.age || '-'}</p>
                       </div>
