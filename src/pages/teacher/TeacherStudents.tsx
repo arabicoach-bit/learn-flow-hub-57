@@ -100,9 +100,77 @@ export default function TeacherStudents() {
                   <SelectItem value="Left">Left</SelectItem>
                 </SelectContent>
               </Select>
+              <YearMonthFilter value={studentFilter} onChange={setStudentFilter} />
             </div>
           </CardContent>
         </Card>
+
+        {/* Student Statistics */}
+        <Collapsible defaultOpen>
+          <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors w-full py-2">
+            <ChevronRight className="w-4 h-4 transition-transform data-[state=open]:rotate-90" />
+            Student Statistics
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 pt-2">
+              <Card>
+                <CardContent className="pt-4 pb-3 px-4">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-primary" />
+                    <div>
+                      <p className="text-xl font-bold">{totalStudents}</p>
+                      <p className="text-xs text-muted-foreground">Total</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-4 pb-3 px-4">
+                  <div className="flex items-center gap-2">
+                    <UserCheck className="w-4 h-4 text-emerald-500" />
+                    <div>
+                      <p className="text-xl font-bold">{activeStudents}</p>
+                      <p className="text-xs text-muted-foreground">Active</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-4 pb-3 px-4">
+                  <div className="flex items-center gap-2">
+                    <PauseCircle className="w-4 h-4 text-amber-500" />
+                    <div>
+                      <p className="text-xl font-bold">{tempStopStudents}</p>
+                      <p className="text-xs text-muted-foreground">Temp Stop</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-4 pb-3 px-4">
+                  <div className="flex items-center gap-2">
+                    <UserX className="w-4 h-4 text-destructive" />
+                    <div>
+                      <p className="text-xl font-bold">{leftStudents}</p>
+                      <p className="text-xs text-muted-foreground">Left</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-4 pb-3 px-4">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-blue-500" />
+                    <div>
+                      <p className="text-xl font-bold">{retentionRate}%</p>
+                      <p className="text-xs text-muted-foreground">Retention</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
 
         {/* Students List */}
         <Card className="glass-card">
