@@ -59,7 +59,7 @@ const Index = () => {
                 variant="outline" 
                 size="lg"
                 className="gap-2 rounded-full border-border/60 hover:bg-muted/50"
-                onClick={() => navigate('/reports')}
+                onClick={() => navigate('/admin/quarter-analysis')}
               >
                 <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
                   <Play className="w-3 h-3 text-primary fill-primary" />
