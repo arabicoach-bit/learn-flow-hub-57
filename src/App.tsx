@@ -80,6 +80,7 @@ const AppRoutes = () => (
     <Route path="/admin/leads" element={<ProtectedRoute allowedRoles={['admin']}><Leads /></ProtectedRoute>} />
     <Route path="/admin/packages" element={<ProtectedRoute allowedRoles={['admin']}><Packages /></ProtectedRoute>} />
     <Route path="/admin/payroll" element={<ProtectedRoute allowedRoles={['admin']}><AdminPayroll /></ProtectedRoute>} />
+    <Route path="/admin/quarter-analysis" element={<ProtectedRoute allowedRoles={['admin']}><QuarterAnalysis /></ProtectedRoute>} />
     
     {/* Teacher routes */}
     <Route path="/teacher" element={<Navigate to="/teacher/schedule" replace />} />
