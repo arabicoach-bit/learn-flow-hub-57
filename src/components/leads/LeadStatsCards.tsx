@@ -3,7 +3,6 @@ import { Users, CheckCircle, Clock, DollarSign, XCircle, UserCheck, Percent } fr
 
 interface LeadStats {
   total: number;
-  trialBooked: number;
   pending: number;
   priceNegotiation: number;
   lost: number;
@@ -17,16 +16,15 @@ interface LeadStatsCardsProps {
 
 const statItems = [
   { key: 'total' as const, label: 'Total Leads', icon: Users, color: 'text-primary' },
-  { key: 'trialBooked' as const, label: 'Trial Booked', icon: CheckCircle, color: 'text-blue-400' },
+  { key: 'converted' as const, label: 'Converted', icon: UserCheck, color: 'text-emerald-400' },
   { key: 'pending' as const, label: 'Pending', icon: Clock, color: 'text-amber-400' },
   { key: 'priceNegotiation' as const, label: 'Price Negotiation', icon: DollarSign, color: 'text-purple-400' },
   { key: 'lost' as const, label: 'Lost', icon: XCircle, color: 'text-red-400' },
-  { key: 'converted' as const, label: 'Converted', icon: UserCheck, color: 'text-emerald-400' },
 ];
 
 export function LeadStatsCards({ stats }: LeadStatsCardsProps) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
       {statItems.map(({ key, label, icon: Icon, color }) => (
         <Card key={key} className="bg-card">
           <CardHeader className="pb-2">

@@ -78,10 +78,10 @@ export default function Leads() {
   };
 
   const totalLeads = filteredLeads.length;
-  const convertedCount = filteredLeads.filter(l => l.status === 'Converted').length;
+  // "Trial Booked" = converted in the lead pipeline
+  const convertedCount = filteredLeads.filter(l => l.trial_status === 'Trial Booked' || l.status === 'Converted').length;
   const stats = {
     total: totalLeads,
-    trialBooked: filteredLeads.filter(l => l.trial_status === 'Trial Booked').length,
     pending: filteredLeads.filter(l => l.trial_status === 'Pending').length,
     priceNegotiation: filteredLeads.filter(l => l.trial_status === 'Price Negotiation').length,
     lost: filteredLeads.filter(l => l.trial_status === 'Lost').length,
