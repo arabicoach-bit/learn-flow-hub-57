@@ -40,6 +40,7 @@ export function EditStudentDialog({ student, open, onOpenChange }: EditStudentDi
       setFormData({
         name: student.name || '',
         phone: student.phone || '',
+        parent_guardian_name: student.parent_guardian_name || '',
         age: student.age?.toString() || '',
         gender: student.gender || '',
         nationality: student.nationality || '',
