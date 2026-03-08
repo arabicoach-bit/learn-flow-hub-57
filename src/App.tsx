@@ -19,7 +19,7 @@ import StudentDetail from "./pages/StudentDetail";
 import Teachers from "./pages/Teachers";
 import TeacherDetail from "./pages/TeacherDetail";
 
-import Reports from "./pages/Reports";
+
 
 import AdminNotifications from "./pages/admin/Notifications";
 import TrialStudents from "./pages/admin/TrialStudents";
@@ -72,7 +72,7 @@ const AppRoutes = () => (
     <Route path="/admin/teachers" element={<ProtectedRoute allowedRoles={['admin']}><Teachers /></ProtectedRoute>} />
     <Route path="/admin/teachers/:id" element={<ProtectedRoute allowedRoles={['admin']}><TeacherDetail /></ProtectedRoute>} />
     
-    <Route path="/admin/reports" element={<ProtectedRoute allowedRoles={['admin']}><Reports /></ProtectedRoute>} />
+    
     
     <Route path="/admin/notifications" element={<ProtectedRoute allowedRoles={['admin']}><AdminNotifications /></ProtectedRoute>} />
     <Route path="/admin/trial-students" element={<ProtectedRoute allowedRoles={['admin']}><TrialStudents /></ProtectedRoute>} />
