@@ -1,26 +1,29 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Mail, Phone, DollarSign, GraduationCap, BookOpen, TrendingUp, Receipt } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, DollarSign, GraduationCap, BookOpen, TrendingUp, Receipt, Users, UserCheck, PauseCircle, UserX, Search, Clock, Check, X, Save, Loader2, Edit2 } from 'lucide-react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useTeacher, useUpdateTeacher } from '@/hooks/use-teachers';
-import { useScheduledLessons } from '@/hooks/use-scheduled-lessons';
 import { useStudents } from '@/hooks/use-students';
 import { useTeacherTotalHours } from '@/hooks/use-teacher-total-hours';
 import { Button } from '@/components/ui/button';
-import { getWalletColor, getStatusDisplayLabel } from '@/lib/wallet-utils';
+import { getWalletColor, getStatusDisplayLabel, formatSalary, formatDate, getWalletDisplayLabel } from '@/lib/wallet-utils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { formatSalary, formatDate } from '@/lib/wallet-utils';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { YearMonthFilter, getDefaultFilter, getFilterDateRange, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
+import { useMarkScheduledLesson, useUpdateScheduledLesson } from '@/hooks/use-scheduled-lessons';
+import { toast as sonnerToast } from 'sonner';
 
+// ── Salary history hook ──
 interface SalaryHistoryRecord {
   monthLabel: string;
   monthDate: string;
@@ -54,25 +57,20 @@ function useTeacherSalaryHistory(teacherId: string) {
         .single();
 
       const rate = teacher?.rate_per_lesson || 0;
-
       const monthMap: Record<string, { monthLabel: string; monthDate: string; lessons: number; minutes: number; trialCount: number }> = {};
 
       lessons?.forEach(l => {
         const monthKey = l.scheduled_date.slice(0, 7);
-        const monthLabel = format(new Date(l.scheduled_date.slice(0, 7) + '-01'), 'MMM yyyy');
-        if (!monthMap[monthKey]) {
-          monthMap[monthKey] = { monthLabel, monthDate: monthKey, lessons: 0, minutes: 0, trialCount: 0 };
-        }
+        const monthLabel = format(new Date(monthKey + '-01'), 'MMM yyyy');
+        if (!monthMap[monthKey]) monthMap[monthKey] = { monthLabel, monthDate: monthKey, lessons: 0, minutes: 0, trialCount: 0 };
         monthMap[monthKey].lessons += 1;
         monthMap[monthKey].minutes += l.duration_minutes || 0;
       });
 
       trials?.forEach(t => {
         const monthKey = t.lesson_date.slice(0, 7);
-        const monthLabel = format(new Date(t.lesson_date.slice(0, 7) + '-01'), 'MMM yyyy');
-        if (!monthMap[monthKey]) {
-          monthMap[monthKey] = { monthLabel, monthDate: monthKey, lessons: 0, minutes: 0, trialCount: 0 };
-        }
+        const monthLabel = format(new Date(monthKey + '-01'), 'MMM yyyy');
+        if (!monthMap[monthKey]) monthMap[monthKey] = { monthLabel, monthDate: monthKey, lessons: 0, minutes: 0, trialCount: 0 };
         monthMap[monthKey].trialCount += 1;
       });
 
@@ -99,30 +97,92 @@ function useTeacherSalaryHistory(teacherId: string) {
   });
 }
 
+// ── Today's lessons hook for admin context ──
+function useAdminTeacherTodayLessons(teacherId: string | undefined) {
+  const today = format(new Date(), 'yyyy-MM-dd');
+  return useQuery({
+    queryKey: ['admin-teacher-today-lessons', teacherId, today],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('scheduled_lessons')
+        .select('*, students!scheduled_lessons_student_id_fkey(name, phone, wallet_balance, status)')
+        .eq('teacher_id', teacherId!)
+        .eq('scheduled_date', today)
+        .order('scheduled_time', { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!teacherId,
+  });
+}
+
+// ── Trial lessons hook for admin context ──
+function useAdminTeacherTrialLessons(teacherId: string | undefined, startDate: string | null, endDate: string | null) {
+  return useQuery({
+    queryKey: ['admin-teacher-trial-lessons', teacherId, startDate, endDate],
+    queryFn: async () => {
+      let query = supabase
+        .from('trial_lessons_log')
+        .select('*, trial_students!trial_lessons_log_trial_student_id_fkey(name, phone)')
+        .eq('teacher_id', teacherId!)
+        .order('lesson_date', { ascending: false });
+
+      if (startDate) query = query.gte('lesson_date', startDate);
+      if (endDate) query = query.lte('lesson_date', endDate);
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!teacherId,
+  });
+}
+
 export default function TeacherDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { data: teacher, isLoading: teacherLoading } = useTeacher(id || '');
 
-  const { data: lessons } = useScheduledLessons({ teacher_id: id });
-  const { data: salaryHistory } = useTeacherSalaryHistory(id || '');
   const { data: allStudents } = useStudents();
+  const { data: todayLessons, refetch: refetchToday } = useAdminTeacherTodayLessons(id);
 
-  const [filter, setFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
-  const { startDate, endDate } = getFilterDateRange(filter);
-  const { data: filteredStats } = useTeacherTotalHours(id, startDate, endDate);
+  const [payrollFilter, setPayrollFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
+  const payrollRange = getFilterDateRange(payrollFilter);
+  const { data: filteredStats } = useTeacherTotalHours(id, payrollRange.startDate, payrollRange.endDate);
+  const { data: salaryHistory } = useTeacherSalaryHistory(id || '');
+
+  const [trialFilter, setTrialFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
+  const trialRange = getFilterDateRange(trialFilter);
+  const { data: trialLessons } = useAdminTeacherTrialLessons(id, trialRange.startDate, trialRange.endDate);
+  const [trialStatusFilter, setTrialStatusFilter] = useState<string>('all');
 
   const teacherStudents = allStudents?.filter(s => s.teacher_id === id) || [];
-  const updateTeacher = useUpdateTeacher();
 
+  // Students tab filters
+  const [studentSearch, setStudentSearch] = useState('');
+  const [studentStatusFilter, setStudentStatusFilter] = useState<string>('all');
+
+  const filteredStudents = useMemo(() => {
+    return teacherStudents.filter(s => {
+      const matchesSearch = s.name.toLowerCase().includes(studentSearch.toLowerCase());
+      const matchesStatus = studentStatusFilter === 'all' || s.status === studentStatusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [teacherStudents, studentSearch, studentStatusFilter]);
+
+  // Filtered trial lessons
+  const filteredTrials = useMemo(() => {
+    if (!trialLessons) return [];
+    if (trialStatusFilter === 'all') return trialLessons;
+    return trialLessons.filter((t: any) => t.status?.toLowerCase() === trialStatusFilter.toLowerCase());
+  }, [trialLessons, trialStatusFilter]);
+
+  // Edit teacher state
+  const updateTeacher = useUpdateTeacher();
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    email: '',
-    rate_per_lesson: '',
-  });
+  const [formData, setFormData] = useState({ name: '', phone: '', email: '', rate_per_lesson: '' });
 
   useEffect(() => {
     if (teacher) {
@@ -147,10 +207,21 @@ export default function TeacherDetail() {
       });
       toast({ title: 'Teacher updated successfully!' });
       setIsEditing(false);
-    } catch (error) {
+    } catch {
       toast({ title: 'Error updating teacher', variant: 'destructive' });
     }
   };
+
+  // KPI calculations
+  const totalStudents = teacherStudents.length;
+  const activeStudents = teacherStudents.filter(s => s.status === 'Active').length;
+  const tempStopStudents = teacherStudents.filter(s => s.status === 'Temporary Stop').length;
+  const leftStudents = teacherStudents.filter(s => s.status === 'Left').length;
+
+  // Current month stats for header KPIs
+  const currentMonthFilter = getDefaultFilter();
+  const currentMonthRange = getFilterDateRange(currentMonthFilter);
+  const { data: currentMonthStats } = useTeacherTotalHours(id, currentMonthRange.startDate, currentMonthRange.endDate);
 
   if (teacherLoading) {
     return (
@@ -168,50 +239,47 @@ export default function TeacherDetail() {
       <AdminLayout>
         <div className="text-center py-12">
           <p className="text-muted-foreground">Teacher not found</p>
-          <Button variant="ghost" onClick={() => navigate(-1)} className="mt-4">
-            Back
-          </Button>
+          <Button variant="ghost" onClick={() => navigate(-1)} className="mt-4">Back</Button>
         </div>
       </AdminLayout>
     );
   }
 
+  const isActive = teacher.is_active !== false;
+
   return (
     <AdminLayout>
       <div className="space-y-6 animate-fade-in">
+        {/* Header */}
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="flex-1">
-            <h1 className="text-3xl font-display font-bold">{teacher.name}</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-display font-bold">{teacher.name}</h1>
+              <Badge variant={isActive ? 'default' : 'secondary'}>{isActive ? 'Active' : 'Inactive'}</Badge>
+            </div>
             <div className="flex items-center gap-4 text-muted-foreground mt-1">
               {teacher.phone && (
-                <span className="flex items-center gap-1">
-                  <Phone className="w-4 h-4" /> {teacher.phone}
-                </span>
+                <span className="flex items-center gap-1"><Phone className="w-4 h-4" /> {teacher.phone}</span>
               )}
               {teacher.email && (
-                <span className="flex items-center gap-1">
-                  <Mail className="w-4 h-4" /> {teacher.email}
-                </span>
+                <span className="flex items-center gap-1"><Mail className="w-4 h-4" /> {teacher.email}</span>
               )}
               <span className="flex items-center gap-1">
                 <DollarSign className="w-4 h-4" /> {formatSalary(teacher.rate_per_lesson)} / hour
               </span>
             </div>
           </div>
-          <YearMonthFilter value={filter} onChange={setFilter} />
           <Button variant={isEditing ? 'outline' : 'default'} onClick={() => setIsEditing(!isEditing)}>
             {isEditing ? 'Cancel' : 'Edit'}
           </Button>
         </div>
 
         {isEditing && (
-          <Card className="glass-card">
-            <CardHeader>
-              <CardTitle>Edit Teacher</CardTitle>
-            </CardHeader>
+          <Card>
+            <CardHeader><CardTitle>Edit Teacher</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -238,168 +306,247 @@ export default function TeacherDetail() {
           </Card>
         )}
 
-        {/* Performance Metrics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="glass-card">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="p-3 rounded-lg bg-primary/10">
-                  <GraduationCap className="w-5 h-5 text-primary" />
-                </div>
+        {/* KPI Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          <Card>
+            <CardContent className="pt-4 pb-3 px-4">
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-primary" />
                 <div>
-                  <p className="text-2xl font-bold">{teacherStudents.length}</p>
-                  <p className="text-sm text-muted-foreground">Students</p>
+                  <p className="text-xl font-bold">{totalStudents}</p>
+                  <p className="text-xs text-muted-foreground">Total Students</p>
                 </div>
               </div>
             </CardContent>
           </Card>
-          <Card className="glass-card">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="p-3 rounded-lg bg-secondary">
-                  <BookOpen className="w-5 h-5 text-secondary-foreground" />
-                </div>
+          <Card>
+            <CardContent className="pt-4 pb-3 px-4">
+              <div className="flex items-center gap-2">
+                <UserCheck className="w-4 h-4 text-emerald-500" />
                 <div>
-                  <p className="text-2xl font-bold">{filteredStats ? `${filteredStats.totalHours.toFixed(1)}h` : '...'}</p>
-                  <p className="text-sm text-muted-foreground">Hours</p>
+                  <p className="text-xl font-bold">{activeStudents}</p>
+                  <p className="text-xs text-muted-foreground">Active</p>
                 </div>
               </div>
             </CardContent>
           </Card>
-          <Card className="glass-card">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="p-3 rounded-lg bg-primary/10">
-                  <TrendingUp className="w-5 h-5 text-primary" />
-                </div>
+          <Card>
+            <CardContent className="pt-4 pb-3 px-4">
+              <div className="flex items-center gap-2">
+                <PauseCircle className="w-4 h-4 text-amber-500" />
                 <div>
-                  <p className="text-2xl font-bold">{filteredStats?.totalLessons ?? '...'}</p>
-                  <p className="text-sm text-muted-foreground">Lessons</p>
+                  <p className="text-xl font-bold">{tempStopStudents}</p>
+                  <p className="text-xs text-muted-foreground">Temp Stop</p>
                 </div>
               </div>
             </CardContent>
           </Card>
-          <Card className="glass-card">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="p-3 rounded-lg bg-accent">
-                  <Receipt className="w-5 h-5 text-accent-foreground" />
-                </div>
+          <Card>
+            <CardContent className="pt-4 pb-3 px-4">
+              <div className="flex items-center gap-2">
+                <UserX className="w-4 h-4 text-destructive" />
                 <div>
-                  <p className="text-2xl font-bold">{filteredStats ? formatSalary(filteredStats.salary) : '...'}</p>
-                  <p className="text-sm text-muted-foreground">Salary</p>
+                  <p className="text-xl font-bold">{leftStudents}</p>
+                  <p className="text-xs text-muted-foreground">Left</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4 pb-3 px-4">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-primary" />
+                <div>
+                  <p className="text-xl font-bold">{currentMonthStats?.totalLessons ?? '...'}</p>
+                  <p className="text-xs text-muted-foreground">Lessons (Month)</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4 pb-3 px-4">
+              <div className="flex items-center gap-2">
+                <Receipt className="w-4 h-4 text-emerald-500" />
+                <div>
+                  <p className="text-xl font-bold">{currentMonthStats ? formatSalary(currentMonthStats.salary) : '...'}</p>
+                  <p className="text-xs text-muted-foreground">Salary (Month)</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
+        {/* Tabs */}
         <Tabs defaultValue="students" className="space-y-4">
           <TabsList>
-            <TabsTrigger value="students">Students ({teacherStudents.length})</TabsTrigger>
-            <TabsTrigger value="lessons">Lessons ({lessons?.length || 0})</TabsTrigger>
-            <TabsTrigger value="payroll">Payroll ({salaryHistory?.length || 0})</TabsTrigger>
+            <TabsTrigger value="students">Students ({totalStudents})</TabsTrigger>
+            <TabsTrigger value="payroll">Payroll</TabsTrigger>
+            <TabsTrigger value="today">Today's Lessons ({todayLessons?.length || 0})</TabsTrigger>
+            <TabsTrigger value="trials">Trial Lessons</TabsTrigger>
           </TabsList>
 
+          {/* ── Tab A: Students ── */}
           <TabsContent value="students">
-            <Card className="glass-card overflow-hidden">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Phone</th>
-                    <th>Program</th>
-                    <th>Level</th>
-                    <th>Wallet</th>
-                    <th>Status</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {teacherStudents.length === 0 ? (
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input placeholder="Search student..." value={studentSearch} onChange={(e) => setStudentSearch(e.target.value)} className="pl-10" />
+                </div>
+                <Select value={studentStatusFilter} onValueChange={setStudentStatusFilter}>
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="Active">Active</SelectItem>
+                    <SelectItem value="Temporary Stop">Temporary Stop</SelectItem>
+                    <SelectItem value="Left">Left</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Card className="overflow-hidden">
+                <table className="data-table">
+                  <thead>
                     <tr>
-                      <td colSpan={7} className="text-center py-8 text-muted-foreground">
-                        No students assigned to this teacher
-                      </td>
+                      <th>Student Name</th>
+                      <th>Status</th>
+                      <th>Wallet</th>
+                      <th></th>
                     </tr>
-                  ) : (
-                    teacherStudents.map((student) => (
-                      <tr key={student.student_id}>
-                        <td className="font-medium">{student.name}</td>
-                        <td>{student.phone}</td>
-                        <td>{student.programs?.name || '-'}</td>
-                        <td>{student.student_level || '-'}</td>
-                        <td>
-                          <span className={`font-medium ${getWalletColor(student.wallet_balance || 0)}`}>
-                            {student.wallet_balance} lessons
-                          </span>
-                        </td>
-                        <td>
-                          <Badge
-                            variant="outline"
-                            className={
-                              student.status === 'Active'
-                                ? 'status-active'
-                                : student.status === 'Temporary Stop'
-                                ? 'status-grace'
-                                : 'status-blocked'
-                            }
-                          >
-                            {getStatusDisplayLabel(student.status)}
-                          </Badge>
-                        </td>
-                        <td>
-                          <Button variant="ghost" size="sm" onClick={() => navigate(`/admin/students/${student.student_id}`)}>
-                            View
-                          </Button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </Card>
+                  </thead>
+                  <tbody>
+                    {filteredStudents.length === 0 ? (
+                      <tr><td colSpan={4} className="text-center py-8 text-muted-foreground">No students found</td></tr>
+                    ) : (
+                      filteredStudents.map((student) => (
+                        <tr key={student.student_id}>
+                          <td className="font-medium">{student.name}</td>
+                          <td>
+                            <Badge variant="outline" className={
+                              student.status === 'Active' ? 'status-active' :
+                              student.status === 'Temporary Stop' ? 'status-grace' : 'status-blocked'
+                            }>
+                              {getStatusDisplayLabel(student.status)}
+                            </Badge>
+                          </td>
+                          <td>
+                            <span className={`font-medium ${getWalletColor(student.wallet_balance || 0)}`}>
+                              {getWalletDisplayLabel(student.wallet_balance || 0)}
+                            </span>
+                          </td>
+                          <td>
+                            <Button variant="ghost" size="sm" onClick={() => navigate(`/admin/students/${student.student_id}`)}>
+                              Open Student
+                            </Button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </Card>
+            </div>
           </TabsContent>
 
-          <TabsContent value="lessons">
-            <Card className="glass-card overflow-hidden">
+          {/* ── Tab B: Payroll ── */}
+          <TabsContent value="payroll">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Monthly Summary</h3>
+                <YearMonthFilter value={payrollFilter} onChange={setPayrollFilter} />
+              </div>
+
+              {/* Monthly summary card */}
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Completed Lessons</p>
+                      <p className="text-2xl font-bold">{filteredStats?.totalLessons ?? '...'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Teaching Hours</p>
+                      <p className="text-2xl font-bold">{filteredStats ? `${filteredStats.totalHours.toFixed(1)}h` : '...'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Rate/Hour</p>
+                      <p className="text-2xl font-bold">{formatSalary(teacher.rate_per_lesson)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Salary (EGP)</p>
+                      <p className="text-2xl font-bold text-emerald-500">{filteredStats ? formatSalary(filteredStats.salary) : '...'}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Salary history table */}
+              <Card className="overflow-hidden">
+                <CardHeader><CardTitle className="text-base">Payment Records</CardTitle></CardHeader>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Month</th>
+                      <th>Lessons</th>
+                      <th>Hours</th>
+                      <th>Salary (EGP)</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {!salaryHistory?.length ? (
+                      <tr><td colSpan={5} className="text-center py-8 text-muted-foreground">No salary history yet</td></tr>
+                    ) : (
+                      <>
+                        {salaryHistory.map((record) => (
+                          <tr key={record.monthDate}>
+                            <td>{record.monthLabel}</td>
+                            <td>{record.lessons}</td>
+                            <td>{record.hours.toFixed(1)}h</td>
+                            <td className="font-medium">{formatSalary(record.salary)}</td>
+                            <td>
+                              <Badge variant="outline" className={record.isPending ? 'bg-amber-500/20 text-amber-600 border-amber-500/30' : 'bg-emerald-500/20 text-emerald-600 border-emerald-500/30'}>
+                                {record.isPending ? '⏳ Pending' : '✅ Paid'}
+                              </Badge>
+                            </td>
+                          </tr>
+                        ))}
+                        <tr className="font-bold border-t">
+                          <td>All Time Total</td>
+                          <td>{salaryHistory.reduce((s, r) => s + r.lessons, 0)}</td>
+                          <td>{salaryHistory.reduce((s, r) => s + r.hours, 0).toFixed(1)}h</td>
+                          <td>{formatSalary(salaryHistory.reduce((s, r) => s + r.salary, 0))}</td>
+                          <td></td>
+                        </tr>
+                      </>
+                    )}
+                  </tbody>
+                </table>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* ── Tab C: Today's Lessons ── */}
+          <TabsContent value="today">
+            <Card className="overflow-hidden">
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Date</th>
+                    <th>Time</th>
                     <th>Student</th>
                     <th>Duration</th>
                     <th>Status</th>
+                    <th>Notes</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {!lessons?.length ? (
-                    <tr>
-                      <td colSpan={4} className="text-center py-8 text-muted-foreground">
-                        No lessons recorded
-                      </td>
-                    </tr>
+                  {!todayLessons?.length ? (
+                    <tr><td colSpan={6} className="text-center py-8 text-muted-foreground">No lessons scheduled for today</td></tr>
                   ) : (
-                    lessons.slice(0, 50).map((lesson) => (
-                      <tr key={lesson.scheduled_lesson_id}>
-                        <td>{formatDate(lesson.scheduled_date)}</td>
-                        <td>{lesson.students?.name || '-'}</td>
-                        <td>{lesson.duration_minutes || '-'} min</td>
-                        <td>
-                          <Badge
-                            variant="outline"
-                            className={
-                              lesson.status === 'completed'
-                                ? 'bg-wallet-positive/20 text-wallet-positive'
-                                : lesson.status === 'absent'
-                                ? 'bg-wallet-negative/20 text-wallet-negative'
-                                : 'bg-muted text-muted-foreground'
-                            }
-                          >
-                            {lesson.status}
-                          </Badge>
-                        </td>
-                      </tr>
+                    todayLessons.map((lesson: any) => (
+                      <TodayLessonRow key={lesson.scheduled_lesson_id} lesson={lesson} onUpdated={refetchToday} />
                     ))
                   )}
                 </tbody>
@@ -407,55 +554,203 @@ export default function TeacherDetail() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="payroll">
-            <Card className="glass-card overflow-hidden">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Month</th>
-                    <th>Lessons</th>
-                    <th>Hours</th>
-                    <th>Salary</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {!salaryHistory?.length ? (
+          {/* ── Tab D: Trial Lessons ── */}
+          <TabsContent value="trials">
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+                <YearMonthFilter value={trialFilter} onChange={setTrialFilter} />
+                <Select value={trialStatusFilter} onValueChange={setTrialStatusFilter}>
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="scheduled">Scheduled</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="absent">Absent</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Card className="overflow-hidden">
+                <table className="data-table">
+                  <thead>
                     <tr>
-                      <td colSpan={5} className="text-center py-8 text-muted-foreground">
-                        No salary history yet
-                      </td>
+                      <th>Date</th>
+                      <th>Time</th>
+                      <th>Student</th>
+                      <th>Phone</th>
+                      <th>Duration</th>
+                      <th>Status</th>
+                      <th>Notes</th>
+                      <th>Actions</th>
                     </tr>
-                  ) : (
-                    <>
-                      {salaryHistory.map((record) => (
-                        <tr key={record.monthDate}>
-                          <td>{record.monthLabel}</td>
-                          <td>{record.lessons}</td>
-                          <td>{record.hours.toFixed(1)}h</td>
-                          <td className="font-medium">{formatSalary(record.salary)}</td>
-                          <td>
-                            <Badge variant="outline" className={record.isPending ? 'bg-wallet-warning/20 text-wallet-warning' : 'bg-wallet-positive/20 text-wallet-positive'}>
-                              {record.isPending ? '⏳ Pending' : '✅ Paid'}
-                            </Badge>
-                          </td>
-                        </tr>
-                      ))}
-                      <tr className="font-bold border-t">
-                        <td>All Time Total</td>
-                        <td>{salaryHistory.reduce((s, r) => s + r.lessons, 0)}</td>
-                        <td>{salaryHistory.reduce((s, r) => s + r.hours, 0).toFixed(1)}h</td>
-                        <td>{formatSalary(salaryHistory.reduce((s, r) => s + r.salary, 0))}</td>
-                        <td></td>
-                      </tr>
-                    </>
-                  )}
-                </tbody>
-              </table>
-            </Card>
+                  </thead>
+                  <tbody>
+                    {!filteredTrials.length ? (
+                      <tr><td colSpan={8} className="text-center py-8 text-muted-foreground">No trial lessons found</td></tr>
+                    ) : (
+                      filteredTrials.map((trial: any) => (
+                        <TrialLessonRow key={trial.trial_lesson_id} trial={trial} />
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
     </AdminLayout>
+  );
+}
+
+// ── Today Lesson Row with inline actions ──
+function TodayLessonRow({ lesson, onUpdated }: { lesson: any; onUpdated: () => void }) {
+  const markLesson = useMarkScheduledLesson();
+  const updateLesson = useUpdateScheduledLesson();
+  const queryClient = useQueryClient();
+  const [notes, setNotes] = useState(lesson.notes || '');
+  const [isSavingNote, setIsSavingNote] = useState(false);
+
+  const formatTime = (time: string) => {
+    if (!time) return '-';
+    const [hours, minutes] = time.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const hour12 = hour % 12 || 12;
+    return `${hour12}:${minutes} ${ampm}`;
+  };
+
+  const handleMark = async (status: 'completed' | 'absent') => {
+    try {
+      await markLesson.mutateAsync({
+        scheduledLessonId: lesson.scheduled_lesson_id,
+        status,
+        notes: notes || undefined,
+      });
+      sonnerToast.success(`Lesson marked as ${status}`);
+      onUpdated();
+    } catch (err: any) {
+      sonnerToast.error('Failed to mark lesson', { description: err.message });
+    }
+  };
+
+  const handleSaveNote = async () => {
+    setIsSavingNote(true);
+    try {
+      const { error } = await supabase
+        .from('scheduled_lessons')
+        .update({ notes })
+        .eq('scheduled_lesson_id', lesson.scheduled_lesson_id);
+      if (error) throw error;
+      sonnerToast.success('Note saved');
+      queryClient.invalidateQueries({ queryKey: ['admin-teacher-today-lessons'] });
+    } catch (err: any) {
+      sonnerToast.error('Failed to save note', { description: err.message });
+    } finally {
+      setIsSavingNote(false);
+    }
+  };
+
+  const statusBadgeClass = lesson.status === 'completed'
+    ? 'bg-emerald-500/20 text-emerald-600 border-emerald-500/30'
+    : lesson.status === 'absent'
+    ? 'bg-red-500/20 text-red-600 border-red-500/30'
+    : 'bg-muted text-muted-foreground';
+
+  return (
+    <tr>
+      <td className="font-medium">{formatTime(lesson.scheduled_time)}</td>
+      <td>{lesson.students?.name || '-'}</td>
+      <td>{lesson.duration_minutes} min</td>
+      <td><Badge variant="outline" className={statusBadgeClass}>{lesson.status}</Badge></td>
+      <td>
+        <div className="flex gap-1 items-center max-w-[200px]">
+          <Input
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Notes..."
+            className="h-7 text-xs"
+          />
+          <Button size="icon" variant="ghost" className="h-7 w-7" disabled={isSavingNote} onClick={handleSaveNote}>
+            {isSavingNote ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+          </Button>
+        </div>
+      </td>
+      <td>
+        {lesson.status === 'scheduled' && (
+          <div className="flex gap-1">
+            <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => handleMark('completed')} disabled={markLesson.isPending}>
+              <Check className="w-3 h-3" /> Done
+            </Button>
+            <Button size="sm" variant="outline" className="h-7 text-xs gap-1 text-destructive" onClick={() => handleMark('absent')} disabled={markLesson.isPending}>
+              <X className="w-3 h-3" /> Absent
+            </Button>
+          </div>
+        )}
+      </td>
+    </tr>
+  );
+}
+
+// ── Trial Lesson Row with inline actions ──
+function TrialLessonRow({ trial }: { trial: any }) {
+  const queryClient = useQueryClient();
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleMarkTrial = async (status: string) => {
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from('trial_lessons_log')
+        .update({ status })
+        .eq('trial_lesson_id', trial.trial_lesson_id);
+      if (error) throw error;
+      sonnerToast.success(`Trial marked as ${status}`);
+      queryClient.invalidateQueries({ queryKey: ['admin-teacher-trial-lessons'] });
+    } catch (err: any) {
+      sonnerToast.error('Failed', { description: err.message });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const formatTime = (time: string | null) => {
+    if (!time) return '-';
+    const [hours, minutes] = time.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const hour12 = hour % 12 || 12;
+    return `${hour12}:${minutes} ${ampm}`;
+  };
+
+  const statusBadgeClass = trial.status === 'completed'
+    ? 'bg-emerald-500/20 text-emerald-600 border-emerald-500/30'
+    : trial.status === 'absent'
+    ? 'bg-red-500/20 text-red-600 border-red-500/30'
+    : 'bg-muted text-muted-foreground';
+
+  return (
+    <tr>
+      <td>{formatDate(trial.lesson_date)}</td>
+      <td>{formatTime(trial.lesson_time)}</td>
+      <td className="font-medium">{trial.trial_students?.name || '-'}</td>
+      <td className="text-sm text-muted-foreground">{trial.trial_students?.phone || '-'}</td>
+      <td>{trial.duration_minutes} min</td>
+      <td><Badge variant="outline" className={statusBadgeClass}>{trial.status}</Badge></td>
+      <td className="text-sm text-muted-foreground max-w-[150px] truncate">{trial.notes || '-'}</td>
+      <td>
+        {trial.status === 'scheduled' && (
+          <div className="flex gap-1">
+            <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => handleMarkTrial('completed')} disabled={isSaving}>
+              <Check className="w-3 h-3" /> Done
+            </Button>
+            <Button size="sm" variant="outline" className="h-7 text-xs gap-1 text-destructive" onClick={() => handleMarkTrial('absent')} disabled={isSaving}>
+              <X className="w-3 h-3" /> Absent
+            </Button>
+          </div>
+        )}
+      </td>
+    </tr>
   );
 }
