@@ -440,19 +440,18 @@ export default function Packages() {
     const scheduledCount = summary.lessons.filter(l => l.status === 'scheduled').length;
     const totalDone = completedCount2 + absentCount;
     const progressPct = totalLessons > 0 ? Math.round((totalDone / totalLessons) * 100) : 0;
-    const attendanceRate = totalDone > 0 ? Math.round((completedCount2 / totalDone) * 100) : 0;
-    const attendanceColor: [number,number,number] = attendanceRate >= 80 ? green : attendanceRate >= 60 ? amber : red;
+    const completedPct = totalLessons > 0 ? Math.round((completedCount2 / totalLessons) * 100) : 0;
+    const absentPct = totalLessons > 0 ? Math.round((absentCount / totalLessons) * 100) : 0;
+    const scheduledPct = totalLessons > 0 ? Math.round((scheduledCount / totalLessons) * 100) : 0;
 
     // Progress bar background
     doc.setFillColor(235, 238, 245);
     doc.roundedRect(14, y, contentW, 8, 2, 2, 'F');
-    // Progress bar fill
     const fillW = Math.max(0, (progressPct / 100) * contentW);
     if (fillW > 0) {
       doc.setFillColor(...navy);
       doc.roundedRect(14, y, fillW, 8, 2, 2, 'F');
     }
-    // Progress text
     doc.setFontSize(7);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(255, 255, 255);
@@ -465,9 +464,9 @@ export default function Packages() {
     doc.text(`${totalDone} / ${totalLessons} lessons used`, pageWidth - 14, y + 5.5, { align: 'right' });
     y += 14;
 
-    // ── 4 STAT BOXES ──
-    const boxW = (contentW - 9) / 4;
-    const boxH = 22;
+    // ── 3 STAT BOXES WITH PERCENTAGES ──
+    const boxW = (contentW - 6) / 3;
+    const boxH = 24;
 
     // Completed
     doc.setFillColor(220, 252, 231);
@@ -477,10 +476,12 @@ export default function Packages() {
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...green);
-    doc.text(`${completedCount2}`, 14 + boxW/2, y + 10, { align: 'center' });
+    doc.text(`${completedCount2}`, 14 + boxW/2, y + 9, { align: 'center' });
+    doc.setFontSize(8);
+    doc.text(`${completedPct}%`, 14 + boxW/2, y + 15, { align: 'center' });
     doc.setFontSize(6);
     doc.setFont('helvetica', 'normal');
-    doc.text('COMPLETED', 14 + boxW/2, y + 18, { align: 'center' });
+    doc.text('COMPLETED', 14 + boxW/2, y + 21, { align: 'center' });
 
     // Absent
     const b2x = 14 + boxW + 3;
@@ -490,12 +491,14 @@ export default function Packages() {
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...red);
-    doc.text(`${absentCount}`, b2x + boxW/2, y + 10, { align: 'center' });
+    doc.text(`${absentCount}`, b2x + boxW/2, y + 9, { align: 'center' });
+    doc.setFontSize(8);
+    doc.text(`${absentPct}%`, b2x + boxW/2, y + 15, { align: 'center' });
     doc.setFontSize(6);
     doc.setFont('helvetica', 'normal');
-    doc.text('ABSENT', b2x + boxW/2, y + 18, { align: 'center' });
+    doc.text('ABSENT', b2x + boxW/2, y + 21, { align: 'center' });
 
-    // Upcoming
+    // Scheduled
     const b3x = b2x + boxW + 3;
     doc.setFillColor(219, 234, 254);
     doc.setDrawColor(...blue);
@@ -503,24 +506,12 @@ export default function Packages() {
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...blue);
-    doc.text(`${scheduledCount}`, b3x + boxW/2, y + 10, { align: 'center' });
+    doc.text(`${scheduledCount}`, b3x + boxW/2, y + 9, { align: 'center' });
+    doc.setFontSize(8);
+    doc.text(`${scheduledPct}%`, b3x + boxW/2, y + 15, { align: 'center' });
     doc.setFontSize(6);
     doc.setFont('helvetica', 'normal');
-    doc.text('UPCOMING', b3x + boxW/2, y + 18, { align: 'center' });
-
-    // Attendance Rate
-    const b4x = b3x + boxW + 3;
-    doc.setFillColor(245, 245, 250);
-    doc.setDrawColor(...attendanceColor);
-    doc.rect(b4x, y, boxW, boxH, 'FD');
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...attendanceColor);
-    doc.text(`${attendanceRate}%`, b4x + boxW/2, y + 10, { align: 'center' });
-    doc.setFontSize(6);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(100, 100, 100);
-    doc.text('ATTENDANCE', b4x + boxW/2, y + 18, { align: 'center' });
+    doc.text('SCHEDULED', b3x + boxW/2, y + 21, { align: 'center' });
 
     y += boxH + 8;
 
