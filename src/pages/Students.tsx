@@ -37,6 +37,7 @@ export default function Students() {
 
   const { data: students, isLoading } = useStudents({ search, status: statusFilter || undefined, teacher_id: teacherFilter || undefined });
   const { data: teachers } = useTeachers();
+  const { data: programs } = usePrograms();
   const createStudent = useCreateStudent();
   const updateStudent = useUpdateStudent();
   const deleteStudentMutation = useDeleteStudent();
