@@ -155,7 +155,7 @@ const Index = () => {
               <CardTitle className="font-display">Recent Notifications</CardTitle>
               <p className="text-sm text-muted-foreground mt-1">Stay updated with the latest activities</p>
             </div>
-            <Button variant="outline" size="sm" onClick={() => navigate('/notifications')}>
+            <Button variant="outline" size="sm" onClick={() => navigate('/admin/notifications')}>
               View All
             </Button>
           </CardHeader>
