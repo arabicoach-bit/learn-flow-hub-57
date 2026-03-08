@@ -21,7 +21,8 @@ import {
   XCircle,
   UserCheck,
   Loader2,
-  Download
+  Download,
+  TrendingUp
 } from 'lucide-react';
 import { useTrialStudents, useUpdateTrialStudent, useDeleteTrialStudent, type TrialStudent } from '@/hooks/use-trial-students';
 import { useTeachers } from '@/hooks/use-teachers';
