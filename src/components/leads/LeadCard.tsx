@@ -18,6 +18,7 @@ interface LeadCardProps {
   onUpdateFollowUp: (leadId: string, followUp: string) => void;
   onEdit: (lead: Lead) => void;
   onDelete?: (leadId: string) => void;
+  onConvertToTrial?: (lead: Lead) => void;
 }
 
 const trialStatusColors: Record<string, string> = {
