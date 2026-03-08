@@ -12,6 +12,7 @@ interface LeadTableViewProps {
   onUpdateLeadStatus: (leadId: string, status: string) => void;
   onUpdateTrialStatus: (leadId: string, trialStatus: string) => void;
   onUpdateFollowUp: (leadId: string, followUp: string) => void;
+  onUpdateHandledBy: (leadId: string, handledBy: string) => void;
   onEdit: (lead: Lead) => void;
   onDelete: (leadId: string) => void;
   onConvertToTrial?: (lead: Lead) => void;
@@ -49,7 +50,9 @@ const followUpOptions = [
   'F.4 – Special Offer', 'F.5 – Help Offer', 'F.6 – Soft Reminder', 'F.7 – Arabic Challenge',
 ];
 
-export function LeadTableView({ leads, onUpdateLeadStatus, onUpdateTrialStatus, onUpdateFollowUp, onEdit, onDelete, onConvertToTrial }: LeadTableViewProps) {
+const handledByOptions = ['Abdelrahman', 'Khaled', 'Sara', 'Other'];
+
+export function LeadTableView({ leads, onUpdateLeadStatus, onUpdateTrialStatus, onUpdateFollowUp, onUpdateHandledBy, onEdit, onDelete, onConvertToTrial }: LeadTableViewProps) {
   return (
     <div className="rounded-md border">
       <Table>
@@ -151,7 +154,27 @@ export function LeadTableView({ leads, onUpdateLeadStatus, onUpdateTrialStatus, 
                 ) : '—'}
               </TableCell>
 
-              <TableCell className="text-muted-foreground">{lead.handled_by || '—'}</TableCell>
+              {/* Handled By Dropdown */}
+              <TableCell>
+                <Select
+                  value={lead.handled_by || '__none__'}
+                  onValueChange={(value) => onUpdateHandledBy(lead.lead_id, value === '__none__' ? '' : value)}
+                >
+                  <SelectTrigger className="h-8 w-[130px] border-0 bg-transparent p-0">
+                    {lead.handled_by ? (
+                      <span className="text-sm">{lead.handled_by}</span>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">Assign</span>
+                    )}
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">— None —</SelectItem>
+                    {handledByOptions.map(h => (
+                      <SelectItem key={h} value={h}>{h}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </TableCell>
               <TableCell>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

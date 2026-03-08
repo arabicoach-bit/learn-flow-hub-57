@@ -92,6 +92,14 @@ export default function Leads() {
       toast({ title: 'Error', description: 'Failed to update follow-up.', variant: 'destructive' });
     }
   };
+  const handleUpdateHandledBy = async (leadId: string, handledBy: string) => {
+    try {
+      await updateLead.mutateAsync({ leadId, handled_by: handledBy || undefined });
+      toast({ title: 'Updated', description: handledBy ? `Handled by set to ${handledBy}.` : 'Handled by cleared.' });
+    } catch {
+      toast({ title: 'Error', description: 'Failed to update.', variant: 'destructive' });
+    }
+  };
 
   const totalLeads = filteredLeads.length;
   // "Trial Booked" = converted in the lead pipeline
@@ -179,6 +187,7 @@ export default function Leads() {
               onUpdateLeadStatus={handleUpdateLeadStatus}
               onUpdateTrialStatus={handleUpdateTrialStatus}
               onUpdateFollowUp={handleUpdateFollowUp}
+              onUpdateHandledBy={handleUpdateHandledBy}
               onEdit={setEditingLead}
               onDelete={handleDeleteLead}
               onConvertToTrial={setConvertingLead}
