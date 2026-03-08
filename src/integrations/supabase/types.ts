@@ -264,6 +264,8 @@ export type Database = {
           approved_by: string | null
           completed_date: string | null
           created_at: string | null
+          description: string | null
+          due_date: string | null
           is_renewal: boolean | null
           lesson_duration: number | null
           lessons_purchased: number
@@ -271,6 +273,7 @@ export type Database = {
           next_payment_date: string | null
           package_id: string
           package_type_id: string | null
+          paid_date: string | null
           payment_date: string | null
           payment_proof: string | null
           payment_received: boolean | null
@@ -287,6 +290,8 @@ export type Database = {
           approved_by?: string | null
           completed_date?: string | null
           created_at?: string | null
+          description?: string | null
+          due_date?: string | null
           is_renewal?: boolean | null
           lesson_duration?: number | null
           lessons_purchased: number
@@ -294,6 +299,7 @@ export type Database = {
           next_payment_date?: string | null
           package_id?: string
           package_type_id?: string | null
+          paid_date?: string | null
           payment_date?: string | null
           payment_proof?: string | null
           payment_received?: boolean | null
@@ -310,6 +316,8 @@ export type Database = {
           approved_by?: string | null
           completed_date?: string | null
           created_at?: string | null
+          description?: string | null
+          due_date?: string | null
           is_renewal?: boolean | null
           lesson_duration?: number | null
           lessons_purchased?: number
@@ -317,6 +325,7 @@ export type Database = {
           next_payment_date?: string | null
           package_id?: string
           package_type_id?: string | null
+          paid_date?: string | null
           payment_date?: string | null
           payment_proof?: string | null
           payment_received?: boolean | null
