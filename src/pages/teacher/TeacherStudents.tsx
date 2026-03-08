@@ -30,7 +30,7 @@ export default function TeacherStudents() {
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [programFilter, setProgramFilter] = useState('');
+  
   const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const [studentFilter, setStudentFilter] = useState<YearMonthFilterValue>({ year: null, month: null });
