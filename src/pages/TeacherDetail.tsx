@@ -576,6 +576,7 @@ export default function TeacherDetail() {
                     <SelectItem value="Left">Left</SelectItem>
                   </SelectContent>
                 </Select>
+                <YearMonthFilter value={studentFilter} onChange={setStudentFilter} />
               </div>
               <Card className="overflow-hidden">
                 <div className="overflow-x-auto">
