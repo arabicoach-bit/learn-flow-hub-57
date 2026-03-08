@@ -53,6 +53,11 @@ export default function Students() {
     });
   })();
 
+  const totalStudents = filteredStudents.length;
+  const activeCount = filteredStudents.filter(s => s.status === 'Active').length;
+  const overdueCount = filteredStudents.filter(s => (s.wallet_balance || 0) <= 0).length;
+  const tempStopCount = filteredStudents.filter(s => s.status === 'Temporary Stop').length;
+
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
