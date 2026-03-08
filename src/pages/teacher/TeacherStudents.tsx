@@ -82,10 +82,6 @@ export default function TeacherStudents() {
   const retentionRate = totalStudents > 0 ? Math.round((activeStudents / totalStudents) * 100) : 0;
 
   // Unique programs for filter
-  const usedPrograms = useMemo(() => {
-    const ids = new Set(myStudents.map(s => s.program_id).filter(Boolean));
-    return programs?.filter(p => ids.has(p.program_id)) || [];
-  }, [myStudents, programs]);
 
   const toggleStudent = (studentId: string) => {
     setExpandedStudents(prev => {
