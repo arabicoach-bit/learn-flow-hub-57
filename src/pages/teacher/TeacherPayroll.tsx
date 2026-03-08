@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Wallet, DollarSign } from 'lucide-react';
+import { Wallet, DollarSign, Gift } from 'lucide-react';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { formatSalary } from '@/lib/wallet-utils';
 import { useTeacherTotalHours } from '@/hooks/use-teacher-total-hours';
@@ -16,33 +16,56 @@ export default function TeacherPayroll() {
 
   const currentMonthStart = format(startOfMonth(new Date()), 'yyyy-MM-dd');
   const currentMonthEnd = format(endOfMonth(new Date()), 'yyyy-MM-dd');
+  const currentMonthYear = format(new Date(), 'yyyy-MM');
 
   const { data: stats, isLoading: statsLoading } = useTeacherTotalHours(teacherId, currentMonthStart, currentMonthEnd);
+
+  const { data: currentBonus } = useQuery({
+    queryKey: ['teacher-bonus', teacherId, currentMonthYear],
+    queryFn: async () => {
+      if (!teacherId) return null;
+      const { data } = await supabase
+        .from('teacher_bonuses')
+        .select('amount, notes')
+        .eq('teacher_id', teacherId)
+        .eq('month_year', currentMonthYear)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!teacherId,
+  });
 
   const { data: salaryHistory, isLoading } = useQuery({
     queryKey: ['teacher-salary-history', teacherId],
     queryFn: async () => {
       if (!teacherId) return [];
-      const { data: lessons } = await supabase
-        .from('scheduled_lessons')
-        .select('scheduled_date, duration_minutes')
-        .eq('teacher_id', teacherId)
-        .eq('status', 'completed')
-        .order('scheduled_date', { ascending: false });
+      const [lessonsRes, trialsRes, teacherRes, bonusesRes] = await Promise.all([
+        supabase
+          .from('scheduled_lessons')
+          .select('scheduled_date, duration_minutes')
+          .eq('teacher_id', teacherId)
+          .eq('status', 'completed')
+          .order('scheduled_date', { ascending: false }),
+        supabase
+          .from('trial_lessons_log')
+          .select('lesson_date')
+          .eq('teacher_id', teacherId)
+          .eq('status', 'completed'),
+        supabase
+          .from('teachers')
+          .select('rate_per_lesson')
+          .eq('teacher_id', teacherId)
+          .single(),
+        supabase
+          .from('teacher_bonuses')
+          .select('month_year, amount, notes')
+          .eq('teacher_id', teacherId),
+      ]);
 
-      const { data: trials } = await supabase
-        .from('trial_lessons_log')
-        .select('lesson_date')
-        .eq('teacher_id', teacherId)
-        .eq('status', 'completed');
-
-      const { data: teacher } = await supabase
-        .from('teachers')
-        .select('rate_per_lesson')
-        .eq('teacher_id', teacherId)
-        .single();
-
-      const rate = teacher?.rate_per_lesson || 0;
+      const lessons = lessonsRes.data || [];
+      const trials = trialsRes.data || [];
+      const rate = teacherRes.data?.rate_per_lesson || 0;
+      const bonuses = bonusesRes.data || [];
       const currentMonth = format(new Date(), 'yyyy-MM');
 
       const monthMap: Record<string, { monthLabel: string; monthDate: string; lessons: number; minutes: number; trialCount: number }> = {};
@@ -68,18 +91,26 @@ export default function TeacherPayroll() {
           const regularHours = m.minutes / 60;
           const trialHours = m.trialCount * 0.5;
           const totalHours = regularHours + trialHours;
+          const salary = Math.round(totalHours * rate * 100) / 100;
+          const bonus = bonuses.find(b => b.month_year === m.monthDate);
+          const bonusAmount = bonus?.amount || 0;
           return {
             monthLabel: m.monthLabel,
             monthDate: m.monthDate,
             lessons: m.lessons + m.trialCount,
             hours: totalHours,
-            salary: Math.round(totalHours * rate * 100) / 100,
+            salary,
+            bonus: bonusAmount,
+            totalPay: salary + bonusAmount,
             isPending: m.monthDate === currentMonth,
           };
         });
     },
     enabled: !!teacherId,
   });
+
+  const currentBonusAmount = currentBonus?.amount || 0;
+  const estimatedTotal = (stats?.salary || 0) + currentBonusAmount;
 
   return (
     <TeacherLayout>
@@ -100,7 +131,7 @@ export default function TeacherPayroll() {
             {statsLoading ? (
               <Skeleton className="h-24 w-full" />
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div className="text-center p-4 rounded-lg bg-emerald-600/10 border border-emerald-600/20">
                   <p className="text-sm text-muted-foreground mb-1">Lessons</p>
                   <p className="text-3xl font-bold text-emerald-400">{stats?.totalLessons || 0}</p>
@@ -110,8 +141,16 @@ export default function TeacherPayroll() {
                   <p className="text-3xl font-bold text-emerald-400">{(stats?.totalHours || 0).toFixed(1)}h</p>
                 </div>
                 <div className="text-center p-4 rounded-lg bg-emerald-600/10 border border-emerald-600/20">
-                  <p className="text-sm text-muted-foreground mb-1">Estimated Earnings</p>
+                  <p className="text-sm text-muted-foreground mb-1">Salary</p>
                   <p className="text-3xl font-bold text-emerald-400">{formatSalary(stats?.salary || 0)}</p>
+                </div>
+                <div className="text-center p-4 rounded-lg bg-amber-600/10 border border-amber-600/20">
+                  <p className="text-sm text-muted-foreground mb-1 flex items-center justify-center gap-1"><Gift className="w-3 h-3" /> Bonus</p>
+                  <p className="text-3xl font-bold text-amber-400">{formatSalary(currentBonusAmount)}</p>
+                </div>
+                <div className="text-center p-4 rounded-lg bg-primary/10 border border-primary/20">
+                  <p className="text-sm text-muted-foreground mb-1">Total</p>
+                  <p className="text-3xl font-bold text-primary">{formatSalary(estimatedTotal)}</p>
                 </div>
               </div>
             )}
@@ -141,6 +180,8 @@ export default function TeacherPayroll() {
                       <th className="text-center">Lessons</th>
                       <th className="text-center">Hours</th>
                       <th className="text-center">Salary</th>
+                      <th className="text-center">Bonus</th>
+                      <th className="text-center">Total</th>
                       <th className="text-center">Status</th>
                     </tr>
                   </thead>
@@ -151,6 +192,8 @@ export default function TeacherPayroll() {
                         <td className="text-center">{record.lessons}</td>
                         <td className="text-center">{record.hours.toFixed(1)}h</td>
                         <td className="text-center font-semibold text-emerald-400">{formatSalary(record.salary)}</td>
+                        <td className="text-center text-amber-400">{record.bonus > 0 ? formatSalary(record.bonus) : '—'}</td>
+                        <td className="text-center font-bold text-primary">{formatSalary(record.totalPay)}</td>
                         <td className="text-center">
                           <Badge variant="outline" className={
                             record.isPending
@@ -167,6 +210,8 @@ export default function TeacherPayroll() {
                       <td className="text-center">{salaryHistory.reduce((s, r) => s + r.lessons, 0)}</td>
                       <td className="text-center">{salaryHistory.reduce((s, r) => s + r.hours, 0).toFixed(1)}h</td>
                       <td className="text-center text-emerald-400">{formatSalary(salaryHistory.reduce((s, r) => s + r.salary, 0))}</td>
+                      <td className="text-center text-amber-400">{formatSalary(salaryHistory.reduce((s, r) => s + r.bonus, 0))}</td>
+                      <td className="text-center text-primary">{formatSalary(salaryHistory.reduce((s, r) => s + r.totalPay, 0))}</td>
                       <td></td>
                     </tr>
                   </tbody>
