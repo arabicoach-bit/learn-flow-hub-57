@@ -24,6 +24,7 @@ import { toast } from 'sonner';
 import { ArrowLeft, User, Wallet, CreditCard, BookOpen, Loader2, Plus, RefreshCw, Pencil, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { getWalletColor, getStatusBadgeClass, formatCurrency, formatDate, formatDateTime, getStatusDisplayLabel } from '@/lib/wallet-utils';
 import { StudentLessonsView } from '@/components/student/StudentLessonsView';
+import { StudentInfoView } from '@/components/student/StudentInfoView';
 import { AddPackageForm } from '@/components/packages/AddPackageForm';
 import { RenewPackageForm } from '@/components/packages/RenewPackageForm';
 import { EditPackageDialog } from '@/components/packages/EditPackageDialog';
