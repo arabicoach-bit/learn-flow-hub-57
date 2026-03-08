@@ -7,11 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useQuery } from '@tanstack/react-query';
-import { Wallet, Users, BookOpen, Download, Clock, GraduationCap } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Wallet, Users, BookOpen, Download, Clock, GraduationCap, Gift } from 'lucide-react';
 import { formatSalary } from '@/lib/wallet-utils';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { YearMonthFilter, getDefaultFilter, getFilterDateRange, getFilterLabel, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
 import { fetchAllTeachersTotalHours, type TeacherTotalHoursResult } from '@/hooks/use-teacher-total-hours';
 
@@ -23,6 +25,9 @@ interface TeacherPayrollData {
   total_hours: number;
   rate_per_lesson: number;
   salary_earned: number;
+  bonus: number;
+  bonus_notes: string | null;
+  total_pay: number;
   active_students: number;
   temp_stop_students: number;
   left_students: number;
@@ -31,10 +36,17 @@ interface TeacherPayrollData {
 
 export default function AdminPayroll() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [filter, setFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
+  const [editingBonus, setEditingBonus] = useState<string | null>(null);
+  const [bonusValue, setBonusValue] = useState('');
+  const [bonusNotes, setBonusNotes] = useState('');
   const { data: teachers, isLoading: teachersLoading } = useTeachers();
 
   const { startDate, endDate } = getFilterDateRange(filter);
+  const monthYear = filter.month !== null && filter.year
+    ? `${filter.year}-${String(filter.month + 1).padStart(2, '0')}`
+    : format(new Date(), 'yyyy-MM');
 
   const { data: payrollData, isLoading: payrollLoading } = useQuery({
     queryKey: ['admin-payroll-unified', startDate, endDate],
@@ -43,21 +55,23 @@ export default function AdminPayroll() {
       const teacherIds = (teachers || []).map(t => t.teacher_id);
       if (teacherIds.length === 0) return [];
 
-      // Use shared batch function for hours/salary
-      const hoursByTeacher = await fetchAllTeachersTotalHours(teacherIds, startDate, endDate);
-
-      // Fetch students & trial students for counts
-      const [studentsRes, trialStudentsRes] = await Promise.all([
+      const [hoursByTeacher, studentsRes, trialStudentsRes, bonusesRes] = await Promise.all([
+        fetchAllTeachersTotalHours(teacherIds, startDate, endDate),
         supabase.from('students').select('student_id, teacher_id, status'),
         supabase.from('trial_students').select('trial_id, teacher_id, status').eq('status', 'Scheduled'),
+        supabase.from('teacher_bonuses').select('*').eq('month_year', monthYear),
       ]);
 
       const students = studentsRes.data || [];
       const trialStudents = trialStudentsRes.data || [];
+      const bonuses = bonusesRes.data || [];
 
       const payroll: TeacherPayrollData[] = (teachers || []).map(teacher => {
         const hrs = hoursByTeacher[teacher.teacher_id] || {} as TeacherTotalHoursResult;
         const teacherStudents = students.filter(s => s.teacher_id === teacher.teacher_id);
+        const bonus = bonuses.find(b => b.teacher_id === teacher.teacher_id);
+        const salaryEarned = hrs.salary || 0;
+        const bonusAmount = bonus?.amount || 0;
 
         return {
           teacher_id: teacher.teacher_id,
@@ -66,7 +80,10 @@ export default function AdminPayroll() {
           lessons_taken: hrs.totalLessons || 0,
           total_hours: hrs.totalHours || 0,
           rate_per_lesson: hrs.ratePerHour || 0,
-          salary_earned: hrs.salary || 0,
+          salary_earned: salaryEarned,
+          bonus: bonusAmount,
+          bonus_notes: bonus?.notes || null,
+          total_pay: salaryEarned + bonusAmount,
           active_students: teacherStudents.filter(s => s.status === 'Active').length,
           temp_stop_students: teacherStudents.filter(s => s.status === 'Temporary Stop').length,
           left_students: teacherStudents.filter(s => s.status === 'Left').length,
@@ -74,7 +91,7 @@ export default function AdminPayroll() {
         };
       });
 
-      return payroll.sort((a, b) => b.salary_earned - a.salary_earned);
+      return payroll.sort((a, b) => b.total_pay - a.total_pay);
     },
     enabled: !!teachers,
   });
@@ -84,18 +101,40 @@ export default function AdminPayroll() {
   const totalLessons = payrollData?.reduce((sum, t) => sum + t.lessons_taken, 0) || 0;
   const totalHours = payrollData?.reduce((sum, t) => sum + t.total_hours, 0) || 0;
   const totalSalary = payrollData?.reduce((sum, t) => sum + t.salary_earned, 0) || 0;
+  const totalBonus = payrollData?.reduce((sum, t) => sum + t.bonus, 0) || 0;
+  const totalPay = payrollData?.reduce((sum, t) => sum + t.total_pay, 0) || 0;
   const totalActiveStudents = payrollData?.reduce((sum, t) => sum + t.active_students, 0) || 0;
   const totalTrialLessons = payrollData?.reduce((sum, t) => sum + t.trial_lessons, 0) || 0;
   const activeTeachers = payrollData?.filter(t => t.lessons_taken > 0).length || 0;
 
+  const saveBonus = async (teacherId: string) => {
+    const amount = parseFloat(bonusValue) || 0;
+    try {
+      const { error } = await supabase
+        .from('teacher_bonuses')
+        .upsert({
+          teacher_id: teacherId,
+          month_year: monthYear,
+          amount,
+          notes: bonusNotes || null,
+        }, { onConflict: 'teacher_id,month_year' });
+      if (error) throw error;
+      toast.success('Bonus saved');
+      setEditingBonus(null);
+      queryClient.invalidateQueries({ queryKey: ['admin-payroll-unified'] });
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to save bonus');
+    }
+  };
+
   const exportToCSV = () => {
     if (!payrollData || payrollData.length === 0) return;
     
-    const headers = ['Teacher', 'Rate/Hr (EGP)', 'Lessons', 'Hours', 'Salary (EGP)', 'Active', 'Temp Stopped', 'Left', 'Trial Lessons'];
+    const headers = ['Teacher', 'Rate/Hr (EGP)', 'Lessons', 'Hours', 'Salary (EGP)', 'Bonus (EGP)', 'Total Pay (EGP)', 'Active', 'Temp Stopped', 'Left', 'Trial Lessons'];
     const rows = payrollData.map(t => [
       t.teacher_name, t.rate_per_lesson.toString(), t.lessons_taken.toString(),
-      t.total_hours.toFixed(2), t.salary_earned.toFixed(2), t.active_students.toString(),
-      t.temp_stop_students.toString(), t.left_students.toString(), t.trial_lessons.toString(),
+      t.total_hours.toFixed(2), t.salary_earned.toFixed(2), t.bonus.toFixed(2), t.total_pay.toFixed(2),
+      t.active_students.toString(), t.temp_stop_students.toString(), t.left_students.toString(), t.trial_lessons.toString(),
     ]);
     
     const csvContent = [headers, ...rows].map(row => row.join(',')).join('\n');
@@ -126,7 +165,7 @@ export default function AdminPayroll() {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
           <Card className="glass-card">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
@@ -165,8 +204,30 @@ export default function AdminPayroll() {
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-emerald-500/10"><Wallet className="w-5 h-5 text-emerald-500" /></div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Total Payroll</p>
+                  <p className="text-xs text-muted-foreground">Total Salary</p>
                   {isLoading ? <Skeleton className="h-7 w-16" /> : <p className="text-xl font-bold text-emerald-400">{formatSalary(totalSalary)}</p>}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="glass-card border-amber-600/20">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-amber-500/10"><Gift className="w-5 h-5 text-amber-500" /></div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Total Bonus</p>
+                  {isLoading ? <Skeleton className="h-7 w-16" /> : <p className="text-xl font-bold text-amber-400">{formatSalary(totalBonus)}</p>}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="glass-card">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10"><Wallet className="w-5 h-5 text-primary" /></div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Total Pay</p>
+                  {isLoading ? <Skeleton className="h-7 w-16" /> : <p className="text-xl font-bold text-primary">{formatSalary(totalPay)}</p>}
                 </div>
               </div>
             </CardContent>
@@ -178,17 +239,6 @@ export default function AdminPayroll() {
                 <div>
                   <p className="text-xs text-muted-foreground">Active Students</p>
                   {isLoading ? <Skeleton className="h-7 w-12" /> : <p className="text-xl font-bold">{totalActiveStudents}</p>}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="glass-card">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-amber-500/10"><Users className="w-5 h-5 text-amber-500" /></div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Trial Lessons</p>
-                  {isLoading ? <Skeleton className="h-7 w-12" /> : <p className="text-xl font-bold">{totalTrialLessons}</p>}
                 </div>
               </div>
             </CardContent>
@@ -212,52 +262,77 @@ export default function AdminPayroll() {
               <div className="rounded-lg border overflow-hidden">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-muted/50">
-                      <TableHead>Teacher</TableHead>
-                      <TableHead className="text-center">Rate/hr</TableHead>
-                      <TableHead className="text-center">Lessons</TableHead>
-                      <TableHead className="text-center">Hours</TableHead>
-                      <TableHead className="text-center">Salary</TableHead>
-                      <TableHead className="text-center">Active</TableHead>
-                      <TableHead className="text-center">Temp. Stopped</TableHead>
-                      <TableHead className="text-center">Left</TableHead>
-                      <TableHead className="text-center">Trial Lessons</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {payrollData.map((teacher) => (
-                      <TableRow 
-                        key={teacher.teacher_id}
-                        className="cursor-pointer hover:bg-muted/50 transition-colors"
-                        onClick={() => navigate(`/admin/teachers/${teacher.teacher_id}`)}
-                      >
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-medium">
-                              {teacher.teacher_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                            </div>
-                            <div>
-                              <p className="font-medium">{teacher.teacher_name}</p>
-                              <p className="text-xs text-muted-foreground">{teacher.email || '-'}</p>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-center">{formatSalary(teacher.rate_per_lesson)}</TableCell>
-                        <TableCell className="text-center font-medium">{teacher.lessons_taken}</TableCell>
-                        <TableCell className="text-center font-medium">{teacher.total_hours.toFixed(1)}h</TableCell>
-                        <TableCell className="text-center font-semibold text-emerald-400">{formatSalary(teacher.salary_earned)}</TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant="outline" className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30">{teacher.active_students}</Badge>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant="outline" className="bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30">{teacher.temp_stop_students}</Badge>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant="outline" className="bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/30">{teacher.left_students}</Badge>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant="outline" className="bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30">{teacher.trial_lessons}</Badge>
-                        </TableCell>
+                     <TableRow className="bg-muted/50">
+                       <TableHead>Teacher</TableHead>
+                       <TableHead className="text-center">Rate/hr</TableHead>
+                       <TableHead className="text-center">Lessons</TableHead>
+                       <TableHead className="text-center">Hours</TableHead>
+                       <TableHead className="text-center">Salary</TableHead>
+                       <TableHead className="text-center">Bonus</TableHead>
+                       <TableHead className="text-center">Total Pay</TableHead>
+                       <TableHead className="text-center">Active</TableHead>
+                       <TableHead className="text-center">Temp.</TableHead>
+                       <TableHead className="text-center">Left</TableHead>
+                     </TableRow>
+                   </TableHeader>
+                   <TableBody>
+                     {payrollData.map((teacher) => (
+                       <TableRow 
+                         key={teacher.teacher_id}
+                         className="cursor-pointer hover:bg-muted/50 transition-colors"
+                       >
+                         <TableCell onClick={() => navigate(`/admin/teachers/${teacher.teacher_id}`)}>
+                           <div className="flex items-center gap-2">
+                             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-medium">
+                               {teacher.teacher_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                             </div>
+                             <div>
+                               <p className="font-medium">{teacher.teacher_name}</p>
+                               <p className="text-xs text-muted-foreground">{teacher.email || '-'}</p>
+                             </div>
+                           </div>
+                         </TableCell>
+                         <TableCell className="text-center" onClick={() => navigate(`/admin/teachers/${teacher.teacher_id}`)}>{formatSalary(teacher.rate_per_lesson)}</TableCell>
+                         <TableCell className="text-center font-medium" onClick={() => navigate(`/admin/teachers/${teacher.teacher_id}`)}>{teacher.lessons_taken}</TableCell>
+                         <TableCell className="text-center font-medium" onClick={() => navigate(`/admin/teachers/${teacher.teacher_id}`)}>{teacher.total_hours.toFixed(1)}h</TableCell>
+                         <TableCell className="text-center font-semibold text-emerald-400" onClick={() => navigate(`/admin/teachers/${teacher.teacher_id}`)}>{formatSalary(teacher.salary_earned)}</TableCell>
+                         <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                           {editingBonus === teacher.teacher_id ? (
+                             <div className="flex items-center gap-1 min-w-[140px]">
+                               <Input
+                                 type="number"
+                                 value={bonusValue}
+                                 onChange={(e) => setBonusValue(e.target.value)}
+                                 placeholder="Amount"
+                                 className="h-7 w-20 text-xs"
+                               />
+                               <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => saveBonus(teacher.teacher_id)}>✓</Button>
+                               <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setEditingBonus(null)}>✗</Button>
+                             </div>
+                           ) : (
+                             <button
+                               className="inline-flex items-center gap-1 text-amber-400 hover:underline cursor-pointer"
+                               onClick={() => {
+                                 setEditingBonus(teacher.teacher_id);
+                                 setBonusValue(teacher.bonus.toString());
+                                 setBonusNotes(teacher.bonus_notes || '');
+                               }}
+                             >
+                               {teacher.bonus > 0 ? formatSalary(teacher.bonus) : '—'}
+                               <Gift className="w-3 h-3" />
+                             </button>
+                           )}
+                         </TableCell>
+                         <TableCell className="text-center font-bold text-primary" onClick={() => navigate(`/admin/teachers/${teacher.teacher_id}`)}>{formatSalary(teacher.total_pay)}</TableCell>
+                         <TableCell className="text-center" onClick={() => navigate(`/admin/teachers/${teacher.teacher_id}`)}>
+                           <Badge variant="outline" className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30">{teacher.active_students}</Badge>
+                         </TableCell>
+                         <TableCell className="text-center" onClick={() => navigate(`/admin/teachers/${teacher.teacher_id}`)}>
+                           <Badge variant="outline" className="bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30">{teacher.temp_stop_students}</Badge>
+                         </TableCell>
+                         <TableCell className="text-center" onClick={() => navigate(`/admin/teachers/${teacher.teacher_id}`)}>
+                           <Badge variant="outline" className="bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/30">{teacher.left_students}</Badge>
+                         </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
