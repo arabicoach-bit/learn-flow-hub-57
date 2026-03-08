@@ -133,6 +133,14 @@ export function RenewPackageForm({
       form.setValue('amount', lastPackage.amount);
       form.setValue('lessons_purchased', lastPackage.lessons_purchased);
       form.setValue('lesson_duration', lastPackage.lesson_duration || 45);
+
+      // Pre-fill package description from previous package
+      if (lastPackage.description) {
+        const matchedPkg = PACKAGE_DESCRIPTIONS.find(p => p.label === lastPackage.description);
+        if (matchedPkg) {
+          form.setValue('package_description', matchedPkg.value);
+        }
+      }
     }
   }, [lastPackage]);
 
