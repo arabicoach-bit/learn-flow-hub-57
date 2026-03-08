@@ -42,7 +42,7 @@ export default function Students() {
   const updateStudent = useUpdateStudent();
   const deleteStudentMutation = useDeleteStudent();
 
-  const PROGRAMMES = ['Arabic A', 'Arabic B', 'IGCSE', 'Adult Course', 'Islamic Arabic'];
+  const STUDENT_LEVELS = ['Beginner', 'Elementary', 'Intermediate', 'Upper Intermediate', 'Advanced'];
 
   // Apply date filter on created_at
   const filteredStudents = (() => {
