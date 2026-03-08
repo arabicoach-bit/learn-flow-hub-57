@@ -235,7 +235,7 @@ function StudentPackagesTab({
                         </TableRow>
                         {isExpanded && (
                           <TableRow>
-                            <TableCell colSpan={11} className="bg-muted/30 p-4">
+                            <TableCell colSpan={10} className="bg-muted/30 p-4">
                               <div className="text-sm font-medium mb-2 text-muted-foreground">Scheduled Lessons</div>
                               <PackageLessonsTable packageId={pkg.package_id} studentId={studentId} teacherId={teacherId} lessonDuration={pkg.lesson_duration || 45} />
                             </TableCell>
