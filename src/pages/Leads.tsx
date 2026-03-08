@@ -12,6 +12,7 @@ import { LeadTableView } from '@/components/leads/LeadTableView';
 import { LeadStatsCards } from '@/components/leads/LeadStatsCards';
 import { LeadFiltersBar } from '@/components/leads/LeadFiltersBar';
 import { AddLeadForm } from '@/components/leads/AddLeadForm';
+import { ConvertLeadToTrialDialog } from '@/components/leads/ConvertLeadToTrialDialog';
 import { exportLeads, type LeadExport } from '@/lib/excel-export';
 
 export default function Leads() {
@@ -21,6 +22,7 @@ export default function Leads() {
   const [followUpFilter, setFollowUpFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState<YearMonthFilterValue>({ year: null, month: null });
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
+  const [convertingLead, setConvertingLead] = useState<Lead | null>(null);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const { toast } = useToast();
 
@@ -153,6 +155,7 @@ export default function Leads() {
                   onUpdateFollowUp={handleUpdateFollowUp}
                   onEdit={setEditingLead}
                   onDelete={handleDeleteLead}
+                  onConvertToTrial={setConvertingLead}
                 />
               ))}
             </div>
@@ -163,6 +166,7 @@ export default function Leads() {
               onUpdateFollowUp={handleUpdateFollowUp}
               onEdit={setEditingLead}
               onDelete={handleDeleteLead}
+              onConvertToTrial={setConvertingLead}
             />
           )
         ) : (
@@ -180,6 +184,10 @@ export default function Leads() {
         <EditLeadDialog
           lead={editingLead} open={!!editingLead}
           onOpenChange={(open) => !open && setEditingLead(null)}
+        />
+        <ConvertLeadToTrialDialog
+          lead={convertingLead} open={!!convertingLead}
+          onOpenChange={(open) => !open && setConvertingLead(null)}
         />
       </div>
     </AdminLayout>

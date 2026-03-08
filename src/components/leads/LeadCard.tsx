@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   MoreVertical, Phone, GraduationCap, Calendar, User,
-  MessageSquare, Tag, Trash2, AlertTriangle,
+  MessageSquare, Tag, Trash2, AlertTriangle, UserPlus,
 } from 'lucide-react';
 import type { Lead } from '@/hooks/use-leads';
 
@@ -18,6 +18,7 @@ interface LeadCardProps {
   onUpdateFollowUp: (leadId: string, followUp: string) => void;
   onEdit: (lead: Lead) => void;
   onDelete?: (leadId: string) => void;
+  onConvertToTrial?: (lead: Lead) => void;
 }
 
 const trialStatusColors: Record<string, string> = {
@@ -57,7 +58,7 @@ function isOverdue(dateStr: string | null): boolean {
   return isPast(d) && !isToday(d);
 }
 
-export function LeadCard({ lead, onUpdateTrialStatus, onUpdateFollowUp, onEdit, onDelete }: LeadCardProps) {
+export function LeadCard({ lead, onUpdateTrialStatus, onUpdateFollowUp, onEdit, onDelete, onConvertToTrial }: LeadCardProps) {
   const overdue = isOverdue(lead.next_followup_date);
 
   return (
@@ -89,6 +90,11 @@ export function LeadCard({ lead, onUpdateTrialStatus, onUpdateFollowUp, onEdit, 
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => onEdit(lead)}>Edit Details</DropdownMenuItem>
+                {onConvertToTrial && lead.trial_status !== 'Trial Booked' && lead.status !== 'Converted' && (
+                  <DropdownMenuItem onClick={() => onConvertToTrial(lead)} className="text-primary">
+                    <UserPlus className="w-4 h-4 mr-2" />Convert to Trial
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 {trialStatusOptions.map((status) => (
                   <DropdownMenuItem key={status} onClick={() => onUpdateTrialStatus(lead.lead_id, status)}>

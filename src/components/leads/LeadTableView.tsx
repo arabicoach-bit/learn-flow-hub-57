@@ -3,7 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreVertical, Trash2, AlertTriangle } from 'lucide-react';
+import { MoreVertical, Trash2, AlertTriangle, UserPlus } from 'lucide-react';
 import type { Lead } from '@/hooks/use-leads';
 
 interface LeadTableViewProps {
@@ -12,6 +12,7 @@ interface LeadTableViewProps {
   onUpdateFollowUp: (leadId: string, followUp: string) => void;
   onEdit: (lead: Lead) => void;
   onDelete: (leadId: string) => void;
+  onConvertToTrial?: (lead: Lead) => void;
 }
 
 const trialStatusColors: Record<string, string> = {
@@ -51,7 +52,7 @@ function isOverdue(dateStr: string | null): boolean {
   return isPast(d) && !isToday(d);
 }
 
-export function LeadTableView({ leads, onUpdateTrialStatus, onUpdateFollowUp, onEdit, onDelete }: LeadTableViewProps) {
+export function LeadTableView({ leads, onUpdateTrialStatus, onUpdateFollowUp, onEdit, onDelete, onConvertToTrial }: LeadTableViewProps) {
   return (
     <div className="rounded-md border">
       <Table>
@@ -120,6 +121,11 @@ export function LeadTableView({ leads, onUpdateTrialStatus, onUpdateFollowUp, on
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => onEdit(lead)}>Edit Details</DropdownMenuItem>
+                      {onConvertToTrial && lead.trial_status !== 'Trial Booked' && lead.status !== 'Converted' && (
+                        <DropdownMenuItem onClick={() => onConvertToTrial(lead)} className="text-primary">
+                          <UserPlus className="w-4 h-4 mr-2" />Convert to Trial
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuSeparator />
                       {trialStatusOptions.map(s => (
                         <DropdownMenuItem key={s} onClick={() => onUpdateTrialStatus(lead.lead_id, s)}>
