@@ -649,6 +649,51 @@ export type Database = {
         }
         Relationships: []
       }
+      teacher_bonuses: {
+        Row: {
+          amount: number
+          bonus_id: string
+          created_at: string | null
+          month_year: string
+          notes: string | null
+          teacher_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount?: number
+          bonus_id?: string
+          created_at?: string | null
+          month_year: string
+          notes?: string | null
+          teacher_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          bonus_id?: string
+          created_at?: string | null
+          month_year?: string
+          notes?: string | null
+          teacher_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teacher_bonuses_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teacher_monthly_performance"
+            referencedColumns: ["teacher_id"]
+          },
+          {
+            foreignKeyName: "teacher_bonuses_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["teacher_id"]
+          },
+        ]
+      }
       teachers: {
         Row: {
           created_at: string | null
