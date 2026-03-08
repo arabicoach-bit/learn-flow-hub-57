@@ -230,11 +230,10 @@ export default function Packages() {
     const scheduleText = s.weekly_schedule?.length > 0
       ? s.weekly_schedule.map(d => `${dayNames[d.day_of_week]} ${d.time_slot?.slice(0,5)}`).join(', ')
       : '';
+    const totalLessons = s.lessons.length;
     const completedCount2 = s.statistics.total_completed;
     const absentCount = s.statistics.total_absent;
     const scheduledCount = s.lessons.filter(l => l.status === 'scheduled').length;
-    const totalDone = completedCount2 + absentCount;
-    const attendanceRate = totalDone > 0 ? Math.round(completedCount2 / totalDone * 100) : 0;
 
     const firstDate = s.lessons.length > 0 && s.lessons[0].date ? formatDate(s.lessons[0].date) : '';
     const lastLesson = [...s.lessons].filter(l => l.date).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
@@ -250,10 +249,9 @@ export default function Packages() {
     if (endDate) msg += `🏁 *End:* ${endDate}\n`;
     msg += `\n`;
     msg += `📊 *Attendance Summary*\n`;
-    msg += `✅ Completed: ${completedCount2}\n`;
-    msg += `❌ Absent: ${absentCount}\n`;
-    msg += `🕐 Upcoming: ${scheduledCount}\n`;
-    msg += `📈 Attendance Rate: ${attendanceRate}%\n`;
+    msg += `✅ Completed: ${completedCount2} (${totalLessons > 0 ? Math.round((completedCount2 / totalLessons) * 100) : 0}%)\n`;
+    msg += `❌ Absent: ${absentCount} (${totalLessons > 0 ? Math.round((absentCount / totalLessons) * 100) : 0}%)\n`;
+    msg += `🕐 Scheduled: ${scheduledCount} (${totalLessons > 0 ? Math.round((scheduledCount / totalLessons) * 100) : 0}%)\n`;
     msg += `\n`;
 
     if (s.lessons.length > 0) {
@@ -300,7 +298,7 @@ export default function Packages() {
     const green: [number,number,number] = [34, 197, 94];
     const red: [number,number,number] = [239, 68, 68];
     const blue: [number,number,number] = [59, 130, 246];
-    const amber: [number,number,number] = [245, 158, 11];
+    
 
     const loadImage = (src: string): Promise<string> =>
       new Promise((resolve) => {
@@ -440,19 +438,18 @@ export default function Packages() {
     const scheduledCount = summary.lessons.filter(l => l.status === 'scheduled').length;
     const totalDone = completedCount2 + absentCount;
     const progressPct = totalLessons > 0 ? Math.round((totalDone / totalLessons) * 100) : 0;
-    const attendanceRate = totalDone > 0 ? Math.round((completedCount2 / totalDone) * 100) : 0;
-    const attendanceColor: [number,number,number] = attendanceRate >= 80 ? green : attendanceRate >= 60 ? amber : red;
+    const completedPct = totalLessons > 0 ? Math.round((completedCount2 / totalLessons) * 100) : 0;
+    const absentPct = totalLessons > 0 ? Math.round((absentCount / totalLessons) * 100) : 0;
+    const scheduledPct = totalLessons > 0 ? Math.round((scheduledCount / totalLessons) * 100) : 0;
 
     // Progress bar background
     doc.setFillColor(235, 238, 245);
     doc.roundedRect(14, y, contentW, 8, 2, 2, 'F');
-    // Progress bar fill
     const fillW = Math.max(0, (progressPct / 100) * contentW);
     if (fillW > 0) {
       doc.setFillColor(...navy);
       doc.roundedRect(14, y, fillW, 8, 2, 2, 'F');
     }
-    // Progress text
     doc.setFontSize(7);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(255, 255, 255);
@@ -465,9 +462,9 @@ export default function Packages() {
     doc.text(`${totalDone} / ${totalLessons} lessons used`, pageWidth - 14, y + 5.5, { align: 'right' });
     y += 14;
 
-    // ── 4 STAT BOXES ──
-    const boxW = (contentW - 9) / 4;
-    const boxH = 22;
+    // ── 3 STAT BOXES WITH PERCENTAGES ──
+    const boxW = (contentW - 6) / 3;
+    const boxH = 24;
 
     // Completed
     doc.setFillColor(220, 252, 231);
@@ -477,10 +474,12 @@ export default function Packages() {
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...green);
-    doc.text(`${completedCount2}`, 14 + boxW/2, y + 10, { align: 'center' });
+    doc.text(`${completedCount2}`, 14 + boxW/2, y + 9, { align: 'center' });
+    doc.setFontSize(8);
+    doc.text(`${completedPct}%`, 14 + boxW/2, y + 15, { align: 'center' });
     doc.setFontSize(6);
     doc.setFont('helvetica', 'normal');
-    doc.text('COMPLETED', 14 + boxW/2, y + 18, { align: 'center' });
+    doc.text('COMPLETED', 14 + boxW/2, y + 21, { align: 'center' });
 
     // Absent
     const b2x = 14 + boxW + 3;
@@ -490,12 +489,14 @@ export default function Packages() {
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...red);
-    doc.text(`${absentCount}`, b2x + boxW/2, y + 10, { align: 'center' });
+    doc.text(`${absentCount}`, b2x + boxW/2, y + 9, { align: 'center' });
+    doc.setFontSize(8);
+    doc.text(`${absentPct}%`, b2x + boxW/2, y + 15, { align: 'center' });
     doc.setFontSize(6);
     doc.setFont('helvetica', 'normal');
-    doc.text('ABSENT', b2x + boxW/2, y + 18, { align: 'center' });
+    doc.text('ABSENT', b2x + boxW/2, y + 21, { align: 'center' });
 
-    // Upcoming
+    // Scheduled
     const b3x = b2x + boxW + 3;
     doc.setFillColor(219, 234, 254);
     doc.setDrawColor(...blue);
@@ -503,24 +504,12 @@ export default function Packages() {
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...blue);
-    doc.text(`${scheduledCount}`, b3x + boxW/2, y + 10, { align: 'center' });
+    doc.text(`${scheduledCount}`, b3x + boxW/2, y + 9, { align: 'center' });
+    doc.setFontSize(8);
+    doc.text(`${scheduledPct}%`, b3x + boxW/2, y + 15, { align: 'center' });
     doc.setFontSize(6);
     doc.setFont('helvetica', 'normal');
-    doc.text('UPCOMING', b3x + boxW/2, y + 18, { align: 'center' });
-
-    // Attendance Rate
-    const b4x = b3x + boxW + 3;
-    doc.setFillColor(245, 245, 250);
-    doc.setDrawColor(...attendanceColor);
-    doc.rect(b4x, y, boxW, boxH, 'FD');
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...attendanceColor);
-    doc.text(`${attendanceRate}%`, b4x + boxW/2, y + 10, { align: 'center' });
-    doc.setFontSize(6);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(100, 100, 100);
-    doc.text('ATTENDANCE', b4x + boxW/2, y + 18, { align: 'center' });
+    doc.text('SCHEDULED', b3x + boxW/2, y + 21, { align: 'center' });
 
     y += boxH + 8;
 
@@ -561,7 +550,7 @@ export default function Packages() {
       const legendItems: { color: [number,number,number]; label: string }[] = [
         { color: green, label: 'Completed' },
         { color: red, label: 'Absent' },
-        { color: blue, label: 'Upcoming' },
+        { color: blue, label: 'Scheduled' },
       ];
       let lx = 14;
       legendItems.forEach(({ color, label }) => {
@@ -592,7 +581,7 @@ export default function Packages() {
           lesson.date ? formatDate(lesson.date) : 'N/A',
           lesson.scheduled_time?.slice(0, 5) || '-',
           lesson.duration_minutes ? `${lesson.duration_minutes} min` : '-',
-          lesson.status === 'completed' ? 'Completed' : lesson.status === 'absent' ? 'Absent' : 'Upcoming',
+          lesson.status === 'completed' ? 'Completed' : lesson.status === 'absent' ? 'Absent' : 'Scheduled',
           lesson.notes?.trim() || '',
         ]),
         headStyles: {
@@ -1034,9 +1023,10 @@ export default function Packages() {
             const scheduledLessons = summary.lessons.filter(l => l.status === 'scheduled').length;
             const totalDone = completedLessons + absentLessons;
             const progressPct = totalLessons > 0 ? Math.round((totalDone / totalLessons) * 100) : 0;
-            const attendanceRate = totalDone > 0 ? Math.round((completedLessons / totalDone) * 100) : 0;
-            const attendanceColor = attendanceRate >= 80 ? 'text-emerald-500' : attendanceRate >= 60 ? 'text-amber-500' : 'text-destructive';
-            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const completedPct = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+            const absentPct = totalLessons > 0 ? Math.round((absentLessons / totalLessons) * 100) : 0;
+            const scheduledPct = totalLessons > 0 ? Math.round((scheduledLessons / totalLessons) * 100) : 0;
+            const summaryDayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
             const descText = summary.description
               || (summaryPkg ? (filteredPackages.find(p => p.package_id === summaryPkg) as any)?.description : null)
@@ -1090,30 +1080,29 @@ export default function Packages() {
                         .sort((a, b) => a.day_of_week - b.day_of_week)
                         .map((s, i) => (
                           <Badge key={i} variant="secondary" className="text-xs font-medium px-3 py-1">
-                            {dayNames[s.day_of_week]} {s.time_slot?.slice(0, 5)}
+                            {summaryDayNames[s.day_of_week]} {s.time_slot?.slice(0, 5)}
                           </Badge>
                         ))}
                     </div>
                   </div>
                 )}
 
-                {/* Stats Row: 4 metrics */}
-                <div className="grid grid-cols-4 gap-3">
+                {/* Stats Row: 3 metrics with percentages */}
+                <div className="grid grid-cols-3 gap-3">
                   <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-center">
                     <div className="text-xl font-bold text-emerald-500">{completedLessons}</div>
+                    <div className="text-xs text-emerald-600 font-medium">{completedPct}%</div>
                     <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Completed</div>
                   </div>
                   <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-center">
                     <div className="text-xl font-bold text-destructive">{absentLessons}</div>
+                    <div className="text-xs text-destructive font-medium">{absentPct}%</div>
                     <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Absent</div>
                   </div>
                   <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-center">
                     <div className="text-xl font-bold text-blue-500">{scheduledLessons}</div>
-                    <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Upcoming</div>
-                  </div>
-                  <div className="p-3 rounded-lg bg-muted/40 border text-center">
-                    <div className={`text-xl font-bold ${attendanceColor}`}>{attendanceRate}%</div>
-                    <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Attendance</div>
+                    <div className="text-xs text-blue-600 font-medium">{scheduledPct}%</div>
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Scheduled</div>
                   </div>
                 </div>
 
@@ -1146,7 +1135,7 @@ export default function Packages() {
                     <div className="flex items-center gap-4 text-[10px] text-muted-foreground pt-1">
                       <div className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-sm bg-emerald-500" /> Completed</div>
                       <div className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-sm bg-destructive" /> Absent</div>
-                      <div className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-sm bg-blue-400" /> Upcoming</div>
+                      <div className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-sm bg-blue-400" /> Scheduled</div>
                     </div>
                   </div>
                 )}
@@ -1181,7 +1170,7 @@ export default function Packages() {
                                   {lesson.status === 'completed' ? <CheckCircle2 className="w-3 h-3 text-emerald-500" /> :
                                    lesson.status === 'absent' ? <XCircle className="w-3 h-3 text-destructive" /> :
                                    <Clock className="w-3 h-3 text-blue-500" />}
-                                  <span>{lesson.status === 'completed' ? 'Completed' : lesson.status === 'absent' ? 'Absent' : 'Upcoming'}</span>
+                                  <span>{lesson.status === 'completed' ? 'Completed' : lesson.status === 'absent' ? 'Absent' : 'Scheduled'}</span>
                                 </div>
                               </TableCell>
                               <TableCell className="max-w-[100px] truncate">{lesson.notes || ''}</TableCell>
