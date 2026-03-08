@@ -900,12 +900,12 @@ export default function Packages() {
         }}
       />
 
-      {/* Package Summary Dialog */}
+      {/* Package Summary Dialog - Redesigned */}
       <Dialog open={!!summaryPkg} onOpenChange={(o) => !o && setSummaryPkg(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <FileText className="w-5 h-5" />
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <FileText className="w-5 h-5 text-primary" />
               Package Summary
             </DialogTitle>
           </DialogHeader>
@@ -914,88 +914,190 @@ export default function Packages() {
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
-          ) : summary ? (
-            <div className="space-y-6">
-              {/* Student Info */}
-              <div className="p-4 rounded-lg bg-muted/30 border">
-                <div className="space-y-1 text-sm">
-                  <div><span className="font-semibold text-muted-foreground">Student:</span> {summary.student_name}</div>
-                  <div><span className="font-semibold text-muted-foreground">Teacher:</span> {summary.teacher_name || '—'}</div>
-                  <div><span className="font-semibold text-muted-foreground">Phone:</span> {summary.student_phone}</div>
-                  <div><span className="font-semibold text-muted-foreground">Description:</span> {summary.description || (summaryPkg ? (filteredPackages.find(p => p.package_id === summaryPkg) as any)?.description : null) || '—'}</div>
+          ) : summary ? (() => {
+            const totalLessons = summary.lessons.length;
+            const completedLessons = summary.statistics.total_completed;
+            const absentLessons = summary.statistics.total_absent;
+            const scheduledLessons = summary.lessons.filter(l => l.status === 'scheduled').length;
+            const totalDone = completedLessons + absentLessons;
+            const progressPct = totalLessons > 0 ? Math.round((totalDone / totalLessons) * 100) : 0;
+            const attendanceRate = totalDone > 0 ? Math.round((completedLessons / totalDone) * 100) : 0;
+            const attendanceColor = attendanceRate >= 80 ? 'text-emerald-500' : attendanceRate >= 60 ? 'text-amber-500' : 'text-destructive';
+            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+            const descText = summary.description
+              || (summaryPkg ? (filteredPackages.find(p => p.package_id === summaryPkg) as any)?.description : null)
+              || null;
+
+            return (
+              <div className="space-y-5">
+                {/* Header: Student Info + Progress */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Student Card */}
+                  <div className="md:col-span-2 p-4 rounded-xl bg-muted/30 border space-y-2">
+                    <div className="flex items-center gap-2 text-sm">
+                      <User className="w-4 h-4 text-primary" />
+                      <span className="font-bold text-foreground">{summary.student_name}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <BookOpen className="w-3.5 h-3.5" />
+                      <span>{summary.teacher_name || '—'}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Phone className="w-3.5 h-3.5" />
+                      <span>{summary.student_phone}</span>
+                    </div>
+                    {descText && (
+                      <div className="text-xs text-muted-foreground pt-1 border-t mt-2">
+                        {descText}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Progress Ring Card */}
+                  <div className="p-4 rounded-xl border bg-primary/5 flex flex-col items-center justify-center text-center">
+                    <div className="text-3xl font-bold text-primary">{progressPct}%</div>
+                    <div className="text-xs text-muted-foreground mb-2">Package Progress</div>
+                    <Progress value={progressPct} className="h-2 w-full" />
+                    <div className="text-xs text-muted-foreground mt-1.5">
+                      {totalDone} / {totalLessons} lessons used
+                    </div>
+                  </div>
+                </div>
+
+                {/* Weekly Schedule */}
+                {summary.weekly_schedule?.length > 0 && (
+                  <div className="p-3 rounded-lg border bg-muted/20">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground mb-2">
+                      <Calendar className="w-3.5 h-3.5" />
+                      WEEKLY SCHEDULE
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {summary.weekly_schedule
+                        .sort((a, b) => a.day_of_week - b.day_of_week)
+                        .map((s, i) => (
+                          <Badge key={i} variant="secondary" className="text-xs font-medium px-3 py-1">
+                            {dayNames[s.day_of_week]} {s.time_slot?.slice(0, 5)}
+                          </Badge>
+                        ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Stats Row: 4 metrics */}
+                <div className="grid grid-cols-4 gap-3">
+                  <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-center">
+                    <div className="text-xl font-bold text-emerald-500">{completedLessons}</div>
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Completed</div>
+                  </div>
+                  <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-center">
+                    <div className="text-xl font-bold text-destructive">{absentLessons}</div>
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Absent</div>
+                  </div>
+                  <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-center">
+                    <div className="text-xl font-bold text-blue-500">{scheduledLessons}</div>
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Upcoming</div>
+                  </div>
+                  <div className="p-3 rounded-lg bg-muted/40 border text-center">
+                    <div className={`text-xl font-bold ${attendanceColor}`}>{attendanceRate}%</div>
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Attendance</div>
+                  </div>
+                </div>
+
+                {/* Visual Lesson Timeline */}
+                {totalLessons > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+                      <TrendingUp className="w-3.5 h-3.5" />
+                      LESSON TIMELINE
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {summary.lessons.map((lesson, idx) => {
+                        const bgColor = lesson.status === 'completed'
+                          ? 'bg-emerald-500'
+                          : lesson.status === 'absent'
+                          ? 'bg-destructive'
+                          : 'bg-blue-400';
+                        const tooltip = `${idx + 1}. ${lesson.date ? formatDate(lesson.date) : 'TBD'} - ${lesson.status}${lesson.notes ? ` (${lesson.notes})` : ''}`;
+                        return (
+                          <div
+                            key={idx}
+                            className={`w-6 h-6 rounded-md ${bgColor} flex items-center justify-center cursor-default transition-transform hover:scale-125`}
+                            title={tooltip}
+                          >
+                            <span className="text-[9px] font-bold text-white">{idx + 1}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="flex items-center gap-4 text-[10px] text-muted-foreground pt-1">
+                      <div className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-sm bg-emerald-500" /> Completed</div>
+                      <div className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-sm bg-destructive" /> Absent</div>
+                      <div className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-sm bg-blue-400" /> Upcoming</div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Detailed Lessons Table (collapsible feel - scrollable) */}
+                {summary.lessons.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                      Lesson Record
+                    </div>
+                    <div className="overflow-x-auto rounded-lg border max-h-[240px] overflow-y-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="text-xs">
+                            <TableHead className="w-8">#</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Time</TableHead>
+                            <TableHead>Duration</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Notes</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {summary.lessons.map((lesson, idx) => (
+                            <TableRow key={idx} className="text-xs">
+                              <TableCell className="font-medium">{idx + 1}</TableCell>
+                              <TableCell>{lesson.date ? formatDate(lesson.date) : 'N/A'}</TableCell>
+                              <TableCell>{lesson.scheduled_time?.slice(0, 5) || '-'}</TableCell>
+                              <TableCell>{lesson.duration_minutes ? `${lesson.duration_minutes}m` : '-'}</TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-1">
+                                  {lesson.status === 'completed' ? <CheckCircle2 className="w-3 h-3 text-emerald-500" /> :
+                                   lesson.status === 'absent' ? <XCircle className="w-3 h-3 text-destructive" /> :
+                                   <Clock className="w-3 h-3 text-blue-500" />}
+                                  <span>{lesson.status === 'completed' ? 'Done' : lesson.status === 'absent' ? 'Absent' : 'Upcoming'}</span>
+                                </div>
+                              </TableCell>
+                              <TableCell className="max-w-[100px] truncate">{lesson.notes || ''}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex flex-wrap gap-2 pt-4 border-t">
+                  <Button onClick={handleShareWhatsApp} className="bg-[#25D366] hover:bg-[#25D366]/90 text-white">
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    Share via WhatsApp
+                  </Button>
+                  <Button onClick={handleExportPDF} className="bg-[#2D3561] hover:bg-[#2D3561]/90">
+                    <Download className="w-4 h-4 mr-2" />
+                    Export PDF
+                  </Button>
+                  <Button onClick={handleCopySummary} variant="outline">
+                    <Copy className="w-4 h-4 mr-2" />
+                    Copy
+                  </Button>
                 </div>
               </div>
-
-              {/* Statistics */}
-              <div className="grid grid-cols-3 gap-4">
-                <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-center">
-                  <div className="text-2xl font-bold text-emerald-500">{summary.statistics.total_completed}</div>
-                  <div className="text-xs text-muted-foreground">Completed</div>
-                </div>
-                <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-center">
-                  <div className="text-2xl font-bold text-destructive">{summary.statistics.total_absent}</div>
-                  <div className="text-xs text-muted-foreground">Absent</div>
-                </div>
-                <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20 text-center">
-                  <div className="text-2xl font-bold text-blue-500">{summary.lessons.filter(l => l.status === 'scheduled').length}</div>
-                  <div className="text-xs text-muted-foreground">Upcoming</div>
-                </div>
-              </div>
-
-              {/* Lessons Table */}
-              {summary.lessons.length > 0 && (
-                <div className="overflow-x-auto rounded-lg border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>#</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Time</TableHead>
-                        <TableHead>Duration</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Notes</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {summary.lessons.map((lesson, idx) => (
-                        <TableRow key={idx}>
-                          <TableCell>{idx + 1}</TableCell>
-                          <TableCell>{lesson.date ? formatDate(lesson.date) : 'N/A'}</TableCell>
-                          <TableCell>{lesson.scheduled_time?.slice(0, 5) || '-'}</TableCell>
-                          <TableCell>{lesson.duration_minutes ? `${lesson.duration_minutes}m` : '-'}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1">
-                              {lesson.status === 'completed' ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> :
-                               lesson.status === 'absent' ? <XCircle className="w-4 h-4 text-destructive" /> :
-                               <Clock className="w-4 h-4 text-blue-500" />}
-                              <span>{lesson.status === 'completed' ? 'Done' : lesson.status === 'absent' ? 'Absent' : 'Upcoming'}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="max-w-[120px] truncate">{lesson.notes || ''}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-
-              {/* Actions */}
-              <div className="flex flex-wrap gap-2 pt-4 border-t">
-                <Button onClick={handleShareWhatsApp} className="bg-[#25D366] hover:bg-[#25D366]/90 text-white">
-                  <MessageCircle className="w-4 h-4 mr-2" />
-                  Share via WhatsApp
-                </Button>
-                <Button onClick={handleExportPDF} className="bg-[#2D3561] hover:bg-[#2D3561]/90">
-                  <Download className="w-4 h-4 mr-2" />
-                  Export PDF
-                </Button>
-                <Button onClick={handleCopySummary} variant="outline">
-                  <Copy className="w-4 h-4 mr-2" />
-                  Copy
-                </Button>
-              </div>
-            </div>
-          ) : (
+            );
+          })() : (
             <div className="text-center text-muted-foreground py-8">Summary not found</div>
           )}
         </DialogContent>
