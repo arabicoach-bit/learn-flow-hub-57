@@ -230,11 +230,10 @@ export default function Packages() {
     const scheduleText = s.weekly_schedule?.length > 0
       ? s.weekly_schedule.map(d => `${dayNames[d.day_of_week]} ${d.time_slot?.slice(0,5)}`).join(', ')
       : '';
+    const totalLessons = s.lessons.length;
     const completedCount2 = s.statistics.total_completed;
     const absentCount = s.statistics.total_absent;
     const scheduledCount = s.lessons.filter(l => l.status === 'scheduled').length;
-    const totalDone = completedCount2 + absentCount;
-    const attendanceRate = totalDone > 0 ? Math.round(completedCount2 / totalDone * 100) : 0;
 
     const firstDate = s.lessons.length > 0 && s.lessons[0].date ? formatDate(s.lessons[0].date) : '';
     const lastLesson = [...s.lessons].filter(l => l.date).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
