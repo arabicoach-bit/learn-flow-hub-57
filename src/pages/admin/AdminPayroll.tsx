@@ -262,52 +262,77 @@ export default function AdminPayroll() {
               <div className="rounded-lg border overflow-hidden">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-muted/50">
-                      <TableHead>Teacher</TableHead>
-                      <TableHead className="text-center">Rate/hr</TableHead>
-                      <TableHead className="text-center">Lessons</TableHead>
-                      <TableHead className="text-center">Hours</TableHead>
-                      <TableHead className="text-center">Salary</TableHead>
-                      <TableHead className="text-center">Active</TableHead>
-                      <TableHead className="text-center">Temp. Stopped</TableHead>
-                      <TableHead className="text-center">Left</TableHead>
-                      <TableHead className="text-center">Trial Lessons</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {payrollData.map((teacher) => (
-                      <TableRow 
-                        key={teacher.teacher_id}
-                        className="cursor-pointer hover:bg-muted/50 transition-colors"
-                        onClick={() => navigate(`/admin/teachers/${teacher.teacher_id}`)}
-                      >
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-medium">
-                              {teacher.teacher_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                            </div>
-                            <div>
-                              <p className="font-medium">{teacher.teacher_name}</p>
-                              <p className="text-xs text-muted-foreground">{teacher.email || '-'}</p>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-center">{formatSalary(teacher.rate_per_lesson)}</TableCell>
-                        <TableCell className="text-center font-medium">{teacher.lessons_taken}</TableCell>
-                        <TableCell className="text-center font-medium">{teacher.total_hours.toFixed(1)}h</TableCell>
-                        <TableCell className="text-center font-semibold text-emerald-400">{formatSalary(teacher.salary_earned)}</TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant="outline" className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30">{teacher.active_students}</Badge>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant="outline" className="bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30">{teacher.temp_stop_students}</Badge>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant="outline" className="bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/30">{teacher.left_students}</Badge>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant="outline" className="bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30">{teacher.trial_lessons}</Badge>
-                        </TableCell>
+                     <TableRow className="bg-muted/50">
+                       <TableHead>Teacher</TableHead>
+                       <TableHead className="text-center">Rate/hr</TableHead>
+                       <TableHead className="text-center">Lessons</TableHead>
+                       <TableHead className="text-center">Hours</TableHead>
+                       <TableHead className="text-center">Salary</TableHead>
+                       <TableHead className="text-center">Bonus</TableHead>
+                       <TableHead className="text-center">Total Pay</TableHead>
+                       <TableHead className="text-center">Active</TableHead>
+                       <TableHead className="text-center">Temp.</TableHead>
+                       <TableHead className="text-center">Left</TableHead>
+                     </TableRow>
+                   </TableHeader>
+                   <TableBody>
+                     {payrollData.map((teacher) => (
+                       <TableRow 
+                         key={teacher.teacher_id}
+                         className="cursor-pointer hover:bg-muted/50 transition-colors"
+                       >
+                         <TableCell onClick={() => navigate(`/admin/teachers/${teacher.teacher_id}`)}>
+                           <div className="flex items-center gap-2">
+                             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-medium">
+                               {teacher.teacher_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                             </div>
+                             <div>
+                               <p className="font-medium">{teacher.teacher_name}</p>
+                               <p className="text-xs text-muted-foreground">{teacher.email || '-'}</p>
+                             </div>
+                           </div>
+                         </TableCell>
+                         <TableCell className="text-center" onClick={() => navigate(`/admin/teachers/${teacher.teacher_id}`)}>{formatSalary(teacher.rate_per_lesson)}</TableCell>
+                         <TableCell className="text-center font-medium" onClick={() => navigate(`/admin/teachers/${teacher.teacher_id}`)}>{teacher.lessons_taken}</TableCell>
+                         <TableCell className="text-center font-medium" onClick={() => navigate(`/admin/teachers/${teacher.teacher_id}`)}>{teacher.total_hours.toFixed(1)}h</TableCell>
+                         <TableCell className="text-center font-semibold text-emerald-400" onClick={() => navigate(`/admin/teachers/${teacher.teacher_id}`)}>{formatSalary(teacher.salary_earned)}</TableCell>
+                         <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                           {editingBonus === teacher.teacher_id ? (
+                             <div className="flex items-center gap-1 min-w-[140px]">
+                               <Input
+                                 type="number"
+                                 value={bonusValue}
+                                 onChange={(e) => setBonusValue(e.target.value)}
+                                 placeholder="Amount"
+                                 className="h-7 w-20 text-xs"
+                               />
+                               <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => saveBonus(teacher.teacher_id)}>✓</Button>
+                               <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setEditingBonus(null)}>✗</Button>
+                             </div>
+                           ) : (
+                             <button
+                               className="inline-flex items-center gap-1 text-amber-400 hover:underline cursor-pointer"
+                               onClick={() => {
+                                 setEditingBonus(teacher.teacher_id);
+                                 setBonusValue(teacher.bonus.toString());
+                                 setBonusNotes(teacher.bonus_notes || '');
+                               }}
+                             >
+                               {teacher.bonus > 0 ? formatSalary(teacher.bonus) : '—'}
+                               <Gift className="w-3 h-3" />
+                             </button>
+                           )}
+                         </TableCell>
+                         <TableCell className="text-center font-bold text-primary" onClick={() => navigate(`/admin/teachers/${teacher.teacher_id}`)}>{formatSalary(teacher.total_pay)}</TableCell>
+                         <TableCell className="text-center" onClick={() => navigate(`/admin/teachers/${teacher.teacher_id}`)}>
+                           <Badge variant="outline" className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30">{teacher.active_students}</Badge>
+                         </TableCell>
+                         <TableCell className="text-center" onClick={() => navigate(`/admin/teachers/${teacher.teacher_id}`)}>
+                           <Badge variant="outline" className="bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30">{teacher.temp_stop_students}</Badge>
+                         </TableCell>
+                         <TableCell className="text-center" onClick={() => navigate(`/admin/teachers/${teacher.teacher_id}`)}>
+                           <Badge variant="outline" className="bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/30">{teacher.left_students}</Badge>
+                         </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
