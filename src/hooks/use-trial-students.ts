@@ -4,6 +4,7 @@ import type { Database } from '@/integrations/supabase/types';
 
 type TrialStatus = Database['public']['Enums']['trial_status'];
 type TrialResult = Database['public']['Enums']['trial_result'];
+type TrialConversionStatus = 'Pending' | 'Converted' | 'Lost';
 
 export interface TrialStudent {
   trial_id: string;
