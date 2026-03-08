@@ -186,13 +186,7 @@ const Index = () => {
                       </div>
                       <Badge
                         variant="outline"
-                        className={
-                          notification.type === 'blocked'
-                            ? 'status-blocked'
-                            : notification.type === 'grace_mode'
-                            ? 'status-grace'
-                            : 'status-new'
-                        }
+                        className="status-new"
                       >
                         {notification.type.replace('_', ' ')}
                       </Badge>
