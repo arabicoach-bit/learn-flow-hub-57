@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
-  const { data: notifications, isLoading: notificationsLoading } = useNotifications(5);
+  const { data: notifications, isLoading: notificationsLoading } = useNotifications({ limit: 5 });
   const navigate = useNavigate();
 
   return (

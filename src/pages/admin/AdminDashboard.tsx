@@ -25,7 +25,7 @@ export default function AdminDashboard() {
   const [filter, setFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
   const { startDate, endDate } = getFilterDateRange(filter);
   const { data: stats, isLoading: statsLoading } = useDashboardStats(startDate, endDate);
-  const { data: notifications, isLoading: notificationsLoading } = useNotifications(5);
+  const { data: notifications, isLoading: notificationsLoading } = useNotifications({ limit: 5 });
 
   // Set up real-time subscriptions for dashboard updates
   useEffect(() => {
