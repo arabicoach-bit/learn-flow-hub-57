@@ -201,14 +201,14 @@ export default function QuarterAnalysis() {
             )}
 
             {/* LESSON KPIs */}
-            <SectionHeader title="Lesson KPIs" icon={<BookOpen className="w-5 h-5" />} />
+            <SectionHeader title="Lessons" emoji="📚" theme="lessons" />
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              <KPICard title="Total Lessons" value={data.lessons.totalLessons} icon={<BookOpen className="w-5 h-5" />} />
-              <KPICard title="Completed" value={data.lessons.completedLessons} icon={<CheckCircle className="w-5 h-5" />} variant="success" />
-              <KPICard title="Absent" value={data.lessons.absentLessons} icon={<XCircle className="w-5 h-5" />} variant="danger" />
-              <KPICard title="Scheduled" value={data.lessons.scheduledLessons} icon={<Calendar className="w-5 h-5" />} />
-              <KPICard title="Trial Lessons" value={data.lessons.trialLessons} icon={<UserCheck className="w-5 h-5" />} />
-              <KPICard title="Trial Conversion" value={data.lessons.trialConversionRate} icon={<TrendingUp className="w-5 h-5" />} suffix="%" variant={data.lessons.trialConversionRate >= 50 ? 'success' : 'warning'} />
+              <KPICard title="Total Lessons" value={data.lessons.totalLessons} icon={<BookOpen className="w-5 h-5" />} theme="lessons" />
+              <KPICard title="Completed" value={data.lessons.completedLessons} icon={<CheckCircle className="w-5 h-5" />} variant="success" theme="lessons" />
+              <KPICard title="Absent" value={data.lessons.absentLessons} icon={<XCircle className="w-5 h-5" />} variant="danger" theme="lessons" />
+              <KPICard title="Scheduled" value={data.lessons.scheduledLessons} icon={<Calendar className="w-5 h-5" />} theme="lessons" />
+              <KPICard title="Trial Lessons" value={data.lessons.trialLessons} icon={<UserCheck className="w-5 h-5" />} theme="lessons" />
+              <KPICard title="Trial Conversion" value={data.lessons.trialConversionRate} icon={<TrendingUp className="w-5 h-5" />} suffix="%" variant={data.lessons.trialConversionRate >= 50 ? 'success' : 'warning'} theme="lessons" />
             </div>
             {comparePrevious && prevData && (
               <ComparisonRow
