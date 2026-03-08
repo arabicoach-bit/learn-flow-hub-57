@@ -26,6 +26,7 @@ import TrialStudents from "./pages/admin/TrialStudents";
 import Leads from "./pages/Leads";
 import Packages from "./pages/admin/Packages";
 import AdminPayroll from "./pages/admin/AdminPayroll";
+import QuarterAnalysis from "./pages/admin/QuarterAnalysis";
 
 // Teacher pages
 import TeacherSchedule from "./pages/teacher/TeacherSchedule";
