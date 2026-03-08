@@ -38,10 +38,9 @@ import {
   Loader2,
   Download,
   TrendingUp,
-  MoreVertical,
-  UserPlus,
   Trash2,
-  AlertCircle
+  AlertCircle,
+  Pencil
 } from 'lucide-react';
 import { useTrialStudents, useUpdateTrialStudent, useDeleteTrialStudent, type TrialStudent } from '@/hooks/use-trial-students';
 import { useTeachers } from '@/hooks/use-teachers';
