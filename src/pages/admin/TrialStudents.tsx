@@ -200,7 +200,7 @@ export default function TrialStudents() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
           <Card className="bg-card">
             <CardHeader className="pb-2">
               <CardDescription>Total Trials</CardDescription>
@@ -260,6 +260,18 @@ export default function TrialStudents() {
               </div>
             </CardContent>
           </Card>
+
+          <Card className="bg-card">
+            <CardHeader className="pb-2">
+              <CardDescription>Conversion Rate</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-primary" />
+                <span className="text-2xl font-bold">{conversionRate}%</span>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Filters */}
@@ -286,6 +298,20 @@ export default function TrialStudents() {
               <SelectItem value="Completed">Completed</SelectItem>
               <SelectItem value="Converted">Converted</SelectItem>
               <SelectItem value="Lost">Lost</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
+            value={teacherFilter}
+            onValueChange={setTeacherFilter}
+          >
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Filter by teacher" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Teachers</SelectItem>
+              {teachers?.filter(t => t.is_active).map(t => (
+                <SelectItem key={t.teacher_id} value={t.teacher_id}>{t.name}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
