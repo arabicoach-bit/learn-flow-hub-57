@@ -189,7 +189,7 @@ function StudentPackagesTab({
                     <TableHead>Next Lesson</TableHead>
                     <TableHead>Payment</TableHead>
                     <TableHead>Amount</TableHead>
-                    <TableHead>Kind</TableHead>
+                    
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -224,7 +224,7 @@ function StudentPackagesTab({
                             </div>
                           </TableCell>
                           <TableCell className="font-medium">{formatCurrency(pkg.amount)}</TableCell>
-                          <TableCell><Badge variant="secondary" className="text-[10px]">{pkg.is_renewal ? 'Renewal' : 'New'}</Badge></TableCell>
+                          
                           <TableCell onClick={(e) => e.stopPropagation()}>
                             <div className="flex gap-1">
                               <Button variant="ghost" size="sm" onClick={() => setEditPackage(pkg)} className="gap-1 text-xs"><Pencil className="w-3 h-3" />Edit</Button>
@@ -235,7 +235,7 @@ function StudentPackagesTab({
                         </TableRow>
                         {isExpanded && (
                           <TableRow>
-                            <TableCell colSpan={11} className="bg-muted/30 p-4">
+                            <TableCell colSpan={10} className="bg-muted/30 p-4">
                               <div className="text-sm font-medium mb-2 text-muted-foreground">Scheduled Lessons</div>
                               <PackageLessonsTable packageId={pkg.package_id} studentId={studentId} teacherId={teacherId} lessonDuration={pkg.lesson_duration || 45} />
                             </TableCell>
