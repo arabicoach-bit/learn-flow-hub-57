@@ -142,12 +142,14 @@ export default function TrialStudents() {
     total: filteredTrialStudents.length,
     scheduled: filteredTrialStudents.filter(s => s.status === 'Scheduled').length,
     completed: filteredTrialStudents.filter(s => s.status === 'Completed').length,
-    converted: filteredTrialStudents.filter(s => s.status === 'Converted').length,
-    lost: filteredTrialStudents.filter(s => s.status === 'Lost').length,
+    absent: filteredTrialStudents.filter(s => s.status === 'Absent').length,
+    converted: filteredTrialStudents.filter(s => s.conversion_status === 'Converted').length,
+    pending: filteredTrialStudents.filter(s => s.conversion_status === 'Pending').length,
+    lost: filteredTrialStudents.filter(s => s.conversion_status === 'Lost').length,
   };
 
-  const conversionRate = (stats.completed + stats.converted + stats.lost) > 0
-    ? ((stats.converted / (stats.completed + stats.converted + stats.lost)) * 100).toFixed(1)
+  const conversionRate = (stats.converted + stats.lost) > 0
+    ? ((stats.converted / (stats.converted + stats.lost)) * 100).toFixed(1)
     : '0.0';
 
   return (
