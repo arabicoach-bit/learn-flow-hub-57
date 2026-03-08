@@ -170,6 +170,8 @@ export default function TeacherDetail() {
   // Students tab filters
   const [studentSearch, setStudentSearch] = useState('');
   const [studentStatusFilter, setStudentStatusFilter] = useState<string>('all');
+  const [studentFilter, setStudentFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
+  const studentRange = getFilterDateRange(studentFilter);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
 
   const filteredStudents = useMemo(() => {
@@ -177,9 +179,15 @@ export default function TeacherDetail() {
       const matchesSearch = s.name.toLowerCase().includes(studentSearch.toLowerCase()) ||
         s.phone.includes(studentSearch);
       const matchesStatus = studentStatusFilter === 'all' || s.status === studentStatusFilter;
-      return matchesSearch && matchesStatus;
+      // Filter by created_at date range
+      const createdAt = s.created_at ? new Date(s.created_at) : null;
+      const matchesDate = !createdAt || (
+        (!studentRange.startDate || createdAt >= new Date(studentRange.startDate)) &&
+        (!studentRange.endDate || createdAt <= new Date(studentRange.endDate + 'T23:59:59'))
+      );
+      return matchesSearch && matchesStatus && matchesDate;
     });
-  }, [teacherStudents, studentSearch, studentStatusFilter]);
+  }, [teacherStudents, studentSearch, studentStatusFilter, studentRange.startDate, studentRange.endDate]);
 
   // Filtered trial lessons
   const filteredTrials = useMemo(() => {
