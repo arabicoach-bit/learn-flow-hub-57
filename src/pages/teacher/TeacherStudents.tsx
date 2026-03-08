@@ -13,8 +13,9 @@ import { usePrograms } from '@/hooks/use-programs';
 import { getWalletColor, getStatusDisplayLabel } from '@/lib/wallet-utils';
 import { EditStudentDialog } from '@/components/teacher/EditStudentDialog';
 import { StudentLessonsView } from '@/components/student/StudentLessonsView';
-import { GraduationCap, Search, Phone, ChevronDown, User, School, BookOpen, Calendar, Pencil, AlertTriangle } from 'lucide-react';
-import { useState } from 'react';
+import { GraduationCap, Search, Phone, ChevronDown, User, School, BookOpen, Calendar, Pencil, AlertTriangle, Users, UserCheck, PauseCircle, UserX, TrendingUp, ChevronRight } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { YearMonthFilter, getFilterDateRange, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
 
 export default function TeacherStudents() {
   const { profile } = useAuth();
@@ -24,18 +25,34 @@ export default function TeacherStudents() {
   const [statusFilter, setStatusFilter] = useState('');
   const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set());
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+  const [studentFilter, setStudentFilter] = useState<YearMonthFilterValue>({ year: null, month: null });
 
   const { data: students, isLoading: studentsLoading } = useStudents();
   const { data: programs } = usePrograms();
   
   const myStudents = students?.filter(s => s.teacher_id === teacherId) || [];
 
-  const filteredStudents = myStudents.filter((student) => {
-    const matchesSearch = student.name.toLowerCase().includes(search.toLowerCase()) ||
-      student.phone.includes(search);
-    const matchesStatus = !statusFilter || student.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const studentRange = getFilterDateRange(studentFilter);
+
+  const filteredStudents = useMemo(() => {
+    return myStudents.filter((student) => {
+      const matchesSearch = student.name.toLowerCase().includes(search.toLowerCase()) ||
+        student.phone.includes(search);
+      const matchesStatus = !statusFilter || student.status === statusFilter;
+      const createdAt = student.created_at ? new Date(student.created_at) : null;
+      const matchesDate = !createdAt || (
+        (!studentRange.startDate || createdAt >= new Date(studentRange.startDate)) &&
+        (!studentRange.endDate || createdAt <= new Date(studentRange.endDate + 'T23:59:59'))
+      );
+      return matchesSearch && matchesStatus && matchesDate;
+    });
+  }, [myStudents, search, statusFilter, studentRange]);
+
+  const totalStudents = filteredStudents.length;
+  const activeStudents = filteredStudents.filter(s => s.status === 'Active').length;
+  const tempStopStudents = filteredStudents.filter(s => s.status === 'Temporary Stop').length;
+  const leftStudents = filteredStudents.filter(s => s.status === 'Left').length;
+  const retentionRate = totalStudents > 0 ? Math.round((activeStudents / totalStudents) * 100) : 0;
 
   const toggleStudent = (studentId: string) => {
     setExpandedStudents(prev => {
@@ -83,9 +100,77 @@ export default function TeacherStudents() {
                   <SelectItem value="Left">Left</SelectItem>
                 </SelectContent>
               </Select>
+              <YearMonthFilter value={studentFilter} onChange={setStudentFilter} />
             </div>
           </CardContent>
         </Card>
+
+        {/* Student Statistics */}
+        <Collapsible defaultOpen>
+          <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors w-full py-2">
+            <ChevronRight className="w-4 h-4 transition-transform data-[state=open]:rotate-90" />
+            Student Statistics
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 pt-2">
+              <Card>
+                <CardContent className="pt-4 pb-3 px-4">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-primary" />
+                    <div>
+                      <p className="text-xl font-bold">{totalStudents}</p>
+                      <p className="text-xs text-muted-foreground">Total</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-4 pb-3 px-4">
+                  <div className="flex items-center gap-2">
+                    <UserCheck className="w-4 h-4 text-emerald-500" />
+                    <div>
+                      <p className="text-xl font-bold">{activeStudents}</p>
+                      <p className="text-xs text-muted-foreground">Active</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-4 pb-3 px-4">
+                  <div className="flex items-center gap-2">
+                    <PauseCircle className="w-4 h-4 text-amber-500" />
+                    <div>
+                      <p className="text-xl font-bold">{tempStopStudents}</p>
+                      <p className="text-xs text-muted-foreground">Temp Stop</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-4 pb-3 px-4">
+                  <div className="flex items-center gap-2">
+                    <UserX className="w-4 h-4 text-destructive" />
+                    <div>
+                      <p className="text-xl font-bold">{leftStudents}</p>
+                      <p className="text-xs text-muted-foreground">Left</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-4 pb-3 px-4">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-blue-500" />
+                    <div>
+                      <p className="text-xl font-bold">{retentionRate}%</p>
+                      <p className="text-xs text-muted-foreground">Retention</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
 
         {/* Students List */}
         <Card className="glass-card">
