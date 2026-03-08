@@ -92,6 +92,9 @@ export function useTrialStudents(filters?: { status?: TrialStatus; conversion_st
       if (filters?.status) {
         query = query.eq('status', filters.status);
       }
+      if (filters?.conversion_status) {
+        query = query.eq('conversion_status', filters.conversion_status);
+      }
       if (filters?.teacher_id) {
         query = query.eq('teacher_id', filters.teacher_id);
       }
