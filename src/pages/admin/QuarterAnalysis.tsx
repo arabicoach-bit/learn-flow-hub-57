@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
-  Users, GraduationCap, Package, BookOpen, UserCheck, TrendingUp, TrendingDown,
+  Users, Package, BookOpen, UserCheck, TrendingUp, TrendingDown,
   DollarSign, Clock, AlertTriangle, CheckCircle, XCircle, Calendar, BarChart3
 } from 'lucide-react';
 import {
@@ -19,26 +19,37 @@ import {
   type QuarterAnalysisData,
 } from '@/hooks/use-quarter-analysis';
 
-function KPICard({ title, value, icon, suffix, variant }: {
+type SectionTheme = 'students' | 'packages' | 'lessons' | 'teachers';
+
+const sectionColors: Record<SectionTheme, { icon: string; card: string; border: string }> = {
+  students: { icon: 'text-blue-500', card: 'border-l-4 border-l-blue-500/40', border: 'border-blue-500/20' },
+  packages: { icon: 'text-emerald-500', card: 'border-l-4 border-l-emerald-500/40', border: 'border-emerald-500/20' },
+  lessons: { icon: 'text-violet-500', card: 'border-l-4 border-l-violet-500/40', border: 'border-violet-500/20' },
+  teachers: { icon: 'text-amber-500', card: 'border-l-4 border-l-amber-500/40', border: 'border-amber-500/20' },
+};
+
+function KPICard({ title, value, icon, suffix, variant, theme }: {
   title: string;
   value: number | string;
   icon: React.ReactNode;
   suffix?: string;
   variant?: 'default' | 'success' | 'warning' | 'danger';
+  theme?: SectionTheme;
 }) {
-  const colorMap = {
+  const variantColors = {
     default: 'text-primary',
     success: 'text-emerald-500',
     warning: 'text-amber-500',
     danger: 'text-red-500',
   };
-  const color = colorMap[variant || 'default'];
+  const color = variantColors[variant || 'default'];
+  const themeStyles = theme ? sectionColors[theme] : null;
 
   return (
-    <Card className="glass-card hover:shadow-md transition-shadow">
+    <Card className={`glass-card hover:shadow-md transition-shadow ${themeStyles?.card || ''}`}>
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-2">
-          <span className={`${color}`}>{icon}</span>
+          <span className={color}>{icon}</span>
         </div>
         <p className="text-2xl font-bold">
           {typeof value === 'number' ? value.toLocaleString() : value}
@@ -148,14 +159,14 @@ export default function QuarterAnalysis() {
         ) : data ? (
           <>
             {/* STUDENT KPIs */}
-            <SectionHeader title="Student KPIs" icon={<GraduationCap className="w-5 h-5" />} />
+            <SectionHeader title="Students" emoji="👩‍🎓" theme="students" />
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              <KPICard title="Total Students" value={data.students.totalStudents} icon={<Users className="w-5 h-5" />} />
-              <KPICard title="Active Students" value={data.students.activeStudents} icon={<CheckCircle className="w-5 h-5" />} variant="success" />
-              <KPICard title="Temporary Stop" value={data.students.temporaryStop} icon={<AlertTriangle className="w-5 h-5" />} variant="warning" />
-              <KPICard title="Left Students" value={data.students.leftStudents} icon={<XCircle className="w-5 h-5" />} variant="danger" />
-              <KPICard title="New Students" value={data.students.newStudents} icon={<UserCheck className="w-5 h-5" />} variant="success" />
-              <KPICard title="Retention Rate" value={data.students.retentionRate} icon={<TrendingUp className="w-5 h-5" />} suffix="%" variant={data.students.retentionRate >= 80 ? 'success' : 'warning'} />
+              <KPICard title="Total Students" value={data.students.totalStudents} icon={<Users className="w-5 h-5" />} theme="students" />
+              <KPICard title="Active Students" value={data.students.activeStudents} icon={<CheckCircle className="w-5 h-5" />} variant="success" theme="students" />
+              <KPICard title="Temporary Stop" value={data.students.temporaryStop} icon={<AlertTriangle className="w-5 h-5" />} variant="warning" theme="students" />
+              <KPICard title="Left Students" value={data.students.leftStudents} icon={<XCircle className="w-5 h-5" />} variant="danger" theme="students" />
+              <KPICard title="New Students" value={data.students.newStudents} icon={<UserCheck className="w-5 h-5" />} variant="success" theme="students" />
+              <KPICard title="Retention Rate" value={data.students.retentionRate} icon={<TrendingUp className="w-5 h-5" />} suffix="%" variant={data.students.retentionRate >= 80 ? 'success' : 'warning'} theme="students" />
             </div>
             {comparePrevious && prevData && (
               <ComparisonRow
@@ -169,15 +180,15 @@ export default function QuarterAnalysis() {
             )}
 
             {/* PACKAGE KPIs */}
-            <SectionHeader title="Package KPIs" icon={<Package className="w-5 h-5" />} />
+            <SectionHeader title="Packages" emoji="📦" theme="packages" />
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
-              <KPICard title="Total Packages" value={data.packages.totalPackages} icon={<Package className="w-5 h-5" />} />
-              <KPICard title="New Packages" value={data.packages.newPackages} icon={<Package className="w-5 h-5" />} variant="success" />
-              <KPICard title="Renewals" value={data.packages.renewals} icon={<TrendingUp className="w-5 h-5" />} />
-              <KPICard title="Running" value={data.packages.runningPackages} icon={<CheckCircle className="w-5 h-5" />} variant="success" />
-              <KPICard title="Completed" value={data.packages.completedPackages} icon={<CheckCircle className="w-5 h-5" />} />
-              <KPICard title="Pending Payments" value={data.packages.pendingPayments} icon={<AlertTriangle className="w-5 h-5" />} variant="warning" />
-              <KPICard title="Paid Revenue" value={`AED ${data.packages.paidRevenue.toLocaleString()}`} icon={<DollarSign className="w-5 h-5" />} variant="success" />
+              <KPICard title="Total Packages" value={data.packages.totalPackages} icon={<Package className="w-5 h-5" />} theme="packages" />
+              <KPICard title="New Packages" value={data.packages.newPackages} icon={<Package className="w-5 h-5" />} variant="success" theme="packages" />
+              <KPICard title="Renewals" value={data.packages.renewals} icon={<TrendingUp className="w-5 h-5" />} theme="packages" />
+              <KPICard title="Running" value={data.packages.runningPackages} icon={<CheckCircle className="w-5 h-5" />} variant="success" theme="packages" />
+              <KPICard title="Completed" value={data.packages.completedPackages} icon={<CheckCircle className="w-5 h-5" />} theme="packages" />
+              <KPICard title="Pending Payments" value={data.packages.pendingPayments} icon={<AlertTriangle className="w-5 h-5" />} variant="warning" theme="packages" />
+              <KPICard title="Paid Revenue" value={`AED ${data.packages.paidRevenue.toLocaleString()}`} icon={<DollarSign className="w-5 h-5" />} variant="success" theme="packages" />
             </div>
             {comparePrevious && prevData && (
               <ComparisonRow
@@ -190,14 +201,14 @@ export default function QuarterAnalysis() {
             )}
 
             {/* LESSON KPIs */}
-            <SectionHeader title="Lesson KPIs" icon={<BookOpen className="w-5 h-5" />} />
+            <SectionHeader title="Lessons" emoji="📚" theme="lessons" />
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              <KPICard title="Total Lessons" value={data.lessons.totalLessons} icon={<BookOpen className="w-5 h-5" />} />
-              <KPICard title="Completed" value={data.lessons.completedLessons} icon={<CheckCircle className="w-5 h-5" />} variant="success" />
-              <KPICard title="Absent" value={data.lessons.absentLessons} icon={<XCircle className="w-5 h-5" />} variant="danger" />
-              <KPICard title="Scheduled" value={data.lessons.scheduledLessons} icon={<Calendar className="w-5 h-5" />} />
-              <KPICard title="Trial Lessons" value={data.lessons.trialLessons} icon={<UserCheck className="w-5 h-5" />} />
-              <KPICard title="Trial Conversion" value={data.lessons.trialConversionRate} icon={<TrendingUp className="w-5 h-5" />} suffix="%" variant={data.lessons.trialConversionRate >= 50 ? 'success' : 'warning'} />
+              <KPICard title="Total Lessons" value={data.lessons.totalLessons} icon={<BookOpen className="w-5 h-5" />} theme="lessons" />
+              <KPICard title="Completed" value={data.lessons.completedLessons} icon={<CheckCircle className="w-5 h-5" />} variant="success" theme="lessons" />
+              <KPICard title="Absent" value={data.lessons.absentLessons} icon={<XCircle className="w-5 h-5" />} variant="danger" theme="lessons" />
+              <KPICard title="Scheduled" value={data.lessons.scheduledLessons} icon={<Calendar className="w-5 h-5" />} theme="lessons" />
+              <KPICard title="Trial Lessons" value={data.lessons.trialLessons} icon={<UserCheck className="w-5 h-5" />} theme="lessons" />
+              <KPICard title="Trial Conversion" value={data.lessons.trialConversionRate} icon={<TrendingUp className="w-5 h-5" />} suffix="%" variant={data.lessons.trialConversionRate >= 50 ? 'success' : 'warning'} theme="lessons" />
             </div>
             {comparePrevious && prevData && (
               <ComparisonRow
@@ -211,12 +222,12 @@ export default function QuarterAnalysis() {
             )}
 
             {/* TEACHER KPIs */}
-            <SectionHeader title="Teacher KPIs" icon={<Users className="w-5 h-5" />} />
+            <SectionHeader title="Teachers" emoji="👨‍🏫" theme="teachers" />
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <KPICard title="Active Teachers" value={data.teachers.totalActiveTeachers} icon={<Users className="w-5 h-5" />} />
-              <KPICard title="Lessons Taught" value={data.teachers.lessonsTaughtThisQuarter} icon={<BookOpen className="w-5 h-5" />} />
-              <KPICard title="Total Hours" value={data.teachers.totalTeachingHours} icon={<Clock className="w-5 h-5" />} suffix="hrs" />
-              <KPICard title="Total Salary + Bonus" value={`AED ${data.teachers.totalSalary.toLocaleString()}`} icon={<DollarSign className="w-5 h-5" />} />
+              <KPICard title="Active Teachers" value={data.teachers.totalActiveTeachers} icon={<Users className="w-5 h-5" />} theme="teachers" />
+              <KPICard title="Lessons Taught" value={data.teachers.lessonsTaughtThisQuarter} icon={<BookOpen className="w-5 h-5" />} theme="teachers" />
+              <KPICard title="Total Hours" value={data.teachers.totalTeachingHours} icon={<Clock className="w-5 h-5" />} suffix="hrs" theme="teachers" />
+              <KPICard title="Total Salary + Bonus" value={`AED ${data.teachers.totalSalary.toLocaleString()}`} icon={<DollarSign className="w-5 h-5" />} theme="teachers" />
             </div>
 
             {/* Teacher performance table */}
@@ -262,11 +273,12 @@ export default function QuarterAnalysis() {
   );
 }
 
-function SectionHeader({ title, icon }: { title: string; icon: React.ReactNode }) {
+function SectionHeader({ title, emoji, theme }: { title: string; emoji: string; theme: SectionTheme }) {
+  const colors = sectionColors[theme];
   return (
-    <div className="flex items-center gap-2 pt-4">
-      <span className="text-primary">{icon}</span>
-      <h2 className="text-xl font-display font-bold">{title}</h2>
+    <div className={`flex items-center gap-2 pt-6 pb-1 border-b ${colors.border}`}>
+      <span className="text-xl">{emoji}</span>
+      <h2 className={`text-xl font-display font-bold ${colors.icon}`}>{title}</h2>
     </div>
   );
 }
