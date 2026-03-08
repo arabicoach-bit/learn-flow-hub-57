@@ -62,6 +62,7 @@ export function EditStudentDialog({ student, open, onOpenChange }: EditStudentDi
         studentId: student.student_id,
         name: formData.name,
         phone: formData.phone,
+        parent_guardian_name: formData.parent_guardian_name || null,
         age: formData.age ? parseInt(formData.age) : null,
         gender: formData.gender || null,
         nationality: formData.nationality || null,
