@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useStudents, useCreateStudent, useUpdateStudent, useDeleteStudent } from '@/hooks/use-students';
 import { useTeachers } from '@/hooks/use-teachers';
+import { usePrograms } from '@/hooks/use-programs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
