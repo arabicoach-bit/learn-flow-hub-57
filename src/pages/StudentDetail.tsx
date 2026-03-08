@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
-import { YearMonthFilter, getDefaultFilter, getFilterDateRange } from '@/components/shared/YearMonthFilter';
+import { YearMonthFilter, getDefaultFilter, getFilterDateRange, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useStudent } from '@/hooks/use-students';
@@ -58,7 +58,7 @@ function StudentPackagesTab({
   const [pkgSearch, setPkgSearch] = React.useState('');
   const [pkgStatusFilter, setPkgStatusFilter] = React.useState('all');
   const [pkgPaymentFilter, setPkgPaymentFilter] = React.useState('all');
-  const [pkgFilter, setPkgFilter] = React.useState(getDefaultFilter());
+  const [pkgFilter, setPkgFilter] = React.useState<YearMonthFilterValue>({ year: null, month: null });
   const [nextLessons, setNextLessons] = React.useState<Record<string, string | null>>({});
   const [lessonCounts, setLessonCounts] = React.useState<Record<string, number>>({});
   const [endDates, setEndDates] = React.useState<Record<string, string | null>>({});
