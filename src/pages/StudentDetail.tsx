@@ -287,7 +287,6 @@ export default function StudentDetail() {
   const [editForm, setEditForm] = useState({
     name: '',
     phone: '',
-    parent_phone: '',
     parent_guardian_name: '',
     age: '',
     gender: '',
@@ -319,7 +318,6 @@ export default function StudentDetail() {
       setEditForm({
         name: student.name,
         phone: student.phone,
-        parent_phone: student.parent_phone || '',
         parent_guardian_name: student.parent_guardian_name || '',
         age: student.age?.toString() || '',
         gender: student.gender || '',
@@ -342,7 +340,6 @@ export default function StudentDetail() {
         studentId: id,
         name: editForm.name,
         phone: editForm.phone,
-        parent_phone: editForm.parent_phone || null,
         parent_guardian_name: editForm.parent_guardian_name || null,
         age: editForm.age ? parseInt(editForm.age) : null,
         gender: editForm.gender || null,
@@ -586,10 +583,6 @@ export default function StudentDetail() {
                         <p className="font-medium">{student.parent_guardian_name || '-'}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Parent Phone</p>
-                        <p className="font-medium">{student.parent_phone || '-'}</p>
-                      </div>
-                      <div>
                         <p className="text-sm text-muted-foreground">Age</p>
                         <p className="font-medium">{student.age || '-'}</p>
                       </div>
@@ -616,10 +609,6 @@ export default function StudentDetail() {
                       <div>
                         <p className="text-sm text-muted-foreground">Level</p>
                         <p className="font-medium">{student.student_level || '-'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Teacher</p>
-                        <p className="font-medium">{student.teachers?.name || '-'}</p>
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Teacher</p>
@@ -665,14 +654,6 @@ export default function StudentDetail() {
                           id="parent_guardian_name"
                           value={editForm.parent_guardian_name}
                           onChange={(e) => setEditForm({ ...editForm, parent_guardian_name: e.target.value })}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="parent_phone">Parent Phone</Label>
-                        <Input
-                          id="parent_phone"
-                          value={editForm.parent_phone}
-                          onChange={(e) => setEditForm({ ...editForm, parent_phone: e.target.value })}
                         />
                       </div>
                       <div className="space-y-2">

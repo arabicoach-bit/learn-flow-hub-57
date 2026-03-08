@@ -193,8 +193,8 @@ export function useParentPhone(relatedId: string | null, type: string) {
         return data?.phone || null;
       }
       const { data } = await supabase
-        .from('students').select('parent_phone, phone').eq('student_id', relatedId).maybeSingle();
-      return data?.parent_phone || data?.phone || null;
+        .from('students').select('phone').eq('student_id', relatedId).maybeSingle();
+      return data?.phone || null;
     },
     enabled: !!relatedId,
   });

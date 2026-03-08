@@ -24,6 +24,7 @@ export function EditStudentDialog({ student, open, onOpenChange }: EditStudentDi
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
+    parent_guardian_name: '',
     age: '',
     gender: '',
     nationality: '',
@@ -39,6 +40,7 @@ export function EditStudentDialog({ student, open, onOpenChange }: EditStudentDi
       setFormData({
         name: student.name || '',
         phone: student.phone || '',
+        parent_guardian_name: student.parent_guardian_name || '',
         age: student.age?.toString() || '',
         gender: student.gender || '',
         nationality: student.nationality || '',
@@ -60,6 +62,7 @@ export function EditStudentDialog({ student, open, onOpenChange }: EditStudentDi
         studentId: student.student_id,
         name: formData.name,
         phone: formData.phone,
+        parent_guardian_name: formData.parent_guardian_name || null,
         age: formData.age ? parseInt(formData.age) : null,
         gender: formData.gender || null,
         nationality: formData.nationality || null,
@@ -107,6 +110,14 @@ export function EditStudentDialog({ student, open, onOpenChange }: EditStudentDi
                 required
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Parent Name</Label>
+            <Input
+              value={formData.parent_guardian_name}
+              onChange={(e) => setFormData({ ...formData, parent_guardian_name: e.target.value })}
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">

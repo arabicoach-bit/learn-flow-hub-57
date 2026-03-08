@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useStudents, useCreateStudent, useUpdateStudent, useDeleteStudent } from '@/hooks/use-students';
 import { useTeachers } from '@/hooks/use-teachers';
+import { usePrograms } from '@/hooks/use-programs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -36,11 +37,12 @@ export default function Students() {
 
   const { data: students, isLoading } = useStudents({ search, status: statusFilter || undefined, teacher_id: teacherFilter || undefined });
   const { data: teachers } = useTeachers();
+  const { data: programs } = usePrograms();
   const createStudent = useCreateStudent();
   const updateStudent = useUpdateStudent();
   const deleteStudentMutation = useDeleteStudent();
 
-  const PROGRAMMES = ['Arabic A', 'Arabic B', 'IGCSE', 'Adult Course', 'Islamic Arabic'];
+  const STUDENT_LEVELS = ['Beginner', 'Elementary', 'Intermediate', 'Upper Intermediate', 'Advanced'];
 
   // Apply date filter on created_at
   const filteredStudents = (() => {
@@ -62,7 +64,13 @@ export default function Students() {
     name: '',
     phone: '',
     parent_guardian_name: '',
-    program: '',
+    age: '',
+    gender: '',
+    nationality: '',
+    school: '',
+    year_group: '',
+    program_id: '',
+    student_level: '',
     teacher_id: '',
   });
 
@@ -79,12 +87,20 @@ export default function Students() {
         name: formData.name,
         phone: formData.phone,
         parent_guardian_name: formData.parent_guardian_name || undefined,
+        age: formData.age ? parseInt(formData.age) : undefined,
+        gender: formData.gender || undefined,
+        nationality: formData.nationality || undefined,
+        school: formData.school || undefined,
+        year_group: formData.year_group || undefined,
+        program_id: formData.program_id || undefined,
+        student_level: formData.student_level || undefined,
         teacher_id: formData.teacher_id,
       });
       toast({ title: 'Student created successfully!' });
       setIsDialogOpen(false);
       setFormData({ 
-        name: '', phone: '', parent_guardian_name: '', program: '', teacher_id: '' 
+        name: '', phone: '', parent_guardian_name: '', age: '', gender: '',
+        nationality: '', school: '', year_group: '', program_id: '', student_level: '', teacher_id: '' 
       });
     } catch (error) {
       toast({ title: 'Error creating student', variant: 'destructive' });
@@ -150,14 +166,20 @@ export default function Students() {
                   <Plus className="w-4 h-4" /> Add Student
                 </Button>
               </DialogTrigger>
-            <DialogContent className="max-w-md">
+             <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Add New Student</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Student Name *</Label>
-                  <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Name *</Label>
+                    <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Phone *</Label>
+                    <Input value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} required />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -165,17 +187,58 @@ export default function Students() {
                   <Input value={formData.parent_guardian_name} onChange={(e) => setFormData({ ...formData, parent_guardian_name: e.target.value })} />
                 </div>
 
-                <div className="space-y-2">
-                  <Label>WhatsApp Contact *</Label>
-                  <Input value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} required />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Age</Label>
+                    <Input type="number" value={formData.age} onChange={(e) => setFormData({ ...formData, age: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Gender</Label>
+                    <Select value={formData.gender} onValueChange={(v) => setFormData({ ...formData, gender: v })}>
+                      <SelectTrigger><SelectValue placeholder="Select gender" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Male">Male</SelectItem>
+                        <SelectItem value="Female">Female</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Nationality</Label>
+                    <Input value={formData.nationality} onChange={(e) => setFormData({ ...formData, nationality: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>School</Label>
+                    <Input value={formData.school} onChange={(e) => setFormData({ ...formData, school: e.target.value })} />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Year Group</Label>
+                    <Input value={formData.year_group} onChange={(e) => setFormData({ ...formData, year_group: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Program</Label>
+                    <Select value={formData.program_id} onValueChange={(v) => setFormData({ ...formData, program_id: v })}>
+                      <SelectTrigger><SelectValue placeholder="Select program" /></SelectTrigger>
+                      <SelectContent>
+                        {programs?.filter(p => p.is_active).map((program) => (
+                          <SelectItem key={program.program_id} value={program.program_id}>{program.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Programme</Label>
-                  <Select value={formData.program} onValueChange={(v) => setFormData({ ...formData, program: v })}>
-                    <SelectTrigger><SelectValue placeholder="Select programme" /></SelectTrigger>
+                  <Label>Student Level</Label>
+                  <Select value={formData.student_level} onValueChange={(v) => setFormData({ ...formData, student_level: v })}>
+                    <SelectTrigger><SelectValue placeholder="Select level" /></SelectTrigger>
                     <SelectContent>
-                      {PROGRAMMES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                      {STUDENT_LEVELS.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -185,7 +248,7 @@ export default function Students() {
                   <Select value={formData.teacher_id} onValueChange={(v) => setFormData({ ...formData, teacher_id: v })}>
                     <SelectTrigger><SelectValue placeholder="Select teacher" /></SelectTrigger>
                     <SelectContent>
-                      {teachers?.map((t) => <SelectItem key={t.teacher_id} value={t.teacher_id}>{t.name}</SelectItem>)}
+                      {teachers?.filter(t => t.is_active).map((t) => <SelectItem key={t.teacher_id} value={t.teacher_id}>{t.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
