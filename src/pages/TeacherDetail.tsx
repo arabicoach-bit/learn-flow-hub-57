@@ -468,87 +468,6 @@ export default function TeacherDetail() {
           </Card>
         )}
 
-        {/* KPI Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          <Card>
-            <CardContent className="pt-4 pb-3 px-4">
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-primary" />
-                <div>
-                  <p className="text-xl font-bold">{totalStudents}</p>
-                  <p className="text-xs text-muted-foreground">Total Students</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4 pb-3 px-4">
-              <div className="flex items-center gap-2">
-                <UserCheck className="w-4 h-4 text-emerald-500" />
-                <div>
-                  <p className="text-xl font-bold">{activeStudents}</p>
-                  <p className="text-xs text-muted-foreground">Active</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4 pb-3 px-4">
-              <div className="flex items-center gap-2">
-                <PauseCircle className="w-4 h-4 text-amber-500" />
-                <div>
-                  <p className="text-xl font-bold">{tempStopStudents}</p>
-                  <p className="text-xs text-muted-foreground">Temp Stop</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4 pb-3 px-4">
-              <div className="flex items-center gap-2">
-                <UserX className="w-4 h-4 text-destructive" />
-                <div>
-                  <p className="text-xl font-bold">{leftStudents}</p>
-                  <p className="text-xs text-muted-foreground">Left</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4 pb-3 px-4">
-              <div className="flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-primary" />
-                <div>
-                  <p className="text-xl font-bold">{currentMonthStats?.totalLessons ?? '...'}</p>
-                  <p className="text-xs text-muted-foreground">Lessons (Month)</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4 pb-3 px-4">
-              <div className="flex items-center gap-2">
-                <Receipt className="w-4 h-4 text-emerald-500" />
-                <div>
-                  <p className="text-xl font-bold">{currentMonthStats ? formatSalary(currentMonthStats.salary) : '...'}</p>
-                  <p className="text-xs text-muted-foreground">Salary (Month)</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4 pb-3 px-4">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-blue-500" />
-                <div>
-                  <p className="text-xl font-bold">{totalStudents > 0 ? Math.round((activeStudents / totalStudents) * 100) : 0}%</p>
-                  <p className="text-xs text-muted-foreground">Retention Rate</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Tabs */}
         <Tabs defaultValue="students" className="space-y-4">
           <TabsList>
@@ -561,6 +480,73 @@ export default function TeacherDetail() {
           {/* ── Tab A: Students ── */}
           <TabsContent value="students">
             <div className="space-y-4">
+              {/* Student Stats Accordion */}
+              <Collapsible defaultOpen>
+                <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors w-full py-2">
+                  <ChevronRight className="w-4 h-4 transition-transform data-[state=open]:rotate-90" />
+                  Student Statistics
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3 pt-2">
+                    <Card>
+                      <CardContent className="pt-4 pb-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <Users className="w-4 h-4 text-primary" />
+                          <div>
+                            <p className="text-xl font-bold">{totalStudents}</p>
+                            <p className="text-xs text-muted-foreground">Total</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="pt-4 pb-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <UserCheck className="w-4 h-4 text-emerald-500" />
+                          <div>
+                            <p className="text-xl font-bold">{activeStudents}</p>
+                            <p className="text-xs text-muted-foreground">Active</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="pt-4 pb-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <PauseCircle className="w-4 h-4 text-amber-500" />
+                          <div>
+                            <p className="text-xl font-bold">{tempStopStudents}</p>
+                            <p className="text-xs text-muted-foreground">Temp Stop</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="pt-4 pb-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <UserX className="w-4 h-4 text-destructive" />
+                          <div>
+                            <p className="text-xl font-bold">{leftStudents}</p>
+                            <p className="text-xs text-muted-foreground">Left</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="pt-4 pb-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <TrendingUp className="w-4 h-4 text-blue-500" />
+                          <div>
+                            <p className="text-xl font-bold">{totalStudents > 0 ? Math.round((activeStudents / totalStudents) * 100) : 0}%</p>
+                            <p className="text-xs text-muted-foreground">Retention</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -676,33 +662,39 @@ export default function TeacherDetail() {
           {/* ── Tab B: Payroll ── */}
           <TabsContent value="payroll">
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Monthly Summary</h3>
-                <YearMonthFilter value={payrollFilter} onChange={setPayrollFilter} />
-              </div>
-
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Completed Lessons</p>
-                      <p className="text-2xl font-bold">{filteredStats?.totalLessons ?? '...'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Teaching Hours</p>
-                      <p className="text-2xl font-bold">{filteredStats ? `${filteredStats.totalHours.toFixed(1)}h` : '...'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Rate/Hour</p>
-                      <p className="text-2xl font-bold">{formatSalary(teacher.rate_per_lesson)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Salary (EGP)</p>
-                      <p className="text-2xl font-bold text-emerald-500">{filteredStats ? formatSalary(filteredStats.salary) : '...'}</p>
-                    </div>
+              <Collapsible defaultOpen>
+                <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors w-full py-2">
+                  <ChevronRight className="w-4 h-4 transition-transform data-[state=open]:rotate-90" />
+                  Payroll Summary
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="flex items-center justify-end mb-2">
+                    <YearMonthFilter value={payrollFilter} onChange={setPayrollFilter} />
                   </div>
-                </CardContent>
-              </Card>
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Completed Lessons</p>
+                          <p className="text-2xl font-bold">{filteredStats?.totalLessons ?? '...'}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Teaching Hours</p>
+                          <p className="text-2xl font-bold">{filteredStats ? `${filteredStats.totalHours.toFixed(1)}h` : '...'}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Rate/Hour</p>
+                          <p className="text-2xl font-bold">{formatSalary(teacher.rate_per_lesson)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Salary (EGP)</p>
+                          <p className="text-2xl font-bold text-emerald-500">{filteredStats ? formatSalary(filteredStats.salary) : '...'}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </CollapsibleContent>
+              </Collapsible>
 
               <Card className="overflow-hidden">
                 <CardHeader><CardTitle className="text-base">Payment Records</CardTitle></CardHeader>
@@ -752,10 +744,61 @@ export default function TeacherDetail() {
           {/* ── Tab C: Today's Lessons ── */}
           <TabsContent value="today">
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <Clock className="w-5 h-5 text-primary" />
-                Today's Lessons ({todayLessons?.length || 0})
-              </h3>
+              <Collapsible defaultOpen>
+                <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors w-full py-2">
+                  <ChevronRight className="w-4 h-4 transition-transform data-[state=open]:rotate-90" />
+                  Today's Statistics
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2">
+                    <Card>
+                      <CardContent className="pt-4 pb-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <BookOpen className="w-4 h-4 text-primary" />
+                          <div>
+                            <p className="text-xl font-bold">{todayLessons?.length || 0}</p>
+                            <p className="text-xs text-muted-foreground">Total</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="pt-4 pb-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <Check className="w-4 h-4 text-emerald-500" />
+                          <div>
+                            <p className="text-xl font-bold">{todayLessons?.filter((l: any) => l.status === 'completed').length || 0}</p>
+                            <p className="text-xs text-muted-foreground">Completed</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="pt-4 pb-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-amber-500" />
+                          <div>
+                            <p className="text-xl font-bold">{todayLessons?.filter((l: any) => l.status === 'scheduled').length || 0}</p>
+                            <p className="text-xs text-muted-foreground">Pending</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="pt-4 pb-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <X className="w-4 h-4 text-destructive" />
+                          <div>
+                            <p className="text-xl font-bold">{todayLessons?.filter((l: any) => l.status === 'absent').length || 0}</p>
+                            <p className="text-xs text-muted-foreground">Absent</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+
               {!todayLessons?.length ? (
                 <Card className="p-8 text-center text-muted-foreground">
                   <Clock className="w-10 h-10 mx-auto mb-2 opacity-50" />
