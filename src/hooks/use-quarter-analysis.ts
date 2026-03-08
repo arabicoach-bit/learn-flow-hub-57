@@ -311,7 +311,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         if (t.teacher_id) {
           if (!trialsByTeacher[t.teacher_id]) trialsByTeacher[t.teacher_id] = { conducted: 0, converted: 0 };
           trialsByTeacher[t.teacher_id].conducted++;
-          if (t.status === 'Converted') trialsByTeacher[t.teacher_id].converted++;
+          if (t.conversion_status === 'Converted') trialsByTeacher[t.teacher_id].converted++;
         }
       });
 
