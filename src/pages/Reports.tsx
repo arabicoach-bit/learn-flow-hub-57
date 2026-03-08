@@ -185,7 +185,7 @@ export default function Reports() {
                     <Download className="w-4 h-4 mr-2" />
                     Export Excel
                   </Button>
-                  <Button onClick={() => navigate('/admin/reports/package-summaries')}>
+                  <Button onClick={() => navigate('/admin/packages')}>
                     <FileText className="w-4 h-4 mr-2" />
                     Full Summaries
                     <ArrowRight className="w-4 h-4 ml-2" />

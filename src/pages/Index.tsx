@@ -50,7 +50,7 @@ const Index = () => {
               <Button 
                 size="lg" 
                 className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 rounded-full px-6"
-                onClick={() => navigate('/students')}
+                onClick={() => navigate('/admin/students')}
               >
                 View Students
                 <ArrowRight className="w-4 h-4" />
