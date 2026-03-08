@@ -442,36 +442,73 @@ export default function TrialStudents() {
                           )}
                         </TableCell>
                         <TableCell>
-                          <Badge className={
-                            student.status === 'Scheduled' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
-                            student.status === 'Completed' ? 'bg-green-500/20 text-green-400 border-green-500/30' :
-                            'bg-orange-500/20 text-orange-400 border-orange-500/30'
-                          }>
-                            {student.status}
-                          </Badge>
+                          <Select
+                            value={student.status}
+                            onValueChange={(v) => handleUpdateStatus(student.trial_id, v as any)}
+                          >
+                            <SelectTrigger className="h-7 w-[120px] text-xs border-0 bg-transparent px-1 focus:ring-0">
+                              <Badge className={
+                                student.status === 'Scheduled' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
+                                student.status === 'Completed' ? 'bg-green-500/20 text-green-400 border-green-500/30' :
+                                'bg-orange-500/20 text-orange-400 border-orange-500/30'
+                              }>
+                                {student.status}
+                              </Badge>
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Scheduled">Scheduled</SelectItem>
+                              <SelectItem value="Completed">Completed</SelectItem>
+                              <SelectItem value="Absent">Absent</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </TableCell>
                         <TableCell>
-                          <Badge className={
-                            student.conversion_status === 'Converted' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
-                            student.conversion_status === 'Lost' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
-                            'bg-amber-500/20 text-amber-400 border-amber-500/30'
-                          }>
-                            {student.conversion_status}
-                          </Badge>
+                          <Select
+                            value={student.conversion_status}
+                            onValueChange={(v) => handleUpdateConversion(student.trial_id, v as any)}
+                          >
+                            <SelectTrigger className="h-7 w-[120px] text-xs border-0 bg-transparent px-1 focus:ring-0">
+                              <Badge className={
+                                student.conversion_status === 'Converted' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
+                                student.conversion_status === 'Lost' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
+                                'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                              }>
+                                {student.conversion_status}
+                              </Badge>
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Pending">Pending</SelectItem>
+                              <SelectItem value="Converted">Converted</SelectItem>
+                              <SelectItem value="Lost">Lost</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </TableCell>
                         <TableCell>
-                          {student.trial_result ? (
-                            <Badge className={
-                              student.trial_result === 'Very Positive' ? 'bg-emerald-500/20 text-emerald-400' :
-                              student.trial_result === 'Positive' ? 'bg-green-500/20 text-green-400' :
-                              student.trial_result === 'Neutral' ? 'bg-amber-500/20 text-amber-400' :
-                              'bg-red-500/20 text-red-400'
-                            }>
-                              {student.trial_result}
-                            </Badge>
-                          ) : (
-                            <span className="text-muted-foreground text-xs">—</span>
-                          )}
+                          <Select
+                            value={student.trial_result || '_none'}
+                            onValueChange={(v) => handleUpdateResult(student.trial_id, v as any)}
+                          >
+                            <SelectTrigger className="h-7 w-[130px] text-xs border-0 bg-transparent px-1 focus:ring-0">
+                              {student.trial_result ? (
+                                <Badge className={
+                                  student.trial_result === 'Very Positive' ? 'bg-emerald-500/20 text-emerald-400' :
+                                  student.trial_result === 'Positive' ? 'bg-green-500/20 text-green-400' :
+                                  student.trial_result === 'Neutral' ? 'bg-amber-500/20 text-amber-400' :
+                                  'bg-red-500/20 text-red-400'
+                                }>
+                                  {student.trial_result}
+                                </Badge>
+                              ) : (
+                                <span className="text-muted-foreground text-xs">Set result</span>
+                              )}
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Very Positive">Very Positive</SelectItem>
+                              <SelectItem value="Positive">Positive</SelectItem>
+                              <SelectItem value="Neutral">Neutral</SelectItem>
+                              <SelectItem value="Negative">Negative</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </TableCell>
                         <TableCell>
                           {student.notes ? (
@@ -497,30 +534,6 @@ export default function TrialStudents() {
                                   Convert to Student
                                 </DropdownMenuItem>
                               )}
-                              <DropdownMenuSeparator />
-                              <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Attendance</div>
-                              <DropdownMenuItem onClick={() => handleUpdateStatus(student.trial_id, 'Scheduled' as any)}>Scheduled</DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleUpdateStatus(student.trial_id, 'Completed' as any)}>Completed</DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleUpdateStatus(student.trial_id, 'Absent' as any)}>Absent</DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Conversion</div>
-                              <DropdownMenuItem onClick={() => handleUpdateConversion(student.trial_id, 'Pending')}>Pending</DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleUpdateConversion(student.trial_id, 'Converted')}>Converted</DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleUpdateConversion(student.trial_id, 'Lost')}>Lost</DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Result</div>
-                              <DropdownMenuItem onClick={() => handleUpdateResult(student.trial_id, 'Very Positive')}>
-                                <CheckCircle className="w-4 h-4 mr-2 text-emerald-400" /> Very Positive
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleUpdateResult(student.trial_id, 'Positive')}>
-                                <CheckCircle className="w-4 h-4 mr-2 text-green-400" /> Positive
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleUpdateResult(student.trial_id, 'Neutral')}>
-                                <AlertCircle className="w-4 h-4 mr-2 text-amber-400" /> Neutral
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleUpdateResult(student.trial_id, 'Negative')}>
-                                <XCircle className="w-4 h-4 mr-2 text-red-400" /> Negative
-                              </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 onClick={() => handleDelete(student.trial_id)}
