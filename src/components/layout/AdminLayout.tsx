@@ -18,7 +18,7 @@ import {
   UserPlus, 
   GraduationCap, 
   Users, 
-   
+  BarChart3,
   Bell, 
   LogOut,
   User,
