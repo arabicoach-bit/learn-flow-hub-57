@@ -72,21 +72,46 @@ export function NotificationCard({ notification }: NotificationCardProps) {
     }
   };
 
-  const whatsappMessage = formatWhatsAppMessage(
-    notification.type,
-    notification.student_name || 'Student',
-    notification.message
-  );
+  const studentName = notification.student_name || 'Student';
+  const details = parseNotificationDetails(notification.message);
+
+  // Build share message from enriched data when available, fallback to legacy
+  const shareMessage = useMemo(() => {
+    if (notification.type === 'lesson_completed' && lessonDetails) {
+      return formatLessonShareMessage(studentName, {
+        teacher_name: lessonDetails.teacher_name,
+        scheduled_date: lessonDetails.scheduled_date,
+        scheduled_time: lessonDetails.scheduled_time,
+        duration_minutes: lessonDetails.duration_minutes,
+        notes: lessonDetails.notes,
+        wallet_balance: notification.wallet_balance,
+      });
+    }
+    if (notification.type === 'new_package' && packageDetails) {
+      return formatPackageShareMessage(studentName, {
+        package_type_name: packageDetails.package_type_name,
+        lessons_purchased: packageDetails.lessons_purchased,
+        lesson_duration: packageDetails.lesson_duration,
+        lessons_per_week: packageDetails.lessons_per_week,
+        start_date: packageDetails.start_date,
+        is_renewal: packageDetails.is_renewal,
+        description: packageDetails.description,
+        schedule: packageDetails.schedule,
+        wallet_balance: notification.wallet_balance,
+      }, details.teacher);
+    }
+    return formatWhatsAppMessage(notification.type, studentName, notification.message);
+  }, [notification, lessonDetails, packageDetails, studentName, details.teacher]);
 
   const handleWhatsApp = () => {
     if (!notification.is_read) markRead.mutate(notification.notification_id);
     const phone = parentPhone?.replace(/[^0-9+]/g, '') || '';
-    const encoded = encodeURIComponent(whatsappMessage);
+    const encoded = encodeURIComponent(shareMessage);
     window.open(`https://wa.me/${phone}?text=${encoded}`, '_blank');
   };
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(whatsappMessage);
+    navigator.clipboard.writeText(shareMessage);
     setCopied(true);
     toast.success('Message copied!');
     setTimeout(() => setCopied(false), 2000);
