@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Download, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Search, Download, Pencil, Trash2, Users, UserCheck, AlertTriangle, PauseCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useStudents, useCreateStudent, useUpdateStudent, useDeleteStudent } from '@/hooks/use-students';
@@ -8,6 +8,7 @@ import { useTeachers } from '@/hooks/use-teachers';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
@@ -27,7 +28,7 @@ export default function Students() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [teacherFilter, setTeacherFilter] = useState<string>('');
-  const [dateFilter, setDateFilter] = useState<YearMonthFilterValue>({ year: null, month: null });
+  const [dateFilter, setDateFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editStudent, setEditStudent] = useState<Student | null>(null);
   const [deleteStudent, setDeleteStudent] = useState<Student | null>(null);
@@ -51,6 +52,11 @@ export default function Students() {
       return created && created >= startDate && created <= endDate;
     });
   })();
+
+  const totalStudents = filteredStudents.length;
+  const activeCount = filteredStudents.filter(s => s.status === 'Active').length;
+  const overdueCount = filteredStudents.filter(s => (s.wallet_balance || 0) <= 0).length;
+  const tempStopCount = filteredStudents.filter(s => s.status === 'Temporary Stop').length;
 
   const [formData, setFormData] = useState({
     name: '',
@@ -191,6 +197,38 @@ export default function Students() {
             </DialogContent>
           </Dialog>
           </div>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Card><CardContent className="pt-4 pb-3">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-muted-foreground" />
+              <div className="text-xl font-bold">{totalStudents}</div>
+            </div>
+            <p className="text-xs text-muted-foreground">Total Students</p>
+          </CardContent></Card>
+          <Card><CardContent className="pt-4 pb-3">
+            <div className="flex items-center gap-2">
+              <UserCheck className="h-4 w-4 text-emerald-600" />
+              <div className="text-xl font-bold text-emerald-600">{activeCount}</div>
+            </div>
+            <p className="text-xs text-muted-foreground">Active</p>
+          </CardContent></Card>
+          <Card><CardContent className="pt-4 pb-3">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-red-600" />
+              <div className="text-xl font-bold text-red-600">{overdueCount}</div>
+            </div>
+            <p className="text-xs text-muted-foreground">Overdue</p>
+          </CardContent></Card>
+          <Card><CardContent className="pt-4 pb-3">
+            <div className="flex items-center gap-2">
+              <PauseCircle className="h-4 w-4 text-amber-600" />
+              <div className="text-xl font-bold text-amber-600">{tempStopCount}</div>
+            </div>
+            <p className="text-xs text-muted-foreground">Temporary Stop</p>
+          </CardContent></Card>
         </div>
 
         {/* Filters */}
