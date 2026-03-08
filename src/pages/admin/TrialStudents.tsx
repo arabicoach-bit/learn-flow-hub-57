@@ -376,6 +376,7 @@ export default function TrialStudents() {
                 key={student.trial_id}
                 student={student}
                 onUpdateStatus={handleUpdateStatus}
+                onUpdateConversion={handleUpdateConversion}
                 onUpdateResult={handleUpdateResult}
                 onEdit={handleEdit}
                 onConvert={handleConvert}
