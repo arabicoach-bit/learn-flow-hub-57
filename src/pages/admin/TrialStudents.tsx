@@ -133,9 +133,10 @@ export default function TrialStudents() {
         if (created < filterStart || created > filterEnd) return false;
       }
       if (teacherFilter !== 'all' && s.teacher_id !== teacherFilter) return false;
+      if (conversionFilter !== 'all' && s.conversion_status !== conversionFilter) return false;
       return true;
     });
-  }, [trialStudents, filterStart, filterEnd, teacherFilter]);
+  }, [trialStudents, filterStart, filterEnd, teacherFilter, conversionFilter]);
 
   // Stats based on filtered data
   const stats = {
