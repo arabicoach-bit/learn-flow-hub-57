@@ -801,6 +801,7 @@ export type Database = {
         Row: {
           admin_payment_amount: number | null
           age: number | null
+          conversion_status: Database["public"]["Enums"]["trial_conversion_status"]
           converted_student_id: string | null
           created_at: string | null
           duration_minutes: number
@@ -831,6 +832,7 @@ export type Database = {
         Insert: {
           admin_payment_amount?: number | null
           age?: number | null
+          conversion_status?: Database["public"]["Enums"]["trial_conversion_status"]
           converted_student_id?: string | null
           created_at?: string | null
           duration_minutes?: number
@@ -861,6 +863,7 @@ export type Database = {
         Update: {
           admin_payment_amount?: number | null
           age?: number | null
+          conversion_status?: Database["public"]["Enums"]["trial_conversion_status"]
           converted_student_id?: string | null
           created_at?: string | null
           duration_minutes?: number
@@ -1139,8 +1142,9 @@ export type Database = {
       package_status: "Active" | "Completed"
       payroll_status: "Draft" | "Approved" | "Paid"
       student_status: "Active" | "Temporary Stop" | "Left"
+      trial_conversion_status: "Pending" | "Converted" | "Lost"
       trial_result: "Positive" | "Very Positive" | "Neutral" | "Negative"
-      trial_status: "Scheduled" | "Completed" | "Converted" | "Lost"
+      trial_status: "Scheduled" | "Completed" | "Converted" | "Lost" | "Absent"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1286,8 +1290,9 @@ export const Constants = {
       package_status: ["Active", "Completed"],
       payroll_status: ["Draft", "Approved", "Paid"],
       student_status: ["Active", "Temporary Stop", "Left"],
+      trial_conversion_status: ["Pending", "Converted", "Lost"],
       trial_result: ["Positive", "Very Positive", "Neutral", "Negative"],
-      trial_status: ["Scheduled", "Completed", "Converted", "Lost"],
+      trial_status: ["Scheduled", "Completed", "Converted", "Lost", "Absent"],
     },
   },
 } as const
