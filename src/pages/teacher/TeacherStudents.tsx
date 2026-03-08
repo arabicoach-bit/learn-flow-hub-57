@@ -13,8 +13,9 @@ import { usePrograms } from '@/hooks/use-programs';
 import { getWalletColor, getStatusDisplayLabel } from '@/lib/wallet-utils';
 import { EditStudentDialog } from '@/components/teacher/EditStudentDialog';
 import { StudentLessonsView } from '@/components/student/StudentLessonsView';
-import { GraduationCap, Search, Phone, ChevronDown, User, School, BookOpen, Calendar, Pencil, AlertTriangle } from 'lucide-react';
-import { useState } from 'react';
+import { GraduationCap, Search, Phone, ChevronDown, User, School, BookOpen, Calendar, Pencil, AlertTriangle, Users, UserCheck, PauseCircle, UserX, TrendingUp, ChevronRight } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { YearMonthFilter, getFilterDateRange, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
 
 export default function TeacherStudents() {
   const { profile } = useAuth();
