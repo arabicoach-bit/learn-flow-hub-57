@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Package as PackageIcon, FileSpreadsheet, Search, Filter, CheckCircle, Pencil, FileText } from 'lucide-react';
+import { Package as PackageIcon, FileSpreadsheet, Search, Filter, CheckCircle, Pencil, FileText, MessageCircle } from 'lucide-react';
 import { Copy, Loader2, CheckCircle2, XCircle, Clock, Download } from 'lucide-react';
 import { usePackages, type Package } from '@/hooks/use-packages';
 import { usePackageSummary } from '@/hooks/use-package-summary';
