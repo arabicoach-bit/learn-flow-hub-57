@@ -25,18 +25,34 @@ export default function TeacherStudents() {
   const [statusFilter, setStatusFilter] = useState('');
   const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set());
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+  const [studentFilter, setStudentFilter] = useState<YearMonthFilterValue>({ year: null, month: null });
 
   const { data: students, isLoading: studentsLoading } = useStudents();
   const { data: programs } = usePrograms();
   
   const myStudents = students?.filter(s => s.teacher_id === teacherId) || [];
 
-  const filteredStudents = myStudents.filter((student) => {
-    const matchesSearch = student.name.toLowerCase().includes(search.toLowerCase()) ||
-      student.phone.includes(search);
-    const matchesStatus = !statusFilter || student.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const studentRange = getFilterDateRange(studentFilter);
+
+  const filteredStudents = useMemo(() => {
+    return myStudents.filter((student) => {
+      const matchesSearch = student.name.toLowerCase().includes(search.toLowerCase()) ||
+        student.phone.includes(search);
+      const matchesStatus = !statusFilter || student.status === statusFilter;
+      const createdAt = student.created_at ? new Date(student.created_at) : null;
+      const matchesDate = !createdAt || (
+        (!studentRange.startDate || createdAt >= new Date(studentRange.startDate)) &&
+        (!studentRange.endDate || createdAt <= new Date(studentRange.endDate + 'T23:59:59'))
+      );
+      return matchesSearch && matchesStatus && matchesDate;
+    });
+  }, [myStudents, search, statusFilter, studentRange]);
+
+  const totalStudents = filteredStudents.length;
+  const activeStudents = filteredStudents.filter(s => s.status === 'Active').length;
+  const tempStopStudents = filteredStudents.filter(s => s.status === 'Temporary Stop').length;
+  const leftStudents = filteredStudents.filter(s => s.status === 'Left').length;
+  const retentionRate = totalStudents > 0 ? Math.round((activeStudents / totalStudents) * 100) : 0;
 
   const toggleStudent = (studentId: string) => {
     setExpandedStudents(prev => {
