@@ -154,7 +154,27 @@ export function LeadTableView({ leads, onUpdateLeadStatus, onUpdateTrialStatus, 
                 ) : '—'}
               </TableCell>
 
-              <TableCell className="text-muted-foreground">{lead.handled_by || '—'}</TableCell>
+              {/* Handled By Dropdown */}
+              <TableCell>
+                <Select
+                  value={lead.handled_by || '__none__'}
+                  onValueChange={(value) => onUpdateHandledBy(lead.lead_id, value === '__none__' ? '' : value)}
+                >
+                  <SelectTrigger className="h-8 w-[130px] border-0 bg-transparent p-0">
+                    {lead.handled_by ? (
+                      <span className="text-sm">{lead.handled_by}</span>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">Assign</span>
+                    )}
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">— None —</SelectItem>
+                    {handledByOptions.map(h => (
+                      <SelectItem key={h} value={h}>{h}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </TableCell>
               <TableCell>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
