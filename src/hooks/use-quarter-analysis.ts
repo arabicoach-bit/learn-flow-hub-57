@@ -271,7 +271,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
       const absentLessons = lessons.filter(l => l.status === 'absent').length;
       const scheduledLessons = lessons.filter(l => l.status === 'scheduled').length;
       const trialLessonsCount = trials.length;
-      const convertedTrials = trials.filter(t => t.status === 'Converted').length;
+      const convertedTrials = trials.filter(t => t.conversion_status === 'Converted').length;
       const trialConversionRate = trialLessonsCount > 0 ? (convertedTrials / trialLessonsCount) * 100 : 0;
 
       // ===== TEACHER KPIs with monthly breakdown =====
