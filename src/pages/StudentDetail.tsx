@@ -60,6 +60,7 @@ function StudentPackagesTab({
   const [pkgFilter, setPkgFilter] = React.useState(getDefaultFilter());
   const [nextLessons, setNextLessons] = React.useState<Record<string, string | null>>({});
   const [lessonCounts, setLessonCounts] = React.useState<Record<string, number>>({});
+  const [endDates, setEndDates] = React.useState<Record<string, string | null>>({});
 
   React.useEffect(() => {
     if (!packages?.length) return;
@@ -84,10 +85,24 @@ function StudentPackagesTab({
         .eq('package_id', pkg.package_id)
         .in('status', ['completed', 'absent']);
       setLessonCounts(prev => ({
-        ...prev,
-        [pkg.package_id]: count ?? 0
-      }));
-    });
+          ...prev,
+          [pkg.package_id]: count ?? 0
+        }));
+        // Fetch last lesson date (end date)
+        const { data: last } = await supabase
+          .from('scheduled_lessons')
+          .select('scheduled_date')
+          .eq('package_id', pkg.package_id)
+          .order('scheduled_date', { ascending: false })
+          .limit(1)
+          .single();
+        setEndDates(prev => ({
+          ...prev,
+          [pkg.package_id]: last?.scheduled_date
+            ? format(new Date(last.scheduled_date), 'dd MMM yy')
+            : null
+        }));
+      });
   }, [packages]);
 
   const { startDate: sd, endDate: ed } = getFilterDateRange(pkgFilter);
@@ -182,6 +197,7 @@ function StudentPackagesTab({
                   <TableRow>
                     <TableHead className="w-10"></TableHead>
                     <TableHead>Start</TableHead>
+                    <TableHead>End</TableHead>
                     <TableHead>Plan</TableHead>
                     <TableHead>Description</TableHead>
                     <TableHead>Status</TableHead>
@@ -203,6 +219,7 @@ function StudentPackagesTab({
                         <TableRow className="cursor-pointer hover:bg-muted/50" onClick={() => setExpandedPackageId(isExpanded ? null : pkg.package_id)}>
                           <TableCell>{isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}</TableCell>
                           <TableCell>{pkg.start_date ? format(new Date(pkg.start_date), 'dd MMM yy') : '-'}</TableCell>
+                          <TableCell>{endDates[pkg.package_id] || '—'}</TableCell>
                           <TableCell className="font-medium">{pkg.package_types?.name || 'Custom'}</TableCell>
                           <TableCell className="text-muted-foreground text-sm">{(pkg as any).description || '—'}</TableCell>
                           <TableCell><Badge variant="outline" className={pkg.status === 'Active' ? 'status-active' : 'status-grace'}>{pkg.status === 'Active' ? 'Running' : pkg.status}</Badge></TableCell>
@@ -235,7 +252,7 @@ function StudentPackagesTab({
                         </TableRow>
                         {isExpanded && (
                           <TableRow>
-                            <TableCell colSpan={10} className="bg-muted/30 p-4">
+                            <TableCell colSpan={11} className="bg-muted/30 p-4">
                               <div className="text-sm font-medium mb-2 text-muted-foreground">Scheduled Lessons</div>
                               <PackageLessonsTable packageId={pkg.package_id} studentId={studentId} teacherId={teacherId} lessonDuration={pkg.lesson_duration || 45} />
                             </TableCell>
