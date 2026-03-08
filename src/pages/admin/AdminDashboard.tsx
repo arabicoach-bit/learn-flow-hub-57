@@ -1,221 +1,277 @@
-import { useEffect, useState } from 'react';
-import { Users, GraduationCap, AlertTriangle, UserPlus, Wallet, Bell } from 'lucide-react';
+import { useEffect } from 'react';
+import { 
+  Bell, BookOpen, AlertTriangle, Phone, 
+  Users, Clock, CheckCircle2, XCircle, 
+  Zap, ArrowRight, Wallet, UserCheck
+} from 'lucide-react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
-import { MetricCard } from '@/components/dashboard/MetricCard';
-import { useDashboardStats } from '@/hooks/use-dashboard-stats';
-import { YearMonthFilter, getDefaultFilter, getFilterDateRange, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
+import { useCommandCenter } from '@/hooks/use-command-center';
+import { usePendingPackages, useActivatePackage } from '@/hooks/use-pending-packages';
 import { useNotifications } from '@/hooks/use-notifications';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatRelativeTime, getNotificationStyles, formatNotificationType } from '@/lib/notification-utils';
+import { formatCurrency, formatDate } from '@/lib/wallet-utils';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { StudentStatsSection } from '@/components/dashboard/StudentStatsSection';
-import { QuickStatsSection } from '@/components/dashboard/QuickStatsSection';
-import { PendingPackagesWidget } from '@/components/admin/PendingPackagesWidget';
-import { AICRMAssistant } from '@/components/admin/AICRMAssistant';
+import { Loader2, DollarSign } from 'lucide-react';
+import { format } from 'date-fns';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [filter, setFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
-  const { startDate, endDate } = getFilterDateRange(filter);
-  const { data: stats, isLoading: statsLoading } = useDashboardStats(startDate, endDate);
-  const { data: notifications, isLoading: notificationsLoading } = useNotifications({ limit: 5 });
+  const { data: cmd, isLoading: cmdLoading } = useCommandCenter();
+  const { data: pendingPackages, isLoading: pkgLoading } = usePendingPackages();
+  const { data: notifications, isLoading: notifLoading } = useNotifications({ limit: 5 });
+  const activatePackage = useActivatePackage();
 
-  // Set up real-time subscriptions for dashboard updates
+  // Real-time subscriptions
   useEffect(() => {
-    // Subscribe to students table changes for live stat updates
     const studentsChannel = supabase
       .channel('dashboard-students')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'students',
-        },
-        (payload) => {
-          // Refresh dashboard metrics when student status changes
-          queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
-          queryClient.invalidateQueries({ queryKey: ['admin-student-stats'] });
-        }
-      )
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'students' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['command-center'] });
+      })
       .subscribe();
 
-    // Subscribe to notifications for real-time alerts
     const notificationsChannel = supabase
       .channel('dashboard-notifications')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-        },
-        (payload: any) => {
-          const type = payload.new?.type;
-          const studentName = payload.new?.student_name || 'Unknown';
-          
-          if (type === 'blocked') {
-            toast.error(`🚫 Student ${studentName} has LEFT!`, { duration: 10000, action: { label: 'View', onClick: () => navigate('/admin/notifications') } });
-          } else if (type === 'grace_mode') {
-            toast.warning(`⚠️ Student ${studentName} entered Temporary Stop`, { duration: 5000 });
-          } else if (type === 'lesson_completed') {
-            toast.success(`✅ Lesson: ${studentName}`, { duration: 4000 });
-          } else if (type === 'trial_completed') {
-            toast.info(`🎓 Trial done: ${studentName} - update result!`, { duration: 6000 });
-          } else if (type === 'new_package') {
-            toast.success(`📦 New package: ${studentName}`, { duration: 4000 });
-          } else if (type === 'low_balance') {
-            toast.warning(`⚠️ Low credit: ${studentName}`, { duration: 5000 });
-          }
-          
-          queryClient.invalidateQueries({ queryKey: ['notifications'] });
-          queryClient.invalidateQueries({ queryKey: ['notifications-all'] });
-          queryClient.invalidateQueries({ queryKey: ['notifications-unread-count'] });
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, (payload: any) => {
+        const type = payload.new?.type;
+        const studentName = payload.new?.student_name || 'Unknown';
+        
+        if (type === 'blocked') {
+          toast.error(`🚫 Student ${studentName} has LEFT!`, { duration: 10000, action: { label: 'View', onClick: () => navigate('/admin/notifications') } });
+        } else if (type === 'grace_mode') {
+          toast.warning(`⚠️ Student ${studentName} entered Temporary Stop`, { duration: 5000 });
+        } else if (type === 'lesson_completed') {
+          toast.success(`✅ Lesson: ${studentName}`, { duration: 4000 });
+        } else if (type === 'trial_completed') {
+          toast.info(`🎓 Trial done: ${studentName} - update result!`, { duration: 6000 });
+        } else if (type === 'new_package') {
+          toast.success(`📦 New package: ${studentName}`, { duration: 4000 });
+        } else if (type === 'low_balance') {
+          toast.warning(`⚠️ Low credit: ${studentName}`, { duration: 5000 });
         }
-      )
+        
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        queryClient.invalidateQueries({ queryKey: ['notifications-all'] });
+        queryClient.invalidateQueries({ queryKey: ['notifications-unread-count'] });
+        queryClient.invalidateQueries({ queryKey: ['command-center'] });
+      })
       .subscribe();
 
+    const lessonsChannel = supabase
+      .channel('dashboard-lessons')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'scheduled_lessons' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['command-center'] });
+      })
+      .subscribe();
 
     return () => {
       supabase.removeChannel(studentsChannel);
       supabase.removeChannel(notificationsChannel);
+      supabase.removeChannel(lessonsChannel);
     };
   }, [queryClient, navigate]);
 
+  const todayLabel = format(new Date(), 'EEEE, MMM d, yyyy');
+
   return (
     <AdminLayout>
-      <div className="space-y-8 animate-fade-in">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-display font-bold mb-2">Admin Dashboard</h1>
-            <p className="text-muted-foreground">Welcome back! Here's your academy overview.</p>
-          </div>
-          <YearMonthFilter value={filter} onChange={setFilter} />
+      <div className="space-y-6 animate-fade-in">
+        {/* Header */}
+        <div>
+          <h1 className="text-3xl font-display font-bold flex items-center gap-3">
+            <Zap className="w-8 h-8 text-primary" />
+            Command Center
+          </h1>
+          <p className="text-muted-foreground mt-1">📅 {todayLabel} — What needs your attention today</p>
         </div>
 
-        {/* KPI Metrics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-          {statsLoading ? (
-            Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-32 rounded-xl" />
-            ))
+        {/* TODAY'S SNAPSHOT - Top Row */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {cmdLoading ? (
+            Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28 rounded-xl" />)
           ) : (
             <>
-              <MetricCard
-                title="Active Students"
-                value={stats?.activeStudents || 0}
-                icon={<GraduationCap className="w-6 h-6" />}
-                variant="success"
+              <ActionCard
+                emoji="📚"
+                label="Today's Lessons"
+                value={cmd?.todaysLessons || 0}
+                detail={
+                  cmd ? `${cmd.todaysCompleted} done · ${cmd.todaysScheduled} pending` : ''
+                }
+                variant="blue"
+                onClick={() => navigate('/admin/students')}
               />
-              <MetricCard
-                title="Temporary Stop"
-                value={stats?.graceStudents || 0}
-                icon={<AlertTriangle className="w-6 h-6" />}
-                variant="warning"
+              <ActionCard
+                emoji="🎯"
+                label="Unmarked"
+                value={cmd?.todaysScheduled || 0}
+                detail="Lessons not marked yet"
+                variant={cmd?.todaysScheduled ? 'amber' : 'green'}
+                onClick={() => navigate('/admin/students')}
               />
-              <MetricCard
-                title="Left"
-                value={stats?.blockedStudents || 0}
-                icon={<AlertTriangle className="w-6 h-6" />}
-                variant="danger"
+              <ActionCard
+                emoji="📞"
+                label="Overdue Follow-ups"
+                value={cmd?.overdueFollowups || 0}
+                detail="Leads need contact"
+                variant={cmd?.overdueFollowups ? 'red' : 'green'}
+                onClick={() => navigate('/admin/leads')}
               />
-              <MetricCard
-                title="Leads This Month"
-                value={stats?.totalLeadsThisMonth || 0}
-                icon={<UserPlus className="w-6 h-6" />}
-              />
-              <MetricCard
-                title="Pending Renewals"
-                value={stats?.pendingRenewals || 0}
-                icon={<Wallet className="w-6 h-6" />}
-                variant="warning"
+              <ActionCard
+                emoji="🎓"
+                label="Today's Trials"
+                value={cmd?.todaysTrials || 0}
+                detail="Trial lessons today"
+                variant="purple"
+                onClick={() => navigate('/admin/trial-students')}
               />
             </>
           )}
         </div>
 
-        {/* Pending Packages Widget */}
-        <PendingPackagesWidget />
+        {/* URGENT ACTIONS ROW */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Pending Packages */}
+          <Card className="border-l-4 border-l-amber-500">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-display flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  📦 Pending Packages
+                  {pendingPackages && pendingPackages.length > 0 && (
+                    <Badge variant="destructive" className="text-xs">{pendingPackages.length}</Badge>
+                  )}
+                </span>
+                <Button variant="ghost" size="sm" onClick={() => navigate('/admin/packages')}>
+                  View All <ArrowRight className="w-3 h-3 ml-1" />
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {pkgLoading ? (
+                <div className="space-y-2">{Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-lg" />)}</div>
+              ) : pendingPackages && pendingPackages.length > 0 ? (
+                <div className="space-y-2">
+                  {pendingPackages.slice(0, 3).map((pkg) => (
+                    <div key={pkg.package_id} className="flex items-center justify-between p-3 rounded-lg bg-amber-500/5 border border-amber-500/15">
+                      <div>
+                        <p className="font-medium text-sm">{pkg.students.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {pkg.package_types?.name || 'Custom'} · {formatCurrency(pkg.amount)}
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        className="bg-emerald-600 hover:bg-emerald-700 h-8 text-xs"
+                        onClick={() => activatePackage.mutate(pkg.package_id)}
+                        disabled={activatePackage.isPending}
+                      >
+                        {activatePackage.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <>Activate</>}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">✅ No pending packages</p>
+              )}
+            </CardContent>
+          </Card>
 
-        {/* Quick Statistics - Leads & Trials */}
-        <QuickStatsSection />
+          {/* Low Balance Students */}
+          <Card className="border-l-4 border-l-red-500">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-display flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  ⚠️ Low Balance Students
+                  {cmd?.lowBalanceStudents && cmd.lowBalanceStudents.length > 0 && (
+                    <Badge variant="destructive" className="text-xs">{cmd.lowBalanceStudents.length}</Badge>
+                  )}
+                </span>
+                <Button variant="ghost" size="sm" onClick={() => navigate('/admin/students')}>
+                  View All <ArrowRight className="w-3 h-3 ml-1" />
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {cmdLoading ? (
+                <div className="space-y-2">{Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-12 rounded-lg" />)}</div>
+              ) : cmd?.lowBalanceStudents && cmd.lowBalanceStudents.length > 0 ? (
+                <div className="space-y-2">
+                  {cmd.lowBalanceStudents.slice(0, 5).map((student) => (
+                    <div 
+                      key={student.student_id} 
+                      className="flex items-center justify-between p-3 rounded-lg bg-red-500/5 border border-red-500/15 cursor-pointer hover:bg-red-500/10 transition-colors"
+                      onClick={() => navigate(`/admin/students/${student.student_id}`)}
+                    >
+                      <span className="font-medium text-sm">{student.name}</span>
+                      <Badge variant={student.wallet_balance <= 0 ? 'destructive' : 'outline'} className="text-xs">
+                        {student.wallet_balance} lessons
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">✅ All students have sufficient balance</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
-        {/* Student Statistics Section */}
-        <StudentStatsSection />
+        {/* STATUS OVERVIEW */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {cmdLoading ? (
+            Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)
+          ) : (
+            <>
+              <MiniStat icon={<CheckCircle2 className="w-4 h-4 text-emerald-500" />} label="Completed Today" value={cmd?.todaysCompleted || 0} />
+              <MiniStat icon={<XCircle className="w-4 h-4 text-red-500" />} label="Absent Today" value={cmd?.todaysAbsent || 0} />
+              <MiniStat icon={<AlertTriangle className="w-4 h-4 text-amber-500" />} label="Temporary Stop" value={cmd?.temporaryStopStudents || 0} />
+              <MiniStat icon={<UserCheck className="w-4 h-4 text-purple-500" />} label="Today's Trials" value={cmd?.todaysTrials || 0} />
+            </>
+          )}
+        </div>
 
-        {/* Teacher Analytics Link */}
-        <Card className="glass-card">
-          <CardContent className="pt-6 flex items-center justify-between">
-            <div>
-              <h3 className="font-display font-semibold text-lg">Teacher Performance & Payroll</h3>
-              <p className="text-sm text-muted-foreground">View all teacher analytics, hours, salaries, and student counts in one place.</p>
-            </div>
-            <Button onClick={() => navigate('/admin/payroll')} variant="outline">
-              View Analytics →
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Recent Notifications */}
-        <Card className="glass-card">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="font-display flex items-center gap-2">
-              <Bell className="w-5 h-5" />
-              Recent Notifications
+        {/* RECENT NOTIFICATIONS */}
+        <Card>
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <CardTitle className="text-base font-display flex items-center gap-2">
+              🔔 Recent Notifications
             </CardTitle>
             <Button variant="ghost" size="sm" onClick={() => navigate('/admin/notifications')}>
-              View All
+              View All <ArrowRight className="w-3 h-3 ml-1" />
             </Button>
           </CardHeader>
           <CardContent>
-            {notificationsLoading ? (
-              <div className="space-y-3">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <Skeleton key={i} className="h-16 rounded-lg" />
-                ))}
-              </div>
+            {notifLoading ? (
+              <div className="space-y-2">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-14 rounded-lg" />)}</div>
             ) : notifications && notifications.length > 0 ? (
-              <div className="space-y-3">
-                {notifications.map((notification) => {
-                  const styles = getNotificationStyles(notification.type);
-                  
+              <div className="space-y-2">
+                {notifications.map((n) => {
+                  const styles = getNotificationStyles(n.type);
                   return (
                     <div
-                      key={notification.notification_id}
+                      key={n.notification_id}
                       onClick={() => navigate('/admin/notifications')}
-                      className={`p-4 rounded-lg border transition-all cursor-pointer hover:shadow-md ${
-                        notification.is_read
-                          ? 'bg-muted/30 border-border/50'
-                          : `${styles.bgColor} ${styles.borderColor}`
+                      className={`p-3 rounded-lg border transition-all cursor-pointer hover:shadow-sm ${
+                        n.is_read ? 'bg-muted/20 border-border/50' : `${styles.bgColor} ${styles.borderColor}`
                       }`}
                     >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span>{styles.icon}</span>
-                            {notification.student_name && (
-                              <span className="font-medium text-sm">{notification.student_name}</span>
-                            )}
-                          </div>
-                          <p className="text-sm">{notification.message}</p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {formatRelativeTime(notification.created_at)}
-                          </p>
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <span className="text-sm">{styles.icon}</span>
+                          {n.student_name && <span className="font-medium text-sm">{n.student_name}</span>}
+                          <span className="text-sm text-muted-foreground truncate">{n.message}</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className={styles.badgeClass}>
-                            {formatNotificationType(notification.type)}
-                          </Badge>
-                          {!notification.is_read && (
-                            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                          )}
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <span className="text-xs text-muted-foreground">{formatRelativeTime(n.created_at)}</span>
+                          {!n.is_read && <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />}
                         </div>
                       </div>
                     </div>
@@ -223,14 +279,78 @@ export default function AdminDashboard() {
                 })}
               </div>
             ) : (
-              <p className="text-muted-foreground text-center py-8">No notifications yet</p>
+              <p className="text-sm text-muted-foreground text-center py-4">No notifications yet</p>
             )}
           </CardContent>
         </Card>
-        
-        {/* AI CRM Assistant */}
-        <AICRMAssistant />
+
+        {/* Quick Navigation */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <QuickLink emoji="📊" label="Quarter Analysis" onClick={() => navigate('/admin/quarter-analysis')} />
+          <QuickLink emoji="👩‍🎓" label="Students" onClick={() => navigate('/admin/students')} />
+          <QuickLink emoji="👨‍🏫" label="Teachers" onClick={() => navigate('/admin/teachers')} />
+          <QuickLink emoji="💰" label="Payroll" onClick={() => navigate('/admin/payroll')} />
+        </div>
       </div>
     </AdminLayout>
+  );
+}
+
+// --- Sub-components ---
+
+function ActionCard({ emoji, label, value, detail, variant, onClick }: {
+  emoji: string;
+  label: string;
+  value: number;
+  detail: string;
+  variant: 'blue' | 'amber' | 'red' | 'green' | 'purple';
+  onClick: () => void;
+}) {
+  const colors = {
+    blue: 'border-blue-500/20 bg-blue-500/5',
+    amber: 'border-amber-500/20 bg-amber-500/5',
+    red: 'border-red-500/20 bg-red-500/5',
+    green: 'border-emerald-500/20 bg-emerald-500/5',
+    purple: 'border-violet-500/20 bg-violet-500/5',
+  };
+
+  return (
+    <div
+      onClick={onClick}
+      className={`p-4 rounded-xl border cursor-pointer hover:shadow-md transition-all ${colors[variant]}`}
+    >
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-lg">{emoji}</span>
+        <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      </div>
+      <p className="text-2xl font-bold font-display">{value}</p>
+      <p className="text-xs text-muted-foreground mt-1">{detail}</p>
+    </div>
+  );
+}
+
+function MiniStat({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
+  return (
+    <div className="p-3 rounded-lg border bg-card">
+      <div className="flex items-center gap-2 mb-1">
+        {icon}
+        <span className="text-xs text-muted-foreground">{label}</span>
+      </div>
+      <p className="text-xl font-bold font-display">{value}</p>
+    </div>
+  );
+}
+
+function QuickLink({ emoji, label, onClick }: { emoji: string; label: string; onClick: () => void }) {
+  return (
+    <Button
+      variant="outline"
+      className="h-auto py-3 flex items-center gap-2 justify-start"
+      onClick={onClick}
+    >
+      <span>{emoji}</span>
+      <span className="text-sm">{label}</span>
+      <ArrowRight className="w-3 h-3 ml-auto" />
+    </Button>
   );
 }
