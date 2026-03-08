@@ -187,6 +187,7 @@ export default function Leads() {
               onUpdateLeadStatus={handleUpdateLeadStatus}
               onUpdateTrialStatus={handleUpdateTrialStatus}
               onUpdateFollowUp={handleUpdateFollowUp}
+              onUpdateHandledBy={handleUpdateHandledBy}
               onEdit={setEditingLead}
               onDelete={handleDeleteLead}
               onConvertToTrial={setConvertingLead}
