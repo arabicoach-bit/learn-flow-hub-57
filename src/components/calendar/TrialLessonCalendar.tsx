@@ -6,20 +6,20 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
-import { CalendarDays, Users } from 'lucide-react';
+import { CalendarDays, Users, Clock, Check, X } from 'lucide-react';
 import { TrialLessonCalendarCard, type TrialLessonCalendarData } from '@/components/schedule/TrialLessonCalendarCard';
+import { YearMonthFilter, getFilterDateRange, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
 
 interface TrialLessonCalendarProps {
   teacherId: string;
-  /** If true, uses admin context (no RLS teacher filter needed) */
   isAdmin?: boolean;
 }
 
-function useTrialLessonCalendarData(teacherId: string, queryKeyPrefix: string) {
+function useTrialLessonCalendarData(teacherId: string, queryKeyPrefix: string, startDate: string | null, endDate: string | null) {
   return useQuery({
-    queryKey: [queryKeyPrefix, teacherId],
+    queryKey: [queryKeyPrefix, teacherId, startDate, endDate],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('trial_lessons_log')
         .select(`
           trial_lesson_id,
@@ -44,6 +44,10 @@ function useTrialLessonCalendarData(teacherId: string, queryKeyPrefix: string) {
         .eq('teacher_id', teacherId)
         .order('lesson_date', { ascending: true });
 
+      if (startDate) query = query.gte('lesson_date', startDate);
+      if (endDate) query = query.lte('lesson_date', endDate);
+
+      const { data, error } = await query;
       if (error) throw error;
 
       return (data || []).map((lesson: any) => ({
@@ -73,9 +77,11 @@ function useTrialLessonCalendarData(teacherId: string, queryKeyPrefix: string) {
 export function TrialLessonCalendar({ teacherId, isAdmin }: TrialLessonCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [viewMonth, setViewMonth] = useState<Date>(new Date());
+  const [filter, setFilter] = useState<YearMonthFilterValue>({ year: null, month: null });
+  const { startDate, endDate } = getFilterDateRange(filter);
 
   const queryKey = isAdmin ? 'admin-teacher-trial-calendar' : 'teacher-trial-calendar';
-  const { data: trialLessons, isLoading, refetch } = useTrialLessonCalendarData(teacherId, queryKey);
+  const { data: trialLessons, isLoading, refetch } = useTrialLessonCalendarData(teacherId, queryKey, startDate, endDate);
 
   const lessonsByDate = useMemo(() => {
     if (!trialLessons) return new Map<string, TrialLessonCalendarData[]>();
@@ -126,19 +132,65 @@ export function TrialLessonCalendar({ teacherId, isAdmin }: TrialLessonCalendarP
 
   return (
     <div className="space-y-6">
+      {/* Filter + Stats */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <YearMonthFilter value={filter} onChange={setFilter} />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="border-purple-500/20 bg-purple-500/5">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
+              <Users className="w-5 h-5 text-purple-400" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{stats.total}</p>
+              <p className="text-sm text-muted-foreground">Total</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-purple-500/20 bg-purple-500/5">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
+              <Clock className="w-5 h-5 text-purple-400" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{stats.scheduled}</p>
+              <p className="text-sm text-muted-foreground">Scheduled</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-emerald-500/20 bg-emerald-500/5">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+              <Check className="w-5 h-5 text-emerald-400" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{stats.completed}</p>
+              <p className="text-sm text-muted-foreground">Completed</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-amber-500/20 bg-amber-500/5">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
+              <X className="w-5 h-5 text-amber-400" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{stats.absent}</p>
+              <p className="text-sm text-muted-foreground">Absent</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Calendar */}
       <Card className="glass-card">
         <CardHeader className="pb-2">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <CardTitle className="flex items-center gap-2">
-              <CalendarDays className="w-5 h-5 text-purple-500" />
-              Trial Lessons Calendar
-            </CardTitle>
-            <div className="flex gap-4 text-sm text-muted-foreground">
-              <span>Scheduled: <strong className="text-purple-500">{stats.scheduled}</strong></span>
-              <span>Completed: <strong className="text-emerald-600">{stats.completed}</strong></span>
-              <span>Absent: <strong className="text-destructive">{stats.absent}</strong></span>
-            </div>
-          </div>
+          <CardTitle className="flex items-center gap-2">
+            <CalendarDays className="w-5 h-5 text-purple-500" />
+            Trial Lessons Calendar
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -179,6 +231,7 @@ export function TrialLessonCalendar({ teacherId, isAdmin }: TrialLessonCalendarP
         </CardContent>
       </Card>
 
+      {/* Day detail */}
       <Card className="glass-card">
         <CardHeader>
           <div className="flex items-center justify-between">
