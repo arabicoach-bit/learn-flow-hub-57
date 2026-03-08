@@ -36,10 +36,17 @@ interface TeacherPayrollData {
 
 export default function AdminPayroll() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [filter, setFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
+  const [editingBonus, setEditingBonus] = useState<string | null>(null);
+  const [bonusValue, setBonusValue] = useState('');
+  const [bonusNotes, setBonusNotes] = useState('');
   const { data: teachers, isLoading: teachersLoading } = useTeachers();
 
   const { startDate, endDate } = getFilterDateRange(filter);
+  const monthYear = filter.month !== null && filter.year
+    ? `${filter.year}-${String(filter.month + 1).padStart(2, '0')}`
+    : format(new Date(), 'yyyy-MM');
 
   const { data: payrollData, isLoading: payrollLoading } = useQuery({
     queryKey: ['admin-payroll-unified', startDate, endDate],
@@ -48,21 +55,23 @@ export default function AdminPayroll() {
       const teacherIds = (teachers || []).map(t => t.teacher_id);
       if (teacherIds.length === 0) return [];
 
-      // Use shared batch function for hours/salary
-      const hoursByTeacher = await fetchAllTeachersTotalHours(teacherIds, startDate, endDate);
-
-      // Fetch students & trial students for counts
-      const [studentsRes, trialStudentsRes] = await Promise.all([
+      const [hoursByTeacher, studentsRes, trialStudentsRes, bonusesRes] = await Promise.all([
+        fetchAllTeachersTotalHours(teacherIds, startDate, endDate),
         supabase.from('students').select('student_id, teacher_id, status'),
         supabase.from('trial_students').select('trial_id, teacher_id, status').eq('status', 'Scheduled'),
+        supabase.from('teacher_bonuses').select('*').eq('month_year', monthYear),
       ]);
 
       const students = studentsRes.data || [];
       const trialStudents = trialStudentsRes.data || [];
+      const bonuses = bonusesRes.data || [];
 
       const payroll: TeacherPayrollData[] = (teachers || []).map(teacher => {
         const hrs = hoursByTeacher[teacher.teacher_id] || {} as TeacherTotalHoursResult;
         const teacherStudents = students.filter(s => s.teacher_id === teacher.teacher_id);
+        const bonus = bonuses.find(b => b.teacher_id === teacher.teacher_id);
+        const salaryEarned = hrs.salary || 0;
+        const bonusAmount = bonus?.amount || 0;
 
         return {
           teacher_id: teacher.teacher_id,
@@ -71,7 +80,10 @@ export default function AdminPayroll() {
           lessons_taken: hrs.totalLessons || 0,
           total_hours: hrs.totalHours || 0,
           rate_per_lesson: hrs.ratePerHour || 0,
-          salary_earned: hrs.salary || 0,
+          salary_earned: salaryEarned,
+          bonus: bonusAmount,
+          bonus_notes: bonus?.notes || null,
+          total_pay: salaryEarned + bonusAmount,
           active_students: teacherStudents.filter(s => s.status === 'Active').length,
           temp_stop_students: teacherStudents.filter(s => s.status === 'Temporary Stop').length,
           left_students: teacherStudents.filter(s => s.status === 'Left').length,
@@ -79,7 +91,7 @@ export default function AdminPayroll() {
         };
       });
 
-      return payroll.sort((a, b) => b.salary_earned - a.salary_earned);
+      return payroll.sort((a, b) => b.total_pay - a.total_pay);
     },
     enabled: !!teachers,
   });
