@@ -15,7 +15,7 @@ import { format, isToday, isYesterday, isThisWeek } from 'date-fns';
 
 type FilterType = 'all' | 'lesson_completed' | 'trial_completed' | 'new_package';
 
-function groupByDate(notifications: typeof import('@/hooks/use-notifications').Notification[] | any[]) {
+function groupByDate(notifications: any[]) {
   const groups: Record<string, typeof notifications> = {};
   
   for (const n of notifications) {

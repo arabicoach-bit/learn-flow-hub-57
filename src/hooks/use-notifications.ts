@@ -58,7 +58,7 @@ export function useNotifications(filters: NotificationFilters = {}) {
       let query = supabase
         .from('notifications')
         .select('*')
-        .in('type', filters.type && filters.type !== 'all' ? [filters.type] : [...ACTIVE_TYPES])
+        .in('type', filters.type && filters.type !== 'all' ? [filters.type] as any : [...ACTIVE_TYPES] as any)
         .order('created_at', { ascending: false });
 
       if (filters.startDate) query = query.gte('created_at', filters.startDate + 'T00:00:00');
