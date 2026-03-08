@@ -85,12 +85,20 @@ export default function Students() {
         name: formData.name,
         phone: formData.phone,
         parent_guardian_name: formData.parent_guardian_name || undefined,
+        age: formData.age ? parseInt(formData.age) : undefined,
+        gender: formData.gender || undefined,
+        nationality: formData.nationality || undefined,
+        school: formData.school || undefined,
+        year_group: formData.year_group || undefined,
+        program_id: formData.program_id || undefined,
+        student_level: formData.student_level || undefined,
         teacher_id: formData.teacher_id,
       });
       toast({ title: 'Student created successfully!' });
       setIsDialogOpen(false);
       setFormData({ 
-        name: '', phone: '', parent_guardian_name: '', program: '', teacher_id: '' 
+        name: '', phone: '', parent_guardian_name: '', age: '', gender: '',
+        nationality: '', school: '', year_group: '', program_id: '', student_level: '', teacher_id: '' 
       });
     } catch (error) {
       toast({ title: 'Error creating student', variant: 'destructive' });
