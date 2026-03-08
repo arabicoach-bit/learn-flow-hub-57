@@ -446,7 +446,7 @@ export default function Packages() {
                               className="h-8 w-8"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigate(`/admin/package-summaries?package=${pkg.package_id}`);
+                                navigate(`/admin/reports/package-summaries?package=${pkg.package_id}`);
                               }}
                             >
                               <FileText className="w-4 h-4" />
