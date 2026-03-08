@@ -78,16 +78,18 @@ export default function TrialStudents() {
   const handleUpdateResult = async (trialId: string, result: TrialResult) => {
     try {
       await updateTrialStudent.mutateAsync({ trial_id: trialId, trial_result: result });
-      toast({
-        title: 'Result updated',
-        description: `Trial result set to ${result}.`,
-      });
+      toast({ title: 'Result updated', description: `Trial result set to ${result}.` });
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to update result.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: 'Failed to update result.', variant: 'destructive' });
+    }
+  };
+
+  const handleUpdateConversion = async (trialId: string, conversion: TrialConversionStatus) => {
+    try {
+      await updateTrialStudent.mutateAsync({ trial_id: trialId, conversion_status: conversion } as any);
+      toast({ title: 'Conversion updated', description: `Conversion status set to ${conversion}.` });
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to update conversion status.', variant: 'destructive' });
     }
   };
 
