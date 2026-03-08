@@ -217,6 +217,30 @@ export function TrialLessonCalendarCard({ lesson, onUpdated, readOnly }: TrialLe
               Absent
             </Button>
           </>
+        ) : !readOnly ? (
+          <div className="flex items-center gap-2">
+            {statusBadge}
+            <Select
+              value={lesson.status}
+              onValueChange={(val) => handleMark(val as 'completed' | 'absent')}
+              disabled={isUpdating}
+            >
+              <SelectTrigger className="w-[150px] h-8 text-xs">
+                <SelectValue placeholder="Change status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="scheduled">
+                  <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> Scheduled</span>
+                </SelectItem>
+                <SelectItem value="completed">
+                  <span className="flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Completed</span>
+                </SelectItem>
+                <SelectItem value="absent">
+                  <span className="flex items-center gap-1"><XCircle className="w-3 h-3" /> Absent</span>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         ) : (
           statusBadge
         )}
