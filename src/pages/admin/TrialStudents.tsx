@@ -206,79 +206,106 @@ export default function TrialStudents() {
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-          <Card className="bg-card">
-            <CardHeader className="pb-2">
-              <CardDescription>Total Trials</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-primary" />
-                <span className="text-2xl font-bold">{stats.total}</span>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Stats Cards - Attendance */}
+        <div>
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Attendance</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card className="bg-card">
+              <CardHeader className="pb-2">
+                <CardDescription>Total Trials</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  <Users className="w-5 h-5 text-primary" />
+                  <span className="text-2xl font-bold">{stats.total}</span>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-card">
+              <CardHeader className="pb-2">
+                <CardDescription>Scheduled</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-blue-400" />
+                  <span className="text-2xl font-bold">{stats.scheduled}</span>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-card">
+              <CardHeader className="pb-2">
+                <CardDescription>Completed</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-green-400" />
+                  <span className="text-2xl font-bold">{stats.completed}</span>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-card">
+              <CardHeader className="pb-2">
+                <CardDescription>Absent</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  <XCircle className="w-5 h-5 text-orange-400" />
+                  <span className="text-2xl font-bold">{stats.absent}</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
 
-          <Card className="bg-card">
-            <CardHeader className="pb-2">
-              <CardDescription>Scheduled</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <Clock className="w-5 h-5 text-blue-400" />
-                <span className="text-2xl font-bold">{stats.scheduled}</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card">
-            <CardHeader className="pb-2">
-              <CardDescription>Completed</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-green-400" />
-                <span className="text-2xl font-bold">{stats.completed}</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card">
-            <CardHeader className="pb-2">
-              <CardDescription>Converted</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <UserCheck className="w-5 h-5 text-emerald-400" />
-                <span className="text-2xl font-bold">{stats.converted}</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card">
-            <CardHeader className="pb-2">
-              <CardDescription>Lost</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <XCircle className="w-5 h-5 text-red-400" />
-                <span className="text-2xl font-bold">{stats.lost}</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card">
-            <CardHeader className="pb-2">
-              <CardDescription>Conversion Rate</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-primary" />
-                <span className="text-2xl font-bold">{conversionRate}%</span>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Stats Cards - Conversion */}
+        <div>
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Conversion</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card className="bg-card">
+              <CardHeader className="pb-2">
+                <CardDescription>Pending</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-amber-400" />
+                  <span className="text-2xl font-bold">{stats.pending}</span>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-card">
+              <CardHeader className="pb-2">
+                <CardDescription>Converted</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  <UserCheck className="w-5 h-5 text-emerald-400" />
+                  <span className="text-2xl font-bold">{stats.converted}</span>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-card">
+              <CardHeader className="pb-2">
+                <CardDescription>Lost</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  <XCircle className="w-5 h-5 text-red-400" />
+                  <span className="text-2xl font-bold">{stats.lost}</span>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-card">
+              <CardHeader className="pb-2">
+                <CardDescription>Conversion Rate</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-primary" />
+                  <span className="text-2xl font-bold">{conversionRate}%</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
         {/* Filters */}
@@ -297,12 +324,25 @@ export default function TrialStudents() {
             onValueChange={(v) => setStatusFilter(v as TrialStatus | 'all')}
           >
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by status" />
+              <SelectValue placeholder="Attendance" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="all">All Attendance</SelectItem>
               <SelectItem value="Scheduled">Scheduled</SelectItem>
               <SelectItem value="Completed">Completed</SelectItem>
+              <SelectItem value="Absent">Absent</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
+            value={conversionFilter}
+            onValueChange={(v) => setConversionFilter(v as TrialConversionStatus | 'all')}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Conversion" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Conversion</SelectItem>
+              <SelectItem value="Pending">Pending</SelectItem>
               <SelectItem value="Converted">Converted</SelectItem>
               <SelectItem value="Lost">Lost</SelectItem>
             </SelectContent>
