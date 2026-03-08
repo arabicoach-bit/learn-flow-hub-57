@@ -28,7 +28,7 @@ export default function Students() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [teacherFilter, setTeacherFilter] = useState<string>('');
-  const [dateFilter, setDateFilter] = useState<YearMonthFilterValue>({ year: null, month: null });
+  const [dateFilter, setDateFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editStudent, setEditStudent] = useState<Student | null>(null);
   const [deleteStudent, setDeleteStudent] = useState<Student | null>(null);
