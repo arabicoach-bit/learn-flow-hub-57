@@ -85,10 +85,24 @@ function StudentPackagesTab({
         .eq('package_id', pkg.package_id)
         .in('status', ['completed', 'absent']);
       setLessonCounts(prev => ({
-        ...prev,
-        [pkg.package_id]: count ?? 0
-      }));
-    });
+          ...prev,
+          [pkg.package_id]: count ?? 0
+        }));
+        // Fetch last lesson date (end date)
+        const { data: last } = await supabase
+          .from('scheduled_lessons')
+          .select('scheduled_date')
+          .eq('package_id', pkg.package_id)
+          .order('scheduled_date', { ascending: false })
+          .limit(1)
+          .single();
+        setEndDates(prev => ({
+          ...prev,
+          [pkg.package_id]: last?.scheduled_date
+            ? format(new Date(last.scheduled_date), 'dd MMM yy')
+            : null
+        }));
+      });
   }, [packages]);
 
   const { startDate: sd, endDate: ed } = getFilterDateRange(pkgFilter);
