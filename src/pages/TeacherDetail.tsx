@@ -153,7 +153,7 @@ export default function TeacherDetail() {
 
   const { data: allStudents } = useStudents();
   const { data: programs } = usePrograms();
-  const { data: todayLessons, refetch: refetchToday } = useAdminTeacherTodayLessons(id);
+  
 
   const [payrollFilter, setPayrollFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
   const payrollRange = getFilterDateRange(payrollFilter);
