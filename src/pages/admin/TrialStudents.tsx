@@ -20,13 +20,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { 
   Plus, 
   Search, 
@@ -38,10 +31,9 @@ import {
   Loader2,
   Download,
   TrendingUp,
-  MoreVertical,
-  UserPlus,
   Trash2,
-  AlertCircle
+  AlertCircle,
+  Pencil
 } from 'lucide-react';
 import { useTrialStudents, useUpdateTrialStudent, useDeleteTrialStudent, type TrialStudent } from '@/hooks/use-trial-students';
 import { useTeachers } from '@/hooks/use-teachers';
@@ -518,32 +510,14 @@ export default function TrialStudents() {
                           )}
                         </TableCell>
                         <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleEdit(student)}>
-                                Edit Details
-                              </DropdownMenuItem>
-                              {student.conversion_status === 'Pending' && student.status !== 'Absent' && (
-                                <DropdownMenuItem onClick={() => handleConvert(student)} className="text-primary">
-                                  <UserPlus className="w-4 h-4 mr-2" />
-                                  Convert to Student
-                                </DropdownMenuItem>
-                              )}
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={() => handleDelete(student.trial_id)}
-                                className="text-destructive focus:text-destructive"
-                              >
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(student)} title="Edit Details">
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(student.trial_id)} title="Delete">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
