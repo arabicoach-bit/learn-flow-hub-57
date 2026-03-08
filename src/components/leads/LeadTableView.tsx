@@ -52,7 +52,7 @@ function isOverdue(dateStr: string | null): boolean {
   return isPast(d) && !isToday(d);
 }
 
-export function LeadTableView({ leads, onUpdateTrialStatus, onUpdateFollowUp, onEdit, onDelete }: LeadTableViewProps) {
+export function LeadTableView({ leads, onUpdateTrialStatus, onUpdateFollowUp, onEdit, onDelete, onConvertToTrial }: LeadTableViewProps) {
   return (
     <div className="rounded-md border">
       <Table>
