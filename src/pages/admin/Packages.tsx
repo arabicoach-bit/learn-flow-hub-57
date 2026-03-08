@@ -103,7 +103,7 @@ export default function Packages() {
   const { data: packages, isLoading } = usePackages();
   const { data: teachers } = useTeachers();
   const [searchQuery, setSearchQuery] = useState('');
-  const [filter, setFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
+  const [filter, setFilter] = useState<YearMonthFilterValue>({ year: null, month: null });
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [teacherFilter, setTeacherFilter] = useState('all');
   const [paymentFilter, setPaymentFilter] = useState('all');
