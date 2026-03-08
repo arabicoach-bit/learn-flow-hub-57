@@ -70,7 +70,7 @@ function getStatusStyle(status: string) {
   }
 }
 
-export function LessonCard({ lesson, onUpdated, showDate, readOnly }: LessonCardProps) {
+export function LessonCard({ lesson, onUpdated, showDate, readOnly, onDelete }: LessonCardProps) {
   const markLesson = useMarkScheduledLesson();
   const queryClient = useQueryClient();
   const [notes, setNotes] = useState(lesson.notes || '');
