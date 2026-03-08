@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Download, Pencil, Trash2, Users, UserCheck, AlertTriangle, PauseCircle } from 'lucide-react';
+import { Plus, Search, Download, Pencil, Trash2, Users, UserCheck, AlertTriangle, PauseCircle, XCircle, Percent } from 'lucide-react';
 import { format } from 'date-fns';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useStudents, useCreateStudent, useUpdateStudent, useDeleteStudent } from '@/hooks/use-students';
