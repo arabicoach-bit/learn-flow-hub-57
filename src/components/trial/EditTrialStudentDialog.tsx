@@ -99,6 +99,7 @@ export function EditTrialStudentDialog({ student, open, onOpenChange }: EditTria
         trial_date: formData.trial_date || undefined,
         trial_time: formData.trial_time || undefined,
         status: formData.status as TrialStatus || undefined,
+        conversion_status: formData.conversion_status as TrialConversionStatus || undefined,
         trial_result: formData.trial_result as TrialResult || undefined,
         notes: formData.notes || undefined,
         handled_by: formData.handled_by || undefined,
