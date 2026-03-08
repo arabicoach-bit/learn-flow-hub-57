@@ -15,7 +15,15 @@ export interface Notification {
   wallet_balance?: number | null;
 }
 
-export function useNotifications(limit = 50) {
+export interface NotificationFilters {
+  type?: string;
+  startDate?: string | null;
+  endDate?: string | null;
+  teacherId?: string | null;
+  limit?: number;
+}
+
+export function useNotifications(filters: NotificationFilters = {}) {
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -30,14 +38,35 @@ export function useNotifications(limit = 50) {
   }, [queryClient]);
 
   return useQuery({
-    queryKey: ['notifications', limit],
+    queryKey: ['notifications', filters],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let studentIds: string[] | null = null;
+
+      // If teacher filter, get that teacher's student IDs + trial IDs
+      if (filters.teacherId) {
+        const { data: students } = await supabase
+          .from('students').select('student_id').eq('teacher_id', filters.teacherId);
+        const { data: trials } = await supabase
+          .from('trial_students').select('trial_id').eq('teacher_id', filters.teacherId);
+        studentIds = [
+          ...(students?.map(s => s.student_id) || []),
+          ...(trials?.map(t => t.trial_id) || []),
+        ];
+        if (studentIds.length === 0) return [];
+      }
+
+      let query = supabase
         .from('notifications')
         .select('*')
-        .in('type', ACTIVE_TYPES)
-        .order('created_at', { ascending: false })
-        .limit(limit);
+        .in('type', filters.type && filters.type !== 'all' ? [filters.type] : [...ACTIVE_TYPES])
+        .order('created_at', { ascending: false });
+
+      if (filters.startDate) query = query.gte('created_at', filters.startDate + 'T00:00:00');
+      if (filters.endDate) query = query.lte('created_at', filters.endDate + 'T23:59:59');
+      if (studentIds) query = query.in('related_id', studentIds);
+      if (filters.limit) query = query.limit(filters.limit);
+
+      const { data, error } = await query;
       if (error) throw error;
       return data as Notification[];
     },
@@ -52,7 +81,7 @@ export function useUnreadNotificationsCount() {
         .from('notifications')
         .select('notification_id', { count: 'exact', head: true })
         .eq('is_read', false)
-        .in('type', ACTIVE_TYPES);
+        .in('type', [...ACTIVE_TYPES]);
       if (error) throw error;
       return count || 0;
     },
@@ -77,7 +106,7 @@ export function useTeacherNotifications(teacherId: string | null | undefined) {
         .from('notifications')
         .select('*')
         .in('related_id', allIds)
-        .in('type', ACTIVE_TYPES)
+        .in('type', [...ACTIVE_TYPES])
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data as Notification[];
@@ -105,7 +134,7 @@ export function useTeacherUnreadCount(teacherId: string | null | undefined) {
         .select('notification_id', { count: 'exact', head: true })
         .eq('is_read', false)
         .in('related_id', allIds)
-        .in('type', ACTIVE_TYPES);
+        .in('type', [...ACTIVE_TYPES]);
       if (error) throw error;
       return count || 0;
     },
@@ -140,7 +169,7 @@ export function useMarkAllNotificationsRead() {
         .from('notifications')
         .update({ is_read: true })
         .eq('is_read', false)
-        .in('type', ACTIVE_TYPES);
+        .in('type', [...ACTIVE_TYPES]);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -163,7 +192,6 @@ export function useParentPhone(relatedId: string | null, type: string) {
           .from('trial_students').select('phone').eq('trial_id', relatedId).maybeSingle();
         return data?.phone || null;
       }
-      // lesson_completed or new_package → student
       const { data } = await supabase
         .from('students').select('parent_phone, phone').eq('student_id', relatedId).maybeSingle();
       return data?.parent_phone || data?.phone || null;
