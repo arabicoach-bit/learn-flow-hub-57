@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Download, Pencil, Trash2 } from 'lucide-react';
+import { format } from 'date-fns';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useStudents, useCreateStudent, useUpdateStudent, useDeleteStudent } from '@/hooks/use-students';
 import { useTeachers } from '@/hooks/use-teachers';
@@ -16,6 +17,9 @@ import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { exportStudents, type StudentExport } from '@/lib/excel-export';
 import { EditStudentDialog } from '@/components/teacher/EditStudentDialog';
+import { YearMonthFilter, getDefaultFilter, getFilterDateRange, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
+import { LessonsCell } from '@/components/students/LessonsCell';
+import { NextLessonCell } from '@/components/students/NextLessonCell';
 import type { Student } from '@/hooks/use-students';
 
 export default function Students() {
@@ -23,6 +27,7 @@ export default function Students() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [teacherFilter, setTeacherFilter] = useState<string>('');
+  const [dateFilter, setDateFilter] = useState<YearMonthFilterValue>({ year: null, month: null });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editStudent, setEditStudent] = useState<Student | null>(null);
   const [deleteStudent, setDeleteStudent] = useState<Student | null>(null);
@@ -35,6 +40,17 @@ export default function Students() {
   const deleteStudentMutation = useDeleteStudent();
 
   const PROGRAMMES = ['Arabic A', 'Arabic B', 'IGCSE', 'Adult Course', 'Islamic Arabic'];
+
+  // Apply date filter on created_at
+  const filteredStudents = (() => {
+    if (!students) return [];
+    const { startDate, endDate } = getFilterDateRange(dateFilter);
+    if (!startDate || !endDate) return students;
+    return students.filter((s) => {
+      const created = s.created_at?.slice(0, 10);
+      return created && created >= startDate && created <= endDate;
+    });
+  })();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -92,11 +108,11 @@ export default function Students() {
             <Button
               variant="outline"
               onClick={() => {
-                if (!students || students.length === 0) {
+                if (!filteredStudents || filteredStudents.length === 0) {
                   toast({ title: 'No data to export', variant: 'destructive' });
                   return;
                 }
-                const exportData: StudentExport[] = students.map(s => ({
+                const exportData: StudentExport[] = filteredStudents.map(s => ({
                   name: s.name,
                   phone: s.phone,
                   parent_phone: s.parent_phone,
@@ -178,7 +194,7 @@ export default function Students() {
         </div>
 
         {/* Filters */}
-        <div className="flex gap-4 flex-wrap">
+        <div className="flex gap-4 flex-wrap items-center">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input placeholder="Search students..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
@@ -201,6 +217,7 @@ export default function Students() {
             <SelectItem value="Left">Left</SelectItem>
             </SelectContent>
           </Select>
+          <YearMonthFilter value={dateFilter} onChange={setDateFilter} />
         </div>
 
         {/* Table */}
@@ -208,11 +225,12 @@ export default function Students() {
           <table className="data-table">
             <thead>
               <tr>
+                <th>ID</th>
                 <th>Name</th>
-                <th>Phone</th>
-                <th>Programme</th>
                 <th>Teacher</th>
                 <th>Wallet</th>
+                <th>Lessons</th>
+                <th>Next Lesson</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
@@ -221,15 +239,15 @@ export default function Students() {
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i}>
-                    <td colSpan={7}><Skeleton className="h-8 w-full" /></td>
+                    <td colSpan={8}><Skeleton className="h-8 w-full" /></td>
                   </tr>
                 ))
-              ) : students?.length === 0 ? (
+              ) : filteredStudents.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-8 text-muted-foreground">No students found</td>
+                  <td colSpan={8} className="text-center py-8 text-muted-foreground">No students found</td>
                 </tr>
               ) : (
-              students?.map((student) => {
+              filteredStudents.map((student) => {
                   const wallet = student.wallet_balance || 0;
                   const isOverdue = wallet <= 0;
 
@@ -239,9 +257,21 @@ export default function Students() {
                       className="cursor-pointer hover:bg-muted/50 transition-colors"
                       onClick={() => navigate(`/admin/students/${student.student_id}`)}
                     >
-                      <td className="font-medium">{student.name}</td>
-                      <td>{student.phone}</td>
-                      <td>{student.programs?.name || '-'}</td>
+                      <td>
+                        <span className="text-xs text-muted-foreground font-mono">
+                          {student.student_id.slice(0, 8)}
+                        </span>
+                      </td>
+                      <td>
+                        <div>
+                          <span className="font-medium">{student.name}</span>
+                          {student.created_at && (
+                            <p className="text-xs text-muted-foreground">
+                              Joined {format(new Date(student.created_at), 'MMM yyyy')}
+                            </p>
+                          )}
+                        </div>
+                      </td>
                       <td>{student.teachers?.name || '-'}</td>
                       <td>
                         <span 
@@ -257,6 +287,12 @@ export default function Students() {
                         >
                           {student.wallet_balance}
                         </span>
+                      </td>
+                      <td onClick={(e) => e.stopPropagation()}>
+                        <LessonsCell studentId={student.student_id} />
+                      </td>
+                      <td onClick={(e) => e.stopPropagation()}>
+                        <NextLessonCell studentId={student.student_id} />
                       </td>
                       <td onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-2">
