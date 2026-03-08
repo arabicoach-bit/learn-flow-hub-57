@@ -1,4 +1,7 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { format } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
+import { YearMonthFilter, getDefaultFilter, getFilterDateRange } from '@/components/shared/YearMonthFilter';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useStudent, useUpdateStudent } from '@/hooks/use-students';
@@ -292,158 +295,299 @@ export default function StudentDetail() {
           </TabsList>
 
           <TabsContent value="payments">
-            <Card className="glass-card">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Packages</CardTitle>
-                <div className="flex gap-2 flex-wrap">
-                  {packages && packages.length > 0 && (
-                    <Button variant="outline" onClick={() => setIsRenewPackageOpen(true)} className="gap-2">
-                      <RefreshCw className="w-4 h-4" />
-                      Renew
-                    </Button>
-                  )}
-                  <Button onClick={() => setIsAddPackageOpen(true)} className="gap-2">
-                    <Plus className="w-4 h-4" />
-                    Add Package
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {packagesLoading ? (
-                  <div className="space-y-3">
-                    {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-12" />)}
+            {(() => {
+              const [pkgSearch, setPkgSearch] = React.useState('');
+              const [pkgStatusFilter, setPkgStatusFilter] = React.useState('all');
+              const [pkgPaymentFilter, setPkgPaymentFilter] = React.useState('all');
+              const [pkgFilter, setPkgFilter] = React.useState(getDefaultFilter());
+              const [nextLessons, setNextLessons] = React.useState<Record<string, string | null>>({});
+              const [lessonCounts, setLessonCounts] = React.useState<Record<string, number>>({});
+
+              React.useEffect(() => {
+                if (!packages?.length) return;
+                packages.forEach(async (pkg) => {
+                  const { data: next } = await supabase
+                    .from('scheduled_lessons')
+                    .select('scheduled_date, scheduled_time')
+                    .eq('package_id', pkg.package_id)
+                    .eq('status', 'scheduled')
+                    .order('scheduled_date', { ascending: true })
+                    .limit(1)
+                    .single();
+                  setNextLessons(prev => ({
+                    ...prev,
+                    [pkg.package_id]: next
+                      ? `${format(new Date(next.scheduled_date), 'dd MMM yy')} ${next.scheduled_time?.slice(0,5) || ''}`
+                      : null
+                  }));
+                  const { count } = await supabase
+                    .from('scheduled_lessons')
+                    .select('scheduled_lesson_id', { count: 'exact', head: true })
+                    .eq('package_id', pkg.package_id)
+                    .in('status', ['completed', 'absent']);
+                  setLessonCounts(prev => ({
+                    ...prev,
+                    [pkg.package_id]: count ?? 0
+                  }));
+                });
+              }, [packages]);
+
+              const { startDate: sd, endDate: ed } = getFilterDateRange(pkgFilter);
+
+              const fp = (packages || []).filter(pkg => {
+                const matchSearch = pkgSearch === ''
+                  || pkg.package_types?.name?.toLowerCase().includes(pkgSearch.toLowerCase())
+                  || (pkg as any).description?.toLowerCase().includes(pkgSearch.toLowerCase());
+                let matchPeriod = true;
+                if (sd && ed && pkg.created_at) {
+                  const d = pkg.created_at.slice(0,10);
+                  matchPeriod = d >= sd && d <= ed;
+                }
+                const matchStatus =
+                  pkgStatusFilter === 'all'
+                  || (pkgStatusFilter === 'Running' && (pkg.status === 'Active' || (pkg.status as string) === 'Running'))
+                  || (pkgStatusFilter === 'Completed' && pkg.status === 'Completed');
+                const matchPayment =
+                  pkgPaymentFilter === 'all'
+                  || pkg.payment_status === pkgPaymentFilter;
+                return matchSearch && matchPeriod && matchStatus && matchPayment;
+              });
+
+              const paidRev = fp.filter(p => p.payment_status === 'Paid').reduce((s,p) => s + (p.amount||0), 0);
+              const pendingRev = fp.filter(p => p.payment_status !== 'Paid').reduce((s,p) => s + (p.amount||0), 0);
+              const runningCnt = fp.filter(p => p.status === 'Active' || (p.status as string) === 'Running').length;
+              const completedCnt = fp.filter(p => p.status === 'Completed').length;
+
+              return (
+                <div className="space-y-4">
+                  {/* Stats */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="text-xl font-bold text-primary">AED {paidRev.toLocaleString()}</div>
+                        <div className="text-xs text-muted-foreground">Total Revenue</div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="text-xl font-bold text-amber-500">AED {pendingRev.toLocaleString()}</div>
+                        <div className="text-xs text-muted-foreground">Pending Payments</div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="text-xl font-bold text-emerald-500">{runningCnt}</div>
+                        <div className="text-xs text-muted-foreground">Running</div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="text-xl font-bold text-muted-foreground">{completedCnt}</div>
+                        <div className="text-xs text-muted-foreground">Completed</div>
+                      </CardContent>
+                    </Card>
                   </div>
-                ) : packagesError ? (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground mb-2">Couldn't load packages</p>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      {packagesError instanceof Error ? packagesError.message : 'Unknown error'}
-                    </p>
-                    <Button
-                      variant="outline"
-                      onClick={() => refetchPackages()}
-                      className="gap-2"
-                      disabled={packagesFetching}
-                    >
-                      {packagesFetching ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
+
+                  {/* Filters */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Input
+                      placeholder="Search packages..."
+                      value={pkgSearch}
+                      onChange={(e) => setPkgSearch(e.target.value)}
+                      className="w-48"
+                    />
+                    <YearMonthFilter value={pkgFilter} onChange={setPkgFilter} />
+                    <Select value={pkgStatusFilter} onValueChange={setPkgStatusFilter}>
+                      <SelectTrigger className="w-[130px] h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Status</SelectItem>
+                        <SelectItem value="Running">Running</SelectItem>
+                        <SelectItem value="Completed">Completed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={pkgPaymentFilter} onValueChange={setPkgPaymentFilter}>
+                      <SelectTrigger className="w-[130px] h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Payments</SelectItem>
+                        <SelectItem value="Paid">Paid</SelectItem>
+                        <SelectItem value="Pending">Pending</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Table Card */}
+                  <Card className="glass-card">
+                    <CardHeader className="flex flex-row items-center justify-between">
+                      <CardTitle>Packages</CardTitle>
+                      <div className="flex gap-2 flex-wrap">
+                        {packages && packages.length > 0 && (
+                          <Button variant="outline" onClick={() => setIsRenewPackageOpen(true)} className="gap-2">
+                            <RefreshCw className="w-4 h-4" />
+                            Renew
+                          </Button>
+                        )}
+                        <Button onClick={() => setIsAddPackageOpen(true)} className="gap-2">
+                          <Plus className="w-4 h-4" />
+                          Add Package
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {packagesLoading ? (
+                        <div className="space-y-3">
+                          {Array.from({length:3}).map((_,i) => (
+                            <Skeleton key={i} className="h-12" />
+                          ))}
+                        </div>
+                      ) : packagesError ? (
+                        <div className="text-center py-8">
+                          <p className="text-muted-foreground mb-2">Couldn't load packages</p>
+                          <Button
+                            variant="outline"
+                            onClick={() => refetchPackages()}
+                            className="gap-2"
+                            disabled={packagesFetching}
+                          >
+                            {packagesFetching ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                            Retry
+                          </Button>
+                        </div>
+                      ) : !fp.length ? (
+                        <div className="text-center py-8">
+                          <p className="text-muted-foreground mb-4">No packages found</p>
+                          <Button onClick={() => setIsAddPackageOpen(true)} className="gap-2">
+                            <Plus className="w-4 h-4" />
+                            Add First Package
+                          </Button>
+                        </div>
                       ) : (
-                        <RefreshCw className="w-4 h-4" />
-                      )}
-                      Retry
-                    </Button>
-                  </div>
-                ) : !packages?.length ? (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground mb-4">No packages yet</p>
-                    <Button onClick={() => setIsAddPackageOpen(true)} className="gap-2">
-                      <Plus className="w-4 h-4" />
-                      Add First Package
-                    </Button>
-                  </div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-10"></TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Package Name</TableHead>
-                        <TableHead>Description</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Lessons</TableHead>
-                        <TableHead>Used</TableHead>
-                        <TableHead>Duration</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {packages.map((pkg) => {
-                        const isExpanded = expandedPackageId === pkg.package_id;
-                        return (
-                          <>
-                            <TableRow 
-                              key={pkg.package_id}
-                              className="cursor-pointer hover:bg-muted/50"
-                              onClick={() => setExpandedPackageId(isExpanded ? null : pkg.package_id)}
-                            >
-                              <TableCell>
-                                {isExpanded ? (
-                                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                                ) : (
-                                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                                )}
-                              </TableCell>
-                              <TableCell>{formatDate(pkg.payment_date)}</TableCell>
-                              <TableCell className="font-medium">{pkg.package_types?.name || '-'}</TableCell>
-                              <TableCell className="text-muted-foreground text-sm">{pkg.package_types?.description || '-'}</TableCell>
-                              <TableCell className="font-medium">{formatCurrency(pkg.amount)}</TableCell>
-                              <TableCell>{pkg.lessons_purchased}</TableCell>
-                              <TableCell>{pkg.lessons_used}</TableCell>
-                              <TableCell>{pkg.lesson_duration ? `${pkg.lesson_duration} mins` : '-'}</TableCell>
-                              <TableCell>
-                                <Badge variant="outline" className={pkg.status === 'Active' ? 'status-active' : 'status-grace'}>
-                                  {pkg.status}
-                                </Badge>
-                              </TableCell>
-                              <TableCell onClick={(e) => e.stopPropagation()}>
-                                <div className="flex gap-1">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setEditPackage(pkg)}
-                                    className="gap-1 text-xs"
-                                  >
-                                    <Pencil className="w-3 h-3" />
-                                    Edit
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => {
-                                      setRenewPackageId(pkg.package_id);
-                                      setIsRenewPackageOpen(true);
-                                    }}
-                                    className="gap-1 text-xs"
-                                  >
-                                    <RefreshCw className="w-3 h-3" />
-                                    Renew
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setDeletePackageId(pkg.package_id)}
-                                    className="gap-1 text-xs text-destructive hover:text-destructive"
-                                  >
-                                    <Trash2 className="w-3 h-3" />
-                                    Delete
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                            {isExpanded && (
-                              <TableRow key={`${pkg.package_id}-lessons`}>
-                                <TableCell colSpan={10} className="bg-muted/30 p-4">
-                                  <div className="text-sm font-medium mb-2 text-muted-foreground">
-                                    Scheduled Lessons for this Package
-                                  </div>
-                                  <PackageLessonsTable
-                                    packageId={pkg.package_id}
-                                    studentId={id!}
-                                    teacherId={student.teacher_id || ''}
-                                    lessonDuration={pkg.lesson_duration || 45}
-                                  />
-                                </TableCell>
+                        <div className="overflow-x-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead className="w-10"></TableHead>
+                                <TableHead>Start</TableHead>
+                                <TableHead>Plan</TableHead>
+                                <TableHead>Description</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Lessons</TableHead>
+                                <TableHead>Next Lesson</TableHead>
+                                <TableHead>Payment</TableHead>
+                                <TableHead>Amount</TableHead>
+                                <TableHead>Kind</TableHead>
+                                <TableHead>Actions</TableHead>
                               </TableRow>
-                            )}
-                          </>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
+                            </TableHeader>
+                            <TableBody>
+                              {fp.map((pkg) => {
+                                const isExpanded = expandedPackageId === pkg.package_id;
+                                const used = lessonCounts[pkg.package_id] ?? 0;
+                                const nextLesson = nextLessons[pkg.package_id];
+                                return (
+                                  <React.Fragment key={pkg.package_id}>
+                                    <TableRow
+                                      className="cursor-pointer hover:bg-muted/50"
+                                      onClick={() => setExpandedPackageId(isExpanded ? null : pkg.package_id)}
+                                    >
+                                      <TableCell>
+                                        {isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+                                      </TableCell>
+                                      <TableCell>
+                                        {pkg.start_date ? format(new Date(pkg.start_date), 'dd MMM yy') : '-'}
+                                      </TableCell>
+                                      <TableCell className="font-medium">
+                                        {pkg.package_types?.name || 'Custom'}
+                                      </TableCell>
+                                      <TableCell className="text-muted-foreground text-sm">
+                                        {(pkg as any).description || '—'}
+                                      </TableCell>
+                                      <TableCell>
+                                        <Badge variant="outline" className={pkg.status === 'Active' ? 'status-active' : 'status-grace'}>
+                                          {pkg.status === 'Active' ? 'Running' : pkg.status}
+                                        </Badge>
+                                      </TableCell>
+                                      <TableCell>
+                                        {used}/{pkg.lessons_purchased}
+                                      </TableCell>
+                                      <TableCell>
+                                        {nextLesson ? (
+                                          <span className="text-xs text-muted-foreground">{nextLesson}</span>
+                                        ) : (
+                                          <span className="text-muted-foreground">—</span>
+                                        )}
+                                      </TableCell>
+                                      <TableCell>
+                                        <div className="space-y-0.5">
+                                          {pkg.payment_status === 'Paid' ? (
+                                            <>
+                                              <Badge variant="outline" className="text-emerald-500 border-emerald-500/30 text-[10px]">Paid</Badge>
+                                              <div className="text-[10px] text-muted-foreground">
+                                                {(pkg as any).paid_date || pkg.payment_date
+                                                  ? format(new Date((pkg as any).paid_date || pkg.payment_date), 'dd MMM, yyyy')
+                                                  : '—'}
+                                              </div>
+                                            </>
+                                          ) : (
+                                            <>
+                                              <Badge variant="outline" className="text-amber-500 border-amber-500/30 text-[10px]">Pending</Badge>
+                                              <div className="text-[10px] text-muted-foreground">
+                                                Due: {(pkg as any).due_date || pkg.start_date
+                                                  ? format(new Date((pkg as any).due_date || pkg.start_date), 'dd MMM, yyyy')
+                                                  : '—'}
+                                              </div>
+                                            </>
+                                          )}
+                                        </div>
+                                      </TableCell>
+                                      <TableCell className="font-medium">
+                                        {formatCurrency(pkg.amount)}
+                                      </TableCell>
+                                      <TableCell>
+                                        <Badge variant="secondary" className="text-[10px]">
+                                          {pkg.is_renewal ? 'Renewal' : 'New'}
+                                        </Badge>
+                                      </TableCell>
+                                      <TableCell onClick={(e) => e.stopPropagation()}>
+                                        <div className="flex gap-1">
+                                          <Button variant="ghost" size="sm" onClick={() => setEditPackage(pkg)} className="gap-1 text-xs">
+                                            <Pencil className="w-3 h-3" />
+                                            Edit
+                                          </Button>
+                                          <Button variant="ghost" size="sm" onClick={() => { setRenewPackageId(pkg.package_id); setIsRenewPackageOpen(true); }} className="gap-1 text-xs">
+                                            <RefreshCw className="w-3 h-3" />
+                                            Renew
+                                          </Button>
+                                          <Button variant="ghost" size="sm" onClick={() => setDeletePackageId(pkg.package_id)} className="gap-1 text-xs text-destructive hover:text-destructive">
+                                            <Trash2 className="w-3 h-3" />
+                                            Delete
+                                          </Button>
+                                        </div>
+                                      </TableCell>
+                                    </TableRow>
+                                    {isExpanded && (
+                                      <TableRow>
+                                        <TableCell colSpan={11} className="bg-muted/30 p-4">
+                                          <div className="text-sm font-medium mb-2 text-muted-foreground">Scheduled Lessons</div>
+                                          <PackageLessonsTable packageId={pkg.package_id} studentId={id!} teacherId={student.teacher_id || ''} lessonDuration={pkg.lesson_duration || 45} />
+                                        </TableCell>
+                                      </TableRow>
+                                    )}
+                                  </React.Fragment>
+                                );
+                              })}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              );
+            })()}
           </TabsContent>
 
           {/* Lessons Tab - Unified view identical for admin & teacher */}
