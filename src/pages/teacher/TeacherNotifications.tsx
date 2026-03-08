@@ -92,7 +92,7 @@ export default function TeacherNotifications() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{lessonCount}</p>
-                <p className="text-xs text-muted-foreground">Lessons</p>
+                <p className="text-xs text-muted-foreground">Completed Lessons</p>
               </div>
             </CardContent>
           </Card>
@@ -106,7 +106,7 @@ export default function TeacherNotifications() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{trialCount}</p>
-                <p className="text-xs text-muted-foreground">Trials</p>
+                <p className="text-xs text-muted-foreground">Trial Lessons</p>
               </div>
             </CardContent>
           </Card>
@@ -120,7 +120,7 @@ export default function TeacherNotifications() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{packageCount}</p>
-                <p className="text-xs text-muted-foreground">Packages</p>
+                <p className="text-xs text-muted-foreground">New Packages</p>
               </div>
             </CardContent>
           </Card>
@@ -135,9 +135,9 @@ export default function TeacherNotifications() {
               <TabsTrigger value="all" className="text-xs h-7 gap-1">
                 <Filter className="w-3 h-3" /> All
               </TabsTrigger>
-              <TabsTrigger value="lesson_completed" className="text-xs h-7">✅ Lessons</TabsTrigger>
+              <TabsTrigger value="lesson_completed" className="text-xs h-7">✅ Completed</TabsTrigger>
               <TabsTrigger value="trial_completed" className="text-xs h-7">🎓 Trials</TabsTrigger>
-              <TabsTrigger value="new_package" className="text-xs h-7">📦 Packages</TabsTrigger>
+              <TabsTrigger value="new_package" className="text-xs h-7">📦 New Packages</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
