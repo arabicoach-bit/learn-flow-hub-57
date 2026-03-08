@@ -254,7 +254,7 @@ function StudentPackagesTab({
   );
 }
 
-
+export default function StudentDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
