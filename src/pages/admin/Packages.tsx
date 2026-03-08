@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Package as PackageIcon, FileSpreadsheet, Search, Filter, CheckCircle, Pencil, FileText } from 'lucide-react';
+import { Package as PackageIcon, FileSpreadsheet, Search, Filter, CheckCircle, Pencil, FileText, MessageCircle } from 'lucide-react';
 import { Copy, Loader2, CheckCircle2, XCircle, Clock, Download } from 'lucide-react';
 import { usePackages, type Package } from '@/hooks/use-packages';
 import { usePackageSummary } from '@/hooks/use-package-summary';
@@ -224,16 +224,66 @@ export default function Packages() {
 
 
 
+  const generateWhatsAppSummary = (s: PackageSummary): string => {
+    const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const scheduleText = s.weekly_schedule?.length > 0
+      ? s.weekly_schedule.map(d => `${dayNames[d.day_of_week]} ${d.time_slot?.slice(0,5)}`).join(', ')
+      : '';
+    const completedCount2 = s.statistics.total_completed;
+    const absentCount = s.statistics.total_absent;
+    const scheduledCount = s.lessons.filter(l => l.status === 'scheduled').length;
+    const totalDone = completedCount2 + absentCount;
+    const attendanceRate = totalDone > 0 ? Math.round(completedCount2 / totalDone * 100) : 0;
+
+    const firstDate = s.lessons.length > 0 && s.lessons[0].date ? formatDate(s.lessons[0].date) : '';
+    const lastLesson = [...s.lessons].filter(l => l.date).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+    const endDate = lastLesson ? formatDate(lastLesson.date) : '';
+
+    let msg = `📋 *OAC Academy - Package Summary*\n\n`;
+    msg += `👤 *Student:* ${s.student_name}\n`;
+    if (s.teacher_name) msg += `👨‍🏫 *Teacher:* ${s.teacher_name}\n`;
+    if (scheduleText) msg += `📅 *Schedule:* ${scheduleText}\n`;
+    if (s.description) msg += `📝 *Description:* ${s.description}\n`;
+    msg += `\n`;
+    if (firstDate) msg += `🗓️ *Start:* ${firstDate}\n`;
+    if (endDate) msg += `🏁 *End:* ${endDate}\n`;
+    msg += `\n`;
+    msg += `📊 *Attendance Summary*\n`;
+    msg += `✅ Completed: ${completedCount2}\n`;
+    msg += `❌ Absent: ${absentCount}\n`;
+    msg += `🕐 Upcoming: ${scheduledCount}\n`;
+    msg += `📈 Attendance Rate: ${attendanceRate}%\n`;
+    msg += `\n`;
+
+    if (s.lessons.length > 0) {
+      msg += `📖 *Lesson Record*\n`;
+      s.lessons.forEach((l, i) => {
+        const icon = l.status === 'completed' ? '✅' : l.status === 'absent' ? '❌' : '🕐';
+        const date = l.date ? formatDate(l.date) : 'TBD';
+        const time = l.scheduled_time?.slice(0, 5) || '';
+        msg += `${i + 1}. ${date} ${time} ${icon}`;
+        if (l.notes?.trim()) msg += ` - ${l.notes.trim()}`;
+        msg += `\n`;
+      });
+      msg += `\n`;
+    }
+
+    msg += `Thank you for choosing OAC Academy! 🌟`;
+    return msg;
+  };
+
+  const handleShareWhatsApp = () => {
+    if (!summary) return;
+    const phone = (summary.parent_phone || summary.student_phone || '').replace(/[^0-9+]/g, '');
+    const text = generateWhatsAppSummary(summary);
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+  };
+
   const handleCopySummary = async () => {
     if (!summary) return;
-    const lines = [
-      `Student: ${summary.student_name}`,
-      `Teacher: ${summary.teacher_name || 'N/A'}`,
-      `Phone: ${summary.student_phone}`,
-      `Completed: ${summary.statistics.total_completed}`,
-      `Absent: ${summary.statistics.total_absent}`,
-    ];
-    await navigator.clipboard.writeText(lines.join('\n'));
+    const text = generateWhatsAppSummary(summary);
+    await navigator.clipboard.writeText(text);
     toast.success('Copied to clipboard!');
   };
 
@@ -930,6 +980,10 @@ export default function Packages() {
 
               {/* Actions */}
               <div className="flex flex-wrap gap-2 pt-4 border-t">
+                <Button onClick={handleShareWhatsApp} className="bg-[#25D366] hover:bg-[#25D366]/90 text-white">
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Share via WhatsApp
+                </Button>
                 <Button onClick={handleExportPDF} className="bg-[#2D3561] hover:bg-[#2D3561]/90">
                   <Download className="w-4 h-4 mr-2" />
                   Export PDF
