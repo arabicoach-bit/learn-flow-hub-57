@@ -661,14 +661,6 @@ export default function StudentDetail() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="parent_phone">Parent Phone</Label>
-                        <Input
-                          id="parent_phone"
-                          value={editForm.parent_phone}
-                          onChange={(e) => setEditForm({ ...editForm, parent_phone: e.target.value })}
-                        />
-                      </div>
-                      <div className="space-y-2">
                         <Label htmlFor="age">Age</Label>
                         <Input
                           id="age"
