@@ -551,7 +551,7 @@ export default function Packages() {
       const legendItems: { color: [number,number,number]; label: string }[] = [
         { color: green, label: 'Completed' },
         { color: red, label: 'Absent' },
-        { color: blue, label: 'Upcoming' },
+        { color: blue, label: 'Scheduled' },
       ];
       let lx = 14;
       legendItems.forEach(({ color, label }) => {
