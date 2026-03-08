@@ -24,6 +24,7 @@ import {
   Download
 } from 'lucide-react';
 import { useTrialStudents, useUpdateTrialStudent, useDeleteTrialStudent, type TrialStudent } from '@/hooks/use-trial-students';
+import { useTeachers } from '@/hooks/use-teachers';
 import { AddTrialStudentForm } from '@/components/trial/AddTrialStudentForm';
 import { TrialStudentCard } from '@/components/trial/TrialStudentCard';
 import { EditTrialStudentDialog } from '@/components/trial/EditTrialStudentDialog';
