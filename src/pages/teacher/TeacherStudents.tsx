@@ -8,12 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useStudents, Student } from '@/hooks/use-students';
+import { useStudents } from '@/hooks/use-students';
 import { usePrograms } from '@/hooks/use-programs';
 import { getWalletColor, getStatusDisplayLabel } from '@/lib/wallet-utils';
 import { StudentLessonsView } from '@/components/student/StudentLessonsView';
 import { StudentInfoView } from '@/components/student/StudentInfoView';
-import { GraduationCap, Search, Phone, ChevronDown, User, School, BookOpen, Calendar, Pencil, AlertTriangle, Users, UserCheck, PauseCircle, UserX, TrendingUp, ChevronRight } from 'lucide-react';
+import { GraduationCap, Search, Phone, ChevronDown, User, BookOpen, AlertTriangle, Users, UserCheck, PauseCircle, UserX, TrendingUp, ChevronRight } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { YearMonthFilter, getFilterDateRange, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
 
