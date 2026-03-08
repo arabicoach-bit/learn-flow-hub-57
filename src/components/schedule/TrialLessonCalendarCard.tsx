@@ -82,7 +82,7 @@ export function TrialLessonCalendarCard({ lesson, onUpdated, readOnly }: TrialLe
     queryClient.invalidateQueries({ queryKey: ['teacher-live-stats'] });
   };
 
-  const handleMark = async (newStatus: 'completed' | 'absent') => {
+  const handleMark = async (newStatus: 'completed' | 'absent' | 'scheduled') => {
     setIsUpdating(true);
     try {
       const { error } = await supabase
