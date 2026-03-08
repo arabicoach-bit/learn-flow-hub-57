@@ -134,9 +134,9 @@ export function usePackageSummary(packageId: string | null) {
         .from('packages')
         .select(`
           description,
-          students(
+          students!packages_student_id_fkey(
             teacher_id,
-            teachers(name)
+            teachers!students_teacher_id_fkey(name)
           )
         `)
         .eq('package_id', packageId)
