@@ -107,14 +107,6 @@ export function YearMonthFilter({ value, onChange }: YearMonthFilterProps) {
         </SelectContent>
       </Select>
 
-      <Button
-        variant={isAllTime ? 'secondary' : 'ghost'}
-        size="sm"
-        className="h-8 text-xs"
-        onClick={() => onChange({ year: null, month: null })}
-      >
-        All Time
-      </Button>
     </div>
   );
 }
