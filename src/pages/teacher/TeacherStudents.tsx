@@ -257,7 +257,7 @@ export default function TeacherStudents() {
                                 </TabsTrigger>
                                 <TabsTrigger value="profile" className="data-[state=active]:bg-muted">
                                   <User className="w-4 h-4 mr-1" />
-                                  Profile
+                                  Student Information
                                 </TabsTrigger>
                               </TabsList>
                               
