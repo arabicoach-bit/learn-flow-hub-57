@@ -222,12 +222,12 @@ export default function QuarterAnalysis() {
             )}
 
             {/* TEACHER KPIs */}
-            <SectionHeader title="Teacher KPIs" icon={<Users className="w-5 h-5" />} />
+            <SectionHeader title="Teachers" emoji="👨‍🏫" theme="teachers" />
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <KPICard title="Active Teachers" value={data.teachers.totalActiveTeachers} icon={<Users className="w-5 h-5" />} />
-              <KPICard title="Lessons Taught" value={data.teachers.lessonsTaughtThisQuarter} icon={<BookOpen className="w-5 h-5" />} />
-              <KPICard title="Total Hours" value={data.teachers.totalTeachingHours} icon={<Clock className="w-5 h-5" />} suffix="hrs" />
-              <KPICard title="Total Salary + Bonus" value={`AED ${data.teachers.totalSalary.toLocaleString()}`} icon={<DollarSign className="w-5 h-5" />} />
+              <KPICard title="Active Teachers" value={data.teachers.totalActiveTeachers} icon={<Users className="w-5 h-5" />} theme="teachers" />
+              <KPICard title="Lessons Taught" value={data.teachers.lessonsTaughtThisQuarter} icon={<BookOpen className="w-5 h-5" />} theme="teachers" />
+              <KPICard title="Total Hours" value={data.teachers.totalTeachingHours} icon={<Clock className="w-5 h-5" />} suffix="hrs" theme="teachers" />
+              <KPICard title="Total Salary + Bonus" value={`AED ${data.teachers.totalSalary.toLocaleString()}`} icon={<DollarSign className="w-5 h-5" />} theme="teachers" />
             </div>
 
             {/* Teacher performance table */}
