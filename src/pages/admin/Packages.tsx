@@ -293,9 +293,14 @@ export default function Packages() {
 
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
+    const contentW = pageWidth - 28;
     const navy: [number,number,number] = [45, 53, 97];
     const gold: [number,number,number] = [245, 197, 24];
     const darkText: [number,number,number] = [26, 26, 46];
+    const green: [number,number,number] = [34, 197, 94];
+    const red: [number,number,number] = [239, 68, 68];
+    const blue: [number,number,number] = [59, 130, 246];
+    const amber: [number,number,number] = [245, 158, 11];
 
     const loadImage = (src: string): Promise<string> =>
       new Promise((resolve) => {
@@ -333,24 +338,14 @@ export default function Packages() {
     doc.setLineWidth(1.5);
     doc.line(14, 48, pageWidth - 14, 48);
 
-    const reportMonth = format(new Date(), 'MMM yyyy');
     doc.setFontSize(8);
     doc.setTextColor(128, 128, 128);
     doc.text(
-      `Report Period: ${reportMonth}   |   Generated: ${format(new Date(), 'dd MMM yyyy, HH:mm')}`,
+      `Generated: ${format(new Date(), 'dd MMM yyyy, HH:mm')}`,
       pageWidth / 2, 53, { align: 'center' }
     );
 
     let y = 60;
-
-    // Student Info
-    doc.setFillColor(...navy);
-    doc.rect(14, y, pageWidth - 28, 8, 'F');
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(255, 255, 255);
-    doc.text('Student Information', 18, y + 6);
-    y += 14;
 
     const infoLine = (label: string, value: string, x: number, yPos: number) => {
       doc.setFontSize(9);
@@ -361,22 +356,61 @@ export default function Packages() {
       doc.text(value, x + doc.getTextWidth(label) + 2, yPos);
     };
 
-    const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    const scheduleText = summary.weekly_schedule?.length > 0
-      ? summary.weekly_schedule.map(s => `${dayNames[s.day_of_week]} ${s.time_slot?.slice(0,5)}`).join('  |  ')
-      : 'N/A';
+    // ── STUDENT INFO ──
+    doc.setFillColor(...navy);
+    doc.rect(14, y, contentW, 8, 'F');
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(255, 255, 255);
+    doc.text('Student Information', 18, y + 6);
+    y += 14;
 
     infoLine('Student Name: ', summary.student_name, 18, y);
     infoLine('Teacher: ', summary.teacher_name || 'N/A', 110, y);
     y += 6;
     infoLine('Phone: ', summary.student_phone, 18, y);
-    y += 6;
-    infoLine('Schedule: ', scheduleText, 18, y);
-    y += 12;
+    y += 10;
 
-    // Package Details
+    // ── WEEKLY SCHEDULE ──
+    const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    if (summary.weekly_schedule?.length > 0) {
+      doc.setFillColor(245, 247, 250);
+      doc.setDrawColor(210, 215, 225);
+      doc.setLineWidth(0.3);
+      const schedBoxH = 14;
+      doc.rect(14, y, contentW, schedBoxH, 'FD');
+
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(128, 128, 128);
+      doc.text('WEEKLY SCHEDULE', 18, y + 5);
+
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...navy);
+      const schedItems = summary.weekly_schedule
+        .sort((a, b) => a.day_of_week - b.day_of_week)
+        .map(s => `${dayNames[s.day_of_week]} ${s.time_slot?.slice(0,5)}`);
+
+      let schedX = 18;
+      schedItems.forEach((item, i) => {
+        // Draw pill background
+        const tw = doc.getTextWidth(item) + 6;
+        doc.setFillColor(...navy);
+        doc.roundedRect(schedX, y + 7, tw, 5.5, 1.5, 1.5, 'F');
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(255, 255, 255);
+        doc.text(item, schedX + 3, y + 11.5);
+        schedX += tw + 3;
+      });
+
+      y += schedBoxH + 6;
+    }
+
+    // ── PACKAGE DETAILS ──
     doc.setFillColor(...navy);
-    doc.rect(14, y, pageWidth - 28, 8, 'F');
+    doc.rect(14, y, contentW, 8, 'F');
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(255, 255, 255);
@@ -385,85 +419,166 @@ export default function Packages() {
 
     const firstLessonDate = summary.lessons.length > 0 && summary.lessons[0].date
       ? formatDate(summary.lessons[0].date) : 'N/A';
-
     const lastLesson = [...summary.lessons]
       .filter(l => l.date)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
     const endDateVal = lastLesson ? formatDate(lastLesson.date) : 'N/A';
-
     const descText = summary.description
-      || (summaryPkg
-        ? (filteredPackages.find(p => p.package_id === summaryPkg) as any)?.description
-        : null)
+      || (summaryPkg ? (filteredPackages.find(p => p.package_id === summaryPkg) as any)?.description : null)
       || 'N/A';
 
     infoLine('Start Date: ', firstLessonDate, 18, y);
     infoLine('End Date: ', endDateVal, 110, y);
     y += 6;
     infoLine('Description: ', descText, 18, y);
-    y += 6;
-    infoLine('Weekly Schedule: ', scheduleText, 18, y);
-    y += 12;
+    y += 10;
 
-    // Stats boxes
+    // ── PROGRESS BAR ──
     const totalLessons = summary.lessons.length;
     const completedCount2 = summary.statistics.total_completed;
     const absentCount = summary.statistics.total_absent;
     const scheduledCount = summary.lessons.filter(l => l.status === 'scheduled').length;
-    const completedPct = totalLessons > 0 ? Math.round(completedCount2 / totalLessons * 100) : 0;
-    const absentPct = totalLessons > 0 ? Math.round(absentCount / totalLessons * 100) : 0;
-    const scheduledPct = totalLessons > 0 ? Math.round(scheduledCount / totalLessons * 100) : 0;
+    const totalDone = completedCount2 + absentCount;
+    const progressPct = totalLessons > 0 ? Math.round((totalDone / totalLessons) * 100) : 0;
+    const attendanceRate = totalDone > 0 ? Math.round((completedCount2 / totalDone) * 100) : 0;
+    const attendanceColor: [number,number,number] = attendanceRate >= 80 ? green : attendanceRate >= 60 ? amber : red;
 
-    const boxW = (pageWidth - 28 - 8) / 3;
-    const boxH = 24;
+    // Progress bar background
+    doc.setFillColor(235, 238, 245);
+    doc.roundedRect(14, y, contentW, 8, 2, 2, 'F');
+    // Progress bar fill
+    const fillW = Math.max(0, (progressPct / 100) * contentW);
+    if (fillW > 0) {
+      doc.setFillColor(...navy);
+      doc.roundedRect(14, y, fillW, 8, 2, 2, 'F');
+    }
+    // Progress text
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(255, 255, 255);
+    if (fillW > 25) {
+      doc.text(`${progressPct}% Complete`, 14 + fillW / 2, y + 5.5, { align: 'center' });
+    }
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(128, 128, 128);
+    doc.text(`${totalDone} / ${totalLessons} lessons used`, pageWidth - 14, y + 5.5, { align: 'right' });
+    y += 14;
 
+    // ── 4 STAT BOXES ──
+    const boxW = (contentW - 9) / 4;
+    const boxH = 22;
+
+    // Completed
     doc.setFillColor(220, 252, 231);
-    doc.setDrawColor(34, 197, 94);
+    doc.setDrawColor(...green);
     doc.setLineWidth(0.5);
     doc.rect(14, y, boxW, boxH, 'FD');
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(34, 197, 94);
-    doc.text(`${completedCount2}`, 14 + boxW/2, y + 9, { align: 'center' });
-    doc.setFontSize(8);
-    doc.text(`${completedPct}%`, 14 + boxW/2, y + 15, { align: 'center' });
-    doc.setFontSize(7);
+    doc.setTextColor(...green);
+    doc.text(`${completedCount2}`, 14 + boxW/2, y + 10, { align: 'center' });
+    doc.setFontSize(6);
     doc.setFont('helvetica', 'normal');
-    doc.text('Completed', 14 + boxW/2, y + 21, { align: 'center' });
+    doc.text('COMPLETED', 14 + boxW/2, y + 18, { align: 'center' });
 
-    const b2x = 14 + boxW + 4;
+    // Absent
+    const b2x = 14 + boxW + 3;
     doc.setFillColor(254, 226, 226);
-    doc.setDrawColor(239, 68, 68);
+    doc.setDrawColor(...red);
     doc.rect(b2x, y, boxW, boxH, 'FD');
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(239, 68, 68);
-    doc.text(`${absentCount}`, b2x + boxW/2, y + 9, { align: 'center' });
-    doc.setFontSize(8);
-    doc.text(`${absentPct}%`, b2x + boxW/2, y + 15, { align: 'center' });
-    doc.setFontSize(7);
+    doc.setTextColor(...red);
+    doc.text(`${absentCount}`, b2x + boxW/2, y + 10, { align: 'center' });
+    doc.setFontSize(6);
     doc.setFont('helvetica', 'normal');
-    doc.text('Absent', b2x + boxW/2, y + 21, { align: 'center' });
+    doc.text('ABSENT', b2x + boxW/2, y + 18, { align: 'center' });
 
-    const b3x = b2x + boxW + 4;
+    // Upcoming
+    const b3x = b2x + boxW + 3;
     doc.setFillColor(219, 234, 254);
-    doc.setDrawColor(59, 130, 246);
+    doc.setDrawColor(...blue);
     doc.rect(b3x, y, boxW, boxH, 'FD');
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(59, 130, 246);
-    doc.text(`${scheduledCount}`, b3x + boxW/2, y + 9, { align: 'center' });
-    doc.setFontSize(8);
-    doc.text(`${scheduledPct}%`, b3x + boxW/2, y + 15, { align: 'center' });
-    doc.setFontSize(7);
+    doc.setTextColor(...blue);
+    doc.text(`${scheduledCount}`, b3x + boxW/2, y + 10, { align: 'center' });
+    doc.setFontSize(6);
     doc.setFont('helvetica', 'normal');
-    doc.text('Upcoming', b3x + boxW/2, y + 21, { align: 'center' });
+    doc.text('UPCOMING', b3x + boxW/2, y + 18, { align: 'center' });
 
-    y += boxH + 10;
+    // Attendance Rate
+    const b4x = b3x + boxW + 3;
+    doc.setFillColor(245, 245, 250);
+    doc.setDrawColor(...attendanceColor);
+    doc.rect(b4x, y, boxW, boxH, 'FD');
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...attendanceColor);
+    doc.text(`${attendanceRate}%`, b4x + boxW/2, y + 10, { align: 'center' });
+    doc.setFontSize(6);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 100, 100);
+    doc.text('ATTENDANCE', b4x + boxW/2, y + 18, { align: 'center' });
 
-    // Lesson Record
+    y += boxH + 8;
+
+    // ── VISUAL LESSON TIMELINE ──
+    if (totalLessons > 0) {
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(128, 128, 128);
+      doc.text('LESSON TIMELINE', 18, y);
+      y += 4;
+
+      const dotSize = 5;
+      const dotGap = 1.5;
+      const dotsPerRow = Math.floor(contentW / (dotSize + dotGap));
+      let dx = 14;
+
+      summary.lessons.forEach((lesson, idx) => {
+        const color: [number,number,number] = lesson.status === 'completed' ? green
+          : lesson.status === 'absent' ? red : blue;
+
+        doc.setFillColor(...color);
+        doc.roundedRect(dx, y, dotSize, dotSize, 1, 1, 'F');
+        doc.setFontSize(5);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(255, 255, 255);
+        doc.text(`${idx + 1}`, dx + dotSize / 2, y + 3.5, { align: 'center' });
+
+        dx += dotSize + dotGap;
+        if ((idx + 1) % dotsPerRow === 0) {
+          dx = 14;
+          y += dotSize + dotGap;
+        }
+      });
+
+      y += dotSize + 4;
+
+      // Legend
+      const legendItems: { color: [number,number,number]; label: string }[] = [
+        { color: green, label: 'Completed' },
+        { color: red, label: 'Absent' },
+        { color: blue, label: 'Upcoming' },
+      ];
+      let lx = 14;
+      legendItems.forEach(({ color, label }) => {
+        doc.setFillColor(...color);
+        doc.rect(lx, y, 3, 3, 'F');
+        doc.setFontSize(6);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 100, 100);
+        doc.text(label, lx + 5, y + 2.5);
+        lx += doc.getTextWidth(label) + 12;
+      });
+      y += 10;
+    }
+
+    // ── LESSON RECORD TABLE ──
     if (summary.lessons.length > 0) {
-      doc.setFontSize(11);
+      doc.setFontSize(10);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...navy);
       doc.text('Lesson Record', 14, y);
@@ -485,23 +600,21 @@ export default function Packages() {
           textColor: [255, 255, 255],
           fontSize: 9,
           fontStyle: 'bold',
-          cellPadding: 4,
+          cellPadding: 3,
         },
         bodyStyles: {
-          fontSize: 8.5,
+          fontSize: 8,
           textColor: darkText,
-          cellPadding: 4,
-          minCellHeight: 10,
+          cellPadding: 3,
+          minCellHeight: 8,
         },
-        alternateRowStyles: {
-          fillColor: [248, 249, 252],
-        },
+        alternateRowStyles: { fillColor: [248, 249, 252] },
         columnStyles: {
           0: { cellWidth: 10, fontStyle: 'bold', halign: 'center' },
-          1: { cellWidth: 30, fontStyle: 'bold' },
+          1: { cellWidth: 28, fontStyle: 'bold' },
           2: { cellWidth: 18, halign: 'center' },
           3: { cellWidth: 22, halign: 'center' },
-          4: { cellWidth: 28 },
+          4: { cellWidth: 26 },
           5: { cellWidth: 'auto' },
         },
         didParseCell: (data) => {
@@ -517,9 +630,9 @@ export default function Packages() {
               : status === 'Absent' ? [220, 38, 38]
               : [37, 99, 235];
             doc.setTextColor(...color);
-            doc.setFontSize(8.5);
+            doc.setFontSize(8);
             doc.setFont('helvetica', 'bold');
-            doc.text(status, data.cell.x + 2, data.cell.y + data.cell.height / 2 + 3);
+            doc.text(status, data.cell.x + 2, data.cell.y + data.cell.height / 2 + 2.5);
             doc.setTextColor(...darkText);
             doc.setFont('helvetica', 'normal');
           }
@@ -532,32 +645,32 @@ export default function Packages() {
       });
 
       y = (doc as any).lastAutoTable?.finalY || y + 10;
-      y += 8;
+      y += 6;
     }
 
-    // Teacher Notes
+    // ── TEACHER NOTES ──
     const lessonNotes = summary.lessons
       .filter(l => l.notes?.trim())
       .map((l, i) => `${i + 1}. ${l.date ? formatDate(l.date) : ''}: ${l.notes}`);
 
     if (lessonNotes.length > 0) {
-      doc.setFontSize(11);
+      doc.setFontSize(10);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...navy);
       doc.text('Teacher Notes', 14, y);
-      y += 6;
+      y += 5;
       doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(...darkText);
       lessonNotes.forEach(note => {
-        const lines = doc.splitTextToSize(note, pageWidth - 28);
+        const lines = doc.splitTextToSize(note, contentW);
         doc.text(lines, 14, y);
-        y += lines.length * 5;
+        y += lines.length * 4.5;
       });
-      y += 6;
+      y += 4;
     }
 
-    // Footer
+    // ── FOOTER ──
     const footerY = Math.max(y + 10, doc.internal.pageSize.getHeight() - 25);
     doc.setDrawColor(...gold);
     doc.setLineWidth(0.5);
