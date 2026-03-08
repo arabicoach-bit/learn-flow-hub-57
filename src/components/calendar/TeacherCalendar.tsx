@@ -63,8 +63,8 @@ export function TeacherCalendar({ teacherId }: TeacherCalendarProps) {
   const isToday = selectedDate && format(selectedDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <Card className="lg:col-span-2 glass-card">
+    <div className="space-y-6">
+      <Card className="glass-card">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <CardTitle className="flex items-center gap-2">
