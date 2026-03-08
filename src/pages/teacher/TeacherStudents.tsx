@@ -8,12 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useStudents, Student } from '@/hooks/use-students';
+import { useStudents } from '@/hooks/use-students';
 import { usePrograms } from '@/hooks/use-programs';
 import { getWalletColor, getStatusDisplayLabel } from '@/lib/wallet-utils';
-import { EditStudentDialog } from '@/components/teacher/EditStudentDialog';
 import { StudentLessonsView } from '@/components/student/StudentLessonsView';
-import { GraduationCap, Search, Phone, ChevronDown, User, School, BookOpen, Calendar, Pencil, AlertTriangle, Users, UserCheck, PauseCircle, UserX, TrendingUp, ChevronRight } from 'lucide-react';
+import { StudentInfoView } from '@/components/student/StudentInfoView';
+import { GraduationCap, Search, Phone, ChevronDown, User, BookOpen, AlertTriangle, Users, UserCheck, PauseCircle, UserX, TrendingUp, ChevronRight } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { YearMonthFilter, getFilterDateRange, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
 
@@ -24,7 +24,7 @@ export default function TeacherStudents() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set());
-  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+  
   const [studentFilter, setStudentFilter] = useState<YearMonthFilterValue>({ year: null, month: null });
 
   const { data: students, isLoading: studentsLoading } = useStudents();
@@ -257,7 +257,7 @@ export default function TeacherStudents() {
                                 </TabsTrigger>
                                 <TabsTrigger value="profile" className="data-[state=active]:bg-muted">
                                   <User className="w-4 h-4 mr-1" />
-                                  Profile
+                                  Student Information
                                 </TabsTrigger>
                               </TabsList>
                               
@@ -272,70 +272,7 @@ export default function TeacherStudents() {
                               </TabsContent>
 
                               <TabsContent value="profile" className="p-4 mt-0">
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                  {student.age && (
-                                    <div className="flex items-center gap-2 text-sm">
-                                      <User className="w-4 h-4 text-muted-foreground" />
-                                      <span className="text-muted-foreground">Age:</span>
-                                      <span className="font-medium">{student.age} years</span>
-                                    </div>
-                                  )}
-                                  {student.gender && (
-                                    <div className="flex items-center gap-2 text-sm">
-                                      <User className="w-4 h-4 text-muted-foreground" />
-                                      <span className="text-muted-foreground">Gender:</span>
-                                      <span className="font-medium">{student.gender}</span>
-                                    </div>
-                                  )}
-                                  {student.school && (
-                                    <div className="flex items-center gap-2 text-sm">
-                                      <School className="w-4 h-4 text-muted-foreground" />
-                                      <span className="text-muted-foreground">School:</span>
-                                      <span className="font-medium">{student.school}</span>
-                                    </div>
-                                  )}
-                                  {student.year_group && (
-                                    <div className="flex items-center gap-2 text-sm">
-                                      <Calendar className="w-4 h-4 text-muted-foreground" />
-                                      <span className="text-muted-foreground">Year Group:</span>
-                                      <span className="font-medium">{student.year_group}</span>
-                                    </div>
-                                  )}
-                                  {programName && (
-                                    <div className="flex items-center gap-2 text-sm">
-                                      <BookOpen className="w-4 h-4 text-muted-foreground" />
-                                      <span className="text-muted-foreground">Program:</span>
-                                      <span className="font-medium">{programName}</span>
-                                    </div>
-                                  )}
-                                  {student.student_level && (
-                                    <div className="flex items-center gap-2 text-sm">
-                                      <GraduationCap className="w-4 h-4 text-muted-foreground" />
-                                      <span className="text-muted-foreground">Level:</span>
-                                      <span className="font-medium">{student.student_level}</span>
-                                    </div>
-                                  )}
-                                  {student.nationality && (
-                                    <div className="flex items-center gap-2 text-sm">
-                                      <User className="w-4 h-4 text-muted-foreground" />
-                                      <span className="text-muted-foreground">Nationality:</span>
-                                      <span className="font-medium">{student.nationality}</span>
-                                    </div>
-                                  )}
-                                </div>
-                                <div className="mt-4 flex justify-end">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setEditingStudent(student);
-                                    }}
-                                  >
-                                    <Pencil className="w-4 h-4 mr-2" />
-                                    Edit Profile
-                                  </Button>
-                                </div>
+                                <StudentInfoView student={student} role="teacher" />
                               </TabsContent>
                             </Tabs>
                           </div>
@@ -351,11 +288,8 @@ export default function TeacherStudents() {
           </CardContent>
         </Card>
 
-        <EditStudentDialog
-          student={editingStudent}
-          open={!!editingStudent}
-          onOpenChange={(open) => !open && setEditingStudent(null)}
-        />
+
+
       </div>
     </TeacherLayout>
   );

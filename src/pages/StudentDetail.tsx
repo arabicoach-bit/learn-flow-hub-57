@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { YearMonthFilter, getDefaultFilter, getFilterDateRange } from '@/components/shared/YearMonthFilter';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { AdminLayout } from '@/components/layout/AdminLayout';
-import { useStudent, useUpdateStudent } from '@/hooks/use-students';
+import { useStudent } from '@/hooks/use-students';
 import { usePackages, Package, useDeletePackage } from '@/hooks/use-packages';
 
 import { useTeachers } from '@/hooks/use-teachers';
@@ -24,6 +24,7 @@ import { toast } from 'sonner';
 import { ArrowLeft, User, Wallet, CreditCard, BookOpen, Loader2, Plus, RefreshCw, Pencil, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { getWalletColor, getStatusBadgeClass, formatCurrency, formatDate, formatDateTime, getStatusDisplayLabel } from '@/lib/wallet-utils';
 import { StudentLessonsView } from '@/components/student/StudentLessonsView';
+import { StudentInfoView } from '@/components/student/StudentInfoView';
 import { AddPackageForm } from '@/components/packages/AddPackageForm';
 import { RenewPackageForm } from '@/components/packages/RenewPackageForm';
 import { EditPackageDialog } from '@/components/packages/EditPackageDialog';
@@ -276,7 +277,6 @@ export default function StudentDetail() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const defaultTab = searchParams.get('tab') || 'payments';
-  const [isEditing, setIsEditing] = useState(false);
   const [isAddPackageOpen, setIsAddPackageOpen] = useState(false);
   const [isRenewPackageOpen, setIsRenewPackageOpen] = useState(false);
   
@@ -284,19 +284,6 @@ export default function StudentDetail() {
   const [editPackage, setEditPackage] = useState<Package | null>(null);
   const [expandedPackageId, setExpandedPackageId] = useState<string | null>(null);
   const [deletePackageId, setDeletePackageId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({
-    name: '',
-    phone: '',
-    parent_guardian_name: '',
-    age: '',
-    gender: '',
-    nationality: '',
-    school: '',
-    year_group: '',
-    program_id: '',
-    student_level: '',
-    teacher_id: '',
-  });
 
   const { data: student, isLoading: studentLoading } = useStudent(id || '');
   const packagesQuery = usePackages(id);
@@ -308,54 +295,7 @@ export default function StudentDetail() {
     refetch: refetchPackages,
   } = packagesQuery;
   
-  const { data: teachers } = useTeachers();
-  const { data: programs } = usePrograms();
-  const updateStudent = useUpdateStudent();
   const deletePackage = useDeletePackage();
-
-  const startEditing = () => {
-    if (student) {
-      setEditForm({
-        name: student.name,
-        phone: student.phone,
-        parent_guardian_name: student.parent_guardian_name || '',
-        age: student.age?.toString() || '',
-        gender: student.gender || '',
-        nationality: student.nationality || '',
-        school: student.school || '',
-        year_group: student.year_group || '',
-        program_id: student.program_id || '',
-        student_level: student.student_level || '',
-        teacher_id: student.teacher_id || '',
-      });
-      setIsEditing(true);
-    }
-  };
-
-  const handleSave = async () => {
-    if (!id) return;
-    
-    try {
-      await updateStudent.mutateAsync({
-        studentId: id,
-        name: editForm.name,
-        phone: editForm.phone,
-        parent_guardian_name: editForm.parent_guardian_name || null,
-        age: editForm.age ? parseInt(editForm.age) : null,
-        gender: editForm.gender || null,
-        nationality: editForm.nationality || null,
-        school: editForm.school || null,
-        year_group: editForm.year_group || null,
-        program_id: editForm.program_id || null,
-        student_level: editForm.student_level || null,
-        teacher_id: editForm.teacher_id || null,
-      });
-      toast.success('Student updated successfully');
-      setIsEditing(false);
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to update student');
-    }
-  };
 
   if (studentLoading) {
     return (
@@ -560,199 +500,9 @@ export default function StudentDetail() {
             />
           </TabsContent>
 
-          {/* Edit Info Tab */}
+          {/* Student Information Tab */}
           <TabsContent value="edit">
-            <Card className="glass-card">
-              <CardHeader>
-                <CardTitle>Edit Student Information</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {!isEditing ? (
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Name</p>
-                        <p className="font-medium">{student.name}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Phone</p>
-                        <p className="font-medium">{student.phone}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Parent/Guardian</p>
-                        <p className="font-medium">{student.parent_guardian_name || '-'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Age</p>
-                        <p className="font-medium">{student.age || '-'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Gender</p>
-                        <p className="font-medium">{student.gender || '-'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Nationality</p>
-                        <p className="font-medium">{student.nationality || '-'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">School</p>
-                        <p className="font-medium">{student.school || '-'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Year Group</p>
-                        <p className="font-medium">{student.year_group || '-'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Program</p>
-                        <p className="font-medium">{student.programs?.name || '-'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Level</p>
-                        <p className="font-medium">{student.student_level || '-'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Teacher</p>
-                        <p className="font-medium">{student.teachers?.name || '-'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Total Paid</p>
-                        <p className="font-medium">{formatCurrency(student.total_paid || 0)}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Renewals</p>
-                        <p className="font-medium">{student.number_of_renewals || 0}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Joined</p>
-                        <p className="font-medium">{formatDate(student.created_at)}</p>
-                      </div>
-                    </div>
-                    <Button onClick={startEditing}>Edit Information</Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="name">Name *</Label>
-                        <Input
-                          id="name"
-                          value={editForm.name}
-                          onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="phone">Phone *</Label>
-                        <Input
-                          id="phone"
-                          value={editForm.phone}
-                          onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="parent_guardian_name">Parent/Guardian Name</Label>
-                        <Input
-                          id="parent_guardian_name"
-                          value={editForm.parent_guardian_name}
-                          onChange={(e) => setEditForm({ ...editForm, parent_guardian_name: e.target.value })}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="age">Age</Label>
-                        <Input
-                          id="age"
-                          type="number"
-                          value={editForm.age}
-                          onChange={(e) => setEditForm({ ...editForm, age: e.target.value })}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Gender</Label>
-                        <Select value={editForm.gender} onValueChange={(v) => setEditForm({ ...editForm, gender: v })}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select gender" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Male">Male</SelectItem>
-                            <SelectItem value="Female">Female</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="nationality">Nationality</Label>
-                        <Input
-                          id="nationality"
-                          value={editForm.nationality}
-                          onChange={(e) => setEditForm({ ...editForm, nationality: e.target.value })}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="school">School</Label>
-                        <Input
-                          id="school"
-                          value={editForm.school}
-                          onChange={(e) => setEditForm({ ...editForm, school: e.target.value })}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="year_group">Year Group</Label>
-                        <Input
-                          id="year_group"
-                          value={editForm.year_group}
-                          onChange={(e) => setEditForm({ ...editForm, year_group: e.target.value })}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Program</Label>
-                        <Select value={editForm.program_id} onValueChange={(v) => setEditForm({ ...editForm, program_id: v })}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select program" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {programs?.map((program) => (
-                              <SelectItem key={program.program_id} value={program.program_id}>{program.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Level</Label>
-                        <Select value={editForm.student_level} onValueChange={(v) => setEditForm({ ...editForm, student_level: v })}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select level" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Beginner">Beginner</SelectItem>
-                            <SelectItem value="Elementary">Elementary</SelectItem>
-                            <SelectItem value="Intermediate">Intermediate</SelectItem>
-                            <SelectItem value="Advanced">Advanced</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Teacher</Label>
-                        <Select value={editForm.teacher_id} onValueChange={(v) => setEditForm({ ...editForm, teacher_id: v })}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select teacher" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {teachers?.map((teacher) => (
-                              <SelectItem key={teacher.teacher_id} value={teacher.teacher_id}>{teacher.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button onClick={handleSave} disabled={updateStudent.isPending}>
-                        {updateStudent.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                        Save Changes
-                      </Button>
-                      <Button variant="outline" onClick={() => setIsEditing(false)}>Cancel</Button>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <StudentInfoView student={student} role="admin" />
           </TabsContent>
         </Tabs>
       </div>
