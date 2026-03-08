@@ -277,7 +277,6 @@ export default function StudentDetail() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const defaultTab = searchParams.get('tab') || 'payments';
-  const [isEditing, setIsEditing] = useState(false);
   const [isAddPackageOpen, setIsAddPackageOpen] = useState(false);
   const [isRenewPackageOpen, setIsRenewPackageOpen] = useState(false);
   
@@ -285,19 +284,6 @@ export default function StudentDetail() {
   const [editPackage, setEditPackage] = useState<Package | null>(null);
   const [expandedPackageId, setExpandedPackageId] = useState<string | null>(null);
   const [deletePackageId, setDeletePackageId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({
-    name: '',
-    phone: '',
-    parent_guardian_name: '',
-    age: '',
-    gender: '',
-    nationality: '',
-    school: '',
-    year_group: '',
-    program_id: '',
-    student_level: '',
-    teacher_id: '',
-  });
 
   const { data: student, isLoading: studentLoading } = useStudent(id || '');
   const packagesQuery = usePackages(id);
