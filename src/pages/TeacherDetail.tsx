@@ -605,7 +605,8 @@ export default function TeacherDetail() {
 }
 
 // ── Today Lesson Row with inline actions ──
-function TodayLessonRow({ lesson, onUpdated }: { lesson: any; onUpdated: () => void }) {
+
+
   const markLesson = useMarkScheduledLesson();
   const updateLesson = useUpdateScheduledLesson();
   const queryClient = useQueryClient();
