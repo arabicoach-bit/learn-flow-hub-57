@@ -20,6 +20,7 @@ import type { Database } from '@/integrations/supabase/types';
 
 type TrialStatus = Database['public']['Enums']['trial_status'];
 type TrialResult = Database['public']['Enums']['trial_result'];
+type TrialConversionStatus = 'Pending' | 'Converted' | 'Lost';
 
 interface EditTrialStudentDialogProps {
   student: TrialStudent | null;
