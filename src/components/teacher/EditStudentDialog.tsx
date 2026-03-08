@@ -112,6 +112,14 @@ export function EditStudentDialog({ student, open, onOpenChange }: EditStudentDi
             </div>
           </div>
 
+          <div className="space-y-2">
+            <Label>Parent Name</Label>
+            <Input
+              value={formData.parent_guardian_name}
+              onChange={(e) => setFormData({ ...formData, parent_guardian_name: e.target.value })}
+            />
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Age</Label>
