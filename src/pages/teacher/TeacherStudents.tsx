@@ -183,17 +183,6 @@ export default function TeacherStudents() {
                   <SelectItem value="Left">Left</SelectItem>
                 </SelectContent>
               </Select>
-              {usedPrograms.length > 0 && (
-                <Select value={programFilter || 'all'} onValueChange={(v) => setProgramFilter(v === 'all' ? '' : v)}>
-                  <SelectTrigger className="w-[150px]"><SelectValue placeholder="All Programs" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Programs</SelectItem>
-                    {usedPrograms.map(p => (
-                      <SelectItem key={p.program_id} value={p.program_id}>{p.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
               <YearMonthFilter value={studentFilter} onChange={setStudentFilter} />
               <div className="flex border rounded-md">
                 <Button variant={viewMode === 'cards' ? 'secondary' : 'ghost'} size="sm" onClick={() => setViewMode('cards')}>
