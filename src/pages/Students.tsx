@@ -424,7 +424,7 @@ export default function Students() {
                             </SelectItem>
                           </SelectContent>
                         </Select>
-                        {isOverdue && (
+                        {isOverdue && student.status === 'Active' && (
                           <Badge variant="outline" className="bg-red-500/20 text-red-700 dark:text-red-300 border-red-500/30 text-xs">
                             Overdue
                           </Badge>
