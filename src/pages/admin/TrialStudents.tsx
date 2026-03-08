@@ -43,7 +43,7 @@ export default function TrialStudents() {
   const [editingStudent, setEditingStudent] = useState<TrialStudent | null>(null);
   const [convertingStudent, setConvertingStudent] = useState<TrialStudent | null>(null);
   const { toast } = useToast();
-  const [dateFilter, setDateFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
+  const [dateFilter, setDateFilter] = useState<YearMonthFilterValue>({ year: null, month: null });
 
   const { data: trialStudents, isLoading, refetch } = useTrialStudents({
     status: statusFilter === 'all' ? undefined : statusFilter,

@@ -37,7 +37,7 @@ const followUpOptions = [
 export default function Leads() {
   const [search, setSearch] = useState('');
   const [trialStatusFilter, setTrialStatusFilter] = useState<string>('all');
-  const [dateFilter, setDateFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
+  const [dateFilter, setDateFilter] = useState<YearMonthFilterValue>({ year: null, month: null });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const { toast } = useToast();
