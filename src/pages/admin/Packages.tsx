@@ -222,44 +222,7 @@ export default function Packages() {
     }
   };
 
-  const generateSummaryText = (s: PackageSummary): string => {
-    const lines = [
-      `📋 PACKAGE COMPLETION SUMMARY`,
-      `═══════════════════════════════`,
-      ``,
-      `👤 Student: ${s.student_name}`,
-      `📞 Phone: ${s.student_phone}`,
-      s.parent_phone ? `👨‍👩‍👧 Parent: ${s.parent_phone}` : '',
-      s.teacher_name ? `👩‍🏫 Teacher: ${s.teacher_name}` : '',
-      ``,
-      `💰 Package Details:`,
-      `   Amount Paid: ${formatCurrency(s.amount)}`,
-      `   Lessons Purchased: ${s.lessons_purchased}`,
-      `   Lessons Used: ${s.lessons_used}`,
-      `   Payment Date: ${s.payment_date ? format(new Date(s.payment_date), 'dd MMM yyyy') : 'N/A'}`,
-      s.completed_date ? `   Completed: ${format(new Date(s.completed_date), 'dd MMM yyyy')}` : '',
-      ``,
-      `📊 Statistics:`,
-      `   ✅ Completed: ${s.statistics.total_completed}`,
-      `   ❌ Absent: ${s.statistics.total_absent}`,
-      ``,
-      `📅 Lesson History:`,
-      `───────────────────────────────`,
-    ];
-    if (s.lessons.length > 0) {
-      s.lessons.forEach((lesson, idx) => {
-        const statusIcon = lesson.status === 'completed' ? '✅' : lesson.status === 'absent' ? '❌' : '🕐';
-        lines.push(`${idx + 1}. ${lesson.date ? format(new Date(lesson.date), 'dd MMM yyyy') : 'N/A'} - ${statusIcon} ${lesson.status}`);
-        lines.push(`   Time: ${lesson.scheduled_time?.slice(0, 5) || '-'} | Duration: ${lesson.duration_minutes || '-'} min`);
-        if (lesson.notes) lines.push(`   Notes: ${lesson.notes}`);
-      });
-    } else {
-      lines.push(`   No lessons recorded.`);
-    }
-    lines.push(``, `═══════════════════════════════`);
-    lines.push(`Generated on ${new Date().toLocaleDateString()}`);
-    return lines.filter(l => l !== '').join('\n');
-  };
+
 
   const handleCopySummary = async () => {
     if (!summary) return;
