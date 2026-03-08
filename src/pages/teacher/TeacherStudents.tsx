@@ -24,7 +24,7 @@ export default function TeacherStudents() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set());
-  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+  
   const [studentFilter, setStudentFilter] = useState<YearMonthFilterValue>({ year: null, month: null });
 
   const { data: students, isLoading: studentsLoading } = useStudents();
