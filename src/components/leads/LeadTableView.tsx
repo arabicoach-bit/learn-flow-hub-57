@@ -12,6 +12,7 @@ interface LeadTableViewProps {
   onUpdateLeadStatus: (leadId: string, status: string) => void;
   onUpdateTrialStatus: (leadId: string, trialStatus: string) => void;
   onUpdateFollowUp: (leadId: string, followUp: string) => void;
+  onUpdateHandledBy: (leadId: string, handledBy: string) => void;
   onEdit: (lead: Lead) => void;
   onDelete: (leadId: string) => void;
   onConvertToTrial?: (lead: Lead) => void;
