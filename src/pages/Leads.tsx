@@ -176,6 +176,7 @@ export default function Leads() {
           ) : (
             <LeadTableView
               leads={filteredLeads}
+              onUpdateLeadStatus={handleUpdateLeadStatus}
               onUpdateTrialStatus={handleUpdateTrialStatus}
               onUpdateFollowUp={handleUpdateFollowUp}
               onEdit={setEditingLead}
