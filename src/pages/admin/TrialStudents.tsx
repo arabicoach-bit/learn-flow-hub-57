@@ -123,11 +123,14 @@ export default function TrialStudents() {
   const filteredTrialStudents = useMemo(() => {
     if (!trialStudents) return [];
     return trialStudents.filter(s => {
-      if (!filterStart || !filterEnd) return true;
-      const created = s.created_at?.slice(0, 10) || '';
-      return created >= filterStart && created <= filterEnd;
+      if (filterStart && filterEnd) {
+        const created = s.created_at?.slice(0, 10) || '';
+        if (created < filterStart || created > filterEnd) return false;
+      }
+      if (teacherFilter !== 'all' && s.teacher_id !== teacherFilter) return false;
+      return true;
     });
-  }, [trialStudents, filterStart, filterEnd]);
+  }, [trialStudents, filterStart, filterEnd, teacherFilter]);
 
   // Stats based on filtered data
   const stats = {
@@ -137,6 +140,10 @@ export default function TrialStudents() {
     converted: filteredTrialStudents.filter(s => s.status === 'Converted').length,
     lost: filteredTrialStudents.filter(s => s.status === 'Lost').length,
   };
+
+  const conversionRate = (stats.completed + stats.converted + stats.lost) > 0
+    ? ((stats.converted / (stats.completed + stats.converted + stats.lost)) * 100).toFixed(1)
+    : '0.0';
 
   return (
     <AdminLayout>
