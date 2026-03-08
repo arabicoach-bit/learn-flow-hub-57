@@ -113,7 +113,7 @@ export default function AdminNotifications() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{trialCount}</p>
-                <p className="text-xs text-muted-foreground">Trials</p>
+                <p className="text-xs text-muted-foreground">Trial Lessons</p>
               </div>
             </CardContent>
           </Card>
