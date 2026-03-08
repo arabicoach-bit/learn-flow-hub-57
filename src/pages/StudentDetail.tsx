@@ -60,6 +60,7 @@ function StudentPackagesTab({
   const [pkgFilter, setPkgFilter] = React.useState(getDefaultFilter());
   const [nextLessons, setNextLessons] = React.useState<Record<string, string | null>>({});
   const [lessonCounts, setLessonCounts] = React.useState<Record<string, number>>({});
+  const [endDates, setEndDates] = React.useState<Record<string, string | null>>({});
 
   React.useEffect(() => {
     if (!packages?.length) return;
