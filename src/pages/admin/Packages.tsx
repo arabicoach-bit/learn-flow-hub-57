@@ -1025,8 +1025,10 @@ export default function Packages() {
             const scheduledLessons = summary.lessons.filter(l => l.status === 'scheduled').length;
             const totalDone = completedLessons + absentLessons;
             const progressPct = totalLessons > 0 ? Math.round((totalDone / totalLessons) * 100) : 0;
-            const attendanceRate = totalDone > 0 ? Math.round((completedLessons / totalDone) * 100) : 0;
-            const attendanceColor = attendanceRate >= 80 ? 'text-emerald-500' : attendanceRate >= 60 ? 'text-amber-500' : 'text-destructive';
+            const completedPct = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+            const absentPct = totalLessons > 0 ? Math.round((absentLessons / totalLessons) * 100) : 0;
+            const scheduledPct = totalLessons > 0 ? Math.round((scheduledLessons / totalLessons) * 100) : 0;
+            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
             const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
             const descText = summary.description
