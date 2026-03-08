@@ -19,26 +19,37 @@ import {
   type QuarterAnalysisData,
 } from '@/hooks/use-quarter-analysis';
 
-function KPICard({ title, value, icon, suffix, variant }: {
+type SectionTheme = 'students' | 'packages' | 'lessons' | 'teachers';
+
+const sectionColors: Record<SectionTheme, { icon: string; card: string; border: string }> = {
+  students: { icon: 'text-blue-500', card: 'border-l-4 border-l-blue-500/40', border: 'border-blue-500/20' },
+  packages: { icon: 'text-emerald-500', card: 'border-l-4 border-l-emerald-500/40', border: 'border-emerald-500/20' },
+  lessons: { icon: 'text-violet-500', card: 'border-l-4 border-l-violet-500/40', border: 'border-violet-500/20' },
+  teachers: { icon: 'text-amber-500', card: 'border-l-4 border-l-amber-500/40', border: 'border-amber-500/20' },
+};
+
+function KPICard({ title, value, icon, suffix, variant, theme }: {
   title: string;
   value: number | string;
   icon: React.ReactNode;
   suffix?: string;
   variant?: 'default' | 'success' | 'warning' | 'danger';
+  theme?: SectionTheme;
 }) {
-  const colorMap = {
+  const variantColors = {
     default: 'text-primary',
     success: 'text-emerald-500',
     warning: 'text-amber-500',
     danger: 'text-red-500',
   };
-  const color = colorMap[variant || 'default'];
+  const color = variantColors[variant || 'default'];
+  const themeStyles = theme ? sectionColors[theme] : null;
 
   return (
-    <Card className="glass-card hover:shadow-md transition-shadow">
+    <Card className={`glass-card hover:shadow-md transition-shadow ${themeStyles?.card || ''}`}>
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-2">
-          <span className={`${color}`}>{icon}</span>
+          <span className={color}>{icon}</span>
         </div>
         <p className="text-2xl font-bold">
           {typeof value === 'number' ? value.toLocaleString() : value}
