@@ -1097,23 +1097,22 @@ export default function Packages() {
                   </div>
                 )}
 
-                {/* Stats Row: 4 metrics */}
-                <div className="grid grid-cols-4 gap-3">
+                {/* Stats Row: 3 metrics with percentages */}
+                <div className="grid grid-cols-3 gap-3">
                   <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-center">
                     <div className="text-xl font-bold text-emerald-500">{completedLessons}</div>
+                    <div className="text-xs text-emerald-600 font-medium">{totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0}%</div>
                     <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Completed</div>
                   </div>
                   <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-center">
                     <div className="text-xl font-bold text-destructive">{absentLessons}</div>
+                    <div className="text-xs text-destructive font-medium">{totalLessons > 0 ? Math.round((absentLessons / totalLessons) * 100) : 0}%</div>
                     <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Absent</div>
                   </div>
                   <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-center">
                     <div className="text-xl font-bold text-blue-500">{scheduledLessons}</div>
-                    <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Upcoming</div>
-                  </div>
-                  <div className="p-3 rounded-lg bg-muted/40 border text-center">
-                    <div className={`text-xl font-bold ${attendanceColor}`}>{attendanceRate}%</div>
-                    <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Attendance</div>
+                    <div className="text-xs text-blue-600 font-medium">{totalLessons > 0 ? Math.round((scheduledLessons / totalLessons) * 100) : 0}%</div>
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Scheduled</div>
                   </div>
                 </div>
 
