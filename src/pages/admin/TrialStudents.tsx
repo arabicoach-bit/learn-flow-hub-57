@@ -21,9 +21,11 @@ import {
   XCircle,
   UserCheck,
   Loader2,
-  Download
+  Download,
+  TrendingUp
 } from 'lucide-react';
 import { useTrialStudents, useUpdateTrialStudent, useDeleteTrialStudent, type TrialStudent } from '@/hooks/use-trial-students';
+import { useTeachers } from '@/hooks/use-teachers';
 import { AddTrialStudentForm } from '@/components/trial/AddTrialStudentForm';
 import { TrialStudentCard } from '@/components/trial/TrialStudentCard';
 import { EditTrialStudentDialog } from '@/components/trial/EditTrialStudentDialog';
@@ -39,11 +41,13 @@ type TrialResult = Database['public']['Enums']['trial_result'];
 export default function TrialStudents() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<TrialStatus | 'all'>('all');
+  const [teacherFilter, setTeacherFilter] = useState<string>('all');
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<TrialStudent | null>(null);
   const [convertingStudent, setConvertingStudent] = useState<TrialStudent | null>(null);
   const { toast } = useToast();
   const [dateFilter, setDateFilter] = useState<YearMonthFilterValue>({ year: null, month: null });
+  const { data: teachers } = useTeachers();
 
   const { data: trialStudents, isLoading, refetch } = useTrialStudents({
     status: statusFilter === 'all' ? undefined : statusFilter,
@@ -120,11 +124,14 @@ export default function TrialStudents() {
   const filteredTrialStudents = useMemo(() => {
     if (!trialStudents) return [];
     return trialStudents.filter(s => {
-      if (!filterStart || !filterEnd) return true;
-      const created = s.created_at?.slice(0, 10) || '';
-      return created >= filterStart && created <= filterEnd;
+      if (filterStart && filterEnd) {
+        const created = s.created_at?.slice(0, 10) || '';
+        if (created < filterStart || created > filterEnd) return false;
+      }
+      if (teacherFilter !== 'all' && s.teacher_id !== teacherFilter) return false;
+      return true;
     });
-  }, [trialStudents, filterStart, filterEnd]);
+  }, [trialStudents, filterStart, filterEnd, teacherFilter]);
 
   // Stats based on filtered data
   const stats = {
@@ -134,6 +141,10 @@ export default function TrialStudents() {
     converted: filteredTrialStudents.filter(s => s.status === 'Converted').length,
     lost: filteredTrialStudents.filter(s => s.status === 'Lost').length,
   };
+
+  const conversionRate = (stats.completed + stats.converted + stats.lost) > 0
+    ? ((stats.converted / (stats.completed + stats.converted + stats.lost)) * 100).toFixed(1)
+    : '0.0';
 
   return (
     <AdminLayout>
@@ -190,7 +201,7 @@ export default function TrialStudents() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
           <Card className="bg-card">
             <CardHeader className="pb-2">
               <CardDescription>Total Trials</CardDescription>
@@ -250,6 +261,18 @@ export default function TrialStudents() {
               </div>
             </CardContent>
           </Card>
+
+          <Card className="bg-card">
+            <CardHeader className="pb-2">
+              <CardDescription>Conversion Rate</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-primary" />
+                <span className="text-2xl font-bold">{conversionRate}%</span>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Filters */}
@@ -276,6 +299,20 @@ export default function TrialStudents() {
               <SelectItem value="Completed">Completed</SelectItem>
               <SelectItem value="Converted">Converted</SelectItem>
               <SelectItem value="Lost">Lost</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
+            value={teacherFilter}
+            onValueChange={setTeacherFilter}
+          >
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Filter by teacher" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Teachers</SelectItem>
+              {teachers?.filter(t => t.is_active).map(t => (
+                <SelectItem key={t.teacher_id} value={t.teacher_id}>{t.name}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
