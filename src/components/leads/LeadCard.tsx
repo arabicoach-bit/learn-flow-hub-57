@@ -90,6 +90,11 @@ export function LeadCard({ lead, onUpdateTrialStatus, onUpdateFollowUp, onEdit, 
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => onEdit(lead)}>Edit Details</DropdownMenuItem>
+                {onConvertToTrial && lead.trial_status !== 'Trial Booked' && lead.status !== 'Converted' && (
+                  <DropdownMenuItem onClick={() => onConvertToTrial(lead)} className="text-primary">
+                    <UserPlus className="w-4 h-4 mr-2" />Convert to Trial
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 {trialStatusOptions.map((status) => (
                   <DropdownMenuItem key={status} onClick={() => onUpdateTrialStatus(lead.lead_id, status)}>
