@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ExternalLink, Copy, Check, MessageCircle } from 'lucide-react';
+import { ExternalLink, Copy, Check, MessageCircle, Calendar, BookOpen, Clock, RefreshCw, FileText } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
@@ -15,6 +15,8 @@ import {
   parseNotificationDetails,
   formatWhatsAppMessage,
 } from '@/lib/notification-utils';
+import { usePackageNotificationDetails, formatSchedule } from '@/hooks/use-package-notification-details';
+import { format } from 'date-fns';
 
 interface NotificationCardProps {
   notification: Notification;
@@ -24,6 +26,11 @@ export function NotificationCard({ notification }: NotificationCardProps) {
   const navigate = useNavigate();
   const markRead = useMarkNotificationRead();
   const { data: parentPhone } = useParentPhone(notification.related_id, notification.type);
+  const { data: packageDetails } = usePackageNotificationDetails(
+    notification.related_id,
+    notification.type,
+    notification.created_at
+  );
   const [copied, setCopied] = useState(false);
 
   const styles = getNotificationStyles(notification.type);
@@ -69,6 +76,8 @@ export function NotificationCard({ notification }: NotificationCardProps) {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const isPackage = notification.type === 'new_package' && packageDetails;
+
   return (
     <div
       className={`p-4 rounded-xl border-2 transition-all ${
@@ -84,6 +93,12 @@ export function NotificationCard({ notification }: NotificationCardProps) {
           <Badge variant="outline" className={styles.badgeClass}>
             {styles.label}
           </Badge>
+          {isPackage && packageDetails.is_renewal && (
+            <Badge variant="outline" className="bg-amber-500/20 text-amber-600 border-amber-500/30 gap-1">
+              <RefreshCw className="w-3 h-3" />
+              Renewal
+            </Badge>
+          )}
           {!notification.is_read && (
             <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
           )}
@@ -98,45 +113,121 @@ export function NotificationCard({ notification }: NotificationCardProps) {
         <h4 className="font-semibold text-base mb-2">{notification.student_name}</h4>
       )}
 
-      {/* Detail grid */}
-      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm mb-3">
-        {details.teacher && (
-          <>
-            <span className="text-muted-foreground">Teacher</span>
-            <span className="font-medium">{details.teacher}</span>
-          </>
-        )}
-        {details.date && (
-          <>
-            <span className="text-muted-foreground">Date</span>
-            <span className="font-medium">{details.date}</span>
-          </>
-        )}
-        {details.notes && details.notes !== '-' && (
-          <>
-            <span className="text-muted-foreground">Notes</span>
-            <span className="font-medium">{details.notes}</span>
-          </>
-        )}
-        {details.remaining && (
-          <>
-            <span className="text-muted-foreground">Remaining</span>
-            <span className="font-medium">{details.remaining}</span>
-          </>
-        )}
-        {notification.wallet_balance !== null && notification.wallet_balance !== undefined && (
-          <>
-            <span className="text-muted-foreground">Wallet</span>
-            <span className="font-medium">{notification.wallet_balance} lessons</span>
-          </>
-        )}
-        {details.lessons && (
-          <>
-            <span className="text-muted-foreground">Package</span>
-            <span className="font-medium">{details.lessons}</span>
-          </>
-        )}
-      </div>
+      {/* Package-specific rich details */}
+      {isPackage ? (
+        <div className="space-y-2 mb-3">
+          {/* Package type & lessons info */}
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
+            {packageDetails.package_type_name && (
+              <>
+                <span className="text-muted-foreground flex items-center gap-1.5">
+                  <BookOpen className="w-3.5 h-3.5" /> Package Type
+                </span>
+                <span className="font-medium">{packageDetails.package_type_name}</span>
+              </>
+            )}
+            <span className="text-muted-foreground flex items-center gap-1.5">
+              <BookOpen className="w-3.5 h-3.5" /> Lessons
+            </span>
+            <span className="font-medium">{packageDetails.lessons_purchased} lessons</span>
+            
+            {packageDetails.lesson_duration && (
+              <>
+                <span className="text-muted-foreground flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5" /> Duration
+                </span>
+                <span className="font-medium">{packageDetails.lesson_duration} min</span>
+              </>
+            )}
+            {packageDetails.lessons_per_week && (
+              <>
+                <span className="text-muted-foreground flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5" /> Per Week
+                </span>
+                <span className="font-medium">{packageDetails.lessons_per_week}x/week</span>
+              </>
+            )}
+            {packageDetails.start_date && (
+              <>
+                <span className="text-muted-foreground flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5" /> Start Date
+                </span>
+                <span className="font-medium">{format(new Date(packageDetails.start_date), 'dd MMM yyyy')}</span>
+              </>
+            )}
+            {details.teacher && (
+              <>
+                <span className="text-muted-foreground">👨‍🏫 Teacher</span>
+                <span className="font-medium">{details.teacher}</span>
+              </>
+            )}
+            {notification.wallet_balance !== null && notification.wallet_balance !== undefined && (
+              <>
+                <span className="text-muted-foreground">💰 Wallet</span>
+                <span className="font-medium">{notification.wallet_balance} lessons</span>
+              </>
+            )}
+          </div>
+
+          {/* Schedule */}
+          {packageDetails.schedule.length > 0 && (
+            <div className="text-sm mt-2 p-2 rounded-lg bg-background/50 border border-border/30">
+              <span className="text-muted-foreground text-xs font-medium">📅 Schedule</span>
+              <p className="font-medium mt-0.5">{formatSchedule(packageDetails.schedule)}</p>
+            </div>
+          )}
+
+          {/* Description */}
+          {packageDetails.description && (
+            <div className="text-sm mt-1 p-2 rounded-lg bg-background/50 border border-border/30">
+              <span className="text-muted-foreground text-xs font-medium flex items-center gap-1">
+                <FileText className="w-3 h-3" /> Description
+              </span>
+              <p className="font-medium mt-0.5">{packageDetails.description}</p>
+            </div>
+          )}
+        </div>
+      ) : (
+        /* Default detail grid for lesson/trial notifications */
+        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm mb-3">
+          {details.teacher && (
+            <>
+              <span className="text-muted-foreground">Teacher</span>
+              <span className="font-medium">{details.teacher}</span>
+            </>
+          )}
+          {details.date && (
+            <>
+              <span className="text-muted-foreground">Date</span>
+              <span className="font-medium">{details.date}</span>
+            </>
+          )}
+          {details.notes && details.notes !== '-' && (
+            <>
+              <span className="text-muted-foreground">Notes</span>
+              <span className="font-medium">{details.notes}</span>
+            </>
+          )}
+          {details.remaining && (
+            <>
+              <span className="text-muted-foreground">Remaining</span>
+              <span className="font-medium">{details.remaining}</span>
+            </>
+          )}
+          {notification.wallet_balance !== null && notification.wallet_balance !== undefined && (
+            <>
+              <span className="text-muted-foreground">Wallet</span>
+              <span className="font-medium">{notification.wallet_balance} lessons</span>
+            </>
+          )}
+          {details.lessons && (
+            <>
+              <span className="text-muted-foreground">Package</span>
+              <span className="font-medium">{details.lessons}</span>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex items-center gap-2 pt-2 border-t border-border/30">
