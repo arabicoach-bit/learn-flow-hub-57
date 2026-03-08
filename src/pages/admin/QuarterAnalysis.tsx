@@ -273,11 +273,12 @@ export default function QuarterAnalysis() {
   );
 }
 
-function SectionHeader({ title, icon }: { title: string; icon: React.ReactNode }) {
+function SectionHeader({ title, emoji, theme }: { title: string; emoji: string; theme: SectionTheme }) {
+  const colors = sectionColors[theme];
   return (
-    <div className="flex items-center gap-2 pt-4">
-      <span className="text-primary">{icon}</span>
-      <h2 className="text-xl font-display font-bold">{title}</h2>
+    <div className={`flex items-center gap-2 pt-6 pb-1 border-b ${colors.border}`}>
+      <span className="text-xl">{emoji}</span>
+      <h2 className={`text-xl font-display font-bold ${colors.icon}`}>{title}</h2>
     </div>
   );
 }
