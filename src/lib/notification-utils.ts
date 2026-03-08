@@ -154,7 +154,7 @@ export function formatWhatsAppMessage(type: string, studentName: string, message
         `✅ Lesson Completed\n` +
         (details.teacher ? `👨‍🏫 Teacher: ${details.teacher}\n` : '') +
         (details.notes && details.notes !== '-' ? `📝 Notes: ${details.notes}\n` : '') +
-        (details.remaining ? `📚 ${details.remaining}\n` : '') +
+        (details.remaining ? `💰 Wallet: ${details.remaining}\n` : '') +
         `\nThank you!`;
     
     case 'trial_completed':
