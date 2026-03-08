@@ -298,7 +298,7 @@ export default function Packages() {
     const green: [number,number,number] = [34, 197, 94];
     const red: [number,number,number] = [239, 68, 68];
     const blue: [number,number,number] = [59, 130, 246];
-    const amber: [number,number,number] = [245, 158, 11];
+    
 
     const loadImage = (src: string): Promise<string> =>
       new Promise((resolve) => {
