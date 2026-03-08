@@ -288,11 +288,8 @@ export default function TeacherStudents() {
           </CardContent>
         </Card>
 
-        <EditStudentDialog
-          student={editingStudent}
-          open={!!editingStudent}
-          onOpenChange={(open) => !open && setEditingStudent(null)}
-        />
+
+
       </div>
     </TeacherLayout>
   );
