@@ -37,6 +37,8 @@ interface LessonCardProps {
   showDate?: boolean;
   /** Hide action buttons (for read-only calendar views) */
   readOnly?: boolean;
+  /** Optional delete handler — shows a delete button when provided */
+  onDelete?: (scheduledLessonId: string) => void;
 }
 
 function formatTime12(time: string) {
