@@ -69,9 +69,9 @@ export default function TeacherStudents() {
         (!studentRange.startDate || createdAt >= new Date(studentRange.startDate)) &&
         (!studentRange.endDate || createdAt <= new Date(studentRange.endDate + 'T23:59:59'))
       );
-      return matchesSearch && matchesStatus && matchesProgram && matchesDate;
+      return matchesSearch && matchesStatus && matchesDate;
     });
-  }, [myStudents, search, statusFilter, programFilter, studentRange]);
+  }, [myStudents, search, statusFilter, studentRange]);
 
   // Stats
   const totalStudents = filteredStudents.length;
