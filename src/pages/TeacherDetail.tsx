@@ -529,29 +529,28 @@ export default function TeacherDetail() {
 
           {/* ── Tab C: Today's Lessons ── */}
           <TabsContent value="today">
-            <Card className="overflow-hidden">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Time</th>
-                    <th>Student</th>
-                    <th>Duration</th>
-                    <th>Status</th>
-                    <th>Notes</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {!todayLessons?.length ? (
-                    <tr><td colSpan={6} className="text-center py-8 text-muted-foreground">No lessons scheduled for today</td></tr>
-                  ) : (
-                    todayLessons.map((lesson: any) => (
-                      <TodayLessonRow key={lesson.scheduled_lesson_id} lesson={lesson} onUpdated={refetchToday} />
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </Card>
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Clock className="w-5 h-5 text-primary" />
+                Today's Lessons ({todayLessons?.length || 0})
+              </h3>
+              {!todayLessons?.length ? (
+                <Card className="p-8 text-center text-muted-foreground">
+                  <Clock className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                  No lessons scheduled for today
+                </Card>
+              ) : (
+                <div className="space-y-4">
+                  {todayLessons.map((lesson: any) => (
+                    <LessonCard
+                      key={lesson.scheduled_lesson_id}
+                      lesson={lesson}
+                      onUpdated={() => refetchToday()}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           </TabsContent>
 
           {/* ── Tab D: Trial Lessons ── */}
