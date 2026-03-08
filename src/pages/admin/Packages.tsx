@@ -107,6 +107,9 @@ export default function Packages() {
   const [teacherFilter, setTeacherFilter] = useState('all');
   const [paymentFilter, setPaymentFilter] = useState('all');
   const [editPackage, setEditPackage] = useState<Package | null>(null);
+  const [summaryPkg, setSummaryPkg] = useState<string | null>(null);
+
+  const { data: summary, isLoading: summaryLoading } = usePackageSummary(summaryPkg);
 
   // Edit Payment Dialog state
   const [isEditPaymentOpen, setIsEditPaymentOpen] = useState(false);
