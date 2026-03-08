@@ -80,7 +80,7 @@ export interface UpdateTrialStudentInput {
   registration_date?: string;
 }
 
-export function useTrialStudents(filters?: { status?: TrialStatus; teacher_id?: string; search?: string }) {
+export function useTrialStudents(filters?: { status?: TrialStatus; conversion_status?: TrialConversionStatus; teacher_id?: string; search?: string }) {
   return useQuery({
     queryKey: ['trial-students', filters],
     queryFn: async () => {
