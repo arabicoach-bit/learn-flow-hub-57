@@ -999,64 +999,133 @@ export default function TeacherDetail() {
   );
 }
 
-// ── Trial Lesson Row with inline actions ──
-function TrialLessonRow({ trial }: { trial: any }) {
-  const queryClient = useQueryClient();
-  const [isSaving, setIsSaving] = useState(false);
+// ── Helper: format time for trial lessons ──
+function formatTrialTime(time: string | null) {
+  if (!time) return '-';
+  const [hours, minutes] = time.split(':');
+  const hour = parseInt(hours);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const hour12 = hour % 12 || 12;
+  return `${hour12}:${minutes} ${ampm}`;
+}
 
-  const handleMarkTrial = async (status: string) => {
-    setIsSaving(true);
+// ── Admin Trial Lesson Card (similar to teacher TrialLessonCard) ──
+function AdminTrialLessonCard({ trial }: { trial: any }) {
+  const [notes, setNotes] = useState(trial.notes || '');
+  const [isSavingNote, setIsSavingNote] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const queryClient = useQueryClient();
+
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: ['admin-teacher-trial-lessons'] });
+  };
+
+  const handleStatusChange = async (newStatus: string) => {
+    setIsUpdatingStatus(true);
     try {
       const { error } = await supabase
         .from('trial_lessons_log')
-        .update({ status })
+        .update({ status: newStatus })
         .eq('trial_lesson_id', trial.trial_lesson_id);
       if (error) throw error;
-      sonnerToast.success(`Trial marked as ${status}`);
-      queryClient.invalidateQueries({ queryKey: ['admin-teacher-trial-lessons'] });
-    } catch (err: any) {
-      sonnerToast.error('Failed', { description: err.message });
+      const label = newStatus === 'completed' ? 'Completed' : newStatus === 'absent' ? 'Absent' : 'Scheduled';
+      sonnerToast.success(`Trial lesson marked as ${label}`);
+      invalidateAll();
+    } catch (error: any) {
+      sonnerToast.error('Failed to update', { description: error.message });
     } finally {
-      setIsSaving(false);
+      setIsUpdatingStatus(false);
     }
   };
 
-  const formatTime = (time: string | null) => {
-    if (!time) return '-';
-    const [hours, minutes] = time.split(':');
-    const hour = parseInt(hours);
-    const ampm = hour >= 12 ? 'PM' : 'AM';
-    const hour12 = hour % 12 || 12;
-    return `${hour12}:${minutes} ${ampm}`;
+  const handleSaveNote = async () => {
+    setIsSavingNote(true);
+    try {
+      const { error } = await supabase
+        .from('trial_lessons_log')
+        .update({ notes: notes || null })
+        .eq('trial_lesson_id', trial.trial_lesson_id);
+      if (error) throw error;
+      sonnerToast.success('Note saved');
+      invalidateAll();
+    } catch (error: any) {
+      sonnerToast.error('Failed to save note', { description: error.message });
+    } finally {
+      setIsSavingNote(false);
+    }
   };
 
-  const statusBadgeClass = trial.status === 'completed'
-    ? 'bg-emerald-500/20 text-emerald-600 border-emerald-500/30'
-    : trial.status === 'absent'
-    ? 'bg-red-500/20 text-red-600 border-red-500/30'
-    : 'bg-muted text-muted-foreground';
+  const studentName = trial.trial_students?.name || '-';
+  const studentPhone = trial.trial_students?.phone || '';
 
   return (
-    <tr>
-      <td>{formatDate(trial.lesson_date)}</td>
-      <td>{formatTime(trial.lesson_time)}</td>
-      <td className="font-medium">{trial.trial_students?.name || '-'}</td>
-      <td className="text-sm text-muted-foreground">{trial.trial_students?.phone || '-'}</td>
-      <td>{trial.duration_minutes} min</td>
-      <td><Badge variant="outline" className={statusBadgeClass}>{trial.status}</Badge></td>
-      <td className="text-sm text-muted-foreground max-w-[150px] truncate">{trial.notes || '-'}</td>
-      <td>
-        {trial.status === 'scheduled' && (
-          <div className="flex gap-1">
-            <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => handleMarkTrial('completed')} disabled={isSaving}>
-              <Check className="w-3 h-3" /> Done
-            </Button>
-            <Button size="sm" variant="outline" className="h-7 text-xs gap-1 text-destructive" onClick={() => handleMarkTrial('absent')} disabled={isSaving}>
-              <X className="w-3 h-3" /> Absent
-            </Button>
+    <Card className="border border-purple-500/30 bg-purple-500/5">
+      <CardContent className="p-4">
+        <div className="space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <Clock className="w-4 h-4 text-muted-foreground" />
+                <span className="font-medium">{formatTrialTime(trial.lesson_time)}</span>
+                <Badge variant="outline" className="text-xs">{trial.duration_minutes} min</Badge>
+                <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs">
+                  <Users className="w-3 h-3 mr-1" />
+                  Trial
+                </Badge>
+              </div>
+              <span className="font-semibold text-lg">{studentName}</span>
+              {studentPhone && <span className="text-sm text-muted-foreground ml-2">{studentPhone}</span>}
+            </div>
           </div>
-        )}
-      </td>
-    </tr>
+
+          {/* Notes Input */}
+          <div className="space-y-2">
+            <Label className="text-sm text-muted-foreground">Notes</Label>
+            <div className="flex gap-2">
+              <Textarea
+                placeholder="Add a comment about this trial lesson..."
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                className="min-h-[60px] resize-none flex-1"
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                className="self-end"
+                disabled={isSavingNote || !notes.trim()}
+                onClick={handleSaveNote}
+              >
+                {isSavingNote ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3 mr-1" />}
+                Save
+              </Button>
+            </div>
+          </div>
+
+          {/* Status Dropdown */}
+          <div className="flex flex-wrap gap-2 items-center">
+            <Select
+              value={trial.status || 'scheduled'}
+              onValueChange={handleStatusChange}
+              disabled={isUpdatingStatus}
+            >
+              <SelectTrigger className="w-[140px] h-8 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="scheduled">
+                  <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> Scheduled</span>
+                </SelectItem>
+                <SelectItem value="completed">
+                  <span className="flex items-center gap-1"><Check className="w-3 h-3" /> Completed</span>
+                </SelectItem>
+                <SelectItem value="absent">
+                  <span className="flex items-center gap-1"><X className="w-3 h-3" /> Absent</span>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
