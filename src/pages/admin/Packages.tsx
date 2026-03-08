@@ -582,7 +582,7 @@ export default function Packages() {
           lesson.date ? formatDate(lesson.date) : 'N/A',
           lesson.scheduled_time?.slice(0, 5) || '-',
           lesson.duration_minutes ? `${lesson.duration_minutes} min` : '-',
-          lesson.status === 'completed' ? 'Completed' : lesson.status === 'absent' ? 'Absent' : 'Upcoming',
+          lesson.status === 'completed' ? 'Completed' : lesson.status === 'absent' ? 'Absent' : 'Scheduled',
           lesson.notes?.trim() || '',
         ]),
         headStyles: {
