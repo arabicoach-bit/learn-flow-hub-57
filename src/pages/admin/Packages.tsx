@@ -1082,7 +1082,7 @@ export default function Packages() {
                         .sort((a, b) => a.day_of_week - b.day_of_week)
                         .map((s, i) => (
                           <Badge key={i} variant="secondary" className="text-xs font-medium px-3 py-1">
-                            {dayNames[s.day_of_week]} {s.time_slot?.slice(0, 5)}
+                            {summaryDayNames[s.day_of_week]} {s.time_slot?.slice(0, 5)}
                           </Badge>
                         ))}
                     </div>
