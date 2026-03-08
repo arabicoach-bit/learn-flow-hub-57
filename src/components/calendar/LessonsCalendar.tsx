@@ -9,8 +9,9 @@ import { useTeachers } from '@/hooks/use-teachers';
 import { useStudents } from '@/hooks/use-students';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
-import { CalendarDays, Clock, Settings2 } from 'lucide-react';
+import { CalendarDays, Clock, Settings2, BookOpen, CheckCircle, XCircle } from 'lucide-react';
 import { UpdateLessonStatusDialog } from '@/components/schedule/UpdateLessonStatusDialog';
+import { YearMonthFilter, YearMonthFilterValue, getDefaultFilter, getFilterDateRange } from '@/components/shared/YearMonthFilter';
 
 interface LessonsCalendarProps {
   teacherId?: string;
@@ -24,16 +25,33 @@ export function LessonsCalendar({ teacherId, studentId, showFilters = true }: Le
   const [filterStudent, setFilterStudent] = useState<string>(studentId || 'all');
   const [viewMonth, setViewMonth] = useState<Date>(new Date());
   const [statusLesson, setStatusLesson] = useState<ScheduledLesson | null>(null);
+  const [filter, setFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
+
+  const { startDate, endDate } = getFilterDateRange(filter);
 
   const { data: teachers } = useTeachers();
   const { data: students } = useStudents();
-  const { data: scheduledLessons, isLoading } = useScheduledLessons({
+  const { data: allLessons, isLoading } = useScheduledLessons({
     teacher_id: filterTeacher !== 'all' ? filterTeacher : undefined,
     student_id: filterStudent !== 'all' ? filterStudent : undefined,
   });
 
+  // Filter by date range
+  const scheduledLessons = useMemo(() => {
+    if (!allLessons) return [];
+    if (!startDate || !endDate) return allLessons;
+    return allLessons.filter(l => l.scheduled_date >= startDate && l.scheduled_date <= endDate);
+  }, [allLessons, startDate, endDate]);
+
+  const stats = useMemo(() => {
+    const total = scheduledLessons.length;
+    const scheduled = scheduledLessons.filter(l => l.status === 'scheduled').length;
+    const completed = scheduledLessons.filter(l => l.status === 'completed').length;
+    const absent = scheduledLessons.filter(l => l.status === 'absent').length;
+    return { total, scheduled, completed, absent };
+  }, [scheduledLessons]);
+
   const lessonsByDate = useMemo(() => {
-    if (!scheduledLessons) return new Map<string, typeof scheduledLessons>();
     const grouped = new Map<string, typeof scheduledLessons>();
     scheduledLessons.forEach((lesson) => {
       const dateKey = lesson.scheduled_date;
@@ -44,10 +62,10 @@ export function LessonsCalendar({ teacherId, studentId, showFilters = true }: Le
   }, [scheduledLessons]);
 
   const selectedDateLessons = useMemo(() => {
-    if (!selectedDate || !scheduledLessons) return [];
+    if (!selectedDate) return [];
     const dateKey = format(selectedDate, 'yyyy-MM-dd');
     return lessonsByDate.get(dateKey) || [];
-  }, [selectedDate, lessonsByDate, scheduledLessons]);
+  }, [selectedDate, lessonsByDate]);
 
   const getDayContent = (day: Date) => {
     const dateKey = format(day, 'yyyy-MM-dd');
@@ -75,112 +93,166 @@ export function LessonsCalendar({ teacherId, studentId, showFilters = true }: Le
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <Card className="lg:col-span-2 glass-card">
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between flex-wrap gap-4">
+    <div className="space-y-6">
+      {/* Filter */}
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <YearMonthFilter value={filter} onChange={setFilter} />
+        {showFilters && (
+          <div className="flex gap-2 flex-wrap">
+            <Select value={filterTeacher} onValueChange={setFilterTeacher}>
+              <SelectTrigger className="w-[160px]"><SelectValue placeholder="All Teachers" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Teachers</SelectItem>
+                {teachers?.map((t) => <SelectItem key={t.teacher_id} value={t.teacher_id}>{t.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={filterStudent} onValueChange={setFilterStudent}>
+              <SelectTrigger className="w-[160px]"><SelectValue placeholder="All Students" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Students</SelectItem>
+                {students?.map((s) => <SelectItem key={s.student_id} value={s.student_id}>{s.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="glass-card">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <BookOpen className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{stats.total}</p>
+              <p className="text-xs text-muted-foreground">Total</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="glass-card">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-emerald-500/10">
+              <Clock className="w-5 h-5 text-emerald-500" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{stats.scheduled}</p>
+              <p className="text-xs text-muted-foreground">Scheduled</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="glass-card">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <CheckCircle className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{stats.completed}</p>
+              <p className="text-xs text-muted-foreground">Completed</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="glass-card">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-destructive/10">
+              <XCircle className="w-5 h-5 text-destructive" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{stats.absent}</p>
+              <p className="text-xs text-muted-foreground">Absent</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Calendar + Day Detail */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="lg:col-span-2 glass-card">
+          <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2">
               <CalendarDays className="w-5 h-5" />
               Lessons Calendar
             </CardTitle>
-            {showFilters && (
-              <div className="flex gap-2 flex-wrap">
-                <Select value={filterTeacher} onValueChange={setFilterTeacher}>
-                  <SelectTrigger className="w-[160px]"><SelectValue placeholder="All Teachers" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Teachers</SelectItem>
-                    {teachers?.map((t) => <SelectItem key={t.teacher_id} value={t.teacher_id}>{t.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <Select value={filterStudent} onValueChange={setFilterStudent}>
-                  <SelectTrigger className="w-[160px]"><SelectValue placeholder="All Students" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Students</SelectItem>
-                    {students?.map((s) => <SelectItem key={s.student_id} value={s.student_id}>{s.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <Skeleton className="h-[350px] w-full" />
+            ) : (
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                month={viewMonth}
+                onMonthChange={setViewMonth}
+                className="rounded-md border w-full"
+                classNames={{
+                  months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0 w-full",
+                  month: "space-y-4 w-full",
+                  table: "w-full border-collapse space-y-1",
+                  head_row: "flex w-full",
+                  head_cell: "text-muted-foreground rounded-md w-full font-normal text-[0.8rem]",
+                  row: "flex w-full mt-2",
+                  cell: "h-12 w-full text-center text-sm p-0 relative",
+                  day: "h-12 w-full p-0 font-normal aria-selected:opacity-100 hover:bg-accent rounded-md flex flex-col items-center justify-center",
+                }}
+                components={{
+                  DayContent: ({ date }) => (
+                    <div className="flex flex-col items-center">
+                      <span>{date.getDate()}</span>
+                      {getDayContent(date)}
+                    </div>
+                  ),
+                }}
+              />
+            )}
+            <div className="flex gap-4 mt-4 text-sm text-muted-foreground">
+              <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-primary" /><span>Scheduled</span></div>
+              <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-emerald-500" /><span>Completed</span></div>
+              <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-destructive" /><span>Absent</span></div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-card">
+          <CardHeader>
+            <CardTitle className="text-lg">
+              {selectedDate ? format(selectedDate, 'EEEE, MMMM d') : 'Select a date'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {selectedDateLessons.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <CalendarDays className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                <p>No lessons on this date</p>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                {selectedDateLessons.map((lesson) => (
+                  <div key={lesson.scheduled_lesson_id} className={`p-3 rounded-lg border ${getStatusColor(lesson.status || 'scheduled')}`}>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="font-medium">{lesson.students?.name}</p>
+                        <p className="text-sm opacity-75">{lesson.teachers?.name}</p>
+                      </div>
+                      <Badge variant="outline" className="capitalize">{lesson.status}</Badge>
+                    </div>
+                    <div className="flex items-center gap-4 mt-2 text-sm opacity-75">
+                      <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{lesson.scheduled_time?.slice(0, 5)}</span>
+                      <span>{lesson.duration_minutes} mins</span>
+                    </div>
+                    <div className="flex gap-2 mt-2">
+                      <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setStatusLesson(lesson)}>
+                        <Settings2 className="w-3 h-3 mr-1" />
+                        Edit
+                      </Button>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <Skeleton className="h-[350px] w-full" />
-          ) : (
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={setSelectedDate}
-              month={viewMonth}
-              onMonthChange={setViewMonth}
-              className="rounded-md border w-full"
-              classNames={{
-                months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0 w-full",
-                month: "space-y-4 w-full",
-                table: "w-full border-collapse space-y-1",
-                head_row: "flex w-full",
-                head_cell: "text-muted-foreground rounded-md w-full font-normal text-[0.8rem]",
-                row: "flex w-full mt-2",
-                cell: "h-12 w-full text-center text-sm p-0 relative",
-                day: "h-12 w-full p-0 font-normal aria-selected:opacity-100 hover:bg-accent rounded-md flex flex-col items-center justify-center",
-              }}
-              components={{
-                DayContent: ({ date }) => (
-                  <div className="flex flex-col items-center">
-                    <span>{date.getDate()}</span>
-                    {getDayContent(date)}
-                  </div>
-                ),
-              }}
-            />
-          )}
-          <div className="flex gap-4 mt-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-primary" /><span>Scheduled</span></div>
-            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-emerald-500" /><span>Completed</span></div>
-            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-destructive" /><span>Absent</span></div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="glass-card">
-        <CardHeader>
-          <CardTitle className="text-lg">
-            {selectedDate ? format(selectedDate, 'EEEE, MMMM d') : 'Select a date'}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {selectedDateLessons.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <CalendarDays className="w-10 h-10 mx-auto mb-2 opacity-50" />
-              <p>No lessons on this date</p>
-            </div>
-          ) : (
-            <div className="space-y-3 max-h-[400px] overflow-y-auto">
-              {selectedDateLessons.map((lesson) => (
-                <div key={lesson.scheduled_lesson_id} className={`p-3 rounded-lg border ${getStatusColor(lesson.status || 'scheduled')}`}>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="font-medium">{lesson.students?.name}</p>
-                      <p className="text-sm opacity-75">{lesson.teachers?.name}</p>
-                    </div>
-                    <Badge variant="outline" className="capitalize">{lesson.status}</Badge>
-                  </div>
-                  <div className="flex items-center gap-4 mt-2 text-sm opacity-75">
-                    <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{lesson.scheduled_time?.slice(0, 5)}</span>
-                    <span>{lesson.duration_minutes} mins</span>
-                  </div>
-                  <div className="flex gap-2 mt-2">
-                    <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setStatusLesson(lesson)}>
-                      <Settings2 className="w-3 h-3 mr-1" />
-                      Edit
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
       {statusLesson && (
         <UpdateLessonStatusDialog

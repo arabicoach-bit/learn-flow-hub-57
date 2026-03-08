@@ -5,8 +5,9 @@ import { Badge } from '@/components/ui/badge';
 import { useScheduledLessons } from '@/hooks/use-scheduled-lessons';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
-import { CalendarDays } from 'lucide-react';
+import { CalendarDays, BookOpen, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { LessonCard } from '@/components/schedule/LessonCard';
+import { YearMonthFilter, YearMonthFilterValue, getDefaultFilter, getFilterDateRange } from '@/components/shared/YearMonthFilter';
 
 interface TeacherCalendarProps {
   teacherId: string;
@@ -15,11 +16,28 @@ interface TeacherCalendarProps {
 export function TeacherCalendar({ teacherId }: TeacherCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [viewMonth, setViewMonth] = useState<Date>(new Date());
+  const [filter, setFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
 
-  const { data: scheduledLessons, isLoading, refetch } = useScheduledLessons({ teacher_id: teacherId });
+  const { startDate, endDate } = getFilterDateRange(filter);
+
+  const { data: allLessons, isLoading, refetch } = useScheduledLessons({ teacher_id: teacherId });
+
+  // Filter lessons by date range
+  const scheduledLessons = useMemo(() => {
+    if (!allLessons) return [];
+    if (!startDate || !endDate) return allLessons;
+    return allLessons.filter(l => l.scheduled_date >= startDate && l.scheduled_date <= endDate);
+  }, [allLessons, startDate, endDate]);
+
+  const stats = useMemo(() => {
+    const total = scheduledLessons.length;
+    const scheduled = scheduledLessons.filter(l => l.status === 'scheduled').length;
+    const completed = scheduledLessons.filter(l => l.status === 'completed').length;
+    const absent = scheduledLessons.filter(l => l.status === 'absent').length;
+    return { total, scheduled, completed, absent };
+  }, [scheduledLessons]);
 
   const lessonsByDate = useMemo(() => {
-    if (!scheduledLessons) return new Map<string, typeof scheduledLessons>();
     const grouped = new Map<string, typeof scheduledLessons>();
     scheduledLessons.forEach((lesson) => {
       const dateKey = lesson.scheduled_date;
@@ -30,10 +48,10 @@ export function TeacherCalendar({ teacherId }: TeacherCalendarProps) {
   }, [scheduledLessons]);
 
   const selectedDateLessons = useMemo(() => {
-    if (!selectedDate || !scheduledLessons) return [];
+    if (!selectedDate) return [];
     const dateKey = format(selectedDate, 'yyyy-MM-dd');
     return (lessonsByDate.get(dateKey) || []).sort((a, b) => a.scheduled_time.localeCompare(b.scheduled_time));
-  }, [selectedDate, lessonsByDate, scheduledLessons]);
+  }, [selectedDate, lessonsByDate]);
 
   const getDayContent = (day: Date) => {
     const dateKey = format(day, 'yyyy-MM-dd');
@@ -51,31 +69,70 @@ export function TeacherCalendar({ teacherId }: TeacherCalendarProps) {
     );
   };
 
-  const stats = useMemo(() => {
-    if (!scheduledLessons) return { total: 0, scheduled: 0, completed: 0 };
-    return {
-      total: scheduledLessons.length,
-      scheduled: scheduledLessons.filter(l => l.status === 'scheduled').length,
-      completed: scheduledLessons.filter(l => l.status === 'completed').length,
-    };
-  }, [scheduledLessons]);
-
   const isToday = selectedDate && format(selectedDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
 
   return (
     <div className="space-y-6">
+      {/* Filter */}
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <YearMonthFilter value={filter} onChange={setFilter} />
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="glass-card">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <BookOpen className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{stats.total}</p>
+              <p className="text-xs text-muted-foreground">Total</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="glass-card">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-emerald-500/10">
+              <Clock className="w-5 h-5 text-emerald-500" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{stats.scheduled}</p>
+              <p className="text-xs text-muted-foreground">Scheduled</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="glass-card">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <CheckCircle className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{stats.completed}</p>
+              <p className="text-xs text-muted-foreground">Completed</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="glass-card">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-destructive/10">
+              <XCircle className="w-5 h-5 text-destructive" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{stats.absent}</p>
+              <p className="text-xs text-muted-foreground">Absent</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Calendar */}
       <Card className="glass-card">
         <CardHeader className="pb-2">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <CardTitle className="flex items-center gap-2">
-              <CalendarDays className="w-5 h-5 text-emerald-500" />
-              My Schedule Calendar
-            </CardTitle>
-            <div className="flex gap-4 text-sm text-muted-foreground">
-              <span>Scheduled: <strong className="text-emerald-600">{stats.scheduled}</strong></span>
-              <span>Completed: <strong className="text-primary">{stats.completed}</strong></span>
-            </div>
-          </div>
+          <CardTitle className="flex items-center gap-2">
+            <CalendarDays className="w-5 h-5 text-emerald-500" />
+            Lessons Calendar
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -116,6 +173,7 @@ export function TeacherCalendar({ teacherId }: TeacherCalendarProps) {
         </CardContent>
       </Card>
 
+      {/* Selected Day Lessons */}
       <Card className="glass-card">
         <CardHeader>
           <div className="flex items-center justify-between">
