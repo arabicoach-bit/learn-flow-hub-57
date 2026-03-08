@@ -37,7 +37,7 @@ const adminNavItems = [
   { title: 'Packages', url: '/admin/packages', icon: Package },
   { title: 'Teachers', url: '/admin/teachers', icon: Users },
   { title: 'Payroll', url: '/admin/payroll', icon: Wallet },
-  { title: 'Reports', url: '/admin/reports', icon: BarChart3 },
+  
 ];
 
 interface AdminLayoutProps {
