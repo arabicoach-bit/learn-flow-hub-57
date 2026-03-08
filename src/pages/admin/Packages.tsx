@@ -545,6 +545,126 @@ export default function Packages() {
           queryClient.invalidateQueries({ queryKey: ['packages'] });
         }}
       />
+
+      {/* Package Summary Dialog */}
+      <Dialog open={!!summaryPkg} onOpenChange={(o) => !o && setSummaryPkg(null)}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                Package Summary
+              </DialogTitle>
+            </DialogHeader>
+
+            {summaryLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : summary ? (
+              <div className="space-y-6">
+                {/* Student Info */}
+                <div className="p-4 rounded-lg bg-muted/30 border">
+                  <h3 className="font-semibold mb-2">Student Information</h3>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div><span className="text-muted-foreground">Name:</span> {summary.student_name}</div>
+                    <div><span className="text-muted-foreground">Phone:</span> {summary.student_phone}</div>
+                    {summary.parent_phone && (
+                      <div><span className="text-muted-foreground">Parent:</span> {summary.parent_phone}</div>
+                    )}
+                    {summary.teacher_name && (
+                      <div><span className="text-muted-foreground">Teacher:</span> {summary.teacher_name}</div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Package Details */}
+                <div className="p-4 rounded-lg bg-muted/30 border">
+                  <h3 className="font-semibold mb-2">Package Details</h3>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div><span className="text-muted-foreground">Amount:</span> {formatCurrency(summary.amount)}</div>
+                    <div><span className="text-muted-foreground">Lessons:</span> {summary.lessons_used}/{summary.lessons_purchased}</div>
+                    <div><span className="text-muted-foreground">Payment:</span> {summary.payment_date ? format(new Date(summary.payment_date), 'dd MMM yyyy') : 'N/A'}</div>
+                    <div><span className="text-muted-foreground">Completed:</span> {summary.completed_date ? format(new Date(summary.completed_date), 'dd MMM yyyy') : 'N/A'}</div>
+                  </div>
+                </div>
+
+                {/* Statistics */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-center">
+                    <div className="text-2xl font-bold text-emerald-500">{summary.statistics.total_completed}</div>
+                    <div className="text-xs text-muted-foreground">Completed</div>
+                  </div>
+                  <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-center">
+                    <div className="text-2xl font-bold text-destructive">{summary.statistics.total_absent}</div>
+                    <div className="text-xs text-muted-foreground">Absent</div>
+                  </div>
+                  <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20 text-center">
+                    <div className="text-2xl font-bold text-blue-500">
+                      {summary.lessons_purchased > 0
+                        ? Math.round((summary.statistics.total_completed / summary.lessons_purchased) * 100)
+                        : 0}%
+                    </div>
+                    <div className="text-xs text-muted-foreground">Attendance</div>
+                  </div>
+                </div>
+
+                {/* Lessons Table */}
+                {summary.lessons.length > 0 && (
+                  <div>
+                    <h3 className="font-semibold mb-2">Lesson History</h3>
+                    <div className="overflow-x-auto rounded-lg border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>#</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Time</TableHead>
+                            <TableHead>Duration</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Notes</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {summary.lessons.map((lesson, idx) => (
+                            <TableRow key={idx}>
+                              <TableCell>{idx + 1}</TableCell>
+                              <TableCell>{lesson.date ? format(new Date(lesson.date), 'dd MMM yyyy') : 'N/A'}</TableCell>
+                              <TableCell>{lesson.scheduled_time?.slice(0, 5) || '-'}</TableCell>
+                              <TableCell>{lesson.duration_minutes ? `${lesson.duration_minutes} min` : '-'}</TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-1">
+                                  {lesson.status === 'completed' ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> :
+                                   lesson.status === 'absent' ? <XCircle className="w-4 h-4 text-destructive" /> :
+                                   <Clock className="w-4 h-4 text-blue-500" />}
+                                  <span>{lesson.status === 'completed' ? 'Completed' : lesson.status === 'absent' ? 'Absent' : 'Scheduled'}</span>
+                                </div>
+                              </TableCell>
+                              <TableCell className="max-w-[120px] truncate">{lesson.notes || '-'}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex flex-wrap gap-2 pt-4 border-t">
+                  <Button onClick={handleSummaryExportPDF} className="bg-[#2D3561] hover:bg-[#2D3561]/90">
+                    <FileText className="w-4 h-4 mr-2" />
+                    Export PDF
+                  </Button>
+                  <Button onClick={handleCopySummary} variant="outline">
+                    <Copy className="w-4 h-4 mr-2" />
+                    Copy Text
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <p className="text-center text-muted-foreground py-8">Summary not found</p>
+            )}
+          </DialogContent>
+        </Dialog>
     </AdminLayout>
   );
 }
