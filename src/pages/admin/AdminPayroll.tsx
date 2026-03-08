@@ -204,8 +204,30 @@ export default function AdminPayroll() {
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-emerald-500/10"><Wallet className="w-5 h-5 text-emerald-500" /></div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Total Payroll</p>
+                  <p className="text-xs text-muted-foreground">Total Salary</p>
                   {isLoading ? <Skeleton className="h-7 w-16" /> : <p className="text-xl font-bold text-emerald-400">{formatSalary(totalSalary)}</p>}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="glass-card border-amber-600/20">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-amber-500/10"><Gift className="w-5 h-5 text-amber-500" /></div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Total Bonus</p>
+                  {isLoading ? <Skeleton className="h-7 w-16" /> : <p className="text-xl font-bold text-amber-400">{formatSalary(totalBonus)}</p>}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="glass-card">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10"><Wallet className="w-5 h-5 text-primary" /></div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Total Pay</p>
+                  {isLoading ? <Skeleton className="h-7 w-16" /> : <p className="text-xl font-bold text-primary">{formatSalary(totalPay)}</p>}
                 </div>
               </div>
             </CardContent>
@@ -217,17 +239,6 @@ export default function AdminPayroll() {
                 <div>
                   <p className="text-xs text-muted-foreground">Active Students</p>
                   {isLoading ? <Skeleton className="h-7 w-12" /> : <p className="text-xl font-bold">{totalActiveStudents}</p>}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="glass-card">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-amber-500/10"><Users className="w-5 h-5 text-amber-500" /></div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Trial Lessons</p>
-                  {isLoading ? <Skeleton className="h-7 w-12" /> : <p className="text-xl font-bold">{totalTrialLessons}</p>}
                 </div>
               </div>
             </CardContent>
