@@ -30,7 +30,7 @@ export default function TeacherStudents() {
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [programFilter, setProgramFilter] = useState('');
+  
   const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const [studentFilter, setStudentFilter] = useState<YearMonthFilterValue>({ year: null, month: null });
@@ -63,15 +63,15 @@ export default function TeacherStudents() {
       const matchesSearch = student.name.toLowerCase().includes(search.toLowerCase()) ||
         student.phone.includes(search);
       const matchesStatus = !statusFilter || student.status === statusFilter;
-      const matchesProgram = !programFilter || student.program_id === programFilter;
+      
       const createdAt = student.created_at ? new Date(student.created_at) : null;
       const matchesDate = !createdAt || (
         (!studentRange.startDate || createdAt >= new Date(studentRange.startDate)) &&
         (!studentRange.endDate || createdAt <= new Date(studentRange.endDate + 'T23:59:59'))
       );
-      return matchesSearch && matchesStatus && matchesProgram && matchesDate;
+      return matchesSearch && matchesStatus && matchesDate;
     });
-  }, [myStudents, search, statusFilter, programFilter, studentRange]);
+  }, [myStudents, search, statusFilter, studentRange]);
 
   // Stats
   const totalStudents = filteredStudents.length;
@@ -82,10 +82,6 @@ export default function TeacherStudents() {
   const retentionRate = totalStudents > 0 ? Math.round((activeStudents / totalStudents) * 100) : 0;
 
   // Unique programs for filter
-  const usedPrograms = useMemo(() => {
-    const ids = new Set(myStudents.map(s => s.program_id).filter(Boolean));
-    return programs?.filter(p => ids.has(p.program_id)) || [];
-  }, [myStudents, programs]);
 
   const toggleStudent = (studentId: string) => {
     setExpandedStudents(prev => {
@@ -187,17 +183,6 @@ export default function TeacherStudents() {
                   <SelectItem value="Left">Left</SelectItem>
                 </SelectContent>
               </Select>
-              {usedPrograms.length > 0 && (
-                <Select value={programFilter || 'all'} onValueChange={(v) => setProgramFilter(v === 'all' ? '' : v)}>
-                  <SelectTrigger className="w-[150px]"><SelectValue placeholder="All Programs" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Programs</SelectItem>
-                    {usedPrograms.map(p => (
-                      <SelectItem key={p.program_id} value={p.program_id}>{p.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
               <YearMonthFilter value={studentFilter} onChange={setStudentFilter} />
               <div className="flex border rounded-md">
                 <Button variant={viewMode === 'cards' ? 'secondary' : 'ghost'} size="sm" onClick={() => setViewMode('cards')}>
