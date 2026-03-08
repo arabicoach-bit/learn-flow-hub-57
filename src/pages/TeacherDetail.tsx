@@ -746,81 +746,9 @@ export default function TeacherDetail() {
             </div>
           </TabsContent>
 
-          {/* ── Tab C: Today's Lessons ── */}
-          <TabsContent value="today">
-            <div className="space-y-4">
-              <Collapsible defaultOpen>
-                <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors w-full py-2">
-                  <ChevronRight className="w-4 h-4 transition-transform data-[state=open]:rotate-90" />
-                  Today's Statistics
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2">
-                    <Card>
-                      <CardContent className="pt-4 pb-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <BookOpen className="w-4 h-4 text-primary" />
-                          <div>
-                            <p className="text-xl font-bold">{todayLessons?.length || 0}</p>
-                            <p className="text-xs text-muted-foreground">Total</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="pt-4 pb-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <Check className="w-4 h-4 text-emerald-500" />
-                          <div>
-                            <p className="text-xl font-bold">{todayLessons?.filter((l: any) => l.status === 'completed').length || 0}</p>
-                            <p className="text-xs text-muted-foreground">Completed</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="pt-4 pb-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-amber-500" />
-                          <div>
-                            <p className="text-xl font-bold">{todayLessons?.filter((l: any) => l.status === 'scheduled').length || 0}</p>
-                            <p className="text-xs text-muted-foreground">Pending</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="pt-4 pb-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <X className="w-4 h-4 text-destructive" />
-                          <div>
-                            <p className="text-xl font-bold">{todayLessons?.filter((l: any) => l.status === 'absent').length || 0}</p>
-                            <p className="text-xs text-muted-foreground">Absent</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-
-              {!todayLessons?.length ? (
-                <Card className="p-8 text-center text-muted-foreground">
-                  <Clock className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                  No lessons scheduled for today
-                </Card>
-              ) : (
-                <div className="space-y-4">
-                  {todayLessons.map((lesson: any) => (
-                    <LessonCard
-                      key={lesson.scheduled_lesson_id}
-                      lesson={lesson}
-                      onUpdated={() => refetchToday()}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
+          {/* ── Tab C: Lessons Calendar ── */}
+          <TabsContent value="calendar">
+            {id && <TeacherCalendar teacherId={id} />}
           </TabsContent>
 
           {/* ── Tab D: Trial Lessons ── */}
