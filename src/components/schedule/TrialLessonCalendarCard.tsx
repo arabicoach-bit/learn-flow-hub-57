@@ -80,6 +80,9 @@ export function TrialLessonCalendarCard({ lesson, onUpdated, readOnly }: TrialLe
     queryClient.invalidateQueries({ queryKey: ['admin-teacher-trial-lessons'] });
     queryClient.invalidateQueries({ queryKey: ['teacher-monthly-stats'] });
     queryClient.invalidateQueries({ queryKey: ['teacher-live-stats'] });
+    queryClient.invalidateQueries({ queryKey: ['trial-students'] });
+    queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
+    queryClient.invalidateQueries({ queryKey: ['admin-payroll-unified'] });
   };
 
   const handleMark = async (newStatus: 'completed' | 'absent') => {

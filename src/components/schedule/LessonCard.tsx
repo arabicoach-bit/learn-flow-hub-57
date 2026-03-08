@@ -109,6 +109,9 @@ export function LessonCard({ lesson, onUpdated, showDate, readOnly }: LessonCard
       toast.success('Note saved');
       queryClient.invalidateQueries({ queryKey: ['scheduled-lessons'] });
       queryClient.invalidateQueries({ queryKey: ['admin-teacher-today-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-todays-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-tomorrows-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-week-lessons'] });
       onUpdated?.();
     } catch (err: any) {
       toast.error('Failed to save note');

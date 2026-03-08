@@ -37,6 +37,12 @@ export function TrialLessonCard({ lesson, onLessonMarked }: TrialLessonCardProps
     queryClient.invalidateQueries({ queryKey: ['teacher-all-trial-lessons'] });
     queryClient.invalidateQueries({ queryKey: ['teacher-monthly-stats'] });
     queryClient.invalidateQueries({ queryKey: ['teacher-live-stats'] });
+    queryClient.invalidateQueries({ queryKey: ['teacher-trial-calendar'] });
+    queryClient.invalidateQueries({ queryKey: ['admin-teacher-trial-calendar'] });
+    queryClient.invalidateQueries({ queryKey: ['admin-teacher-trial-lessons'] });
+    queryClient.invalidateQueries({ queryKey: ['trial-students'] });
+    queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
+    queryClient.invalidateQueries({ queryKey: ['admin-payroll-unified'] });
   };
 
   const handleStatusChange = async (newStatus: string) => {
