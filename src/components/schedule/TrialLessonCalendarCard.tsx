@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Clock, CheckCircle, XCircle, Save, Loader2, Users } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, Save, Loader2, Users, Pencil } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { UpdateTrialLessonDialog } from './UpdateTrialLessonDialog';
 
 export interface TrialLessonCalendarData {
   trial_lesson_id: string;
@@ -19,7 +19,6 @@ export interface TrialLessonCalendarData {
   status: string;
   notes: string | null;
   teacher_payment_amount: number | null;
-  // Extra student info
   age?: number | null;
   school?: string | null;
   year_group?: string | null;
@@ -68,6 +67,7 @@ export function TrialLessonCalendarCard({ lesson, onUpdated, readOnly }: TrialLe
   const [notes, setNotes] = useState(lesson.notes || '');
   const [isSavingNote, setIsSavingNote] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
 
   const isScheduled = lesson.status === 'scheduled';
 
@@ -82,7 +82,7 @@ export function TrialLessonCalendarCard({ lesson, onUpdated, readOnly }: TrialLe
     queryClient.invalidateQueries({ queryKey: ['teacher-live-stats'] });
   };
 
-  const handleMark = async (newStatus: 'completed' | 'absent' | 'scheduled') => {
+  const handleMark = async (newStatus: 'completed' | 'absent') => {
     setIsUpdating(true);
     try {
       const { error } = await supabase
@@ -132,119 +132,114 @@ export function TrialLessonCalendarCard({ lesson, onUpdated, readOnly }: TrialLe
   );
 
   return (
-    <div className={`p-4 rounded-xl border transition-all ${getStatusStyle(lesson.status)}`}>
-      {/* Header: Time range + duration + Trial badge */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-3 flex-wrap">
-          <Clock className="w-4 h-4 text-muted-foreground" />
-          <span className="font-semibold">
-            {formatTime12(lesson.lesson_time)} - {getEndTime(lesson.lesson_time, lesson.duration_minutes)}
-          </span>
-          <Badge variant="outline" className="text-xs font-medium">
-            {lesson.duration_minutes} min
-          </Badge>
-          <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs gap-1">
-            <Users className="w-3 h-3" /> Trial
-          </Badge>
-        </div>
-      </div>
-
-      {/* Student info */}
-      <div className="flex items-center gap-3 mb-2">
-        <span className="font-medium text-base">{lesson.student_name}</span>
-        {lesson.student_phone && (
-          <span className="text-sm text-muted-foreground">{lesson.student_phone}</span>
-        )}
-      </div>
-
-      {/* Extra student details */}
-      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mb-3">
-        {lesson.age && <span>Age: {lesson.age}</span>}
-        {lesson.student_level && <span>Level: {lesson.student_level}</span>}
-        {lesson.interested_program && <span>Program: {lesson.interested_program}</span>}
-        {lesson.year_group && <span>Year: {lesson.year_group}</span>}
-        {lesson.school && <span>School: {lesson.school}</span>}
-        {lesson.parent_guardian_name && <span>Parent: {lesson.parent_guardian_name}</span>}
-      </div>
-
-      {/* Notes */}
-      {!readOnly && (
-        <div className="mb-3">
-          <p className="text-sm text-muted-foreground mb-1.5">Notes</p>
-          <div className="flex gap-2">
-            <Textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Add a comment about this trial lesson..."
-              className="min-h-[60px] text-sm resize-none"
-            />
-            <Button
-              size="sm"
-              variant="outline"
-              className="self-end gap-1"
-              disabled={isSavingNote}
-              onClick={handleSaveNote}
-            >
-              {isSavingNote ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-              Save
-            </Button>
+    <>
+      <div className={`p-4 rounded-xl border transition-all ${getStatusStyle(lesson.status)}`}>
+        {/* Header: Time range + duration + Edit */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            <Clock className="w-4 h-4 text-muted-foreground" />
+            <span className="font-semibold">
+              {formatTime12(lesson.lesson_time)} - {getEndTime(lesson.lesson_time, lesson.duration_minutes)}
+            </span>
+            <Badge variant="outline" className="text-xs font-medium">
+              {lesson.duration_minutes} min
+            </Badge>
+            <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs gap-1">
+              <Users className="w-3 h-3" /> Trial
+            </Badge>
           </div>
+          {!readOnly && (
+            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setEditOpen(true)}>
+              <Pencil className="w-3.5 h-3.5" /> Edit
+            </Button>
+          )}
         </div>
+
+        {/* Student info */}
+        <div className="flex items-center gap-3 mb-2">
+          <span className="font-medium text-base">{lesson.student_name}</span>
+          {lesson.student_phone && (
+            <span className="text-sm text-muted-foreground">{lesson.student_phone}</span>
+          )}
+        </div>
+
+        {/* Extra student details */}
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mb-3">
+          {lesson.age && <span>Age: {lesson.age}</span>}
+          {lesson.student_level && <span>Level: {lesson.student_level}</span>}
+          {lesson.interested_program && <span>Program: {lesson.interested_program}</span>}
+          {lesson.year_group && <span>Year: {lesson.year_group}</span>}
+          {lesson.school && <span>School: {lesson.school}</span>}
+          {lesson.parent_guardian_name && <span>Parent: {lesson.parent_guardian_name}</span>}
+        </div>
+
+        {/* Notes */}
+        {!readOnly && (
+          <div className="mb-3">
+            <p className="text-sm text-muted-foreground mb-1.5">Notes</p>
+            <div className="flex gap-2">
+              <Textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Add a comment about this trial lesson..."
+                className="min-h-[60px] text-sm resize-none"
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                className="self-end gap-1"
+                disabled={isSavingNote}
+                onClick={handleSaveNote}
+              >
+                {isSavingNote ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                Save
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Actions / Status */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {isScheduled && !readOnly ? (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                className="bg-emerald-500/10 border-emerald-500/30 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 gap-1.5"
+                onClick={() => handleMark('completed')}
+                disabled={isUpdating}
+              >
+                {isUpdating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
+                Completed
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 gap-1.5"
+                onClick={() => handleMark('absent')}
+                disabled={isUpdating}
+              >
+                <XCircle className="w-3.5 h-3.5" />
+                Absent
+              </Button>
+            </>
+          ) : (
+            statusBadge
+          )}
+        </div>
+      </div>
+
+      {editOpen && (
+        <UpdateTrialLessonDialog
+          lesson={lesson}
+          open={editOpen}
+          onOpenChange={(open) => !open && setEditOpen(false)}
+          onSuccess={() => {
+            setEditOpen(false);
+            onUpdated?.();
+          }}
+        />
       )}
-
-      {/* Actions / Status */}
-      <div className="flex items-center gap-2 flex-wrap">
-        {isScheduled && !readOnly ? (
-          <>
-            <Button
-              size="sm"
-              variant="outline"
-              className="bg-emerald-500/10 border-emerald-500/30 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 gap-1.5"
-              onClick={() => handleMark('completed')}
-              disabled={isUpdating}
-            >
-              {isUpdating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
-              Completed
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 gap-1.5"
-              onClick={() => handleMark('absent')}
-              disabled={isUpdating}
-            >
-              <XCircle className="w-3.5 h-3.5" />
-              Absent
-            </Button>
-          </>
-        ) : !readOnly ? (
-          <div className="flex items-center gap-2">
-            {statusBadge}
-            <Select
-              value={lesson.status}
-              onValueChange={(val) => handleMark(val as 'completed' | 'absent')}
-              disabled={isUpdating}
-            >
-              <SelectTrigger className="w-[150px] h-8 text-xs">
-                <SelectValue placeholder="Change status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="scheduled">
-                  <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> Scheduled</span>
-                </SelectItem>
-                <SelectItem value="completed">
-                  <span className="flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Completed</span>
-                </SelectItem>
-                <SelectItem value="absent">
-                  <span className="flex items-center gap-1"><XCircle className="w-3 h-3" /> Absent</span>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        ) : (
-          statusBadge
-        )}
-      </div>
-    </div>
+    </>
   );
 }
