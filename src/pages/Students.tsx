@@ -60,7 +60,7 @@ export default function Students() {
   const overdueCount = filteredStudents.filter(s => s.status === 'Active' && (s.wallet_balance || 0) <= 0).length;
   const tempStopCount = filteredStudents.filter(s => s.status === 'Temporary Stop').length;
   const leftCount = filteredStudents.filter(s => s.status === 'Left').length;
-  const retentionRate = totalStudents > 0 ? Math.round(((totalStudents - leftCount) / totalStudents) * 100) : 0;
+  const retentionRate = totalStudents > 0 ? Math.round((activeCount / totalStudents) * 100) : 0;
 
   const [formData, setFormData] = useState({
     name: '',
