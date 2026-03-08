@@ -340,7 +340,6 @@ export default function StudentDetail() {
         studentId: id,
         name: editForm.name,
         phone: editForm.phone,
-        parent_phone: editForm.parent_phone || null,
         parent_guardian_name: editForm.parent_guardian_name || null,
         age: editForm.age ? parseInt(editForm.age) : null,
         gender: editForm.gender || null,
