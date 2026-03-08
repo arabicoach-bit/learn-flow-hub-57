@@ -1,27 +1,30 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Mail, Phone, DollarSign, GraduationCap, BookOpen, TrendingUp, Receipt, Users, UserCheck, PauseCircle, UserX, Search, Clock, Check, X, Loader2, Edit2 } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, DollarSign, GraduationCap, BookOpen, TrendingUp, Receipt, Users, UserCheck, PauseCircle, UserX, Search, Clock, Check, X, Loader2, Edit2, Key, Trash2, MoreVertical, Pencil, Eye } from 'lucide-react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useTeacher, useUpdateTeacher } from '@/hooks/use-teachers';
-import { useStudents } from '@/hooks/use-students';
+import { useStudents, useUpdateStudent, Student } from '@/hooks/use-students';
+import { usePrograms } from '@/hooks/use-programs';
 import { useTeacherTotalHours } from '@/hooks/use-teacher-total-hours';
 import { Button } from '@/components/ui/button';
 import { getWalletColor, getStatusDisplayLabel, formatSalary, formatDate, getWalletDisplayLabel } from '@/lib/wallet-utils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { YearMonthFilter, getDefaultFilter, getFilterDateRange, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
-import { useMarkScheduledLesson, useUpdateScheduledLesson } from '@/hooks/use-scheduled-lessons';
 import { LessonCard } from '@/components/schedule/LessonCard';
+import { EditStudentDialog } from '@/components/teacher/EditStudentDialog';
 import { toast as sonnerToast } from 'sonner';
 
 // ── Salary history hook ──
@@ -144,9 +147,10 @@ export default function TeacherDetail() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { data: teacher, isLoading: teacherLoading } = useTeacher(id || '');
+  const { data: teacher, isLoading: teacherLoading, refetch: refetchTeacher } = useTeacher(id || '');
 
   const { data: allStudents } = useStudents();
+  const { data: programs } = usePrograms();
   const { data: todayLessons, refetch: refetchToday } = useAdminTeacherTodayLessons(id);
 
   const [payrollFilter, setPayrollFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
@@ -164,10 +168,12 @@ export default function TeacherDetail() {
   // Students tab filters
   const [studentSearch, setStudentSearch] = useState('');
   const [studentStatusFilter, setStudentStatusFilter] = useState<string>('all');
+  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
 
   const filteredStudents = useMemo(() => {
     return teacherStudents.filter(s => {
-      const matchesSearch = s.name.toLowerCase().includes(studentSearch.toLowerCase());
+      const matchesSearch = s.name.toLowerCase().includes(studentSearch.toLowerCase()) ||
+        s.phone.includes(studentSearch);
       const matchesStatus = studentStatusFilter === 'all' || s.status === studentStatusFilter;
       return matchesSearch && matchesStatus;
     });
@@ -180,10 +186,28 @@ export default function TeacherDetail() {
     return trialLessons.filter((t: any) => t.status?.toLowerCase() === trialStatusFilter.toLowerCase());
   }, [trialLessons, trialStatusFilter]);
 
+  // Trial stats
+  const trialStats = useMemo(() => {
+    if (!trialLessons) return { total: 0, completed: 0, scheduled: 0, absent: 0 };
+    return {
+      total: trialLessons.length,
+      completed: trialLessons.filter((t: any) => t.status === 'completed').length,
+      scheduled: trialLessons.filter((t: any) => t.status === 'scheduled').length,
+      absent: trialLessons.filter((t: any) => t.status === 'absent').length,
+    };
+  }, [trialLessons]);
+
   // Edit teacher state
   const updateTeacher = useUpdateTeacher();
+  const updateStudent = useUpdateStudent();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({ name: '', phone: '', email: '', rate_per_lesson: '' });
+
+  // Action dialog states
+  const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [tempPasswordInfo, setTempPasswordInfo] = useState<{ email: string; password: string } | null>(null);
 
   useEffect(() => {
     if (teacher) {
@@ -213,13 +237,104 @@ export default function TeacherDetail() {
     }
   };
 
+  const handleToggleActive = async () => {
+    if (!teacher || !id) return;
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('teacher_id', id)
+        .single();
+      if (!profile) throw new Error('No user account found');
+
+      const newActive = teacher.is_active === false;
+      const { data, error } = await supabase.functions.invoke('create-teacher-account?action=toggle-active', {
+        body: { teacher_id: id, user_id: profile.id, is_active: newActive },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast({ title: newActive ? 'Teacher Activated' : 'Teacher Deactivated' });
+      refetchTeacher();
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!teacher || !id) return;
+    setIsSubmitting(true);
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('teacher_id', id)
+        .single();
+      if (!profile) throw new Error('No user account found');
+
+      const { data, error } = await supabase.functions.invoke('create-teacher-account', {
+        body: { teacher_id: id, user_id: profile.id, email: teacher.email, name: teacher.name },
+        headers: { 'x-action': 'reset-password' },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      setTempPasswordInfo({ email: teacher.email || '', password: data.temp_password });
+      toast({ title: 'Password reset successfully' });
+      setIsResetPasswordOpen(false);
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteTeacher = async () => {
+    if (!teacher || !id) return;
+    setIsSubmitting(true);
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('teacher_id', id)
+        .single();
+      if (!profile) throw new Error('No user account found');
+
+      const { data, error } = await supabase.functions.invoke('create-teacher-account?action=delete', {
+        body: { teacher_id: id, user_id: profile.id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast({ title: 'Teacher deleted successfully' });
+      navigate('/admin/teachers');
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleStudentStatusChange = async (student: Student, newStatus: 'Active' | 'Temporary Stop' | 'Left') => {
+    try {
+      await updateStudent.mutateAsync({ studentId: student.student_id, status: newStatus });
+      sonnerToast.success(`${student.name} status changed to ${getStatusDisplayLabel(newStatus)}`);
+    } catch {
+      sonnerToast.error('Failed to update status');
+    }
+  };
+
+  const getProgramName = (programId: string | null) => {
+    if (!programId) return '-';
+    return programs?.find(p => p.program_id === programId)?.name || '-';
+  };
+
   // KPI calculations
   const totalStudents = teacherStudents.length;
   const activeStudents = teacherStudents.filter(s => s.status === 'Active').length;
   const tempStopStudents = teacherStudents.filter(s => s.status === 'Temporary Stop').length;
   const leftStudents = teacherStudents.filter(s => s.status === 'Left').length;
 
-  // Current month stats for header KPIs
   const currentMonthFilter = getDefaultFilter();
   const currentMonthRange = getFilterDateRange(currentMonthFilter);
   const { data: currentMonthStats } = useTeacherTotalHours(id, currentMonthRange.startDate, currentMonthRange.endDate);
@@ -273,9 +388,52 @@ export default function TeacherDetail() {
               </span>
             </div>
           </div>
-          <Button variant={isEditing ? 'outline' : 'default'} onClick={() => setIsEditing(!isEditing)}>
-            {isEditing ? 'Cancel' : 'Edit'}
-          </Button>
+
+          {/* Icon Action Buttons */}
+          <TooltipProvider>
+            <div className="flex items-center gap-1">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" onClick={() => setIsEditing(!isEditing)}>
+                    <Pencil className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Edit Teacher</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" onClick={() => setIsResetPasswordOpen(true)}>
+                    <Key className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Reset Password</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleToggleActive}
+                    className={isActive ? 'text-amber-500 hover:text-amber-600' : 'text-emerald-500 hover:text-emerald-600'}
+                  >
+                    {isActive ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{isActive ? 'Deactivate' : 'Activate'}</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => setIsDeleteOpen(true)}>
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Delete Teacher</TooltipContent>
+              </Tooltip>
+            </div>
+          </TooltipProvider>
         </div>
 
         {isEditing && (
@@ -300,9 +458,12 @@ export default function TeacherDetail() {
                   <Input type="number" step="0.01" value={formData.rate_per_lesson} onChange={(e) => setFormData({ ...formData, rate_per_lesson: e.target.value })} />
                 </div>
               </div>
-              <Button onClick={handleSave} disabled={updateTeacher.isPending}>
-                {updateTeacher.isPending ? 'Saving...' : 'Save Changes'}
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={handleSave} disabled={updateTeacher.isPending}>
+                  {updateTeacher.isPending ? 'Saving...' : 'Save Changes'}
+                </Button>
+                <Button variant="outline" onClick={() => setIsEditing(false)}>Cancel</Button>
+              </div>
             </CardContent>
           </Card>
         )}
@@ -383,7 +544,7 @@ export default function TeacherDetail() {
             <TabsTrigger value="students">Students ({totalStudents})</TabsTrigger>
             <TabsTrigger value="payroll">Payroll</TabsTrigger>
             <TabsTrigger value="today">Today's Lessons ({todayLessons?.length || 0})</TabsTrigger>
-            <TabsTrigger value="trials">Trial Lessons</TabsTrigger>
+            <TabsTrigger value="trials">Trial Lessons ({trialStats.total})</TabsTrigger>
           </TabsList>
 
           {/* ── Tab A: Students ── */}
@@ -392,7 +553,7 @@ export default function TeacherDetail() {
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input placeholder="Search student..." value={studentSearch} onChange={(e) => setStudentSearch(e.target.value)} className="pl-10" />
+                  <Input placeholder="Search by name or phone..." value={studentSearch} onChange={(e) => setStudentSearch(e.target.value)} className="pl-10" />
                 </div>
                 <Select value={studentStatusFilter} onValueChange={setStudentStatusFilter}>
                   <SelectTrigger className="w-[160px]">
@@ -407,45 +568,96 @@ export default function TeacherDetail() {
                 </Select>
               </div>
               <Card className="overflow-hidden">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Student Name</th>
-                      <th>Status</th>
-                      <th>Wallet</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredStudents.length === 0 ? (
-                      <tr><td colSpan={4} className="text-center py-8 text-muted-foreground">No students found</td></tr>
-                    ) : (
-                      filteredStudents.map((student) => (
-                        <tr key={student.student_id}>
-                          <td className="font-medium">{student.name}</td>
-                          <td>
-                            <Badge variant="outline" className={
-                              student.status === 'Active' ? 'status-active' :
-                              student.status === 'Temporary Stop' ? 'status-grace' : 'status-blocked'
-                            }>
-                              {getStatusDisplayLabel(student.status)}
-                            </Badge>
-                          </td>
-                          <td>
-                            <span className={`font-medium ${getWalletColor(student.wallet_balance || 0)}`}>
-                              {getWalletDisplayLabel(student.wallet_balance || 0)}
-                            </span>
-                          </td>
-                          <td>
-                            <Button variant="ghost" size="sm" onClick={() => navigate(`/admin/students/${student.student_id}`)}>
-                              Open Student
-                            </Button>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+                <div className="overflow-x-auto">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Student</th>
+                        <th>Phone</th>
+                        <th>Program</th>
+                        <th>Level</th>
+                        <th>Status</th>
+                        <th>Wallet</th>
+                        <th className="text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredStudents.length === 0 ? (
+                        <tr><td colSpan={7} className="text-center py-8 text-muted-foreground">No students found</td></tr>
+                      ) : (
+                        filteredStudents.map((student) => (
+                          <tr key={student.student_id}>
+                            <td>
+                              <div>
+                                <p className="font-medium">{student.name}</p>
+                                {student.parent_guardian_name && (
+                                  <p className="text-xs text-muted-foreground">Parent: {student.parent_guardian_name}</p>
+                                )}
+                              </div>
+                            </td>
+                            <td>
+                              <div className="text-sm">
+                                <p>{student.phone}</p>
+                                {student.parent_phone && (
+                                  <p className="text-xs text-muted-foreground">{student.parent_phone}</p>
+                                )}
+                              </div>
+                            </td>
+                            <td className="text-sm">{getProgramName(student.program_id)}</td>
+                            <td className="text-sm">{student.student_level || '-'}</td>
+                            <td>
+                              <Select
+                                value={student.status || 'Active'}
+                                onValueChange={(v) => handleStudentStatusChange(student, v as any)}
+                              >
+                                <SelectTrigger className="h-7 w-[130px] text-xs">
+                                  <Badge variant="outline" className={
+                                    student.status === 'Active' ? 'status-active border-0' :
+                                    student.status === 'Temporary Stop' ? 'status-grace border-0' : 'status-blocked border-0'
+                                  }>
+                                    {getStatusDisplayLabel(student.status)}
+                                  </Badge>
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Active">✅ Active</SelectItem>
+                                  <SelectItem value="Temporary Stop">⏸️ Temp Stop</SelectItem>
+                                  <SelectItem value="Left">❌ Left</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </td>
+                            <td>
+                              <span className={`font-medium ${getWalletColor(student.wallet_balance || 0)}`}>
+                                {getWalletDisplayLabel(student.wallet_balance || 0)}
+                              </span>
+                            </td>
+                            <td className="text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingStudent(student)}>
+                                        <Pencil className="w-3.5 h-3.5" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Edit Student</TooltipContent>
+                                  </Tooltip>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => navigate(`/admin/students/${student.student_id}`)}>
+                                        <Eye className="w-3.5 h-3.5" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>View Student</TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </Card>
             </div>
           </TabsContent>
@@ -458,7 +670,6 @@ export default function TeacherDetail() {
                 <YearMonthFilter value={payrollFilter} onChange={setPayrollFilter} />
               </div>
 
-              {/* Monthly summary card */}
               <Card>
                 <CardContent className="pt-6">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -482,7 +693,6 @@ export default function TeacherDetail() {
                 </CardContent>
               </Card>
 
-              {/* Salary history table */}
               <Card className="overflow-hidden">
                 <CardHeader><CardTitle className="text-base">Payment Records</CardTitle></CardHeader>
                 <table className="data-table">
@@ -557,6 +767,54 @@ export default function TeacherDetail() {
           {/* ── Tab D: Trial Lessons ── */}
           <TabsContent value="trials">
             <div className="space-y-4">
+              {/* Trial Stats Cards */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <Card>
+                  <CardContent className="pt-4 pb-3 px-4">
+                    <div className="flex items-center gap-2">
+                      <GraduationCap className="w-4 h-4 text-primary" />
+                      <div>
+                        <p className="text-xl font-bold">{trialStats.total}</p>
+                        <p className="text-xs text-muted-foreground">Total Trials</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-4 pb-3 px-4">
+                    <div className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-500" />
+                      <div>
+                        <p className="text-xl font-bold">{trialStats.completed}</p>
+                        <p className="text-xs text-muted-foreground">Completed</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-4 pb-3 px-4">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-amber-500" />
+                      <div>
+                        <p className="text-xl font-bold">{trialStats.scheduled}</p>
+                        <p className="text-xs text-muted-foreground">Scheduled</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-4 pb-3 px-4">
+                    <div className="flex items-center gap-2">
+                      <X className="w-4 h-4 text-destructive" />
+                      <div>
+                        <p className="text-xl font-bold">{trialStats.absent}</p>
+                        <p className="text-xs text-muted-foreground">Absent</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
               <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
                 <YearMonthFilter value={trialFilter} onChange={setTrialFilter} />
                 <Select value={trialStatusFilter} onValueChange={setTrialStatusFilter}>
@@ -600,11 +858,96 @@ export default function TeacherDetail() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Edit Student Dialog */}
+      <EditStudentDialog
+        student={editingStudent}
+        open={!!editingStudent}
+        onOpenChange={(open) => !open && setEditingStudent(null)}
+      />
+
+      {/* Reset Password Confirmation */}
+      <AlertDialog open={isResetPasswordOpen} onOpenChange={setIsResetPasswordOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Key className="w-5 h-5" /> Reset Password
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will generate a new temporary password for {teacher?.name}.
+              They will be required to change it on their next login.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleResetPassword} disabled={isSubmitting}>
+              {isSubmitting ? 'Resetting...' : 'Reset Password'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="w-5 h-5" /> Delete Teacher
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>Are you sure you want to delete <strong>{teacher?.name}</strong>?</p>
+              <ul className="text-sm list-disc list-inside space-y-1">
+                <li>Remove teacher account permanently</li>
+                <li>Unassign from all students</li>
+                <li>Keep historical lesson records</li>
+              </ul>
+              <p className="text-sm font-medium text-destructive">This action cannot be undone.</p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteTeacher} disabled={isSubmitting} className="bg-destructive hover:bg-destructive/90">
+              {isSubmitting ? 'Deleting...' : 'Yes, Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Temp Password Display */}
+      <Dialog open={!!tempPasswordInfo} onOpenChange={() => setTempPasswordInfo(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-emerald-600">
+              <Mail className="w-5 h-5" /> Credentials Ready
+            </DialogTitle>
+            <DialogDescription>Share these credentials with the teacher.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="p-4 bg-muted rounded-lg space-y-3">
+              <div>
+                <Label className="text-muted-foreground text-xs">Email</Label>
+                <p className="font-mono text-sm">{tempPasswordInfo?.email}</p>
+              </div>
+              <div>
+                <Label className="text-muted-foreground text-xs">Temporary Password</Label>
+                <p className="font-mono text-lg font-bold tracking-wider">{tempPasswordInfo?.password}</p>
+              </div>
+            </div>
+            <Button
+              className="w-full"
+              onClick={() => {
+                navigator.clipboard.writeText(`Email: ${tempPasswordInfo?.email}\nPassword: ${tempPasswordInfo?.password}`);
+                toast({ title: 'Copied to clipboard!' });
+              }}
+            >
+              Copy Credentials
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 }
-
-
 
 // ── Trial Lesson Row with inline actions ──
 function TrialLessonRow({ trial }: { trial: any }) {
