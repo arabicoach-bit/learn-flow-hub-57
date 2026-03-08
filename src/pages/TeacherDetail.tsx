@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Mail, Phone, DollarSign, GraduationCap, BookOpen, TrendingUp, Receipt, Users, UserCheck, PauseCircle, UserX, Search, Clock, Check, X, Loader2, Edit2, Key, Trash2, MoreVertical, Pencil, Eye, ChevronRight, CalendarDays, Save } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, DollarSign, TrendingUp, Users, UserCheck, PauseCircle, UserX, Search, Clock, Loader2, Key, Trash2, Pencil, Eye, ChevronRight, CalendarDays, Save } from 'lucide-react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useTeacher, useUpdateTeacher } from '@/hooks/use-teachers';
 import { useStudents, useUpdateStudent, Student } from '@/hooks/use-students';
@@ -29,6 +29,7 @@ import { LessonCard } from '@/components/schedule/LessonCard';
 import { EditStudentDialog } from '@/components/teacher/EditStudentDialog';
 import { toast as sonnerToast } from 'sonner';
 import { TeacherCalendar } from '@/components/calendar/TeacherCalendar';
+import { TrialLessonCalendar } from '@/components/calendar/TrialLessonCalendar';
 
 // ── Salary history hook ──
 interface SalaryHistoryRecord {
@@ -123,27 +124,7 @@ function useAdminTeacherTodayLessons(teacherId: string | undefined) {
   });
 }
 
-// ── Trial lessons hook for admin context ──
-function useAdminTeacherTrialLessons(teacherId: string | undefined, startDate: string | null, endDate: string | null) {
-  return useQuery({
-    queryKey: ['admin-teacher-trial-lessons', teacherId, startDate, endDate],
-    queryFn: async () => {
-      let query = supabase
-        .from('trial_lessons_log')
-        .select('*, trial_students!trial_lessons_log_trial_student_id_fkey(name, phone)')
-        .eq('teacher_id', teacherId!)
-        .order('lesson_date', { ascending: false });
-
-      if (startDate) query = query.gte('lesson_date', startDate);
-      if (endDate) query = query.lte('lesson_date', endDate);
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!teacherId,
-  });
-}
+// ── Trial lessons hook removed — now using TrialLessonCalendar component ──
 
 export default function TeacherDetail() {
   const { id } = useParams<{ id: string }>();
@@ -161,10 +142,6 @@ export default function TeacherDetail() {
   const { data: filteredStats } = useTeacherTotalHours(id, payrollRange.startDate, payrollRange.endDate);
   const { data: salaryHistory } = useTeacherSalaryHistory(id || '');
 
-  const [trialFilter, setTrialFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
-  const trialRange = getFilterDateRange(trialFilter);
-  const { data: trialLessons } = useAdminTeacherTrialLessons(id, trialRange.startDate, trialRange.endDate);
-  const [trialStatusFilter, setTrialStatusFilter] = useState<string>('all');
 
   const teacherStudents = allStudents?.filter(s => s.teacher_id === id) || [];
 
@@ -180,7 +157,6 @@ export default function TeacherDetail() {
       const matchesSearch = s.name.toLowerCase().includes(studentSearch.toLowerCase()) ||
         s.phone.includes(studentSearch);
       const matchesStatus = studentStatusFilter === 'all' || s.status === studentStatusFilter;
-      // Filter by created_at date range
       const createdAt = s.created_at ? new Date(s.created_at) : null;
       const matchesDate = !createdAt || (
         (!studentRange.startDate || createdAt >= new Date(studentRange.startDate)) &&
@@ -189,24 +165,6 @@ export default function TeacherDetail() {
       return matchesSearch && matchesStatus && matchesDate;
     });
   }, [teacherStudents, studentSearch, studentStatusFilter, studentRange.startDate, studentRange.endDate]);
-
-  // Filtered trial lessons
-  const filteredTrials = useMemo(() => {
-    if (!trialLessons) return [];
-    if (trialStatusFilter === 'all') return trialLessons;
-    return trialLessons.filter((t: any) => t.status?.toLowerCase() === trialStatusFilter.toLowerCase());
-  }, [trialLessons, trialStatusFilter]);
-
-  // Trial stats
-  const trialStats = useMemo(() => {
-    if (!trialLessons) return { total: 0, completed: 0, scheduled: 0, absent: 0 };
-    return {
-      total: trialLessons.length,
-      completed: trialLessons.filter((t: any) => t.status === 'completed').length,
-      scheduled: trialLessons.filter((t: any) => t.status === 'scheduled').length,
-      absent: trialLessons.filter((t: any) => t.status === 'absent').length,
-    };
-  }, [trialLessons]);
 
   // Edit teacher state
   const updateTeacher = useUpdateTeacher();
@@ -488,7 +446,7 @@ export default function TeacherDetail() {
               <CalendarDays className="w-4 h-4 mr-1" />
               Lessons Calendar
             </TabsTrigger>
-            <TabsTrigger value="trials">Trial Lessons ({trialStats.total})</TabsTrigger>
+            <TabsTrigger value="trials">Trial Lessons</TabsTrigger>
           </TabsList>
 
           {/* ── Tab A: Students ── */}
@@ -761,151 +719,9 @@ export default function TeacherDetail() {
             {id && <TeacherCalendar teacherId={id} />}
           </TabsContent>
 
-          {/* ── Tab D: Trial Lessons ── */}
+          {/* ── Tab D: Trial Lessons Calendar ── */}
           <TabsContent value="trials">
-            <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                <YearMonthFilter value={trialFilter} onChange={setTrialFilter} />
-              </div>
-
-              {/* Summary Cards - matching teacher view */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="border-purple-500/20 bg-purple-500/5">
-                  <CardContent className="p-4 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                      <Clock className="w-5 h-5 text-purple-400" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">{trialStats.scheduled}</p>
-                      <p className="text-sm text-muted-foreground">Scheduled</p>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="border-emerald-500/20 bg-emerald-500/5">
-                  <CardContent className="p-4 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-                      <Check className="w-5 h-5 text-emerald-400" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">{trialStats.completed}</p>
-                      <p className="text-sm text-muted-foreground">Completed</p>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="border-amber-500/20 bg-amber-500/5">
-                  <CardContent className="p-4 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
-                      <X className="w-5 h-5 text-amber-400" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">{trialStats.absent}</p>
-                      <p className="text-sm text-muted-foreground">Absent</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {filteredTrials.length === 0 ? (
-                <Card className="glass-card">
-                  <CardContent className="py-16 text-center">
-                    <GraduationCap className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No Trial Lessons Found</h3>
-                    <p className="text-muted-foreground">No trial lessons match the current filters.</p>
-                  </CardContent>
-                </Card>
-              ) : (
-                <Tabs defaultValue="scheduled" className="w-full">
-                  <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="scheduled">
-                      Scheduled ({filteredTrials.filter((t: any) => t.status === 'scheduled').length})
-                    </TabsTrigger>
-                    <TabsTrigger value="completed">
-                      Completed ({filteredTrials.filter((t: any) => t.status === 'completed').length})
-                    </TabsTrigger>
-                    <TabsTrigger value="absent">
-                      Absent ({filteredTrials.filter((t: any) => t.status === 'absent').length})
-                    </TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="scheduled" className="space-y-3 mt-4">
-                    {filteredTrials.filter((t: any) => t.status === 'scheduled').length === 0 ? (
-                      <Card>
-                        <CardContent className="py-8 text-center text-muted-foreground">
-                          No scheduled trial lessons.
-                        </CardContent>
-                      </Card>
-                    ) : (
-                      filteredTrials.filter((t: any) => t.status === 'scheduled').map((trial: any) => (
-                        <div key={trial.trial_lesson_id} className="space-y-1">
-                          <p className="text-xs text-muted-foreground ml-1">
-                            {format(new Date(trial.lesson_date), 'EEEE, MMMM d, yyyy')}
-                          </p>
-                          <AdminTrialLessonCard trial={trial} />
-                        </div>
-                      ))
-                    )}
-                  </TabsContent>
-
-                  <TabsContent value="completed" className="space-y-3 mt-4">
-                    {filteredTrials.filter((t: any) => t.status === 'completed').length === 0 ? (
-                      <Card>
-                        <CardContent className="py-8 text-center text-muted-foreground">
-                          No completed trial lessons yet.
-                        </CardContent>
-                      </Card>
-                    ) : (
-                      filteredTrials.filter((t: any) => t.status === 'completed').map((trial: any) => (
-                        <Card key={trial.trial_lesson_id} className="border-emerald-500/20">
-                          <CardContent className="p-4">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="font-semibold">{trial.trial_students?.name || '-'}</p>
-                                <p className="text-sm text-muted-foreground">
-                                  {format(new Date(trial.lesson_date), 'MMM d, yyyy')} • {formatTrialTime(trial.lesson_time)} • {trial.duration_minutes} min
-                                </p>
-                                {trial.notes && (
-                                  <p className="text-sm text-muted-foreground mt-1 italic">"{trial.notes}"</p>
-                                )}
-                              </div>
-                              <Badge className="bg-emerald-500/20 text-emerald-400">Completed</Badge>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))
-                    )}
-                  </TabsContent>
-
-                  <TabsContent value="absent" className="space-y-3 mt-4">
-                    {filteredTrials.filter((t: any) => t.status === 'absent').length === 0 ? (
-                      <Card>
-                        <CardContent className="py-8 text-center text-muted-foreground">
-                          No absent trial lessons.
-                        </CardContent>
-                      </Card>
-                    ) : (
-                      filteredTrials.filter((t: any) => t.status === 'absent').map((trial: any) => (
-                        <Card key={trial.trial_lesson_id} className="border-amber-500/20">
-                          <CardContent className="p-4">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="font-semibold">{trial.trial_students?.name || '-'}</p>
-                                <p className="text-sm text-muted-foreground">
-                                  {format(new Date(trial.lesson_date), 'MMM d, yyyy')} • {formatTrialTime(trial.lesson_time)} • {trial.duration_minutes} min
-                                </p>
-                                {trial.notes && (
-                                  <p className="text-sm text-muted-foreground mt-1 italic">"{trial.notes}"</p>
-                                )}
-                              </div>
-                              <Badge className="bg-amber-500/20 text-amber-400">Absent</Badge>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))
-                    )}
-                  </TabsContent>
-                </Tabs>
-              )}
-            </div>
+            {id && <TrialLessonCalendar teacherId={id} isAdmin />}
           </TabsContent>
         </Tabs>
       </div>
@@ -1000,133 +816,3 @@ export default function TeacherDetail() {
   );
 }
 
-// ── Helper: format time for trial lessons ──
-function formatTrialTime(time: string | null) {
-  if (!time) return '-';
-  const [hours, minutes] = time.split(':');
-  const hour = parseInt(hours);
-  const ampm = hour >= 12 ? 'PM' : 'AM';
-  const hour12 = hour % 12 || 12;
-  return `${hour12}:${minutes} ${ampm}`;
-}
-
-// ── Admin Trial Lesson Card (similar to teacher TrialLessonCard) ──
-function AdminTrialLessonCard({ trial }: { trial: any }) {
-  const [notes, setNotes] = useState(trial.notes || '');
-  const [isSavingNote, setIsSavingNote] = useState(false);
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
-  const queryClient = useQueryClient();
-
-  const invalidateAll = () => {
-    queryClient.invalidateQueries({ queryKey: ['admin-teacher-trial-lessons'] });
-  };
-
-  const handleStatusChange = async (newStatus: string) => {
-    setIsUpdatingStatus(true);
-    try {
-      const { error } = await supabase
-        .from('trial_lessons_log')
-        .update({ status: newStatus })
-        .eq('trial_lesson_id', trial.trial_lesson_id);
-      if (error) throw error;
-      const label = newStatus === 'completed' ? 'Completed' : newStatus === 'absent' ? 'Absent' : 'Scheduled';
-      sonnerToast.success(`Trial lesson marked as ${label}`);
-      invalidateAll();
-    } catch (error: any) {
-      sonnerToast.error('Failed to update', { description: error.message });
-    } finally {
-      setIsUpdatingStatus(false);
-    }
-  };
-
-  const handleSaveNote = async () => {
-    setIsSavingNote(true);
-    try {
-      const { error } = await supabase
-        .from('trial_lessons_log')
-        .update({ notes: notes || null })
-        .eq('trial_lesson_id', trial.trial_lesson_id);
-      if (error) throw error;
-      sonnerToast.success('Note saved');
-      invalidateAll();
-    } catch (error: any) {
-      sonnerToast.error('Failed to save note', { description: error.message });
-    } finally {
-      setIsSavingNote(false);
-    }
-  };
-
-  const studentName = trial.trial_students?.name || '-';
-  const studentPhone = trial.trial_students?.phone || '';
-
-  return (
-    <Card className="border border-purple-500/30 bg-purple-500/5">
-      <CardContent className="p-4">
-        <div className="space-y-4">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <Clock className="w-4 h-4 text-muted-foreground" />
-                <span className="font-medium">{formatTrialTime(trial.lesson_time)}</span>
-                <Badge variant="outline" className="text-xs">{trial.duration_minutes} min</Badge>
-                <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs">
-                  <Users className="w-3 h-3 mr-1" />
-                  Trial
-                </Badge>
-              </div>
-              <span className="font-semibold text-lg">{studentName}</span>
-              {studentPhone && <span className="text-sm text-muted-foreground ml-2">{studentPhone}</span>}
-            </div>
-          </div>
-
-          {/* Notes Input */}
-          <div className="space-y-2">
-            <Label className="text-sm text-muted-foreground">Notes</Label>
-            <div className="flex gap-2">
-              <Textarea
-                placeholder="Add a comment about this trial lesson..."
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                className="min-h-[60px] resize-none flex-1"
-              />
-              <Button
-                size="sm"
-                variant="outline"
-                className="self-end"
-                disabled={isSavingNote || !notes.trim()}
-                onClick={handleSaveNote}
-              >
-                {isSavingNote ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3 mr-1" />}
-                Save
-              </Button>
-            </div>
-          </div>
-
-          {/* Status Dropdown */}
-          <div className="flex flex-wrap gap-2 items-center">
-            <Select
-              value={trial.status || 'scheduled'}
-              onValueChange={handleStatusChange}
-              disabled={isUpdatingStatus}
-            >
-              <SelectTrigger className="w-[140px] h-8 text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="scheduled">
-                  <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> Scheduled</span>
-                </SelectItem>
-                <SelectItem value="completed">
-                  <span className="flex items-center gap-1"><Check className="w-3 h-3" /> Completed</span>
-                </SelectItem>
-                <SelectItem value="absent">
-                  <span className="flex items-center gap-1"><X className="w-3 h-3" /> Absent</span>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
