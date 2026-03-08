@@ -22,7 +22,6 @@ import TeacherDetail from "./pages/TeacherDetail";
 import Reports from "./pages/Reports";
 
 import AdminNotifications from "./pages/admin/Notifications";
-import PackageSummaries from "./pages/admin/PackageSummaries";
 import TrialStudents from "./pages/admin/TrialStudents";
 import Leads from "./pages/Leads";
 import Packages from "./pages/admin/Packages";
