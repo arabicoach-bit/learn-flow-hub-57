@@ -272,70 +272,7 @@ export default function TeacherStudents() {
                               </TabsContent>
 
                               <TabsContent value="profile" className="p-4 mt-0">
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                  {student.age && (
-                                    <div className="flex items-center gap-2 text-sm">
-                                      <User className="w-4 h-4 text-muted-foreground" />
-                                      <span className="text-muted-foreground">Age:</span>
-                                      <span className="font-medium">{student.age} years</span>
-                                    </div>
-                                  )}
-                                  {student.gender && (
-                                    <div className="flex items-center gap-2 text-sm">
-                                      <User className="w-4 h-4 text-muted-foreground" />
-                                      <span className="text-muted-foreground">Gender:</span>
-                                      <span className="font-medium">{student.gender}</span>
-                                    </div>
-                                  )}
-                                  {student.school && (
-                                    <div className="flex items-center gap-2 text-sm">
-                                      <School className="w-4 h-4 text-muted-foreground" />
-                                      <span className="text-muted-foreground">School:</span>
-                                      <span className="font-medium">{student.school}</span>
-                                    </div>
-                                  )}
-                                  {student.year_group && (
-                                    <div className="flex items-center gap-2 text-sm">
-                                      <Calendar className="w-4 h-4 text-muted-foreground" />
-                                      <span className="text-muted-foreground">Year Group:</span>
-                                      <span className="font-medium">{student.year_group}</span>
-                                    </div>
-                                  )}
-                                  {programName && (
-                                    <div className="flex items-center gap-2 text-sm">
-                                      <BookOpen className="w-4 h-4 text-muted-foreground" />
-                                      <span className="text-muted-foreground">Program:</span>
-                                      <span className="font-medium">{programName}</span>
-                                    </div>
-                                  )}
-                                  {student.student_level && (
-                                    <div className="flex items-center gap-2 text-sm">
-                                      <GraduationCap className="w-4 h-4 text-muted-foreground" />
-                                      <span className="text-muted-foreground">Level:</span>
-                                      <span className="font-medium">{student.student_level}</span>
-                                    </div>
-                                  )}
-                                  {student.nationality && (
-                                    <div className="flex items-center gap-2 text-sm">
-                                      <User className="w-4 h-4 text-muted-foreground" />
-                                      <span className="text-muted-foreground">Nationality:</span>
-                                      <span className="font-medium">{student.nationality}</span>
-                                    </div>
-                                  )}
-                                </div>
-                                <div className="mt-4 flex justify-end">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setEditingStudent(student);
-                                    }}
-                                  >
-                                    <Pencil className="w-4 h-4 mr-2" />
-                                    Edit Profile
-                                  </Button>
-                                </div>
+                                <StudentInfoView student={student} role="teacher" />
                               </TabsContent>
                             </Tabs>
                           </div>
