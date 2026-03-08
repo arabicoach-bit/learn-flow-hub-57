@@ -224,7 +224,7 @@ function StudentPackagesTab({
                             </div>
                           </TableCell>
                           <TableCell className="font-medium">{formatCurrency(pkg.amount)}</TableCell>
-                          <TableCell><Badge variant="secondary" className="text-[10px]">{pkg.is_renewal ? 'Renewal' : 'New'}</Badge></TableCell>
+                          
                           <TableCell onClick={(e) => e.stopPropagation()}>
                             <div className="flex gap-1">
                               <Button variant="ghost" size="sm" onClick={() => setEditPackage(pkg)} className="gap-1 text-xs"><Pencil className="w-3 h-3" />Edit</Button>
