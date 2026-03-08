@@ -24,6 +24,7 @@ export function EditStudentDialog({ student, open, onOpenChange }: EditStudentDi
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
+    parent_guardian_name: '',
     age: '',
     gender: '',
     nationality: '',
