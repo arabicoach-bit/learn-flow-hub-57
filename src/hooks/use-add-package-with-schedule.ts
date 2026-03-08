@@ -102,6 +102,39 @@ export function useAddPackageWithSchedule() {
 
       if (updateStudentError) throw updateStudentError;
 
+      // 8. Create new package notification
+      const { data: teacher } = await supabase
+        .from('teachers')
+        .select('name')
+        .eq('teacher_id', input.teacher_id)
+        .maybeSingle();
+
+      const { data: refreshedStudent } = await supabase
+        .from('students')
+        .select('name, wallet_balance')
+        .eq('student_id', input.student_id)
+        .single();
+
+      const studentName = refreshedStudent?.name || student.name;
+      const walletBalance = refreshedStudent?.wallet_balance ?? student.wallet_balance ?? 0;
+
+      const { error: notificationError } = await supabase
+        .from('notifications')
+        .insert({
+          type: 'new_package',
+          related_id: input.student_id,
+          message:
+            '📦 New package for ' + studentName +
+            ' | 👨‍🏫 Teacher: ' + (teacher?.name || 'N/A') +
+            ' | 📚 ' + input.lessons_purchased + ' lessons' +
+            ' | 💰 AED ' + input.amount +
+            ' | 📋 Wallet: ' + walletBalance,
+          student_name: studentName,
+          wallet_balance: walletBalance,
+        });
+
+      if (notificationError) throw notificationError;
+
       return {
         package: packageData,
         generatedSchedule,

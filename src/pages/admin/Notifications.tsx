@@ -11,7 +11,7 @@ import { NotificationCard } from '@/components/notifications/NotificationCard';
 type FilterType = 'all' | 'lesson_completed' | 'trial_completed' | 'new_package';
 
 export default function AdminNotifications() {
-  const { data: notifications, isLoading } = useNotifications(100);
+  const { data: notifications, isLoading } = useNotifications(1000);
   const markAllRead = useMarkAllNotificationsRead();
   const [filter, setFilter] = useState<FilterType>('all');
 

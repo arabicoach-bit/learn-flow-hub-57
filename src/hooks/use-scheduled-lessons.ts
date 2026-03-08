@@ -269,6 +269,8 @@ export function useUpdateScheduledLesson() {
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
       queryClient.invalidateQueries({ queryKey: ['admin-payroll-unified'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications-unread-count'] });
     },
   });
 }
