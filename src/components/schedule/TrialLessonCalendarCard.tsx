@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Clock, CheckCircle, XCircle, Save, Loader2, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -81,7 +82,7 @@ export function TrialLessonCalendarCard({ lesson, onUpdated, readOnly }: TrialLe
     queryClient.invalidateQueries({ queryKey: ['teacher-live-stats'] });
   };
 
-  const handleMark = async (newStatus: 'completed' | 'absent') => {
+  const handleMark = async (newStatus: 'completed' | 'absent' | 'scheduled') => {
     setIsUpdating(true);
     try {
       const { error } = await supabase
@@ -216,6 +217,30 @@ export function TrialLessonCalendarCard({ lesson, onUpdated, readOnly }: TrialLe
               Absent
             </Button>
           </>
+        ) : !readOnly ? (
+          <div className="flex items-center gap-2">
+            {statusBadge}
+            <Select
+              value={lesson.status}
+              onValueChange={(val) => handleMark(val as 'completed' | 'absent')}
+              disabled={isUpdating}
+            >
+              <SelectTrigger className="w-[150px] h-8 text-xs">
+                <SelectValue placeholder="Change status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="scheduled">
+                  <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> Scheduled</span>
+                </SelectItem>
+                <SelectItem value="completed">
+                  <span className="flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Completed</span>
+                </SelectItem>
+                <SelectItem value="absent">
+                  <span className="flex items-center gap-1"><XCircle className="w-3 h-3" /> Absent</span>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         ) : (
           statusBadge
         )}
