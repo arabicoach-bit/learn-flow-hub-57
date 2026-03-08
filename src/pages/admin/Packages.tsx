@@ -980,6 +980,10 @@ export default function Packages() {
 
               {/* Actions */}
               <div className="flex flex-wrap gap-2 pt-4 border-t">
+                <Button onClick={handleShareWhatsApp} className="bg-[#25D366] hover:bg-[#25D366]/90 text-white">
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Share via WhatsApp
+                </Button>
                 <Button onClick={handleExportPDF} className="bg-[#2D3561] hover:bg-[#2D3561]/90">
                   <Download className="w-4 h-4 mr-2" />
                   Export PDF
