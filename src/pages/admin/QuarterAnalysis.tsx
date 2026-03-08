@@ -180,15 +180,15 @@ export default function QuarterAnalysis() {
             )}
 
             {/* PACKAGE KPIs */}
-            <SectionHeader title="Package KPIs" icon={<Package className="w-5 h-5" />} />
+            <SectionHeader title="Packages" emoji="📦" theme="packages" />
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
-              <KPICard title="Total Packages" value={data.packages.totalPackages} icon={<Package className="w-5 h-5" />} />
-              <KPICard title="New Packages" value={data.packages.newPackages} icon={<Package className="w-5 h-5" />} variant="success" />
-              <KPICard title="Renewals" value={data.packages.renewals} icon={<TrendingUp className="w-5 h-5" />} />
-              <KPICard title="Running" value={data.packages.runningPackages} icon={<CheckCircle className="w-5 h-5" />} variant="success" />
-              <KPICard title="Completed" value={data.packages.completedPackages} icon={<CheckCircle className="w-5 h-5" />} />
-              <KPICard title="Pending Payments" value={data.packages.pendingPayments} icon={<AlertTriangle className="w-5 h-5" />} variant="warning" />
-              <KPICard title="Paid Revenue" value={`AED ${data.packages.paidRevenue.toLocaleString()}`} icon={<DollarSign className="w-5 h-5" />} variant="success" />
+              <KPICard title="Total Packages" value={data.packages.totalPackages} icon={<Package className="w-5 h-5" />} theme="packages" />
+              <KPICard title="New Packages" value={data.packages.newPackages} icon={<Package className="w-5 h-5" />} variant="success" theme="packages" />
+              <KPICard title="Renewals" value={data.packages.renewals} icon={<TrendingUp className="w-5 h-5" />} theme="packages" />
+              <KPICard title="Running" value={data.packages.runningPackages} icon={<CheckCircle className="w-5 h-5" />} variant="success" theme="packages" />
+              <KPICard title="Completed" value={data.packages.completedPackages} icon={<CheckCircle className="w-5 h-5" />} theme="packages" />
+              <KPICard title="Pending Payments" value={data.packages.pendingPayments} icon={<AlertTriangle className="w-5 h-5" />} variant="warning" theme="packages" />
+              <KPICard title="Paid Revenue" value={`AED ${data.packages.paidRevenue.toLocaleString()}`} icon={<DollarSign className="w-5 h-5" />} variant="success" theme="packages" />
             </div>
             {comparePrevious && prevData && (
               <ComparisonRow
