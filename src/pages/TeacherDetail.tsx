@@ -536,6 +536,17 @@ export default function TeacherDetail() {
               </div>
             </CardContent>
           </Card>
+          <Card>
+            <CardContent className="pt-4 pb-3 px-4">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-blue-500" />
+                <div>
+                  <p className="text-xl font-bold">{totalStudents > 0 ? Math.round((activeStudents / totalStudents) * 100) : 0}%</p>
+                  <p className="text-xs text-muted-foreground">Retention Rate</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Tabs */}
