@@ -3,7 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreVertical, Trash2, AlertTriangle } from 'lucide-react';
+import { MoreVertical, Trash2, AlertTriangle, UserPlus } from 'lucide-react';
 import type { Lead } from '@/hooks/use-leads';
 
 interface LeadTableViewProps {
