@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   MoreVertical, Phone, GraduationCap, Calendar, User,
-  MessageSquare, Tag, Trash2, AlertTriangle,
+  MessageSquare, Tag, Trash2, AlertTriangle, UserPlus,
 } from 'lucide-react';
 import type { Lead } from '@/hooks/use-leads';
 
