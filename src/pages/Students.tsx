@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Download, Pencil, Trash2, Users, UserCheck, AlertTriangle, PauseCircle } from 'lucide-react';
+import { Plus, Search, Download, Pencil, Trash2, Users, UserCheck, AlertTriangle, PauseCircle, XCircle, Percent } from 'lucide-react';
 import { format } from 'date-fns';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useStudents, useCreateStudent, useUpdateStudent, useDeleteStudent } from '@/hooks/use-students';
@@ -59,6 +59,8 @@ export default function Students() {
   const activeCount = filteredStudents.filter(s => s.status === 'Active').length;
   const overdueCount = filteredStudents.filter(s => s.status === 'Active' && (s.wallet_balance || 0) <= 0).length;
   const tempStopCount = filteredStudents.filter(s => s.status === 'Temporary Stop').length;
+  const leftCount = filteredStudents.filter(s => s.status === 'Left').length;
+  const retentionRate = totalStudents > 0 ? Math.round(((totalStudents - leftCount) / totalStudents) * 100) : 0;
 
   const [formData, setFormData] = useState({
     name: '',
@@ -263,7 +265,7 @@ export default function Students() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
           <Card><CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4 text-muted-foreground" />
@@ -291,6 +293,20 @@ export default function Students() {
               <div className="text-xl font-bold text-amber-600">{tempStopCount}</div>
             </div>
             <p className="text-xs text-muted-foreground">Temporary Stop</p>
+          </CardContent></Card>
+          <Card><CardContent className="pt-4 pb-3">
+            <div className="flex items-center gap-2">
+              <XCircle className="h-4 w-4 text-red-500" />
+              <div className="text-xl font-bold text-red-500">{leftCount}</div>
+            </div>
+            <p className="text-xs text-muted-foreground">Left</p>
+          </CardContent></Card>
+          <Card><CardContent className="pt-4 pb-3">
+            <div className="flex items-center gap-2">
+              <Percent className="h-4 w-4 text-blue-500" />
+              <div className="text-xl font-bold text-blue-500">{retentionRate}%</div>
+            </div>
+            <p className="text-xs text-muted-foreground">Retention Rate</p>
           </CardContent></Card>
         </div>
 
