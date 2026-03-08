@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ExternalLink, Copy, Check, MessageCircle, Calendar, BookOpen, Clock, RefreshCw, FileText } from 'lucide-react';
+import { ExternalLink, Copy, Check, MessageCircle, Calendar, BookOpen, Clock, RefreshCw, FileText, StickyNote } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
@@ -16,10 +16,19 @@ import {
   formatWhatsAppMessage,
 } from '@/lib/notification-utils';
 import { usePackageNotificationDetails, formatSchedule } from '@/hooks/use-package-notification-details';
+import { useLessonNotificationDetails } from '@/hooks/use-lesson-notification-details';
 import { format } from 'date-fns';
 
 interface NotificationCardProps {
   notification: Notification;
+}
+
+function formatTime12h(time: string): string {
+  const [h, m] = time.split(':');
+  const hour = parseInt(h);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const h12 = hour % 12 || 12;
+  return `${h12}:${m} ${ampm}`;
 }
 
 export function NotificationCard({ notification }: NotificationCardProps) {
@@ -27,6 +36,11 @@ export function NotificationCard({ notification }: NotificationCardProps) {
   const markRead = useMarkNotificationRead();
   const { data: parentPhone } = useParentPhone(notification.related_id, notification.type);
   const { data: packageDetails } = usePackageNotificationDetails(
+    notification.related_id,
+    notification.type,
+    notification.created_at
+  );
+  const { data: lessonDetails } = useLessonNotificationDetails(
     notification.related_id,
     notification.type,
     notification.created_at
@@ -77,6 +91,7 @@ export function NotificationCard({ notification }: NotificationCardProps) {
   };
 
   const isPackage = notification.type === 'new_package' && packageDetails;
+  const isLesson = notification.type === 'lesson_completed';
 
   return (
     <div
@@ -113,10 +128,74 @@ export function NotificationCard({ notification }: NotificationCardProps) {
         <h4 className="font-semibold text-base mb-2">{notification.student_name}</h4>
       )}
 
-      {/* Package-specific rich details */}
-      {isPackage ? (
+      {/* LESSON COMPLETED - Rich details */}
+      {isLesson ? (
         <div className="space-y-2 mb-3">
-          {/* Package type & lessons info */}
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
+            {/* Teacher - from parsed message or fetched details */}
+            {(lessonDetails?.teacher_name || details.teacher) && (
+              <>
+                <span className="text-muted-foreground">👨‍🏫 Teacher</span>
+                <span className="font-medium">{lessonDetails?.teacher_name || details.teacher}</span>
+              </>
+            )}
+            {/* Date */}
+            {lessonDetails?.scheduled_date && (
+              <>
+                <span className="text-muted-foreground flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5" /> Date
+                </span>
+                <span className="font-medium">{format(new Date(lessonDetails.scheduled_date), 'dd MMM yyyy')}</span>
+              </>
+            )}
+            {/* Time */}
+            {lessonDetails?.scheduled_time && (
+              <>
+                <span className="text-muted-foreground flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5" /> Time
+                </span>
+                <span className="font-medium">{formatTime12h(lessonDetails.scheduled_time)}</span>
+              </>
+            )}
+            {/* Duration */}
+            {lessonDetails?.duration_minutes && (
+              <>
+                <span className="text-muted-foreground flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5" /> Duration
+                </span>
+                <span className="font-medium">{lessonDetails.duration_minutes} min</span>
+              </>
+            )}
+            {/* Wallet */}
+            {notification.wallet_balance !== null && notification.wallet_balance !== undefined && (
+              <>
+                <span className="text-muted-foreground">💰 Wallet</span>
+                <span className={`font-medium ${
+                  notification.wallet_balance === 0
+                    ? 'text-destructive font-bold'
+                    : notification.wallet_balance <= 2
+                    ? 'text-amber-500 font-bold'
+                    : ''
+                }`}>
+                  {notification.wallet_balance} lessons
+                </span>
+              </>
+            )}
+          </div>
+
+          {/* Notes */}
+          {(lessonDetails?.notes || (details.notes && details.notes !== '-')) && (
+            <div className="text-sm p-2 rounded-lg bg-background/50 border border-border/30">
+              <span className="text-muted-foreground text-xs font-medium flex items-center gap-1">
+                <StickyNote className="w-3 h-3" /> Notes
+              </span>
+              <p className="font-medium mt-0.5">{lessonDetails?.notes || details.notes}</p>
+            </div>
+          )}
+        </div>
+      ) : isPackage ? (
+        /* PACKAGE - Rich details */
+        <div className="space-y-2 mb-3">
           <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
             {packageDetails.package_type_name && (
               <>
@@ -169,7 +248,6 @@ export function NotificationCard({ notification }: NotificationCardProps) {
             )}
           </div>
 
-          {/* Schedule */}
           {packageDetails.schedule.length > 0 && (
             <div className="text-sm mt-2 p-2 rounded-lg bg-background/50 border border-border/30">
               <span className="text-muted-foreground text-xs font-medium">📅 Schedule</span>
@@ -177,7 +255,6 @@ export function NotificationCard({ notification }: NotificationCardProps) {
             </div>
           )}
 
-          {/* Description */}
           {packageDetails.description && (
             <div className="text-sm mt-1 p-2 rounded-lg bg-background/50 border border-border/30">
               <span className="text-muted-foreground text-xs font-medium flex items-center gap-1">
@@ -188,7 +265,7 @@ export function NotificationCard({ notification }: NotificationCardProps) {
           )}
         </div>
       ) : (
-        /* Default detail grid for lesson/trial notifications */
+        /* DEFAULT - Trial & other notifications */
         <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm mb-3">
           {details.teacher && (
             <>
