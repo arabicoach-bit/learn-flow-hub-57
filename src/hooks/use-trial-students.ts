@@ -31,6 +31,8 @@ export interface TrialStudent {
   trial_result: TrialResult | null;
   notes: string | null;
   handled_by: string | null;
+  follow_up: string | null;
+  last_contact_date: string | null;
   follow_up_notes: string | null;
   converted_student_id: string | null;
   registration_date: string | null;
