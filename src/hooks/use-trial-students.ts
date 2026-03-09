@@ -77,6 +77,8 @@ export interface UpdateTrialStudentInput {
   trial_result?: TrialResult;
   notes?: string;
   handled_by?: string;
+  follow_up?: string;
+  last_contact_date?: string;
   follow_up_notes?: string;
   converted_student_id?: string;
   registration_date?: string;
