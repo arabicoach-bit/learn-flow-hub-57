@@ -99,6 +99,29 @@ export default function TrialStudents() {
     }
   };
 
+  const handleUpdateFollowUp = async (trialId: string, followUp: string) => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      await updateTrialStudent.mutateAsync({
+        trial_id: trialId,
+        follow_up: followUp || undefined,
+        last_contact_date: followUp ? today : undefined,
+      } as any);
+      toast({ title: 'Follow-up updated', description: followUp ? `Follow-up set to ${followUp}.` : 'Follow-up cleared.' });
+    } catch {
+      toast({ title: 'Error', description: 'Failed to update follow-up.', variant: 'destructive' });
+    }
+  };
+
+  const handleUpdateHandledBy = async (trialId: string, handledBy: string) => {
+    try {
+      await updateTrialStudent.mutateAsync({ trial_id: trialId, handled_by: handledBy || undefined });
+      toast({ title: 'Updated', description: handledBy ? `Handled by set to ${handledBy}.` : 'Handled by cleared.' });
+    } catch {
+      toast({ title: 'Error', description: 'Failed to update.', variant: 'destructive' });
+    }
+  };
+
   const handleDelete = async (trialId: string) => {
     if (!window.confirm('Are you sure you want to delete this trial student and all associated lesson records?')) return;
     try {

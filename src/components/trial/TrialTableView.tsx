@@ -167,6 +167,56 @@ export function TrialTableView({ students, onUpdateStatus, onUpdateConversion, o
                         </SelectContent>
                       </Select>
                     </TableCell>
+                    {/* Follow-Up */}
+                    <TableCell>
+                      <Select
+                        value={student.follow_up || '__none__'}
+                        onValueChange={(v) => onUpdateFollowUp(student.trial_id, v === '__none__' ? '' : v)}
+                      >
+                        <SelectTrigger className="h-7 w-[180px] text-xs border-0 bg-transparent px-1 focus:ring-0">
+                          {student.follow_up ? (
+                            <Badge className={followUpColors[student.follow_up] || 'bg-muted text-muted-foreground'}>{student.follow_up}</Badge>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">Set Follow-Up</span>
+                          )}
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">— None —</SelectItem>
+                          {followUpOptions.map(o => (
+                            <SelectItem key={o} value={o}>{o}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    {/* Follow-Up Date */}
+                    <TableCell>
+                      {student.last_contact_date ? (
+                        <span className="text-sm text-muted-foreground">
+                          {format(new Date(student.last_contact_date), 'MMM d, yyyy')}
+                        </span>
+                      ) : '—'}
+                    </TableCell>
+                    {/* Handled By */}
+                    <TableCell>
+                      <Select
+                        value={student.handled_by || '__none__'}
+                        onValueChange={(v) => onUpdateHandledBy(student.trial_id, v === '__none__' ? '' : v)}
+                      >
+                        <SelectTrigger className="h-7 w-[130px] text-xs border-0 bg-transparent px-1 focus:ring-0">
+                          {student.handled_by ? (
+                            <span className="text-sm">{student.handled_by}</span>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">Assign</span>
+                          )}
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">— None —</SelectItem>
+                          {handledByOptions.map(h => (
+                            <SelectItem key={h} value={h}>{h}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
                     <TableCell>
                       {student.notes ? (
                         <p className="text-xs text-muted-foreground max-w-[150px] truncate" title={student.notes}>{student.notes}</p>
