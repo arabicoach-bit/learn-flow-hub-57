@@ -50,7 +50,7 @@ const followUpOptions = [
   'F.4 – Special Offer', 'F.5 – Help Offer', 'F.6 – Soft Reminder', 'F.7 – Arabic Challenge',
 ];
 
-const handledByOptions = ['Abdelrahman', 'Khaled', 'Sara', 'Other'];
+const handledByOptions = ['Amira', 'Hind', 'Mona', 'Ahmed', 'Eman'];
 
 export function LeadTableView({ leads, onUpdateLeadStatus, onUpdateTrialStatus, onUpdateFollowUp, onUpdateHandledBy, onEdit, onDelete, onConvertToTrial }: LeadTableViewProps) {
   return (
