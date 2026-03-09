@@ -50,8 +50,24 @@ const resultBadge = (result: string) => {
   };
   return colors[result] || 'bg-muted text-muted-foreground';
 };
+const followUpOptions = [
+  'F.1 – Student Motivation', 'F.2 – Free Resources', 'F.3 – Parent Feedback',
+  'F.4 – Special Offer', 'F.5 – Help Offer', 'F.6 – Soft Reminder', 'F.7 – Arabic Challenge',
+];
 
-export function TrialTableView({ students, onUpdateStatus, onUpdateConversion, onUpdateResult, onEdit, onConvert, onDelete }: TrialTableViewProps) {
+const followUpColors: Record<string, string> = {
+  'F.1 – Student Motivation': 'bg-emerald-500/20 text-emerald-400',
+  'F.2 – Free Resources': 'bg-green-500/20 text-green-400',
+  'F.3 – Parent Feedback': 'bg-teal-500/20 text-teal-400',
+  'F.4 – Special Offer': 'bg-orange-500/20 text-orange-400',
+  'F.5 – Help Offer': 'bg-cyan-500/20 text-cyan-400',
+  'F.6 – Soft Reminder': 'bg-amber-500/20 text-amber-400',
+  'F.7 – Arabic Challenge': 'bg-violet-500/20 text-violet-400',
+};
+
+const handledByOptions = ['Amira', 'Hind', 'Mona', 'Ahmed', 'Eman'];
+
+export function TrialTableView({ students, onUpdateStatus, onUpdateConversion, onUpdateResult, onUpdateFollowUp, onUpdateHandledBy, onEdit, onConvert, onDelete }: TrialTableViewProps) {
   return (
     <Card className="bg-card">
       <CardContent className="p-0">
