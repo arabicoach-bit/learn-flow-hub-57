@@ -850,10 +850,12 @@ export type Database = {
           converted_student_id: string | null
           created_at: string | null
           duration_minutes: number
+          follow_up: string | null
           follow_up_notes: string | null
           gender: string | null
           handled_by: string | null
           interested_program: string | null
+          last_contact_date: string | null
           lead_id: string | null
           name: string
           notes: string | null
@@ -881,10 +883,12 @@ export type Database = {
           converted_student_id?: string | null
           created_at?: string | null
           duration_minutes?: number
+          follow_up?: string | null
           follow_up_notes?: string | null
           gender?: string | null
           handled_by?: string | null
           interested_program?: string | null
+          last_contact_date?: string | null
           lead_id?: string | null
           name: string
           notes?: string | null
@@ -912,10 +916,12 @@ export type Database = {
           converted_student_id?: string | null
           created_at?: string | null
           duration_minutes?: number
+          follow_up?: string | null
           follow_up_notes?: string | null
           gender?: string | null
           handled_by?: string | null
           interested_program?: string | null
+          last_contact_date?: string | null
           lead_id?: string | null
           name?: string
           notes?: string | null
