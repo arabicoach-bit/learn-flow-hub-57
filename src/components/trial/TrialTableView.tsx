@@ -84,6 +84,9 @@ export function TrialTableView({ students, onUpdateStatus, onUpdateConversion, o
                 <TableHead>Attendance</TableHead>
                 <TableHead>Conversion</TableHead>
                 <TableHead>Result</TableHead>
+                <TableHead>Follow-Up</TableHead>
+                <TableHead>Follow-Up Date</TableHead>
+                <TableHead>Handled By</TableHead>
                 <TableHead>Notes</TableHead>
                 <TableHead className="w-[100px]">Actions</TableHead>
               </TableRow>
