@@ -16,6 +16,8 @@ interface TrialTableViewProps {
   onUpdateStatus: (trialId: string, status: TrialStatus) => void;
   onUpdateConversion: (trialId: string, conversion: 'Pending' | 'Converted' | 'Lost') => void;
   onUpdateResult: (trialId: string, result: TrialResult) => void;
+  onUpdateFollowUp: (trialId: string, followUp: string) => void;
+  onUpdateHandledBy: (trialId: string, handledBy: string) => void;
   onEdit: (student: TrialStudent) => void;
   onConvert: (student: TrialStudent) => void;
   onDelete: (trialId: string) => void;
@@ -48,8 +50,24 @@ const resultBadge = (result: string) => {
   };
   return colors[result] || 'bg-muted text-muted-foreground';
 };
+const followUpOptions = [
+  'F.1 – Student Motivation', 'F.2 – Free Resources', 'F.3 – Parent Feedback',
+  'F.4 – Special Offer', 'F.5 – Help Offer', 'F.6 – Soft Reminder', 'F.7 – Arabic Challenge',
+];
 
-export function TrialTableView({ students, onUpdateStatus, onUpdateConversion, onUpdateResult, onEdit, onConvert, onDelete }: TrialTableViewProps) {
+const followUpColors: Record<string, string> = {
+  'F.1 – Student Motivation': 'bg-emerald-500/20 text-emerald-400',
+  'F.2 – Free Resources': 'bg-green-500/20 text-green-400',
+  'F.3 – Parent Feedback': 'bg-teal-500/20 text-teal-400',
+  'F.4 – Special Offer': 'bg-orange-500/20 text-orange-400',
+  'F.5 – Help Offer': 'bg-cyan-500/20 text-cyan-400',
+  'F.6 – Soft Reminder': 'bg-amber-500/20 text-amber-400',
+  'F.7 – Arabic Challenge': 'bg-violet-500/20 text-violet-400',
+};
+
+const handledByOptions = ['Amira', 'Hind', 'Mona', 'Ahmed', 'Eman'];
+
+export function TrialTableView({ students, onUpdateStatus, onUpdateConversion, onUpdateResult, onUpdateFollowUp, onUpdateHandledBy, onEdit, onConvert, onDelete }: TrialTableViewProps) {
   return (
     <Card className="bg-card">
       <CardContent className="p-0">
@@ -66,6 +84,9 @@ export function TrialTableView({ students, onUpdateStatus, onUpdateConversion, o
                 <TableHead>Attendance</TableHead>
                 <TableHead>Conversion</TableHead>
                 <TableHead>Result</TableHead>
+                <TableHead>Follow-Up</TableHead>
+                <TableHead>Follow-Up Date</TableHead>
+                <TableHead>Handled By</TableHead>
                 <TableHead>Notes</TableHead>
                 <TableHead className="w-[100px]">Actions</TableHead>
               </TableRow>
@@ -143,6 +164,56 @@ export function TrialTableView({ students, onUpdateStatus, onUpdateConversion, o
                           <SelectItem value="Positive">Positive</SelectItem>
                           <SelectItem value="Neutral">Neutral</SelectItem>
                           <SelectItem value="Negative">Negative</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    {/* Follow-Up */}
+                    <TableCell>
+                      <Select
+                        value={student.follow_up || '__none__'}
+                        onValueChange={(v) => onUpdateFollowUp(student.trial_id, v === '__none__' ? '' : v)}
+                      >
+                        <SelectTrigger className="h-7 w-[180px] text-xs border-0 bg-transparent px-1 focus:ring-0">
+                          {student.follow_up ? (
+                            <Badge className={followUpColors[student.follow_up] || 'bg-muted text-muted-foreground'}>{student.follow_up}</Badge>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">Set Follow-Up</span>
+                          )}
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">— None —</SelectItem>
+                          {followUpOptions.map(o => (
+                            <SelectItem key={o} value={o}>{o}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    {/* Follow-Up Date */}
+                    <TableCell>
+                      {student.last_contact_date ? (
+                        <span className="text-sm text-muted-foreground">
+                          {format(new Date(student.last_contact_date), 'MMM d, yyyy')}
+                        </span>
+                      ) : '—'}
+                    </TableCell>
+                    {/* Handled By */}
+                    <TableCell>
+                      <Select
+                        value={student.handled_by || '__none__'}
+                        onValueChange={(v) => onUpdateHandledBy(student.trial_id, v === '__none__' ? '' : v)}
+                      >
+                        <SelectTrigger className="h-7 w-[130px] text-xs border-0 bg-transparent px-1 focus:ring-0">
+                          {student.handled_by ? (
+                            <span className="text-sm">{student.handled_by}</span>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">Assign</span>
+                          )}
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">— None —</SelectItem>
+                          {handledByOptions.map(h => (
+                            <SelectItem key={h} value={h}>{h}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </TableCell>
