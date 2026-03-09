@@ -197,6 +197,8 @@ export default function TrialStudents() {
               onUpdateStatus={handleUpdateStatus}
               onUpdateConversion={handleUpdateConversion}
               onUpdateResult={handleUpdateResult}
+              onUpdateFollowUp={handleUpdateFollowUp}
+              onUpdateHandledBy={handleUpdateHandledBy}
               onEdit={setEditingStudent}
               onConvert={setConvertingStudent}
               onDelete={handleDelete}
