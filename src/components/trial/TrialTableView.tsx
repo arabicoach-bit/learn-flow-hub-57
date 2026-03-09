@@ -16,6 +16,8 @@ interface TrialTableViewProps {
   onUpdateStatus: (trialId: string, status: TrialStatus) => void;
   onUpdateConversion: (trialId: string, conversion: 'Pending' | 'Converted' | 'Lost') => void;
   onUpdateResult: (trialId: string, result: TrialResult) => void;
+  onUpdateFollowUp: (trialId: string, followUp: string) => void;
+  onUpdateHandledBy: (trialId: string, handledBy: string) => void;
   onEdit: (student: TrialStudent) => void;
   onConvert: (student: TrialStudent) => void;
   onDelete: (trialId: string) => void;
