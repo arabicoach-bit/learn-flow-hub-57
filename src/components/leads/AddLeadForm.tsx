@@ -130,7 +130,15 @@ export function AddLeadForm() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Handled By</Label>
-              <Input value={formData.handled_by} onChange={e => update('handled_by', e.target.value)} placeholder="Who is handling this lead?" />
+              <Select value={formData.handled_by || '__none__'} onValueChange={v => update('handled_by', v === '__none__' ? '' : v)}>
+                <SelectTrigger><SelectValue placeholder="Select handler" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">— None —</SelectItem>
+                  {['Amira', 'Hind', 'Mona', 'Ahmed', 'Eman'].map(h => (
+                    <SelectItem key={h} value={h}>{h}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label>Next Follow-up Date</Label>

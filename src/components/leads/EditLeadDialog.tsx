@@ -260,12 +260,15 @@ export function EditLeadDialog({ lead, open, onOpenChange }: EditLeadDialogProps
             </div>
             <div className="space-y-2">
               <Label htmlFor="handled_by">Handled By</Label>
-              <Input
-                id="handled_by"
-                value={formData.handled_by}
-                onChange={(e) => setFormData({ ...formData, handled_by: e.target.value })}
-                placeholder="Who is handling this lead?"
-              />
+              <Select value={formData.handled_by || '__none__'} onValueChange={v => setFormData({ ...formData, handled_by: v === '__none__' ? '' : v })}>
+                <SelectTrigger><SelectValue placeholder="Select handler" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">— None —</SelectItem>
+                  {['Amira', 'Hind', 'Mona', 'Ahmed', 'Eman'].map(h => (
+                    <SelectItem key={h} value={h}>{h}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
