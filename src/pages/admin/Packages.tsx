@@ -11,7 +11,7 @@ import { usePackageSummary } from '@/hooks/use-package-summary';
 import { usePackagesBatchStats } from '@/hooks/use-packages-batch-stats';
 import { EditPackageDialog } from '@/components/packages/EditPackageDialog';
 import { PackageStatsCards } from '@/components/packages/PackageStatsCards';
-import { PackageFiltersBar } from '@/components/packages/PackageFiltersBar';
+import { PackageFiltersBar, type PackageSortOption } from '@/components/packages/PackageFiltersBar';
 import { PackageTableView } from '@/components/packages/PackageTableView';
 import { PackageSummaryDialog } from '@/components/packages/PackageSummaryDialog';
 import { useTeachers } from '@/hooks/use-teachers';
