@@ -29,6 +29,8 @@ interface LeadFiltersBarProps {
   onFollowUpChange: (value: string) => void;
   dateFilter: YearMonthFilterValue;
   onDateChange: (value: YearMonthFilterValue) => void;
+  sortBy: LeadSortOption;
+  onSortChange: (value: LeadSortOption) => void;
   viewMode: 'cards' | 'table';
   onViewModeChange: (mode: 'cards' | 'table') => void;
 }
