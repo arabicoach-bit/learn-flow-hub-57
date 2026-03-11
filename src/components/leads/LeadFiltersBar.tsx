@@ -1,8 +1,10 @@
-import { Search, LayoutGrid, List } from 'lucide-react';
+import { Search, LayoutGrid, List, ArrowUpDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { YearMonthFilter, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
+
+export type LeadSortOption = 'newest' | 'oldest' | 'alpha_asc' | 'alpha_desc' | 'last_contact' | 'next_followup';
 
 const trialStatusOptions = ['Trial Booked', 'Pending', 'Price Negotiation', 'Lost'];
 const leadStatusOptions = ['New', 'Contacted', 'Interested', 'Converted', 'Lost'];
@@ -27,6 +29,8 @@ interface LeadFiltersBarProps {
   onFollowUpChange: (value: string) => void;
   dateFilter: YearMonthFilterValue;
   onDateChange: (value: YearMonthFilterValue) => void;
+  sortBy: LeadSortOption;
+  onSortChange: (value: LeadSortOption) => void;
   viewMode: 'cards' | 'table';
   onViewModeChange: (mode: 'cards' | 'table') => void;
 }
@@ -37,6 +41,7 @@ export function LeadFiltersBar({
   leadStatusFilter, onLeadStatusChange,
   followUpFilter, onFollowUpChange,
   dateFilter, onDateChange,
+  sortBy, onSortChange,
   viewMode, onViewModeChange,
 }: LeadFiltersBarProps) {
   return (
@@ -89,6 +94,21 @@ export function LeadFiltersBar({
         </Select>
 
         <YearMonthFilter value={dateFilter} onChange={onDateChange} />
+
+        <Select value={sortBy} onValueChange={(v) => onSortChange(v as LeadSortOption)}>
+          <SelectTrigger className="w-[160px]">
+            <ArrowUpDown className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+            <SelectValue placeholder="Sort by" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="newest">Newest First</SelectItem>
+            <SelectItem value="oldest">Oldest First</SelectItem>
+            <SelectItem value="alpha_asc">A → Z (Name)</SelectItem>
+            <SelectItem value="alpha_desc">Z → A (Name)</SelectItem>
+            <SelectItem value="last_contact">Last Contact</SelectItem>
+            <SelectItem value="next_followup">Next Follow-Up</SelectItem>
+          </SelectContent>
+        </Select>
 
         <div className="flex border rounded-md overflow-hidden">
           <Button

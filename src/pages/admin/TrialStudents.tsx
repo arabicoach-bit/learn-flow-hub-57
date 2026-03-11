@@ -10,6 +10,7 @@ import { TrialStudentCard } from '@/components/trial/TrialStudentCard';
 import { TrialTableView } from '@/components/trial/TrialTableView';
 import { TrialStatsCards } from '@/components/trial/TrialStatsCards';
 import { TrialFiltersBar } from '@/components/trial/TrialFiltersBar';
+import { type TrialSortOption } from '@/components/trial/TrialFiltersBar';
 import { EditTrialStudentDialog } from '@/components/trial/EditTrialStudentDialog';
 import { ConvertToStudentDialog } from '@/components/trial/ConvertToStudentDialog';
 import { useToast } from '@/hooks/use-toast';
@@ -29,6 +30,7 @@ export default function TrialStudents() {
   const [teacherFilter, setTeacherFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState<YearMonthFilterValue>({ year: null, month: null });
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('table');
+  const [sortBy, setSortBy] = useState<TrialSortOption>('newest');
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<TrialStudent | null>(null);
   const [convertingStudent, setConvertingStudent] = useState<TrialStudent | null>(null);
@@ -55,8 +57,17 @@ export default function TrialStudents() {
       if (conversionFilter !== 'all' && s.conversion_status !== conversionFilter) return false;
       if (resultFilter !== 'all' && s.trial_result !== resultFilter) return false;
       return true;
+    }).sort((a, b) => {
+      switch (sortBy) {
+        case 'oldest': return (a.created_at || '').localeCompare(b.created_at || '');
+        case 'alpha_asc': return (a.name || '').localeCompare(b.name || '');
+        case 'alpha_desc': return (b.name || '').localeCompare(a.name || '');
+        case 'trial_date': return (a.trial_date || '9999').localeCompare(b.trial_date || '9999');
+        case 'last_contact': return (b.last_contact_date || '').localeCompare(a.last_contact_date || '');
+        case 'newest': default: return (b.created_at || '').localeCompare(a.created_at || '');
+      }
     });
-  }, [trialStudents, filterStart, filterEnd, teacherFilter, conversionFilter, resultFilter]);
+  }, [trialStudents, filterStart, filterEnd, teacherFilter, conversionFilter, resultFilter, sortBy]);
 
   const stats = {
     total: filteredStudents.length,
@@ -181,6 +192,7 @@ export default function TrialStudents() {
           resultFilter={resultFilter} onResultChange={setResultFilter}
           teacherFilter={teacherFilter} onTeacherChange={setTeacherFilter}
           dateFilter={dateFilter} onDateChange={setDateFilter}
+          sortBy={sortBy} onSortChange={setSortBy}
           viewMode={viewMode} onViewModeChange={setViewMode}
           teachers={teachers}
         />

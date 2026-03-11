@@ -1,9 +1,11 @@
-import { Search, LayoutGrid, List } from 'lucide-react';
+import { Search, LayoutGrid, List, ArrowUpDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { YearMonthFilter, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
 import type { Database } from '@/integrations/supabase/types';
+
+export type TrialSortOption = 'newest' | 'oldest' | 'alpha_asc' | 'alpha_desc' | 'trial_date' | 'last_contact';
 
 type TrialStatus = Database['public']['Enums']['trial_status'];
 type TrialResult = Database['public']['Enums']['trial_result'];
@@ -28,6 +30,8 @@ interface TrialFiltersBarProps {
   onTeacherChange: (value: string) => void;
   dateFilter: YearMonthFilterValue;
   onDateChange: (value: YearMonthFilterValue) => void;
+  sortBy: TrialSortOption;
+  onSortChange: (value: TrialSortOption) => void;
   viewMode: 'cards' | 'table';
   onViewModeChange: (mode: 'cards' | 'table') => void;
   teachers?: Teacher[];
@@ -40,6 +44,7 @@ export function TrialFiltersBar({
   resultFilter, onResultChange,
   teacherFilter, onTeacherChange,
   dateFilter, onDateChange,
+  sortBy, onSortChange,
   viewMode, onViewModeChange,
   teachers,
 }: TrialFiltersBarProps) {
@@ -101,6 +106,20 @@ export function TrialFiltersBar({
           </SelectContent>
         </Select>
         <YearMonthFilter value={dateFilter} onChange={onDateChange} />
+        <Select value={sortBy} onValueChange={(v) => onSortChange(v as TrialSortOption)}>
+          <SelectTrigger className="w-[160px]">
+            <ArrowUpDown className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+            <SelectValue placeholder="Sort by" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="newest">Newest First</SelectItem>
+            <SelectItem value="oldest">Oldest First</SelectItem>
+            <SelectItem value="alpha_asc">A → Z (Name)</SelectItem>
+            <SelectItem value="alpha_desc">Z → A (Name)</SelectItem>
+            <SelectItem value="trial_date">Trial Date</SelectItem>
+            <SelectItem value="last_contact">Last Contact</SelectItem>
+          </SelectContent>
+        </Select>
         <div className="flex border rounded-md overflow-hidden">
           <Button variant={viewMode === 'cards' ? 'default' : 'ghost'} size="icon" className="rounded-none h-10" onClick={() => onViewModeChange('cards')}>
             <LayoutGrid className="w-4 h-4" />
