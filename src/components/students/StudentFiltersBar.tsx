@@ -1,4 +1,4 @@
-import { Search, LayoutGrid, TableIcon } from 'lucide-react';
+import { Search, LayoutGrid, TableIcon, ArrowUpDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
