@@ -59,7 +59,10 @@ export function StudentFiltersBar({
         </SelectContent>
       </Select>
       <Select value={sortField} onValueChange={onSortFieldChange}>
-        <SelectTrigger className="w-40"><SelectValue placeholder="Sort by" /></SelectTrigger>
+        <SelectTrigger className="w-40">
+          <ArrowUpDown className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+          <SelectValue placeholder="Sort by" />
+        </SelectTrigger>
         <SelectContent>
           <SelectItem value="name">Name A–Z</SelectItem>
           <SelectItem value="name-desc">Name Z–A</SelectItem>
