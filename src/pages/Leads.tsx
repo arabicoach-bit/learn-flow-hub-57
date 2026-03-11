@@ -25,6 +25,7 @@ export default function Leads() {
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [convertingLead, setConvertingLead] = useState<Lead | null>(null);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
+  const [sortBy, setSortBy] = useState<LeadSortOption>('newest');
   const { toast } = useToast();
 
   const { startDate: filterStart, endDate: filterEnd } = getFilterDateRange(dateFilter);
