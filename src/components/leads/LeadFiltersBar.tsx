@@ -1,8 +1,10 @@
-import { Search, LayoutGrid, List } from 'lucide-react';
+import { Search, LayoutGrid, List, ArrowUpDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { YearMonthFilter, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
+
+export type LeadSortOption = 'newest' | 'oldest' | 'alpha_asc' | 'alpha_desc' | 'last_contact' | 'next_followup';
 
 const trialStatusOptions = ['Trial Booked', 'Pending', 'Price Negotiation', 'Lost'];
 const leadStatusOptions = ['New', 'Contacted', 'Interested', 'Converted', 'Lost'];
