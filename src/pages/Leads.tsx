@@ -11,6 +11,7 @@ import { LeadCard } from '@/components/leads/LeadCard';
 import { LeadTableView } from '@/components/leads/LeadTableView';
 import { LeadStatsCards } from '@/components/leads/LeadStatsCards';
 import { LeadFiltersBar } from '@/components/leads/LeadFiltersBar';
+import { type LeadSortOption } from '@/components/leads/LeadFiltersBar';
 import { AddLeadForm } from '@/components/leads/AddLeadForm';
 import { ConvertLeadToTrialDialog } from '@/components/leads/ConvertLeadToTrialDialog';
 import { exportLeads, type LeadExport } from '@/lib/excel-export';
