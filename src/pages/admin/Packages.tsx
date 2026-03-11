@@ -77,7 +77,7 @@ export default function Packages() {
         case 'alpha_desc':
           return (b.students?.name || '').localeCompare(a.students?.name || '');
         case 'due_date':
-          return (a.due_date || '9999').localeCompare(b.due_date || '9999');
+          return ((a as any).due_date || '9999').localeCompare((b as any).due_date || '9999');
         case 'payment_date':
           return (b.payment_date || '').localeCompare(a.payment_date || '');
         case 'amount_high':
