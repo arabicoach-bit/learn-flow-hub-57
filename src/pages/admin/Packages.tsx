@@ -49,7 +49,7 @@ export default function Packages() {
   const { data: summary, isLoading: summaryLoading } = usePackageSummary(summaryPkg);
 
   const filteredPackages = useMemo(() => {
-    return (packages || []).filter(pkg => {
+    const filtered = (packages || []).filter(pkg => {
       const studentName = pkg.students?.name?.toLowerCase() || '';
       const packageType = pkg.package_types?.name?.toLowerCase() || '';
       const matchesSearch = searchQuery === '' ||
@@ -67,7 +67,29 @@ export default function Packages() {
       const matchesPayment = paymentFilter === 'all' || pkg.payment_status === paymentFilter;
       return matchesSearch && matchesPeriod && matchesStatus && matchesTeacher && matchesPayment;
     });
-  }, [packages, searchQuery, startDate, endDate, statusFilter, teacherFilter, paymentFilter]);
+
+    return filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'oldest':
+          return (a.created_at || '').localeCompare(b.created_at || '');
+        case 'alpha_asc':
+          return (a.students?.name || '').localeCompare(b.students?.name || '');
+        case 'alpha_desc':
+          return (b.students?.name || '').localeCompare(a.students?.name || '');
+        case 'due_date':
+          return (a.due_date || '9999').localeCompare(b.due_date || '9999');
+        case 'payment_date':
+          return (b.payment_date || '').localeCompare(a.payment_date || '');
+        case 'amount_high':
+          return (b.amount || 0) - (a.amount || 0);
+        case 'amount_low':
+          return (a.amount || 0) - (b.amount || 0);
+        case 'newest':
+        default:
+          return (b.created_at || '').localeCompare(a.created_at || '');
+      }
+    });
+  }, [packages, searchQuery, startDate, endDate, statusFilter, teacherFilter, paymentFilter, sortBy]);
 
   // Batch stats for visible packages
   const visiblePackageIds = useMemo(() => filteredPackages.map(p => p.package_id), [filteredPackages]);
