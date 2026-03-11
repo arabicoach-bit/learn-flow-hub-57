@@ -41,6 +41,7 @@ export function LeadFiltersBar({
   leadStatusFilter, onLeadStatusChange,
   followUpFilter, onFollowUpChange,
   dateFilter, onDateChange,
+  sortBy, onSortChange,
   viewMode, onViewModeChange,
 }: LeadFiltersBarProps) {
   return (
