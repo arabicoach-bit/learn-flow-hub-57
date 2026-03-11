@@ -1,7 +1,9 @@
-import { Search } from 'lucide-react';
+import { Search, ArrowUpDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { YearMonthFilter, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
+
+export type PackageSortOption = 'newest' | 'oldest' | 'alpha_asc' | 'alpha_desc' | 'due_date' | 'payment_date' | 'amount_high' | 'amount_low';
 
 interface Teacher {
   teacher_id: string;
@@ -20,6 +22,8 @@ interface PackageFiltersBarProps {
   paymentFilter: string;
   onPaymentFilterChange: (v: string) => void;
   teachers: Teacher[] | undefined;
+  sortBy: PackageSortOption;
+  onSortChange: (v: PackageSortOption) => void;
 }
 
 export function PackageFiltersBar({
@@ -29,6 +33,7 @@ export function PackageFiltersBar({
   teacherFilter, onTeacherFilterChange,
   paymentFilter, onPaymentFilterChange,
   teachers,
+  sortBy, onSortChange,
 }: PackageFiltersBarProps) {
   return (
     <div className="flex flex-col sm:flex-row gap-3 flex-wrap items-center">
@@ -42,6 +47,22 @@ export function PackageFiltersBar({
         />
       </div>
       <YearMonthFilter value={filter} onChange={onFilterChange} />
+      <Select value={sortBy} onValueChange={(v) => onSortChange(v as PackageSortOption)}>
+        <SelectTrigger className="w-[160px]">
+          <ArrowUpDown className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+          <SelectValue placeholder="Sort by" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="newest">Newest First</SelectItem>
+          <SelectItem value="oldest">Oldest First</SelectItem>
+          <SelectItem value="alpha_asc">A → Z (Student)</SelectItem>
+          <SelectItem value="alpha_desc">Z → A (Student)</SelectItem>
+          <SelectItem value="due_date">Due Date</SelectItem>
+          <SelectItem value="payment_date">Payment Date</SelectItem>
+          <SelectItem value="amount_high">Amount (High)</SelectItem>
+          <SelectItem value="amount_low">Amount (Low)</SelectItem>
+        </SelectContent>
+      </Select>
       <Select value={statusFilter} onValueChange={onStatusFilterChange}>
         <SelectTrigger className="w-[140px]"><SelectValue placeholder="Status" /></SelectTrigger>
         <SelectContent>
