@@ -44,6 +44,7 @@ export function TrialFiltersBar({
   resultFilter, onResultChange,
   teacherFilter, onTeacherChange,
   dateFilter, onDateChange,
+  sortBy, onSortChange,
   viewMode, onViewModeChange,
   teachers,
 }: TrialFiltersBarProps) {
