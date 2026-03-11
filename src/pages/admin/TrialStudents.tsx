@@ -192,6 +192,7 @@ export default function TrialStudents() {
           resultFilter={resultFilter} onResultChange={setResultFilter}
           teacherFilter={teacherFilter} onTeacherChange={setTeacherFilter}
           dateFilter={dateFilter} onDateChange={setDateFilter}
+          sortBy={sortBy} onSortChange={setSortBy}
           viewMode={viewMode} onViewModeChange={setViewMode}
           teachers={teachers}
         />

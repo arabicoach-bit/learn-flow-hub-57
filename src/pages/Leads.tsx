@@ -170,6 +170,7 @@ export default function Leads() {
           leadStatusFilter={leadStatusFilter} onLeadStatusChange={setLeadStatusFilter}
           followUpFilter={followUpFilter} onFollowUpChange={setFollowUpFilter}
           dateFilter={dateFilter} onDateChange={setDateFilter}
+          sortBy={sortBy} onSortChange={setSortBy}
           viewMode={viewMode} onViewModeChange={setViewMode}
         />
 
