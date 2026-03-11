@@ -33,6 +33,7 @@ export default function Packages() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [teacherFilter, setTeacherFilter] = useState('all');
   const [paymentFilter, setPaymentFilter] = useState('all');
+  const [sortBy, setSortBy] = useState<PackageSortOption>('newest');
   const [editPackage, setEditPackage] = useState<Package | null>(null);
   const [summaryPkg, setSummaryPkg] = useState<string | null>(null);
 
