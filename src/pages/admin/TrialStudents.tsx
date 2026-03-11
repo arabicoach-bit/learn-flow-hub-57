@@ -30,6 +30,7 @@ export default function TrialStudents() {
   const [teacherFilter, setTeacherFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState<YearMonthFilterValue>({ year: null, month: null });
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('table');
+  const [sortBy, setSortBy] = useState<TrialSortOption>('newest');
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<TrialStudent | null>(null);
   const [convertingStudent, setConvertingStudent] = useState<TrialStudent | null>(null);
