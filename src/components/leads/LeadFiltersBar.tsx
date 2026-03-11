@@ -95,6 +95,21 @@ export function LeadFiltersBar({
 
         <YearMonthFilter value={dateFilter} onChange={onDateChange} />
 
+        <Select value={sortBy} onValueChange={(v) => onSortChange(v as LeadSortOption)}>
+          <SelectTrigger className="w-[160px]">
+            <ArrowUpDown className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+            <SelectValue placeholder="Sort by" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="newest">Newest First</SelectItem>
+            <SelectItem value="oldest">Oldest First</SelectItem>
+            <SelectItem value="alpha_asc">A → Z (Name)</SelectItem>
+            <SelectItem value="alpha_desc">Z → A (Name)</SelectItem>
+            <SelectItem value="last_contact">Last Contact</SelectItem>
+            <SelectItem value="next_followup">Next Follow-Up</SelectItem>
+          </SelectContent>
+        </Select>
+
         <div className="flex border rounded-md overflow-hidden">
           <Button
             variant={viewMode === 'cards' ? 'default' : 'ghost'}
