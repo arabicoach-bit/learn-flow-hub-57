@@ -10,6 +10,7 @@ import { TrialStudentCard } from '@/components/trial/TrialStudentCard';
 import { TrialTableView } from '@/components/trial/TrialTableView';
 import { TrialStatsCards } from '@/components/trial/TrialStatsCards';
 import { TrialFiltersBar } from '@/components/trial/TrialFiltersBar';
+import { type TrialSortOption } from '@/components/trial/TrialFiltersBar';
 import { EditTrialStudentDialog } from '@/components/trial/EditTrialStudentDialog';
 import { ConvertToStudentDialog } from '@/components/trial/ConvertToStudentDialog';
 import { useToast } from '@/hooks/use-toast';
