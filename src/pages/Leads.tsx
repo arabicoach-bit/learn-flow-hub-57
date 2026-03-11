@@ -50,8 +50,17 @@ export default function Leads() {
     if (followUpFilter !== 'all') {
       result = result.filter(l => l.follow_up === followUpFilter);
     }
-    return result;
-  }, [leads, leadStatusFilter, followUpFilter]);
+    return [...result].sort((a, b) => {
+      switch (sortBy) {
+        case 'oldest': return (a.created_at || '').localeCompare(b.created_at || '');
+        case 'alpha_asc': return (a.name || '').localeCompare(b.name || '');
+        case 'alpha_desc': return (b.name || '').localeCompare(a.name || '');
+        case 'last_contact': return (b.last_contact_date || '').localeCompare(a.last_contact_date || '');
+        case 'next_followup': return (a.next_followup_date || '9999').localeCompare(b.next_followup_date || '9999');
+        case 'newest': default: return (b.created_at || '').localeCompare(a.created_at || '');
+      }
+    });
+  }, [leads, leadStatusFilter, followUpFilter, sortBy]);
 
   const handleDeleteLead = async (leadId: string) => {
     if (!window.confirm('Are you sure you want to delete this lead?')) return;
