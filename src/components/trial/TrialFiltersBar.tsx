@@ -30,6 +30,8 @@ interface TrialFiltersBarProps {
   onTeacherChange: (value: string) => void;
   dateFilter: YearMonthFilterValue;
   onDateChange: (value: YearMonthFilterValue) => void;
+  sortBy: TrialSortOption;
+  onSortChange: (value: TrialSortOption) => void;
   viewMode: 'cards' | 'table';
   onViewModeChange: (mode: 'cards' | 'table') => void;
   teachers?: Teacher[];
