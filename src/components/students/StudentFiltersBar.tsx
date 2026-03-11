@@ -1,4 +1,4 @@
-import { Search, LayoutGrid, TableIcon } from 'lucide-react';
+import { Search, LayoutGrid, TableIcon, ArrowUpDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -59,7 +59,10 @@ export function StudentFiltersBar({
         </SelectContent>
       </Select>
       <Select value={sortField} onValueChange={onSortFieldChange}>
-        <SelectTrigger className="w-40"><SelectValue placeholder="Sort by" /></SelectTrigger>
+        <SelectTrigger className="w-40">
+          <ArrowUpDown className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+          <SelectValue placeholder="Sort by" />
+        </SelectTrigger>
         <SelectContent>
           <SelectItem value="name">Name A–Z</SelectItem>
           <SelectItem value="name-desc">Name Z–A</SelectItem>
