@@ -19,10 +19,10 @@ export function useStudentsBatchStats(studentIds: string[]) {
     queryFn: async () => {
       if (studentIds.length === 0) return {} as Record<string, StudentBatchStats>;
 
-      // 1. Get active packages for all students
+      // 1. Get active packages for all students (include payment_status)
       const { data: packages } = await supabase
         .from('packages')
-        .select('package_id, student_id, lessons_purchased')
+        .select('package_id, student_id, lessons_purchased, payment_status')
         .in('student_id', studentIds)
         .eq('status', 'Active')
         .order('created_at', { ascending: false });
