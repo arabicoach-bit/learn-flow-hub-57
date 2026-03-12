@@ -27,7 +27,7 @@ export function StudentCardView({ students, batchStats, onEdit, onDelete }: Stud
       {students.map((student) => {
         const wallet = student.wallet_balance || 0;
         const stats = batchStats[student.student_id];
-        const isOverdue = wallet <= 0 && student.status === 'Active';
+        const paymentStatus = getPaymentStatus(student.status, wallet, stats?.hasAnyPendingPackage ?? false);
 
         return (
           <Card
