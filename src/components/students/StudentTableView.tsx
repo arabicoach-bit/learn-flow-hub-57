@@ -50,7 +50,7 @@ export function StudentTableView({
           <tbody>
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
-                <tr key={i}><td colSpan={7}><Skeleton className="h-8 w-full" /></td></tr>
+                <tr key={i}><td colSpan={8}><Skeleton className="h-8 w-full" /></td></tr>
               ))
             ) : students.length === 0 ? (
               <tr><td colSpan={7} className="text-center py-8 text-muted-foreground">No students found</td></tr>
