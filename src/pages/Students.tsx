@@ -78,13 +78,30 @@ export default function Students() {
   const visibleIds = useMemo(() => paginatedStudents.map(s => s.student_id), [paginatedStudents]);
   const { data: batchStats } = useStudentsBatchStats(visibleIds);
 
+  // Payment stats for all filtered active students
+  const allFilteredIds = useMemo(() => dateFiltered.map(s => s.student_id), [dateFiltered]);
+  const { data: paymentStatsMap } = useStudentsPaymentStats(allFilteredIds);
+
   // Stats
   const totalStudents = dateFiltered.length;
   const activeCount = dateFiltered.filter(s => s.status === 'Active').length;
-  const overdueCount = dateFiltered.filter(s => s.status === 'Active' && (s.wallet_balance || 0) <= 0).length;
   const tempStopCount = dateFiltered.filter(s => s.status === 'Temporary Stop').length;
   const leftCount = dateFiltered.filter(s => s.status === 'Left').length;
   const retentionRate = totalStudents > 0 ? Math.round((activeCount / totalStudents) * 100) : 0;
+
+  // Payment status counts
+  const { paidCount, pendingCount, needsRenewalCount } = useMemo(() => {
+    let paid = 0, pending = 0, needsRenewal = 0;
+    dateFiltered.forEach(s => {
+      if (s.status !== 'Active') return;
+      const hasPending = paymentStatsMap?.[s.student_id] ?? false;
+      const wallet = s.wallet_balance || 0;
+      if (hasPending) pending++;
+      else if (wallet > 0) paid++;
+      else needsRenewal++;
+    });
+    return { paidCount: paid, pendingCount: pending, needsRenewalCount: needsRenewal };
+  }, [dateFiltered, paymentStatsMap]);
 
   // Reset page when filters change
   const handleFilterChange = (setter: (v: any) => void) => (v: any) => { setter(v); setPage(1); };
