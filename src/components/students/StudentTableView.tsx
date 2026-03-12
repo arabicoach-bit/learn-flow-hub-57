@@ -40,6 +40,7 @@ export function StudentTableView({
               <th>Name</th>
               <th>Teacher</th>
               <th>Wallet</th>
+              <th>Payment</th>
               <th>Lessons</th>
               <th>Next Lesson</th>
               <th>Status</th>
