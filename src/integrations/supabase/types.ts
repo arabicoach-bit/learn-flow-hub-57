@@ -450,6 +450,8 @@ export type Database = {
           status: string
           student_id: string | null
           teacher_id: string | null
+          wallet_deducted: boolean
+          wallet_deducted_at: string | null
         }
         Insert: {
           class_id?: string | null
@@ -464,6 +466,8 @@ export type Database = {
           status?: string
           student_id?: string | null
           teacher_id?: string | null
+          wallet_deducted?: boolean
+          wallet_deducted_at?: string | null
         }
         Update: {
           class_id?: string | null
@@ -478,6 +482,8 @@ export type Database = {
           status?: string
           student_id?: string | null
           teacher_id?: string | null
+          wallet_deducted?: boolean
+          wallet_deducted_at?: string | null
         }
         Relationships: [
           {
