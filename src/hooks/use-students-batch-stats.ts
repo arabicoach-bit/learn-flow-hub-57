@@ -82,3 +82,32 @@ export function useStudentsBatchStats(studentIds: string[]) {
     enabled: studentIds.length > 0,
   });
 }
+
+/**
+ * Lightweight hook: for a list of student IDs, returns a map of studentId → hasAnyPendingPackage.
+ * Used for stats cards where we need counts across ALL filtered students (not just visible page).
+ */
+export function useStudentsPaymentStats(studentIds: string[]) {
+  return useQuery({
+    queryKey: ['students-payment-stats', studentIds.sort().join(',')],
+    queryFn: async () => {
+      if (studentIds.length === 0) return {} as Record<string, boolean>;
+
+      const { data: packages } = await supabase
+        .from('packages')
+        .select('student_id, payment_status')
+        .in('student_id', studentIds)
+        .eq('status', 'Active');
+
+      const result: Record<string, boolean> = {};
+      (packages || []).forEach(p => {
+        if (p.payment_status === 'Pending') {
+          result[p.student_id] = true;
+        }
+      });
+      return result;
+    },
+    staleTime: 60_000,
+    enabled: studentIds.length > 0,
+  });
+}
