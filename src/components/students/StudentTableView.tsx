@@ -53,7 +53,7 @@ export function StudentTableView({
                 <tr key={i}><td colSpan={8}><Skeleton className="h-8 w-full" /></td></tr>
               ))
             ) : students.length === 0 ? (
-              <tr><td colSpan={7} className="text-center py-8 text-muted-foreground">No students found</td></tr>
+              <tr><td colSpan={8} className="text-center py-8 text-muted-foreground">No students found</td></tr>
             ) : (
               students.map((student) => {
                 const wallet = student.wallet_balance || 0;
