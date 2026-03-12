@@ -46,9 +46,9 @@ export function StudentCardView({ students, batchStats, onEdit, onDelete }: Stud
                   <Badge variant="outline" className={getStatusBadgeClass(student.status)}>
                     {getStatusDisplayLabel(student.status)}
                   </Badge>
-                  {isOverdue && (
-                    <Badge variant="outline" className="bg-red-500/20 text-red-700 dark:text-red-300 border-red-500/30 text-[10px]">
-                      Overdue
+                  {paymentStatus && (
+                    <Badge variant="outline" className={`${getPaymentStatusBadgeClass(paymentStatus)} text-[10px]`}>
+                      {paymentStatus}
                     </Badge>
                   )}
                 </div>
