@@ -6,6 +6,7 @@ export interface StudentBatchStats {
   lessonsTotal: number;
   nextLessonDate: string | null;
   nextLessonTime: string | null;
+  hasAnyPendingPackage: boolean;
 }
 
 /**
