@@ -18,6 +18,36 @@ export function getStatusDisplayLabel(status: string): string {
   }
 }
 
+export type PaymentStatusType = 'Pending' | 'Paid' | 'Needs Renewal' | '';
+
+/**
+ * Compute a student's payment status from their activity status, wallet balance,
+ * and whether any of their packages has a pending payment.
+ */
+export function getPaymentStatus(
+  studentStatus: string,
+  walletBalance: number,
+  hasAnyPendingPackage: boolean
+): PaymentStatusType {
+  if (studentStatus !== 'Active') return '';
+  if (hasAnyPendingPackage) return 'Pending';
+  if (walletBalance > 0) return 'Paid';
+  return 'Needs Renewal';
+}
+
+export function getPaymentStatusBadgeClass(status: PaymentStatusType): string {
+  switch (status) {
+    case 'Paid':
+      return 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30';
+    case 'Pending':
+      return 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30';
+    case 'Needs Renewal':
+      return 'bg-orange-500/15 text-orange-700 dark:text-orange-300 border-orange-500/30';
+    default:
+      return '';
+  }
+}
+
 // Show "Overdue" label when wallet is <= 0
 export function getWalletDisplayLabel(walletBalance: number): string {
   if (walletBalance <= 0) return 'Overdue';
