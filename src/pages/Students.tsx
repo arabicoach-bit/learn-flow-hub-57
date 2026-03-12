@@ -228,7 +228,7 @@ export default function Students() {
           </div>
         </div>
 
-        <StudentStatsCards total={totalStudents} active={activeCount} overdue={overdueCount} tempStop={tempStopCount} left={leftCount} retentionRate={retentionRate} />
+        <StudentStatsCards total={totalStudents} active={activeCount} paid={paidCount} pending={pendingCount} needsRenewal={needsRenewalCount} tempStop={tempStopCount} left={leftCount} retentionRate={retentionRate} />
 
         <StudentFiltersBar
           search={search} onSearchChange={handleFilterChange(setSearch)}
