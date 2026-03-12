@@ -3,8 +3,8 @@ import { format } from 'date-fns';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Pencil, Trash2, MessageCircle, Calendar, BookOpen, Wallet } from 'lucide-react';
-import { getWalletColor, getStatusBadgeClass, getStatusDisplayLabel } from '@/lib/wallet-utils';
+import { Pencil, Trash2, MessageCircle, Calendar, BookOpen, Wallet, CreditCard } from 'lucide-react';
+import { getWalletColor, getStatusBadgeClass, getStatusDisplayLabel, getPaymentStatus, getPaymentStatusBadgeClass } from '@/lib/wallet-utils';
 import type { Student } from '@/hooks/use-students';
 import type { StudentBatchStats } from '@/hooks/use-students-batch-stats';
 
@@ -27,7 +27,7 @@ export function StudentCardView({ students, batchStats, onEdit, onDelete }: Stud
       {students.map((student) => {
         const wallet = student.wallet_balance || 0;
         const stats = batchStats[student.student_id];
-        const isOverdue = wallet <= 0 && student.status === 'Active';
+        const paymentStatus = getPaymentStatus(student.status, wallet, stats?.hasAnyPendingPackage ?? false);
 
         return (
           <Card
@@ -46,9 +46,9 @@ export function StudentCardView({ students, batchStats, onEdit, onDelete }: Stud
                   <Badge variant="outline" className={getStatusBadgeClass(student.status)}>
                     {getStatusDisplayLabel(student.status)}
                   </Badge>
-                  {isOverdue && (
-                    <Badge variant="outline" className="bg-red-500/20 text-red-700 dark:text-red-300 border-red-500/30 text-[10px]">
-                      Overdue
+                  {paymentStatus && (
+                    <Badge variant="outline" className={`${getPaymentStatusBadgeClass(paymentStatus)} text-[10px]`}>
+                      {paymentStatus}
                     </Badge>
                   )}
                 </div>

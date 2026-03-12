@@ -6,6 +6,7 @@ export interface StudentBatchStats {
   lessonsTotal: number;
   nextLessonDate: string | null;
   nextLessonTime: string | null;
+  hasAnyPendingPackage: boolean;
 }
 
 /**
@@ -18,19 +19,23 @@ export function useStudentsBatchStats(studentIds: string[]) {
     queryFn: async () => {
       if (studentIds.length === 0) return {} as Record<string, StudentBatchStats>;
 
-      // 1. Get active packages for all students
+      // 1. Get active packages for all students (include payment_status)
       const { data: packages } = await supabase
         .from('packages')
-        .select('package_id, student_id, lessons_purchased')
+        .select('package_id, student_id, lessons_purchased, payment_status')
         .in('student_id', studentIds)
         .eq('status', 'Active')
         .order('created_at', { ascending: false });
 
-      // Keep only latest active package per student
+      // Keep only latest active package per student + track pending status
       const studentPackageMap: Record<string, { package_id: string; lessons_purchased: number }> = {};
+      const studentHasPending: Record<string, boolean> = {};
       (packages || []).forEach(p => {
         if (!studentPackageMap[p.student_id]) {
           studentPackageMap[p.student_id] = { package_id: p.package_id, lessons_purchased: p.lessons_purchased };
+        }
+        if (p.payment_status === 'Pending') {
+          studentHasPending[p.student_id] = true;
         }
       });
 
@@ -67,9 +72,39 @@ export function useStudentsBatchStats(studentIds: string[]) {
           lessonsTotal: pkg?.lessons_purchased || 0,
           nextLessonDate: nextScheduled?.scheduled_date || null,
           nextLessonTime: nextScheduled?.scheduled_time || null,
+          hasAnyPendingPackage: !!studentHasPending[sid],
         };
       });
 
+      return result;
+    },
+    staleTime: 60_000,
+    enabled: studentIds.length > 0,
+  });
+}
+
+/**
+ * Lightweight hook: for a list of student IDs, returns a map of studentId → hasAnyPendingPackage.
+ * Used for stats cards where we need counts across ALL filtered students (not just visible page).
+ */
+export function useStudentsPaymentStats(studentIds: string[]) {
+  return useQuery({
+    queryKey: ['students-payment-stats', studentIds.sort().join(',')],
+    queryFn: async () => {
+      if (studentIds.length === 0) return {} as Record<string, boolean>;
+
+      const { data: packages } = await supabase
+        .from('packages')
+        .select('student_id, payment_status')
+        .in('student_id', studentIds)
+        .eq('status', 'Active');
+
+      const result: Record<string, boolean> = {};
+      (packages || []).forEach(p => {
+        if (p.payment_status === 'Pending') {
+          result[p.student_id] = true;
+        }
+      });
       return result;
     },
     staleTime: 60_000,

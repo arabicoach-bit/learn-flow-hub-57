@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Pencil, Trash2, MessageCircle } from 'lucide-react';
-import { getWalletColor, getStatusBadgeClass, getStatusDisplayLabel } from '@/lib/wallet-utils';
+import { getWalletColor, getStatusBadgeClass, getStatusDisplayLabel, getPaymentStatus, getPaymentStatusBadgeClass } from '@/lib/wallet-utils';
 import { useUpdateStudent, type Student } from '@/hooks/use-students';
 import { useToast } from '@/hooks/use-toast';
 import type { StudentBatchStats } from '@/hooks/use-students-batch-stats';
@@ -40,6 +40,7 @@ export function StudentTableView({
               <th>Name</th>
               <th>Teacher</th>
               <th>Wallet</th>
+              <th>Payment</th>
               <th>Lessons</th>
               <th>Next Lesson</th>
               <th>Status</th>
@@ -49,15 +50,16 @@ export function StudentTableView({
           <tbody>
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
-                <tr key={i}><td colSpan={7}><Skeleton className="h-8 w-full" /></td></tr>
+                <tr key={i}><td colSpan={8}><Skeleton className="h-8 w-full" /></td></tr>
               ))
             ) : students.length === 0 ? (
-              <tr><td colSpan={7} className="text-center py-8 text-muted-foreground">No students found</td></tr>
+              <tr><td colSpan={8} className="text-center py-8 text-muted-foreground">No students found</td></tr>
             ) : (
               students.map((student) => {
                 const wallet = student.wallet_balance || 0;
                 const isOverdue = wallet <= 0 && student.status === 'Active';
                 const stats = batchStats[student.student_id];
+                const paymentStatus = getPaymentStatus(student.status, wallet, stats?.hasAnyPendingPackage ?? false);
 
                 return (
                   <tr
@@ -89,6 +91,15 @@ export function StudentTableView({
                       >
                         {wallet}
                       </span>
+                    </td>
+                    <td onClick={e => e.stopPropagation()}>
+                      {paymentStatus ? (
+                        <Badge variant="outline" className={getPaymentStatusBadgeClass(paymentStatus)}>
+                          {paymentStatus}
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">—</span>
+                      )}
                     </td>
                     <td onClick={e => e.stopPropagation()}>
                       <span className="text-sm font-medium">

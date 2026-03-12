@@ -4,7 +4,7 @@ import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useStudents, useCreateStudent, useDeleteStudent } from '@/hooks/use-students';
 import { useTeachers } from '@/hooks/use-teachers';
 import { usePrograms } from '@/hooks/use-programs';
-import { useStudentsBatchStats } from '@/hooks/use-students-batch-stats';
+import { useStudentsBatchStats, useStudentsPaymentStats } from '@/hooks/use-students-batch-stats';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -78,13 +78,30 @@ export default function Students() {
   const visibleIds = useMemo(() => paginatedStudents.map(s => s.student_id), [paginatedStudents]);
   const { data: batchStats } = useStudentsBatchStats(visibleIds);
 
+  // Payment stats for all filtered active students
+  const allFilteredIds = useMemo(() => dateFiltered.map(s => s.student_id), [dateFiltered]);
+  const { data: paymentStatsMap } = useStudentsPaymentStats(allFilteredIds);
+
   // Stats
   const totalStudents = dateFiltered.length;
   const activeCount = dateFiltered.filter(s => s.status === 'Active').length;
-  const overdueCount = dateFiltered.filter(s => s.status === 'Active' && (s.wallet_balance || 0) <= 0).length;
   const tempStopCount = dateFiltered.filter(s => s.status === 'Temporary Stop').length;
   const leftCount = dateFiltered.filter(s => s.status === 'Left').length;
   const retentionRate = totalStudents > 0 ? Math.round((activeCount / totalStudents) * 100) : 0;
+
+  // Payment status counts
+  const { paidCount, pendingCount, needsRenewalCount } = useMemo(() => {
+    let paid = 0, pending = 0, needsRenewal = 0;
+    dateFiltered.forEach(s => {
+      if (s.status !== 'Active') return;
+      const hasPending = paymentStatsMap?.[s.student_id] ?? false;
+      const wallet = s.wallet_balance || 0;
+      if (hasPending) pending++;
+      else if (wallet > 0) paid++;
+      else needsRenewal++;
+    });
+    return { paidCount: paid, pendingCount: pending, needsRenewalCount: needsRenewal };
+  }, [dateFiltered, paymentStatsMap]);
 
   // Reset page when filters change
   const handleFilterChange = (setter: (v: any) => void) => (v: any) => { setter(v); setPage(1); };
@@ -211,7 +228,7 @@ export default function Students() {
           </div>
         </div>
 
-        <StudentStatsCards total={totalStudents} active={activeCount} overdue={overdueCount} tempStop={tempStopCount} left={leftCount} retentionRate={retentionRate} />
+        <StudentStatsCards total={totalStudents} active={activeCount} paid={paidCount} pending={pendingCount} needsRenewal={needsRenewalCount} tempStop={tempStopCount} left={leftCount} retentionRate={retentionRate} />
 
         <StudentFiltersBar
           search={search} onSearchChange={handleFilterChange(setSearch)}
