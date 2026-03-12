@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Pencil, Trash2, MessageCircle } from 'lucide-react';
-import { getWalletColor, getStatusBadgeClass, getStatusDisplayLabel } from '@/lib/wallet-utils';
+import { getWalletColor, getStatusBadgeClass, getStatusDisplayLabel, getPaymentStatus, getPaymentStatusBadgeClass } from '@/lib/wallet-utils';
 import { useUpdateStudent, type Student } from '@/hooks/use-students';
 import { useToast } from '@/hooks/use-toast';
 import type { StudentBatchStats } from '@/hooks/use-students-batch-stats';
