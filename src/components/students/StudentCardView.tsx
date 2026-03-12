@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Pencil, Trash2, MessageCircle, Calendar, BookOpen, Wallet } from 'lucide-react';
+import { Pencil, Trash2, MessageCircle, Calendar, BookOpen, Wallet, CreditCard } from 'lucide-react';
 import { getWalletColor, getStatusBadgeClass, getStatusDisplayLabel, getPaymentStatus, getPaymentStatusBadgeClass } from '@/lib/wallet-utils';
 import type { Student } from '@/hooks/use-students';
 import type { StudentBatchStats } from '@/hooks/use-students-batch-stats';
