@@ -59,6 +59,7 @@ export function StudentTableView({
                 const wallet = student.wallet_balance || 0;
                 const isOverdue = wallet <= 0 && student.status === 'Active';
                 const stats = batchStats[student.student_id];
+                const paymentStatus = getPaymentStatus(student.status, wallet, stats?.hasAnyPendingPackage ?? false);
 
                 return (
                   <tr
