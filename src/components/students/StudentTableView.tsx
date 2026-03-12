@@ -93,6 +93,15 @@ export function StudentTableView({
                       </span>
                     </td>
                     <td onClick={e => e.stopPropagation()}>
+                      {paymentStatus ? (
+                        <Badge variant="outline" className={getPaymentStatusBadgeClass(paymentStatus)}>
+                          {paymentStatus}
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">—</span>
+                      )}
+                    </td>
+                    <td onClick={e => e.stopPropagation()}>
                       <span className="text-sm font-medium">
                         {stats ? `${stats.lessonsUsed}/${stats.lessonsTotal}` : '—'}
                       </span>
