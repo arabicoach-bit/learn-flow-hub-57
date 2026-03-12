@@ -27,11 +27,15 @@ export function useStudentsBatchStats(studentIds: string[]) {
         .eq('status', 'Active')
         .order('created_at', { ascending: false });
 
-      // Keep only latest active package per student
+      // Keep only latest active package per student + track pending status
       const studentPackageMap: Record<string, { package_id: string; lessons_purchased: number }> = {};
+      const studentHasPending: Record<string, boolean> = {};
       (packages || []).forEach(p => {
         if (!studentPackageMap[p.student_id]) {
           studentPackageMap[p.student_id] = { package_id: p.package_id, lessons_purchased: p.lessons_purchased };
+        }
+        if (p.payment_status === 'Pending') {
+          studentHasPending[p.student_id] = true;
         }
       });
 
