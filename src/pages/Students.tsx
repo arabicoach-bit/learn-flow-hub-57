@@ -4,7 +4,7 @@ import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useStudents, useCreateStudent, useDeleteStudent } from '@/hooks/use-students';
 import { useTeachers } from '@/hooks/use-teachers';
 import { usePrograms } from '@/hooks/use-programs';
-import { useStudentsBatchStats } from '@/hooks/use-students-batch-stats';
+import { useStudentsBatchStats, useStudentsPaymentStats } from '@/hooks/use-students-batch-stats';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
