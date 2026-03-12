@@ -1,27 +1,31 @@
 import { Card, CardContent } from '@/components/ui/card';
-import { Users, UserCheck, AlertTriangle, PauseCircle, XCircle, Percent } from 'lucide-react';
+import { Users, UserCheck, Clock, PauseCircle, XCircle, Percent, CreditCard, CheckCircle } from 'lucide-react';
 
 interface StudentStatsCardsProps {
   total: number;
   active: number;
-  overdue: number;
+  paid: number;
+  pending: number;
+  needsRenewal: number;
   tempStop: number;
   left: number;
   retentionRate: number;
 }
 
-export function StudentStatsCards({ total, active, overdue, tempStop, left, retentionRate }: StudentStatsCardsProps) {
+export function StudentStatsCards({ total, active, paid, pending, needsRenewal, tempStop, left, retentionRate }: StudentStatsCardsProps) {
   const stats = [
     { icon: Users, value: total, label: 'Total Students', color: 'text-muted-foreground' },
     { icon: UserCheck, value: active, label: 'Active', color: 'text-emerald-600' },
-    { icon: AlertTriangle, value: overdue, label: 'Overdue', color: 'text-red-600' },
+    { icon: CheckCircle, value: paid, label: 'Paid', color: 'text-emerald-500' },
+    { icon: CreditCard, value: pending, label: 'Pending', color: 'text-amber-600' },
+    { icon: Clock, value: needsRenewal, label: 'Needs Renewal', color: 'text-orange-600' },
     { icon: PauseCircle, value: tempStop, label: 'Temporary Stop', color: 'text-amber-600' },
     { icon: XCircle, value: left, label: 'Left', color: 'text-red-500' },
     { icon: Percent, value: `${retentionRate}%`, label: 'Retention Rate', color: 'text-blue-500' },
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
       {stats.map(({ icon: Icon, value, label, color }) => (
         <Card key={label}>
           <CardContent className="pt-4 pb-3">
