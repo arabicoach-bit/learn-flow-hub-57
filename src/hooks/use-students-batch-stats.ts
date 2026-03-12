@@ -72,6 +72,7 @@ export function useStudentsBatchStats(studentIds: string[]) {
           lessonsTotal: pkg?.lessons_purchased || 0,
           nextLessonDate: nextScheduled?.scheduled_date || null,
           nextLessonTime: nextScheduled?.scheduled_time || null,
+          hasAnyPendingPackage: !!studentHasPending[sid],
         };
       });
 
