@@ -57,8 +57,9 @@ export function StudentLessonsView({ studentId, studentName, walletBalance, role
     return { completed, absent, hours };
   }, [filteredLessons]);
 
-  const totalLessons = allStats.completedCount + allStats.absentCount + allStats.scheduledCount;
-  const progressPercent = totalLessons > 0 ? ((allStats.completedCount + allStats.absentCount) / totalLessons) * 100 : 0;
+  const usedLessons = allStats.activePackageLessonsUsed;
+  const totalLessons = allStats.activePackageLessonsTotal;
+  const progressPercent = totalLessons > 0 ? (usedLessons / totalLessons) * 100 : 0;
 
   const handleDeleteLesson = async () => {
     if (!deleteLessonId) return;
