@@ -142,21 +142,29 @@ export function StudentLessonsView({ studentId, studentName, walletBalance, role
         </div>
       </div>
 
-      {/* Wallet Balance */}
-      <div className={`rounded-lg p-3 flex items-center justify-between ${allStats.walletBalance <= 0 ? 'bg-red-500/10 border border-red-500/20' : allStats.walletBalance <= 2 ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-emerald-500/10 border border-emerald-500/20'}`}>
-        <span className="text-sm text-muted-foreground">Wallet Balance</span>
-        <span className={`text-lg font-bold flex items-center gap-1 ${allStats.walletBalance <= 0 ? 'text-red-600 dark:text-red-400' : allStats.walletBalance <= 2 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
-          {allStats.walletBalance <= 0 && <AlertTriangle className="w-4 h-4" />}
-          {allStats.walletBalance <= 0 ? 'Overdue' : allStats.walletBalance <= 2 ? `${allStats.walletBalance} — Low Credit` : `${allStats.walletBalance} lessons remaining`}
-        </span>
+      {/* Wallet & Lessons Summary */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className={`rounded-lg p-3 flex flex-col items-center justify-center ${allStats.walletBalance <= 0 ? 'bg-red-500/10 border border-red-500/20' : allStats.walletBalance <= 2 ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-emerald-500/10 border border-emerald-500/20'}`}>
+          <span className="text-xs text-muted-foreground">Wallet</span>
+          <span className={`text-2xl font-bold flex items-center gap-1 ${allStats.walletBalance <= 0 ? 'text-red-600 dark:text-red-400' : allStats.walletBalance <= 2 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+            {allStats.walletBalance <= 0 && <AlertTriangle className="w-4 h-4" />}
+            {allStats.walletBalance}
+          </span>
+        </div>
+        <div className="rounded-lg p-3 flex flex-col items-center justify-center bg-blue-500/10 border border-blue-500/20">
+          <span className="text-xs text-muted-foreground">Lessons</span>
+          <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+            {usedLessons}/{totalLessons}
+          </span>
+        </div>
       </div>
 
       {/* Progress */}
       <Card className="bg-gradient-to-r from-primary/10 to-primary/5">
         <CardContent className="pt-6">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm text-muted-foreground">Progress</p>
-            <p className="text-sm font-bold">{allStats.completedCount + allStats.absentCount} / {totalLessons}</p>
+            <p className="text-sm text-muted-foreground">Package Progress</p>
+            <p className="text-sm font-bold">{usedLessons} / {totalLessons}</p>
           </div>
           <Progress value={progressPercent} className="h-2" />
         </CardContent>
