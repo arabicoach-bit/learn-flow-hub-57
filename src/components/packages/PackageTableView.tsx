@@ -42,7 +42,7 @@ export function PackageTableView({
                   <TableHead>Plan</TableHead>
                   <TableHead className="text-center">Status</TableHead>
                   <TableHead className="text-center">Lessons</TableHead>
-                  <TableHead className="text-center">Remaining</TableHead>
+                  <TableHead className="text-center">Wallet</TableHead>
                   <TableHead className="text-center">Payment</TableHead>
                   <TableHead className="text-right">Amount</TableHead>
                   <TableHead className="text-center">Kind</TableHead>
