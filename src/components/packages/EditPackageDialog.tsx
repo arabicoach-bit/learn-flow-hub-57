@@ -67,7 +67,6 @@ export function EditPackageDialog({ package_, open, onOpenChange, onSuccess }: E
           lessons_used: parseInt(data.lessons_used),
           lesson_duration: data.lesson_duration ? parseInt(data.lesson_duration) : null,
           start_date: data.start_date || null,
-          status: data.status === 'Running' ? 'Active' : data.status,
           payment_status: data.payment_status,
           due_date: data.payment_status === 'Pending'
             ? data.due_date || null : null,
