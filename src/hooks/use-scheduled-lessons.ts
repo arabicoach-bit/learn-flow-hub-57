@@ -275,7 +275,21 @@ export function useAddScheduledLesson() {
 
       if (error) throw error;
 
-      // Recalculate wallet on INSERT (trigger only fires on UPDATE/DELETE)
+      // Increment lessons_purchased on the package (adding a lesson increases total)
+      const { data: pkg } = await supabase
+        .from('packages')
+        .select('lessons_purchased')
+        .eq('package_id', input.package_id)
+        .single();
+
+      if (pkg) {
+        await supabase
+          .from('packages')
+          .update({ lessons_purchased: pkg.lessons_purchased + 1 })
+          .eq('package_id', input.package_id);
+      }
+
+      // Recalculate wallet
       await supabase.rpc('recalculate_student_wallet', { p_student_id: input.student_id });
 
       return data;
@@ -292,9 +306,16 @@ export function useDeleteScheduledLesson() {
       // Get lesson details before deleting
       const { data: lesson } = await supabase
         .from('scheduled_lessons')
-        .select('student_id, wallet_deducted')
+        .select('student_id, package_id, status')
         .eq('scheduled_lesson_id', scheduledLessonId)
         .single();
+
+      if (!lesson) throw new Error('Lesson not found');
+
+      // Guard: only scheduled lessons can be deleted directly
+      if (lesson.status !== 'scheduled') {
+        throw new Error('Only scheduled lessons can be deleted. Change the status back to "scheduled" first.');
+      }
 
       // Delete the lesson
       const { error } = await supabase
@@ -304,8 +325,24 @@ export function useDeleteScheduledLesson() {
 
       if (error) throw error;
 
+      // Decrement lessons_purchased on the package (removing a lesson decreases total)
+      if (lesson.package_id) {
+        const { data: pkg } = await supabase
+          .from('packages')
+          .select('lessons_purchased')
+          .eq('package_id', lesson.package_id)
+          .single();
+
+        if (pkg && pkg.lessons_purchased > 0) {
+          await supabase
+            .from('packages')
+            .update({ lessons_purchased: pkg.lessons_purchased - 1 })
+            .eq('package_id', lesson.package_id);
+        }
+      }
+
       // Recalculate wallet after delete
-      if (lesson?.student_id) {
+      if (lesson.student_id) {
         await supabase.rpc('recalculate_student_wallet', { p_student_id: lesson.student_id });
       }
     },
