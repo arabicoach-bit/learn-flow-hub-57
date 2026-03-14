@@ -86,7 +86,7 @@ export function PackageTableView({
                           variant={pkg.status === 'Active' ? 'default' : 'secondary'}
                           className={pkg.status === 'Active' ? 'bg-emerald-600' : ''}
                         >
-                          {pkg.status === 'Active' ? 'Running' : pkg.status}
+                          {pkg.status === 'Active' ? 'In Progress' : 'Finished'}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center font-medium text-sm">

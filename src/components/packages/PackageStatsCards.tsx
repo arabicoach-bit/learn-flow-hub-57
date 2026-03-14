@@ -55,12 +55,12 @@ export function PackageStatsCards({
         <Card><CardContent className="pt-4 pb-3 text-center">
           <PlayCircle className="h-4 w-4 mx-auto text-emerald-600 mb-1" />
           <div className="text-xl font-bold text-emerald-600">{runningCount}</div>
-          <p className="text-[10px] text-muted-foreground">Running</p>
+          <p className="text-[10px] text-muted-foreground">In Progress</p>
         </CardContent></Card>
         <Card><CardContent className="pt-4 pb-3 text-center">
           <CheckCircle2 className="h-4 w-4 mx-auto text-muted-foreground mb-1" />
           <div className="text-xl font-bold text-muted-foreground">{completedCount}</div>
-          <p className="text-[10px] text-muted-foreground">Completed</p>
+          <p className="text-[10px] text-muted-foreground">Finished</p>
         </CardContent></Card>
         <Card><CardContent className="pt-4 pb-3 text-center">
           <RefreshCw className="h-4 w-4 mx-auto text-blue-600 mb-1" />

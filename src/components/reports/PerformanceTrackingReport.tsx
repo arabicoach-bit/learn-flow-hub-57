@@ -141,7 +141,7 @@ export function PerformanceTrackingReport({ startDate, endDate }: PerformanceTra
                 <RefreshCw className="w-5 h-5 text-chart-4" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Completed Packages</p>
+                <p className="text-sm text-muted-foreground">Finished Packages</p>
                 <p className="text-xl font-bold">{currentPeriod.completedPackages}</p>
               </div>
             </div>

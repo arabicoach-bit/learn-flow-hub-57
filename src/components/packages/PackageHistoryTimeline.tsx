@@ -129,8 +129,8 @@ export function PackageHistoryTimeline({ packages, isLoading, teacherName }: Pac
                           {pkg.package_types?.description || '-'}
                         </p>
                       </div>
-                      <Badge className={getStatusBadgeClass(pkg.status === 'Active' ? periodStatus : 'Left')}>
-                        {getStatusDisplayLabel(pkg.status)}
+                      <Badge className={pkg.status === 'Active' ? 'bg-emerald-600 text-white' : 'bg-muted text-muted-foreground'}>
+                        {pkg.status === 'Active' ? 'In Progress' : 'Finished'}
                       </Badge>
                     </div>
 

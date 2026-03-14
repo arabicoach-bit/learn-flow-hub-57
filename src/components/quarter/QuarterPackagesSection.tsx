@@ -17,8 +17,8 @@ export function QuarterPackagesSection({ data, monthlyBreakdown, prevData, compa
         <KPICard title="Total Packages" value={data.totalPackages} icon={<Package className="w-5 h-5" />} theme="packages" />
         <KPICard title="New" value={data.newPackages} icon={<Package className="w-5 h-5" />} variant="success" theme="packages" />
         <KPICard title="Renewals" value={data.renewals} icon={<TrendingUp className="w-5 h-5" />} theme="packages" />
-        <KPICard title="Running" value={data.runningPackages} icon={<CheckCircle className="w-5 h-5" />} variant="success" theme="packages" />
-        <KPICard title="Completed" value={data.completedPackages} icon={<CheckCircle className="w-5 h-5" />} theme="packages" />
+        <KPICard title="In Progress" value={data.runningPackages} icon={<CheckCircle className="w-5 h-5" />} variant="success" theme="packages" />
+        <KPICard title="Finished" value={data.completedPackages} icon={<CheckCircle className="w-5 h-5" />} theme="packages" />
         <KPICard title="Pending" value={data.pendingPayments} icon={<AlertTriangle className="w-5 h-5" />} variant="warning" theme="packages" />
         <KPICard title="Paid Revenue" value={`AED ${data.paidRevenue.toLocaleString()}`} icon={<DollarSign className="w-5 h-5" />} variant="success" theme="packages" />
       </div>

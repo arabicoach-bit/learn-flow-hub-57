@@ -197,20 +197,6 @@ export function EditPackageDialog({ package_, open, onOpenChange, onSuccess }: E
               />
           </div>
 
-          <div className="space-y-2">
-            <Label>Package Status</Label>
-            <Select
-              value={formData.status}
-              onValueChange={(v: 'Running' | 'Completed') =>
-                setFormData({ ...formData, status: v })}
-            >
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Running">Running</SelectItem>
-                <SelectItem value="Completed">Completed</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
 
           <div className="border-t pt-4 space-y-3">
             <Label className="text-sm font-medium">Payment</Label>

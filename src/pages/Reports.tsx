@@ -224,8 +224,8 @@ export default function Reports() {
                           <TableCell>{pkg.lessons_used}</TableCell>
                           <TableCell>
                             <Badge variant="outline" className="status-grace">
-                              {pkg.status}
-                            </Badge>
+                               {pkg.status === 'Active' ? 'In Progress' : 'Finished'}
+                             </Badge>
                           </TableCell>
                         </TableRow>
                       ))}

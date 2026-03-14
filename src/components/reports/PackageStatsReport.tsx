@@ -58,7 +58,7 @@ export function PackageStatsReport({ startDate, endDate }: PackageStatsReportPro
                 <p className="text-sm text-muted-foreground">Total Packages</p>
                 <p className="text-3xl font-bold">{stats.totalPackages}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {stats.activePackages} active • {stats.completedPackages} completed
+                  {stats.activePackages} in progress • {stats.completedPackages} finished
                 </p>
               </div>
               <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
