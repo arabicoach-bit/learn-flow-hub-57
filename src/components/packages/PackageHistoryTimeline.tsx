@@ -122,7 +122,7 @@ export function PackageHistoryTimeline({ packages, isLoading, teacherName }: Pac
                             </Badge>
                           )}
                           {index === 0 && pkg.status === 'Active' && (
-                            <Badge className="bg-primary text-xs">Current</Badge>
+                            <Badge className="bg-primary text-xs">In Progress</Badge>
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground">
