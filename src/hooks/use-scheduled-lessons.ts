@@ -275,7 +275,21 @@ export function useAddScheduledLesson() {
 
       if (error) throw error;
 
-      // Recalculate wallet on INSERT (trigger only fires on UPDATE/DELETE)
+      // Increment lessons_purchased on the package (adding a lesson increases total)
+      const { data: pkg } = await supabase
+        .from('packages')
+        .select('lessons_purchased')
+        .eq('package_id', input.package_id)
+        .single();
+
+      if (pkg) {
+        await supabase
+          .from('packages')
+          .update({ lessons_purchased: pkg.lessons_purchased + 1 })
+          .eq('package_id', input.package_id);
+      }
+
+      // Recalculate wallet
       await supabase.rpc('recalculate_student_wallet', { p_student_id: input.student_id });
 
       return data;
