@@ -29,7 +29,6 @@ export function EditPackageDialog({ package_, open, onOpenChange, onSuccess }: E
     lessons_used: '',
     lesson_duration: '',
     start_date: '',
-    status: 'Running' as 'Running' | 'Completed',
     payment_status: 'Pending',
     due_date: '',
     paid_date: '',
@@ -44,9 +43,6 @@ export function EditPackageDialog({ package_, open, onOpenChange, onSuccess }: E
         lessons_used: (package_.lessons_used || 0).toString(),
         lesson_duration: (package_.lesson_duration || '').toString(),
         start_date: package_.start_date || '',
-        status: (package_.status === 'Active' 
-          ? 'Running' : package_.status) as 
-          'Running' | 'Completed',
         payment_status: (package_ as any)
           .payment_status || 'Pending',
         due_date: (package_ as any).due_date || '',
@@ -71,7 +67,6 @@ export function EditPackageDialog({ package_, open, onOpenChange, onSuccess }: E
           lessons_used: parseInt(data.lessons_used),
           lesson_duration: data.lesson_duration ? parseInt(data.lesson_duration) : null,
           start_date: data.start_date || null,
-          status: data.status === 'Running' ? 'Active' : data.status,
           payment_status: data.payment_status,
           due_date: data.payment_status === 'Pending'
             ? data.due_date || null : null,
@@ -202,20 +197,6 @@ export function EditPackageDialog({ package_, open, onOpenChange, onSuccess }: E
               />
           </div>
 
-          <div className="space-y-2">
-            <Label>Package Status</Label>
-            <Select
-              value={formData.status}
-              onValueChange={(v: 'Running' | 'Completed') =>
-                setFormData({ ...formData, status: v })}
-            >
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Running">Running</SelectItem>
-                <SelectItem value="Completed">Completed</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
 
           <div className="border-t pt-4 space-y-3">
             <Label className="text-sm font-medium">Payment</Label>

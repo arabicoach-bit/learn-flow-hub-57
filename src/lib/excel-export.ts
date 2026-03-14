@@ -192,7 +192,7 @@ export function exportPackages(data: PackageExport[]) {
     { header: 'Lessons Purchased', accessor: 'lessons_purchased' },
     { header: 'Lessons Used', accessor: 'lessons_used' },
     { header: 'Lessons Remaining', accessor: item => (item.lessons_purchased - (item.lessons_used || 0)) },
-    { header: 'Status', accessor: 'status' },
+    { header: 'Status', accessor: item => item.status === 'Active' ? 'In Progress' : item.status === 'Completed' ? 'Finished' : (item.status || '') },
     { header: 'Payment Date', accessor: 'payment_date' },
     { header: 'Start Date', accessor: 'start_date' },
     { header: 'Next Payment', accessor: 'next_payment_date' },

@@ -12,7 +12,7 @@ import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, LineChart, Line, PieC
 
 const chartConfig = {
   newPackages: { label: 'New Packages', color: 'hsl(var(--primary))' },
-  completedPackages: { label: 'Completed', color: 'hsl(var(--chart-2))' },
+  completedPackages: { label: 'Finished', color: 'hsl(var(--chart-2))' },
   renewals: { label: 'Renewals', color: 'hsl(var(--chart-3))' },
   revenue: { label: 'Revenue', color: 'hsl(var(--chart-4))' },
 };
@@ -43,8 +43,8 @@ export function PackageStatsReport({ startDate, endDate }: PackageStatsReportPro
   if (!stats) return null;
 
   const statusData = [
-    { name: 'Active', value: stats.activePackages },
-    { name: 'Completed', value: stats.completedPackages },
+    { name: 'In Progress', value: stats.activePackages },
+    { name: 'Finished', value: stats.completedPackages },
   ];
 
   return (
@@ -58,7 +58,7 @@ export function PackageStatsReport({ startDate, endDate }: PackageStatsReportPro
                 <p className="text-sm text-muted-foreground">Total Packages</p>
                 <p className="text-3xl font-bold">{stats.totalPackages}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {stats.activePackages} active • {stats.completedPackages} completed
+                  {stats.activePackages} in progress • {stats.completedPackages} finished
                 </p>
               </div>
               <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">

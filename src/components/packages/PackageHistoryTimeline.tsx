@@ -95,7 +95,7 @@ export function PackageHistoryTimeline({ packages, isLoading, teacherName }: Pac
                     className={`absolute left-2 w-5 h-5 rounded-full border-2 border-background flex items-center justify-center ${
                       pkg.status === 'Active' 
                         ? 'bg-primary' 
-                        : 'bg-muted-foreground'
+                        : 'bg-muted-foreground/60'
                     }`}
                   >
                     {pkg.is_renewal && (
@@ -122,15 +122,15 @@ export function PackageHistoryTimeline({ packages, isLoading, teacherName }: Pac
                             </Badge>
                           )}
                           {index === 0 && pkg.status === 'Active' && (
-                            <Badge className="bg-primary text-xs">Current</Badge>
+                            <Badge className="bg-primary text-xs">In Progress</Badge>
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground">
                           {pkg.package_types?.description || '-'}
                         </p>
                       </div>
-                      <Badge className={getStatusBadgeClass(pkg.status === 'Active' ? periodStatus : 'Left')}>
-                        {getStatusDisplayLabel(pkg.status)}
+                      <Badge className={pkg.status === 'Active' ? 'bg-emerald-600 text-white' : 'bg-muted text-muted-foreground'}>
+                        {pkg.status === 'Active' ? 'In Progress' : 'Finished'}
                       </Badge>
                     </div>
 

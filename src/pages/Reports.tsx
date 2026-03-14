@@ -153,8 +153,8 @@ export default function Reports() {
             <Card className="glass-card">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
-                  <Package className="w-5 h-5 text-primary" />
-                  Completed Packages
+                   <Package className="w-5 h-5 text-primary" />
+                   Finished Packages
                 </CardTitle>
                 <div className="flex gap-2">
                   <Button
@@ -200,7 +200,7 @@ export default function Reports() {
                 ) : completedPackages.length === 0 ? (
                   <div className="text-center py-12">
                     <Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">No completed packages</p>
+                    <p className="text-muted-foreground">No finished packages</p>
                   </div>
                 ) : (
                   <Table>
@@ -224,8 +224,8 @@ export default function Reports() {
                           <TableCell>{pkg.lessons_used}</TableCell>
                           <TableCell>
                             <Badge variant="outline" className="status-grace">
-                              {pkg.status}
-                            </Badge>
+                               {pkg.status === 'Active' ? 'In Progress' : 'Finished'}
+                             </Badge>
                           </TableCell>
                         </TableRow>
                       ))}

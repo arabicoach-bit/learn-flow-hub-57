@@ -67,8 +67,8 @@ export function PackageFiltersBar({
         <SelectTrigger className="w-[140px]"><SelectValue placeholder="Status" /></SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All Status</SelectItem>
-          <SelectItem value="Active">Active</SelectItem>
-          <SelectItem value="Completed">Completed</SelectItem>
+          <SelectItem value="Active">In Progress</SelectItem>
+          <SelectItem value="Completed">Finished</SelectItem>
         </SelectContent>
       </Select>
       <Select value={teacherFilter} onValueChange={onTeacherFilterChange}>
