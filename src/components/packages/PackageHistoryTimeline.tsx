@@ -95,7 +95,7 @@ export function PackageHistoryTimeline({ packages, isLoading, teacherName }: Pac
                     className={`absolute left-2 w-5 h-5 rounded-full border-2 border-background flex items-center justify-center ${
                       pkg.status === 'Active' 
                         ? 'bg-primary' 
-                        : 'bg-muted-foreground'
+                        : 'bg-muted-foreground/60'
                     }`}
                   >
                     {pkg.is_renewal && (
