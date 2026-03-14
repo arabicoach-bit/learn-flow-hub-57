@@ -43,8 +43,8 @@ export function PackageStatsReport({ startDate, endDate }: PackageStatsReportPro
   if (!stats) return null;
 
   const statusData = [
-    { name: 'Active', value: stats.activePackages },
-    { name: 'Completed', value: stats.completedPackages },
+    { name: 'In Progress', value: stats.activePackages },
+    { name: 'Finished', value: stats.completedPackages },
   ];
 
   return (
