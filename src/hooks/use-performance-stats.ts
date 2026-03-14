@@ -68,7 +68,7 @@ async function fetchPeriodStats(startStr: string, endStr: string, label: string)
   return {
     period: label,
     newPackages,
-    completedPackages,
+    completedPackages: finishedPackages,
     renewals,
     totalRevenue,
     newStudents: students.length,

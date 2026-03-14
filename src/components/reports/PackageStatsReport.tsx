@@ -12,7 +12,7 @@ import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, LineChart, Line, PieC
 
 const chartConfig = {
   newPackages: { label: 'New Packages', color: 'hsl(var(--primary))' },
-  completedPackages: { label: 'Completed', color: 'hsl(var(--chart-2))' },
+  completedPackages: { label: 'Finished', color: 'hsl(var(--chart-2))' },
   renewals: { label: 'Renewals', color: 'hsl(var(--chart-3))' },
   revenue: { label: 'Revenue', color: 'hsl(var(--chart-4))' },
 };
