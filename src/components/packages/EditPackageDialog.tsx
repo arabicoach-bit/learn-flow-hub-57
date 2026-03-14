@@ -43,9 +43,6 @@ export function EditPackageDialog({ package_, open, onOpenChange, onSuccess }: E
         lessons_used: (package_.lessons_used || 0).toString(),
         lesson_duration: (package_.lesson_duration || '').toString(),
         start_date: package_.start_date || '',
-        status: (package_.status === 'Active' 
-          ? 'Running' : package_.status) as 
-          'Running' | 'Completed',
         payment_status: (package_ as any)
           .payment_status || 'Pending',
         due_date: (package_ as any).due_date || '',
