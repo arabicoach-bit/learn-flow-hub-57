@@ -5,7 +5,7 @@ import { startOfMonth, endOfMonth, subMonths, format } from 'date-fns';
 export interface PerformanceStats {
   period: string;
   newPackages: number;
-  finishedPackages: number;
+  completedPackages: number;
   renewals: number;
   totalRevenue: number;
   newStudents: number;
