@@ -29,7 +29,6 @@ export function EditPackageDialog({ package_, open, onOpenChange, onSuccess }: E
     lessons_used: '',
     lesson_duration: '',
     start_date: '',
-    status: 'Running' as 'Running' | 'Completed',
     payment_status: 'Pending',
     due_date: '',
     paid_date: '',
