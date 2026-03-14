@@ -59,7 +59,7 @@ async function fetchPeriodStats(startStr: string, endStr: string, label: string)
 
   const newPackages = packages.filter(p => !p.is_renewal).length;
   const renewals = packages.filter(p => p.is_renewal).length;
-  const completedPackages = packages.filter(p => p.status === 'Completed').length;
+  const finishedPackages = packages.filter(p => p.status === 'Completed').length;
   const totalRevenue = packages.reduce((sum, p) => sum + Number(p.amount || 0), 0);
   const totalTrials = trials.length;
   const convertedTrials = trials.filter(t => t.status === 'Converted').length;
