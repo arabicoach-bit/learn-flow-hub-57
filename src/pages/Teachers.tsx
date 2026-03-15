@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useSearchParamState } from '@/hooks/use-search-param-state';
 
 export default function Teachers() {
   const { toast } = useToast();
@@ -22,7 +23,7 @@ export default function Teachers() {
   const updateTeacher = useUpdateTeacher();
 
   // View mode
-  const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
+  const [viewMode, setViewMode] = useSearchParamState('view', 'table') as [string, (v: string) => void];
 
   // Dialog states
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -33,8 +34,8 @@ export default function Teachers() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Search and filter
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [searchQuery, setSearchQuery] = useSearchParamState('q', '');
+  const [statusFilter, setStatusFilter] = useSearchParamState('status', 'all') as [string, (v: string) => void];
 
   // Form states
   const [formData, setFormData] = useState({ name: '', phone: '', email: '', rate_per_lesson: '' });

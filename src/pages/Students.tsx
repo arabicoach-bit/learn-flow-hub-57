@@ -19,18 +19,19 @@ import { StudentStatsCards } from '@/components/students/StudentStatsCards';
 import { StudentFiltersBar } from '@/components/students/StudentFiltersBar';
 import { StudentTableView } from '@/components/students/StudentTableView';
 import { StudentCardView } from '@/components/students/StudentCardView';
+import { useSearchParamState, useSearchParamYearMonth } from '@/hooks/use-search-param-state';
 import type { Student } from '@/hooks/use-students';
 
 const STUDENT_LEVELS = ['Beginner', 'Elementary', 'Intermediate', 'Upper Intermediate', 'Advanced'];
 const PAGE_SIZE = 20;
 
 export default function Students() {
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [teacherFilter, setTeacherFilter] = useState('');
-  const [dateFilter, setDateFilter] = useState<YearMonthFilterValue>({ year: null, month: null });
-  const [sortField, setSortField] = useState('newest');
-  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+  const [search, setSearch] = useSearchParamState('q', '');
+  const [statusFilter, setStatusFilter] = useSearchParamState('status', '');
+  const [teacherFilter, setTeacherFilter] = useSearchParamState('teacher', '');
+  const [dateFilter, setDateFilter] = useSearchParamYearMonth('df');
+  const [sortField, setSortField] = useSearchParamState('sort', 'newest');
+  const [viewMode, setViewMode] = useSearchParamState('view', 'table') as [string, (v: string) => void];
   const [page, setPage] = useState(1);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editStudent, setEditStudent] = useState<Student | null>(null);
