@@ -56,11 +56,15 @@ export default function Students() {
     });
   }, [students, dateFilter]);
 
-  // Payment filter (needs paymentStatsMap to determine payment status)
+  // Payment stats for all filtered students (needed for payment filter + stats)
+  const allFilteredIds = useMemo(() => dateFiltered.map(s => s.student_id), [dateFiltered]);
+  const { data: paymentStatsMap } = useStudentsPaymentStats(allFilteredIds);
+
+  // Payment filter
   const paymentFiltered = useMemo(() => {
     if (!paymentFilter) return dateFiltered;
     return dateFiltered.filter(s => {
-      if (s.status !== 'Active') return paymentFilter === '' ; // non-active students have no payment status
+      if (s.status !== 'Active') return false; // non-active students have no payment status
       const hasPending = paymentStatsMap?.[s.student_id] ?? false;
       const wallet = s.wallet_balance || 0;
       if (paymentFilter === 'Paid') return !hasPending && wallet > 0;
@@ -93,10 +97,6 @@ export default function Students() {
   // Batch stats for visible students
   const visibleIds = useMemo(() => paginatedStudents.map(s => s.student_id), [paginatedStudents]);
   const { data: batchStats } = useStudentsBatchStats(visibleIds);
-
-  // Payment stats for all filtered active students
-  const allFilteredIds = useMemo(() => dateFiltered.map(s => s.student_id), [dateFiltered]);
-  const { data: paymentStatsMap } = useStudentsPaymentStats(allFilteredIds);
 
   // Stats
   const totalStudents = dateFiltered.length;
