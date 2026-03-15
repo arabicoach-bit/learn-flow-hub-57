@@ -230,12 +230,13 @@ export default function Students() {
           </div>
         </div>
 
-        <StudentStatsCards total={totalStudents} active={activeCount} paid={paidCount} pending={pendingCount} needsRenewal={needsRenewalCount} tempStop={tempStopCount} left={leftCount} retentionRate={retentionRate} />
+        <StudentStatsCards total={totalStudents} active={activeCount} paid={paidCount} pending={pendingCount} renewal={needsRenewalCount} stop={tempStopCount} left={leftCount} retentionRate={retentionRate} />
 
         <StudentFiltersBar
           search={search} onSearchChange={handleFilterChange(setSearch)}
           teacherFilter={teacherFilter} onTeacherFilterChange={handleFilterChange(setTeacherFilter)}
           statusFilter={statusFilter} onStatusFilterChange={handleFilterChange(setStatusFilter)}
+          paymentFilter={paymentFilter} onPaymentFilterChange={handleFilterChange(setPaymentFilter)}
           dateFilter={dateFilter} onDateFilterChange={handleFilterChange(setDateFilter)}
           teachers={teachers} viewMode={viewMode as 'table' | 'cards'} onViewModeChange={setViewMode}
           sortField={sortField} onSortFieldChange={setSortField}
