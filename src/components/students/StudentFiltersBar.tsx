@@ -16,6 +16,8 @@ interface StudentFiltersBarProps {
   onTeacherFilterChange: (v: string) => void;
   statusFilter: string;
   onStatusFilterChange: (v: string) => void;
+  paymentFilter: string;
+  onPaymentFilterChange: (v: string) => void;
   dateFilter: YearMonthFilterValue;
   onDateFilterChange: (v: YearMonthFilterValue) => void;
   teachers: Teacher[] | undefined;
@@ -29,6 +31,7 @@ export function StudentFiltersBar({
   search, onSearchChange,
   teacherFilter, onTeacherFilterChange,
   statusFilter, onStatusFilterChange,
+  paymentFilter, onPaymentFilterChange,
   dateFilter, onDateFilterChange,
   teachers,
   viewMode, onViewModeChange,
@@ -54,8 +57,17 @@ export function StudentFiltersBar({
         <SelectContent>
           <SelectItem value="all">All Status</SelectItem>
           <SelectItem value="Active">Active</SelectItem>
-          <SelectItem value="Temporary Stop">Temporary Stop</SelectItem>
+          <SelectItem value="Temporary Stop">Stop</SelectItem>
           <SelectItem value="Left">Left</SelectItem>
+        </SelectContent>
+      </Select>
+      <Select value={paymentFilter || 'all'} onValueChange={(v) => onPaymentFilterChange(v === 'all' ? '' : v)}>
+        <SelectTrigger className="w-40"><SelectValue placeholder="Payment" /></SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Payments</SelectItem>
+          <SelectItem value="Paid">Paid</SelectItem>
+          <SelectItem value="Pending">Pending</SelectItem>
+          <SelectItem value="Renewal">Renewal</SelectItem>
         </SelectContent>
       </Select>
       <Select value={sortField} onValueChange={onSortFieldChange}>

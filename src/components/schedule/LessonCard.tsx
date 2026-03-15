@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { getWalletColor, getWalletDisplayLabel } from '@/lib/wallet-utils';
+import { getWalletColor } from '@/lib/wallet-utils';
 import { Clock, CheckCircle, XCircle, Pencil, Save, Loader2, Trash2 } from 'lucide-react';
 import { useMarkScheduledLesson } from '@/hooks/use-scheduled-lessons';
 import { UpdateLessonStatusDialog } from './UpdateLessonStatusDialog';
@@ -173,7 +173,7 @@ export function LessonCard({ lesson, onUpdated, showDate, readOnly, onDelete }: 
         <div className="flex items-center gap-3 mb-3">
           <span className="font-medium text-base">{studentName}</span>
           <Badge className={`${getWalletColor(walletBalance)} text-xs gap-1`}>
-            💰 {getWalletDisplayLabel(walletBalance)}
+            💰 {walletBalance}
           </Badge>
           {isBlocked && (
             <Badge variant="destructive" className="text-xs">LEFT</Badge>

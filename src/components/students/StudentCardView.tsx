@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Pencil, Trash2, MessageCircle, Calendar, BookOpen, Wallet, CreditCard } from 'lucide-react';
+import { Pencil, Trash2, MessageCircle, Calendar, BookOpen, Wallet, Package } from 'lucide-react';
 import { getWalletColor, getStatusBadgeClass, getStatusDisplayLabel, getPaymentStatus, getPaymentStatusBadgeClass } from '@/lib/wallet-utils';
 import type { Student } from '@/hooks/use-students';
 import type { StudentBatchStats } from '@/hooks/use-students-batch-stats';
@@ -55,7 +55,7 @@ export function StudentCardView({ students, batchStats, onEdit, onDelete }: Stud
               </div>
 
               {/* Stats Row */}
-              <div className="grid grid-cols-3 gap-2 text-center">
+              <div className="grid grid-cols-4 gap-2 text-center">
                 <div className="rounded-lg bg-muted/50 p-2">
                   <Wallet className="h-3.5 w-3.5 mx-auto mb-1 text-muted-foreground" />
                   <span className={`text-sm font-bold ${getWalletColor(wallet)}`}>{wallet}</span>
@@ -74,6 +74,13 @@ export function StudentCardView({ students, batchStats, onEdit, onDelete }: Stud
                     {stats?.nextLessonDate ? format(new Date(stats.nextLessonDate), 'dd MMM') : '—'}
                   </span>
                   <p className="text-[10px] text-muted-foreground">Next</p>
+                </div>
+                <div className="rounded-lg bg-muted/50 p-2">
+                  <Package className="h-3.5 w-3.5 mx-auto mb-1 text-muted-foreground" />
+                  <span className="text-sm font-bold">
+                    {stats ? `${stats.inProgressPackages}/${stats.finishedPackages}` : '—'}
+                  </span>
+                  <p className="text-[10px] text-muted-foreground">Pkg</p>
                 </div>
               </div>
 

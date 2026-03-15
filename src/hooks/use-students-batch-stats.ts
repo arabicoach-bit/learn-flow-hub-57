@@ -7,6 +7,8 @@ export interface StudentBatchStats {
   nextLessonDate: string | null;
   nextLessonTime: string | null;
   hasAnyPendingPackage: boolean;
+  inProgressPackages: number;
+  finishedPackages: number;
 }
 
 /**
@@ -19,29 +21,36 @@ export function useStudentsBatchStats(studentIds: string[]) {
     queryFn: async () => {
       if (studentIds.length === 0) return {} as Record<string, StudentBatchStats>;
 
-      // 1. Get active packages for all students (include payment_status)
+      // 1. Get all packages for all students (include payment_status and status)
       const { data: packages } = await supabase
         .from('packages')
-        .select('package_id, student_id, lessons_purchased, payment_status')
+        .select('package_id, student_id, lessons_purchased, payment_status, status')
         .in('student_id', studentIds)
-        .eq('status', 'Active')
         .order('created_at', { ascending: false });
 
       // Keep only latest active package per student + track pending status
       const studentPackageMap: Record<string, { package_id: string; lessons_purchased: number }> = {};
       const studentHasPending: Record<string, boolean> = {};
+      const studentInProgress: Record<string, number> = {};
+      const studentFinished: Record<string, number> = {};
+
       (packages || []).forEach(p => {
-        if (!studentPackageMap[p.student_id]) {
+        // Track latest active package
+        if (p.status === 'Active' && !studentPackageMap[p.student_id]) {
           studentPackageMap[p.student_id] = { package_id: p.package_id, lessons_purchased: p.lessons_purchased };
         }
         if (p.payment_status === 'Pending') {
           studentHasPending[p.student_id] = true;
         }
+        // Count package statuses
+        if (p.status === 'Active') {
+          studentInProgress[p.student_id] = (studentInProgress[p.student_id] || 0) + 1;
+        } else if (p.status === 'Completed') {
+          studentFinished[p.student_id] = (studentFinished[p.student_id] || 0) + 1;
+        }
       });
 
-      const packageIds = Object.values(studentPackageMap).map(p => p.package_id);
-
-      // 2. Get all scheduled lessons for these packages + next scheduled per student
+      // 2. Get all scheduled lessons for these students
       const { data: lessons } = await supabase
         .from('scheduled_lessons')
         .select('scheduled_lesson_id, package_id, student_id, status, scheduled_date, scheduled_time')
@@ -73,6 +82,8 @@ export function useStudentsBatchStats(studentIds: string[]) {
           nextLessonDate: nextScheduled?.scheduled_date || null,
           nextLessonTime: nextScheduled?.scheduled_time || null,
           hasAnyPendingPackage: !!studentHasPending[sid],
+          inProgressPackages: studentInProgress[sid] || 0,
+          finishedPackages: studentFinished[sid] || 0,
         };
       });
 

@@ -33,6 +33,7 @@ export default function Students() {
   const [sortField, setSortField] = useSearchParamState('sort', 'newest');
   const [viewMode, setViewMode] = useSearchParamState('view', 'table') as [string, (v: string) => void];
   const [page, setPage] = useState(1);
+  const [paymentFilter, setPaymentFilter] = useSearchParamState('payment', '');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editStudent, setEditStudent] = useState<Student | null>(null);
   const [deleteStudent, setDeleteStudent] = useState<Student | null>(null);
@@ -55,9 +56,27 @@ export default function Students() {
     });
   }, [students, dateFilter]);
 
+  // Payment stats for all filtered students (needed for payment filter + stats)
+  const allFilteredIds = useMemo(() => dateFiltered.map(s => s.student_id), [dateFiltered]);
+  const { data: paymentStatsMap } = useStudentsPaymentStats(allFilteredIds);
+
+  // Payment filter
+  const paymentFiltered = useMemo(() => {
+    if (!paymentFilter) return dateFiltered;
+    return dateFiltered.filter(s => {
+      if (s.status !== 'Active') return false; // non-active students have no payment status
+      const hasPending = paymentStatsMap?.[s.student_id] ?? false;
+      const wallet = s.wallet_balance || 0;
+      if (paymentFilter === 'Paid') return !hasPending && wallet > 0;
+      if (paymentFilter === 'Pending') return hasPending;
+      if (paymentFilter === 'Renewal') return !hasPending && wallet <= 0;
+      return true;
+    });
+  }, [dateFiltered, paymentFilter, paymentStatsMap]);
+
   // Sort
   const sorted = useMemo(() => {
-    const list = [...dateFiltered];
+    const list = [...paymentFiltered];
     switch (sortField) {
       case 'name': return list.sort((a, b) => a.name.localeCompare(b.name));
       case 'name-desc': return list.sort((a, b) => b.name.localeCompare(a.name));
@@ -67,7 +86,7 @@ export default function Students() {
       case 'newest':
       default: return list.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
     }
-  }, [dateFiltered, sortField]);
+  }, [paymentFiltered, sortField]);
 
   // Pagination
   const paginatedStudents = useMemo(() => {
@@ -79,16 +98,12 @@ export default function Students() {
   const visibleIds = useMemo(() => paginatedStudents.map(s => s.student_id), [paginatedStudents]);
   const { data: batchStats } = useStudentsBatchStats(visibleIds);
 
-  // Payment stats for all filtered active students
-  const allFilteredIds = useMemo(() => dateFiltered.map(s => s.student_id), [dateFiltered]);
-  const { data: paymentStatsMap } = useStudentsPaymentStats(allFilteredIds);
-
   // Stats
   const totalStudents = dateFiltered.length;
   const activeCount = dateFiltered.filter(s => s.status === 'Active').length;
   const tempStopCount = dateFiltered.filter(s => s.status === 'Temporary Stop').length;
   const leftCount = dateFiltered.filter(s => s.status === 'Left').length;
-  const retentionRate = totalStudents > 0 ? Math.round((activeCount / totalStudents) * 100) : 0;
+  const retentionRate = totalStudents > 0 ? Math.round(((tempStopCount + leftCount) / totalStudents) * 100) : 0;
 
   // Payment status counts
   const { paidCount, pendingCount, needsRenewalCount } = useMemo(() => {
@@ -229,12 +244,13 @@ export default function Students() {
           </div>
         </div>
 
-        <StudentStatsCards total={totalStudents} active={activeCount} paid={paidCount} pending={pendingCount} needsRenewal={needsRenewalCount} tempStop={tempStopCount} left={leftCount} retentionRate={retentionRate} />
+        <StudentStatsCards total={totalStudents} active={activeCount} paid={paidCount} pending={pendingCount} renewal={needsRenewalCount} stop={tempStopCount} left={leftCount} retentionRate={retentionRate} />
 
         <StudentFiltersBar
           search={search} onSearchChange={handleFilterChange(setSearch)}
           teacherFilter={teacherFilter} onTeacherFilterChange={handleFilterChange(setTeacherFilter)}
           statusFilter={statusFilter} onStatusFilterChange={handleFilterChange(setStatusFilter)}
+          paymentFilter={paymentFilter} onPaymentFilterChange={handleFilterChange(setPaymentFilter)}
           dateFilter={dateFilter} onDateFilterChange={handleFilterChange(setDateFilter)}
           teachers={teachers} viewMode={viewMode as 'table' | 'cards'} onViewModeChange={setViewMode}
           sortField={sortField} onSortFieldChange={setSortField}

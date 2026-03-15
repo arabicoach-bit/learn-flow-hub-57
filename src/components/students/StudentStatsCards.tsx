@@ -6,20 +6,20 @@ interface StudentStatsCardsProps {
   active: number;
   paid: number;
   pending: number;
-  needsRenewal: number;
-  tempStop: number;
+  renewal: number;
+  stop: number;
   left: number;
   retentionRate: number;
 }
 
-export function StudentStatsCards({ total, active, paid, pending, needsRenewal, tempStop, left, retentionRate }: StudentStatsCardsProps) {
+export function StudentStatsCards({ total, active, paid, pending, renewal, stop, left, retentionRate }: StudentStatsCardsProps) {
   const stats = [
     { icon: Users, value: total, label: 'Total Students', color: 'text-muted-foreground' },
     { icon: UserCheck, value: active, label: 'Active', color: 'text-emerald-600' },
     { icon: CheckCircle, value: paid, label: 'Paid', color: 'text-emerald-500' },
     { icon: CreditCard, value: pending, label: 'Pending', color: 'text-amber-600' },
-    { icon: Clock, value: needsRenewal, label: 'Needs Renewal', color: 'text-orange-600' },
-    { icon: PauseCircle, value: tempStop, label: 'Temporary Stop', color: 'text-amber-600' },
+    { icon: Clock, value: renewal, label: 'Renewal', color: 'text-orange-600' },
+    { icon: PauseCircle, value: stop, label: 'Stop', color: 'text-amber-600' },
     { icon: XCircle, value: left, label: 'Left', color: 'text-red-500' },
     { icon: Percent, value: `${retentionRate}%`, label: 'Retention Rate', color: 'text-blue-500' },
   ];

@@ -39,25 +39,26 @@ export function StudentTableView({
             <tr>
               <th>Name</th>
               <th>Teacher</th>
+              <th>Status</th>
               <th>Wallet</th>
-              <th>Payment</th>
               <th>Lessons</th>
               <th>Next Lesson</th>
-              <th>Status</th>
+              <th>In-Progress</th>
+              <th>Finished</th>
+              <th>Payment</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
-                <tr key={i}><td colSpan={8}><Skeleton className="h-8 w-full" /></td></tr>
+                <tr key={i}><td colSpan={10}><Skeleton className="h-8 w-full" /></td></tr>
               ))
             ) : students.length === 0 ? (
-              <tr><td colSpan={8} className="text-center py-8 text-muted-foreground">No students found</td></tr>
+              <tr><td colSpan={10} className="text-center py-8 text-muted-foreground">No students found</td></tr>
             ) : (
               students.map((student) => {
                 const wallet = student.wallet_balance || 0;
-                const isOverdue = wallet <= 0 && student.status === 'Active';
                 const stats = batchStats[student.student_id];
                 const paymentStatus = getPaymentStatus(student.status, wallet, stats?.hasAnyPendingPackage ?? false);
 
@@ -78,6 +79,35 @@ export function StudentTableView({
                       </div>
                     </td>
                     <td>{student.teachers?.name || '-'}</td>
+                    <td onClick={e => e.stopPropagation()}>
+                      <Select
+                        value={student.status}
+                        onValueChange={(value: 'Active' | 'Temporary Stop' | 'Left') => {
+                          updateStudent.mutate(
+                            { studentId: student.student_id, status: value },
+                            {
+                              onSuccess: () => toast({ title: `Status updated to ${getStatusDisplayLabel(value)}` }),
+                              onError: () => toast({ title: 'Failed to update status', variant: 'destructive' }),
+                            }
+                          );
+                        }}
+                      >
+                        <SelectTrigger className="w-[110px] h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Active">
+                            <Badge variant="outline" className={getStatusBadgeClass('Active')}>Active</Badge>
+                          </SelectItem>
+                          <SelectItem value="Temporary Stop">
+                            <Badge variant="outline" className={getStatusBadgeClass('Temporary Stop')}>Stop</Badge>
+                          </SelectItem>
+                          <SelectItem value="Left">
+                            <Badge variant="outline" className={getStatusBadgeClass('Left')}>Left</Badge>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </td>
                     <td>
                       <span
                         className={`font-bold px-2 py-0.5 rounded ${getWalletColor(wallet)}`}
@@ -93,15 +123,6 @@ export function StudentTableView({
                       </span>
                     </td>
                     <td onClick={e => e.stopPropagation()}>
-                      {paymentStatus ? (
-                        <Badge variant="outline" className={getPaymentStatusBadgeClass(paymentStatus)}>
-                          {paymentStatus}
-                        </Badge>
-                      ) : (
-                        <span className="text-muted-foreground text-xs">—</span>
-                      )}
-                    </td>
-                    <td onClick={e => e.stopPropagation()}>
                       <span className="text-sm font-medium">
                         {stats ? `${stats.lessonsUsed}/${stats.lessonsTotal}` : '—'}
                       </span>
@@ -114,40 +135,23 @@ export function StudentTableView({
                       </span>
                     </td>
                     <td onClick={e => e.stopPropagation()}>
-                      <div className="flex items-center gap-2">
-                        <Select
-                          value={student.status}
-                          onValueChange={(value: 'Active' | 'Temporary Stop' | 'Left') => {
-                            updateStudent.mutate(
-                              { studentId: student.student_id, status: value },
-                              {
-                                onSuccess: () => toast({ title: `Status updated to ${getStatusDisplayLabel(value)}` }),
-                                onError: () => toast({ title: 'Failed to update status', variant: 'destructive' }),
-                              }
-                            );
-                          }}
-                        >
-                          <SelectTrigger className="w-[130px] h-8 text-xs">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Active">
-                              <Badge variant="outline" className={getStatusBadgeClass('Active')}>Active</Badge>
-                            </SelectItem>
-                            <SelectItem value="Temporary Stop">
-                              <Badge variant="outline" className={getStatusBadgeClass('Temporary Stop')}>{getStatusDisplayLabel('Temporary Stop')}</Badge>
-                            </SelectItem>
-                            <SelectItem value="Left">
-                              <Badge variant="outline" className={getStatusBadgeClass('Left')}>{getStatusDisplayLabel('Left')}</Badge>
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                        {isOverdue && (
-                          <Badge variant="outline" className="bg-red-500/20 text-red-700 dark:text-red-300 border-red-500/30 text-xs">
-                            Overdue
-                          </Badge>
-                        )}
-                      </div>
+                      <span className="text-sm font-medium">
+                        {stats ? (stats.inProgressPackages > 0 ? stats.inProgressPackages : '0') : '—'}
+                      </span>
+                    </td>
+                    <td onClick={e => e.stopPropagation()}>
+                      <span className="text-sm text-muted-foreground">
+                        {stats ? (stats.finishedPackages > 0 ? stats.finishedPackages : '0') : '—'}
+                      </span>
+                    </td>
+                    <td onClick={e => e.stopPropagation()}>
+                      {paymentStatus ? (
+                        <Badge variant="outline" className={getPaymentStatusBadgeClass(paymentStatus)}>
+                          {paymentStatus}
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">—</span>
+                      )}
                     </td>
                     <td onClick={e => e.stopPropagation()}>
                       <div className="flex gap-1">

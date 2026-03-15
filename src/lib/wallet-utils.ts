@@ -3,14 +3,13 @@ export function getStatusDisplayLabel(status: string): string {
   switch (status) {
     case 'Active':
       return 'Active';
-    // New canonical values
     case 'Temporary Stop':
-      return 'Temporary Stop';
+      return 'Stop';
     case 'Left':
       return 'Left';
     // Backwards-compat (should no longer exist in DB)
     case 'Grace':
-      return 'Temporary Stop';
+      return 'Stop';
     case 'Blocked':
       return 'Left';
     default:
@@ -18,7 +17,7 @@ export function getStatusDisplayLabel(status: string): string {
   }
 }
 
-export type PaymentStatusType = 'Pending' | 'Paid' | 'Needs Renewal' | '';
+export type PaymentStatusType = 'Pending' | 'Paid' | 'Renewal' | '';
 
 /**
  * Compute a student's payment status from their activity status, wallet balance,
@@ -32,7 +31,7 @@ export function getPaymentStatus(
   if (studentStatus !== 'Active') return '';
   if (hasAnyPendingPackage) return 'Pending';
   if (walletBalance > 0) return 'Paid';
-  return 'Needs Renewal';
+  return 'Renewal';
 }
 
 export function getPaymentStatusBadgeClass(status: PaymentStatusType): string {
@@ -41,31 +40,25 @@ export function getPaymentStatusBadgeClass(status: PaymentStatusType): string {
       return 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30';
     case 'Pending':
       return 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30';
-    case 'Needs Renewal':
+    case 'Renewal':
       return 'bg-orange-500/15 text-orange-700 dark:text-orange-300 border-orange-500/30';
     default:
       return '';
   }
 }
 
-// Show "Overdue" label when wallet is <= 0
-export function getWalletDisplayLabel(walletBalance: number): string {
-  if (walletBalance <= 0) return 'Overdue';
-  return `${walletBalance}`;
-}
-
 export function getWalletColor(balance: number): string {
-  // Wallet is always >= 0 now. Active: >= 3, Grace: 1-2, Warning: 0
-  if (balance >= 3) return 'wallet-positive';  // Active
-  if (balance >= 1) return 'wallet-warning';   // Grace (approaching limit)
-  return 'wallet-negative';                     // Zero balance
+  if (balance >= 5) return 'text-emerald-600';
+  if (balance >= 3) return 'text-lime-600';
+  if (balance >= 1) return 'text-amber-600';
+  if (balance === 0) return 'text-orange-600';
+  return 'text-red-600';
 }
 
 export function getWalletBgColor(balance: number): string {
-  // Wallet is always >= 0 now
-  if (balance >= 3) return 'bg-emerald-500/20';  // Active
-  if (balance >= 1) return 'bg-amber-500/20';    // Grace
-  return 'bg-red-500/20';                         // Zero
+  if (balance >= 3) return 'bg-emerald-500/20';
+  if (balance >= 1) return 'bg-amber-500/20';
+  return 'bg-red-500/20';
 }
 
 export function getStatusBadgeClass(status: string): string {
