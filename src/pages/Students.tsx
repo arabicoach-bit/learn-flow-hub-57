@@ -236,7 +236,7 @@ export default function Students() {
           teacherFilter={teacherFilter} onTeacherFilterChange={handleFilterChange(setTeacherFilter)}
           statusFilter={statusFilter} onStatusFilterChange={handleFilterChange(setStatusFilter)}
           dateFilter={dateFilter} onDateFilterChange={handleFilterChange(setDateFilter)}
-          teachers={teachers} viewMode={viewMode} onViewModeChange={setViewMode}
+          teachers={teachers} viewMode={viewMode as 'table' | 'cards'} onViewModeChange={setViewMode}
           sortField={sortField} onSortFieldChange={setSortField}
         />
 

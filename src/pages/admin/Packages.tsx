@@ -182,7 +182,7 @@ export default function Packages() {
           teacherFilter={teacherFilter} onTeacherFilterChange={setTeacherFilter}
           paymentFilter={paymentFilter} onPaymentFilterChange={setPaymentFilter}
           teachers={teachers}
-          sortBy={sortBy} onSortChange={setSortBy}
+          sortBy={sortBy as PackageSortOption} onSortChange={setSortBy}
         />
 
         <PackageTableView

@@ -235,9 +235,9 @@ export default function Teachers() {
         <TeacherFiltersBar
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
-          statusFilter={statusFilter}
+          statusFilter={statusFilter as 'all' | 'active' | 'inactive'}
           onStatusFilterChange={setStatusFilter}
-          viewMode={viewMode}
+          viewMode={viewMode as 'table' | 'card'}
           onViewModeChange={setViewMode}
           teacherCount={teachers?.length ?? 0}
         />
