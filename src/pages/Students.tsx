@@ -56,9 +56,23 @@ export default function Students() {
     });
   }, [students, dateFilter]);
 
+  // Payment filter (needs paymentStatsMap to determine payment status)
+  const paymentFiltered = useMemo(() => {
+    if (!paymentFilter) return dateFiltered;
+    return dateFiltered.filter(s => {
+      if (s.status !== 'Active') return paymentFilter === '' ; // non-active students have no payment status
+      const hasPending = paymentStatsMap?.[s.student_id] ?? false;
+      const wallet = s.wallet_balance || 0;
+      if (paymentFilter === 'Paid') return !hasPending && wallet > 0;
+      if (paymentFilter === 'Pending') return hasPending;
+      if (paymentFilter === 'Renewal') return !hasPending && wallet <= 0;
+      return true;
+    });
+  }, [dateFiltered, paymentFilter, paymentStatsMap]);
+
   // Sort
   const sorted = useMemo(() => {
-    const list = [...dateFiltered];
+    const list = [...paymentFiltered];
     switch (sortField) {
       case 'name': return list.sort((a, b) => a.name.localeCompare(b.name));
       case 'name-desc': return list.sort((a, b) => b.name.localeCompare(a.name));
@@ -68,7 +82,7 @@ export default function Students() {
       case 'newest':
       default: return list.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
     }
-  }, [dateFiltered, sortField]);
+  }, [paymentFiltered, sortField]);
 
   // Pagination
   const paginatedStudents = useMemo(() => {
