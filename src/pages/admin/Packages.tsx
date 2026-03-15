@@ -21,6 +21,7 @@ import { getFilterDateRange, type YearMonthFilterValue } from '@/components/shar
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { useSearchParamState, useSearchParamYearMonth } from '@/hooks/use-search-param-state';
 
 type StatusFilter = 'all' | 'Active' | 'Completed';
 
@@ -28,12 +29,12 @@ export default function Packages() {
   const queryClient = useQueryClient();
   const { data: packages, isLoading } = usePackages();
   const { data: teachers } = useTeachers();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filter, setFilter] = useState<YearMonthFilterValue>({ year: null, month: null });
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-  const [teacherFilter, setTeacherFilter] = useState('all');
-  const [paymentFilter, setPaymentFilter] = useState('all');
-  const [sortBy, setSortBy] = useState<PackageSortOption>('newest');
+  const [searchQuery, setSearchQuery] = useSearchParamState('q', '');
+  const [filter, setFilter] = useSearchParamYearMonth('df');
+  const [statusFilter, setStatusFilter] = useSearchParamState('status', 'all') as [string, (v: string) => void];
+  const [teacherFilter, setTeacherFilter] = useSearchParamState('teacher', 'all');
+  const [paymentFilter, setPaymentFilter] = useSearchParamState('payment', 'all');
+  const [sortBy, setSortBy] = useSearchParamState('sort', 'newest') as [string, (v: string) => void];
   const [editPackage, setEditPackage] = useState<Package | null>(null);
   const [summaryPkg, setSummaryPkg] = useState<string | null>(null);
 
@@ -181,7 +182,7 @@ export default function Packages() {
           teacherFilter={teacherFilter} onTeacherFilterChange={setTeacherFilter}
           paymentFilter={paymentFilter} onPaymentFilterChange={setPaymentFilter}
           teachers={teachers}
-          sortBy={sortBy} onSortChange={setSortBy}
+          sortBy={sortBy as PackageSortOption} onSortChange={setSortBy}
         />
 
         <PackageTableView

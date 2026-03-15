@@ -313,7 +313,7 @@ export default function StudentDetail() {
       <AdminLayout>
         <div className="text-center py-12">
           <p className="text-muted-foreground">Student not found</p>
-          <Button variant="outline" onClick={() => navigate('/admin/students')} className="mt-4">
+          <Button variant="outline" onClick={() => navigate(-1)} className="mt-4">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Students
           </Button>
@@ -327,7 +327,7 @@ export default function StudentDetail() {
       <div className="space-y-6 animate-fade-in">
         {/* Header */}
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/admin/students')}>
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
