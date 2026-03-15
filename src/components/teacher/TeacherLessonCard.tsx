@@ -142,7 +142,7 @@ export function TeacherLessonCard({ lesson, onLessonMarked, showDate, date }: Te
                   {lesson.student_name}
                 </span>
                 <Badge variant="outline" className={getWalletBadgeColor(lesson.wallet_balance)}>
-                  💰 {getWalletDisplayLabel(lesson.wallet_balance)}
+                  💰 {lesson.wallet_balance}
                 </Badge>
                 {lesson.program_name && (
                   <Badge variant="secondary" className="text-xs">{lesson.program_name}</Badge>
