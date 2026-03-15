@@ -33,6 +33,7 @@ export default function Students() {
   const [sortField, setSortField] = useSearchParamState('sort', 'newest');
   const [viewMode, setViewMode] = useSearchParamState('view', 'table') as [string, (v: string) => void];
   const [page, setPage] = useState(1);
+  const [paymentFilter, setPaymentFilter] = useSearchParamState('payment', '');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editStudent, setEditStudent] = useState<Student | null>(null);
   const [deleteStudent, setDeleteStudent] = useState<Student | null>(null);
