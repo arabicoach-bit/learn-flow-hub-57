@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { getWalletColor, getWalletDisplayLabel } from '@/lib/wallet-utils';
+import { getWalletColor } from '@/lib/wallet-utils';
 import { Clock, CheckCircle, XCircle, Pencil, Save, Loader2, Trash2 } from 'lucide-react';
 import { useMarkScheduledLesson } from '@/hooks/use-scheduled-lessons';
 import { UpdateLessonStatusDialog } from './UpdateLessonStatusDialog';
