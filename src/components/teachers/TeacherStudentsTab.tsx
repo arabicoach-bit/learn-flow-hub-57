@@ -18,7 +18,7 @@ import { YearMonthFilter, getFilterDateRange, type YearMonthFilterValue } from '
 import { EditStudentDialog } from '@/components/teacher/EditStudentDialog';
 import { Student, useUpdateStudent } from '@/hooks/use-students';
 import { usePrograms } from '@/hooks/use-programs';
-import { getWalletColor, getStatusDisplayLabel, getWalletDisplayLabel } from '@/lib/wallet-utils';
+import { getWalletColor, getStatusDisplayLabel } from '@/lib/wallet-utils';
 import { toast as sonnerToast } from 'sonner';
 
 interface TeacherStudentsTabProps {
