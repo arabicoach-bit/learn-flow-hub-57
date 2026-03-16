@@ -16,6 +16,8 @@ import { useScheduledLessons } from '@/hooks/use-scheduled-lessons';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { getWalletColor, getStatusDisplayLabel } from '@/lib/wallet-utils';
+import { WalletBadge } from '@/components/shared/WalletBadge';
+import { LessonsBadge } from '@/components/shared/LessonsBadge';
 import { StudentLessonsView } from '@/components/student/StudentLessonsView';
 import { StudentInfoView } from '@/components/student/StudentInfoView';
 import {
