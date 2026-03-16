@@ -60,19 +60,24 @@ export default function TeacherStudents() {
   const myStudents = students?.filter(s => s.teacher_id === teacherId) || [];
   const studentRange = getFilterDateRange(studentFilter);
 
-  // Lesson stats per student
+  // Lesson stats per student — active/current package only
   const lessonStatsMap = useMemo(() => {
     const map = new Map<string, { used: number; total: number }>();
     if (!allLessons) return map;
+    // Build set of current package IDs
+    const activePackageIds = new Set<string>();
+    myStudents.forEach(s => {
+      if (s.current_package_id) activePackageIds.add(s.current_package_id);
+    });
     allLessons.forEach(l => {
-      if (!l.student_id) return;
+      if (!l.student_id || !l.package_id || !activePackageIds.has(l.package_id)) return;
       if (!map.has(l.student_id)) map.set(l.student_id, { used: 0, total: 0 });
       const entry = map.get(l.student_id)!;
       entry.total++;
       if (l.status === 'completed' || l.status === 'absent') entry.used++;
     });
     return map;
-  }, [allLessons]);
+  }, [allLessons, myStudents]);
 
   // Next lesson per student
   const nextLessonMap = useMemo(() => {
@@ -103,11 +108,30 @@ export default function TeacherStudents() {
       return matchesSearch && matchesStatus && matchesDate;
     });
 
-    // Sort
+    // Default sort: Active (low credit first) → Stop → Left, then by name
+    const statusOrder = (s: string | null) => {
+      if (s === 'Active') return 0;
+      if (s === 'Temporary Stop') return 1;
+      if (s === 'Left') return 2;
+      return 3;
+    };
+
     results.sort((a, b) => {
+      // Primary: status group
+      const statusCmp = statusOrder(a.status) - statusOrder(b.status);
+      if (statusCmp !== 0) return statusCmp;
+
+      // Within Active: low credit (wallet ≤ 2) first
+      if (a.status === 'Active') {
+        const aLow = (a.wallet_balance || 0) <= 2 ? 0 : 1;
+        const bLow = (b.wallet_balance || 0) <= 2 ? 0 : 1;
+        if (aLow !== bLow) return aLow - bLow;
+      }
+
+      // Secondary: user-chosen sort
       let cmp = 0;
       if (sortField === 'name') cmp = a.name.localeCompare(b.name);
-      else if (sortField === 'status') cmp = (a.status || '').localeCompare(b.status || '');
+      else if (sortField === 'status') cmp = 0; // already sorted by status
       else if (sortField === 'wallet') cmp = (a.wallet_balance || 0) - (b.wallet_balance || 0);
       else if (sortField === 'nextLesson') {
         const na = nextLessonMap.get(a.student_id);
@@ -117,7 +141,10 @@ export default function TeacherStudents() {
         else if (!nb) cmp = -1;
         else cmp = na.date.localeCompare(nb.date) || na.time.localeCompare(nb.time);
       }
-      return sortDir === 'desc' ? -cmp : cmp;
+      if (cmp !== 0) return sortDir === 'desc' ? -cmp : cmp;
+
+      // Fallback: alphabetical
+      return a.name.localeCompare(b.name);
     });
 
     return results;
