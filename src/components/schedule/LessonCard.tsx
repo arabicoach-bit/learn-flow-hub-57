@@ -172,9 +172,7 @@ export function LessonCard({ lesson, onUpdated, showDate, readOnly, onDelete }: 
         {/* Student info */}
         <div className="flex items-center gap-3 mb-3">
           <span className="font-medium text-base">{studentName}</span>
-          <Badge className={`${getWalletColor(walletBalance)} text-xs gap-1`}>
-            💰 {walletBalance}
-          </Badge>
+          <WalletBadge balance={walletBalance} />
           {isBlocked && (
             <Badge variant="destructive" className="text-xs">LEFT</Badge>
           )}

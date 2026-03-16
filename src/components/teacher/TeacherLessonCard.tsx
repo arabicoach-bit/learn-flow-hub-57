@@ -137,9 +137,7 @@ export function TeacherLessonCard({ lesson, onLessonMarked, showDate, date }: Te
                 <span className={`font-semibold text-lg ${isBlocked ? 'text-muted-foreground' : ''}`}>
                   {lesson.student_name}
                 </span>
-                <Badge variant="outline" className={getWalletBadgeColor(lesson.wallet_balance)}>
-                  💰 {lesson.wallet_balance}
-                </Badge>
+                <WalletBadge balance={lesson.wallet_balance} />
                 {lesson.program_name && (
                   <Badge variant="secondary" className="text-xs">{lesson.program_name}</Badge>
                 )}
