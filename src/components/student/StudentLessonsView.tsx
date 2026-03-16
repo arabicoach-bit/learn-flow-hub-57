@@ -11,13 +11,13 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from '@/components/ui/alert-dialog';
 import { WeeklyScheduleCard } from '@/components/schedule/WeeklyScheduleCard';
-import { EditScheduleDialog } from '@/components/schedule/EditScheduleDialog';
+
 import { LessonCard } from '@/components/schedule/LessonCard';
 import type { LessonCardData } from '@/components/schedule/LessonCard';
 import { useDeleteScheduledLesson } from '@/hooks/use-scheduled-lessons';
 import { useStudentLessonStats } from '@/hooks/use-student-lesson-stats';
 import { toast } from 'sonner';
-import { Loader2, AlertTriangle, Pencil } from 'lucide-react';
+import { Loader2, AlertTriangle } from 'lucide-react';
 import { YearMonthFilter, getDefaultFilter, getFilterDateRange, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
 
 interface StudentLessonsViewProps {
@@ -32,7 +32,7 @@ export function StudentLessonsView({ studentId, studentName, walletBalance, role
   const [dateFilter, setDateFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [deleteLessonId, setDeleteLessonId] = useState<string | null>(null);
-  const [isEditScheduleOpen, setIsEditScheduleOpen] = useState(false);
+  
   const deleteLesson = useDeleteScheduledLesson();
   const queryClient = useQueryClient();
 
@@ -113,18 +113,7 @@ export function StudentLessonsView({ studentId, studentName, walletBalance, role
     <div className="space-y-6">
       {/* Weekly Schedule (admin only) */}
       {role === 'admin' && (
-        <div className="relative">
-          <WeeklyScheduleCard studentId={studentId} />
-          <Button
-            variant="outline"
-            size="sm"
-            className="absolute top-4 right-4 gap-2"
-            onClick={() => setIsEditScheduleOpen(true)}
-          >
-            <Pencil className="w-4 h-4" />
-            Edit Schedule
-          </Button>
-        </div>
+        <WeeklyScheduleCard studentId={studentId} />
       )}
 
       {/* Statistics */}
@@ -231,14 +220,6 @@ export function StudentLessonsView({ studentId, studentName, walletBalance, role
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Edit Schedule Dialog (admin only) */}
-      {role === 'admin' && (
-        <EditScheduleDialog
-          studentId={studentId}
-          open={isEditScheduleOpen}
-          onOpenChange={setIsEditScheduleOpen}
-        />
-      )}
     </div>
   );
 }
