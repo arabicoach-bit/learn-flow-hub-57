@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { invalidateAllTrialCaches } from '@/lib/trial-cache-utils';
 import type { Database } from '@/integrations/supabase/types';
 
 type TrialStatus = Database['public']['Enums']['trial_status'];
@@ -135,7 +136,6 @@ export function useCreateTrialStudent() {
 
   return useMutation({
     mutationFn: async (input: CreateTrialStudentInput) => {
-      // First get teacher rate if teacher is assigned
       let teacherPaymentAmount: number | null = null;
       let adminPaymentAmount: number | null = null;
       
@@ -147,7 +147,6 @@ export function useCreateTrialStudent() {
           .single();
         
         if (teacher?.rate_per_lesson) {
-          // 30 min = half hour, then split 50/50
           const halfHourRate = teacher.rate_per_lesson / 2;
           teacherPaymentAmount = halfHourRate * 0.5;
           adminPaymentAmount = halfHourRate * 0.5;
@@ -205,10 +204,7 @@ export function useCreateTrialStudent() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['trial-students'] });
-      queryClient.invalidateQueries({ queryKey: ['teacher-all-trial-lessons'] });
-      queryClient.invalidateQueries({ queryKey: ['teacher-todays-trial-lessons'] });
-      queryClient.invalidateQueries({ queryKey: ['teacher-pending-trial-lessons'] });
+      invalidateAllTrialCaches(queryClient);
     },
   });
 }
@@ -225,9 +221,9 @@ export function useUpdateTrialStudent() {
 
       if (error) throw error;
 
-      // Sync trial_lessons_log if teacher/date/time changed
+      // DB triggers now handle syncing status, teacher_id, date/time to trial_lessons_log
+      // We only need to handle the case where a trial_lessons_log entry doesn't exist yet
       if (data.teacher_id || data.trial_date || data.trial_time) {
-        // Get the current trial student data to have full context
         const { data: trialStudent } = await supabase
           .from('trial_students')
           .select('teacher_id, trial_date, trial_time, duration_minutes')
@@ -235,73 +231,48 @@ export function useUpdateTrialStudent() {
           .single();
 
         if (trialStudent?.teacher_id && trialStudent?.trial_date) {
-          // Check if a trial_lessons_log entry already exists
-          const { data: existingLog } = await supabase
+          // Check if ANY log exists
+          const { data: anyLog } = await supabase
             .from('trial_lessons_log')
             .select('trial_lesson_id')
             .eq('trial_student_id', trial_id)
-            .eq('status', 'scheduled')
             .maybeSingle();
 
-          if (existingLog) {
-            // Update existing entry
+          if (!anyLog) {
+            // Get teacher rate for payment calculation
+            let teacherPaymentAmount: number | null = null;
+            let adminPaymentAmount: number | null = null;
+            
+            const { data: teacher } = await supabase
+              .from('teachers')
+              .select('rate_per_lesson')
+              .eq('teacher_id', trialStudent.teacher_id)
+              .single();
+            
+            if (teacher?.rate_per_lesson) {
+              const halfHourRate = teacher.rate_per_lesson / 2;
+              teacherPaymentAmount = halfHourRate * 0.5;
+              adminPaymentAmount = halfHourRate * 0.5;
+            }
+
             await supabase
               .from('trial_lessons_log')
-              .update({
+              .insert({
+                trial_student_id: trial_id,
                 teacher_id: trialStudent.teacher_id,
                 lesson_date: trialStudent.trial_date,
                 lesson_time: trialStudent.trial_time,
-              })
-              .eq('trial_lesson_id', existingLog.trial_lesson_id);
-          } else {
-            // Check if ANY log exists (completed/cancelled) - don't create duplicate
-            const { data: anyLog } = await supabase
-              .from('trial_lessons_log')
-              .select('trial_lesson_id')
-              .eq('trial_student_id', trial_id)
-              .maybeSingle();
-
-            if (!anyLog) {
-              // Get teacher rate for payment calculation
-              let teacherPaymentAmount: number | null = null;
-              let adminPaymentAmount: number | null = null;
-              
-              const { data: teacher } = await supabase
-                .from('teachers')
-                .select('rate_per_lesson')
-                .eq('teacher_id', trialStudent.teacher_id)
-                .single();
-              
-              if (teacher?.rate_per_lesson) {
-                const halfHourRate = teacher.rate_per_lesson / 2;
-                teacherPaymentAmount = halfHourRate * 0.5;
-                adminPaymentAmount = halfHourRate * 0.5;
-              }
-
-              // Create new log entry
-              await supabase
-                .from('trial_lessons_log')
-                .insert({
-                  trial_student_id: trial_id,
-                  teacher_id: trialStudent.teacher_id,
-                  lesson_date: trialStudent.trial_date,
-                  lesson_time: trialStudent.trial_time,
-                  duration_minutes: 30,
-                  status: 'scheduled',
-                  teacher_payment_amount: teacherPaymentAmount,
-                  admin_payment_amount: adminPaymentAmount,
-                });
-            }
+                duration_minutes: 30,
+                status: 'scheduled',
+                teacher_payment_amount: teacherPaymentAmount,
+                admin_payment_amount: adminPaymentAmount,
+              });
           }
         }
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['trial-students'] });
-      queryClient.invalidateQueries({ queryKey: ['trial-student'] });
-      queryClient.invalidateQueries({ queryKey: ['teacher-all-trial-lessons'] });
-      queryClient.invalidateQueries({ queryKey: ['teacher-todays-trial-lessons'] });
-      queryClient.invalidateQueries({ queryKey: ['teacher-pending-trial-lessons'] });
+      invalidateAllTrialCaches(queryClient);
     },
   });
 }
@@ -311,7 +282,6 @@ export function useDeleteTrialStudent() {
 
   return useMutation({
     mutationFn: async (trialId: string) => {
-      // First delete associated trial_lessons_log entries
       await supabase
         .from('trial_lessons_log')
         .delete()
@@ -325,16 +295,7 @@ export function useDeleteTrialStudent() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['trial-students'] });
-      queryClient.invalidateQueries({ queryKey: ['teacher-all-trial-lessons'] });
-      queryClient.invalidateQueries({ queryKey: ['teacher-todays-trial-lessons'] });
-      queryClient.invalidateQueries({ queryKey: ['teacher-pending-trial-lessons'] });
-      queryClient.invalidateQueries({ queryKey: ['teacher-total-hours'] });
-      queryClient.invalidateQueries({ queryKey: ['teacher-live-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['teacher-monthly-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-teacher-performance'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-payroll-unified'] });
+      invalidateAllTrialCaches(queryClient);
     },
   });
 }
@@ -352,16 +313,7 @@ export function useDeleteTrialLesson() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['trial-students'] });
-      queryClient.invalidateQueries({ queryKey: ['teacher-all-trial-lessons'] });
-      queryClient.invalidateQueries({ queryKey: ['teacher-todays-trial-lessons'] });
-      queryClient.invalidateQueries({ queryKey: ['teacher-pending-trial-lessons'] });
-      queryClient.invalidateQueries({ queryKey: ['teacher-total-hours'] });
-      queryClient.invalidateQueries({ queryKey: ['teacher-live-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['teacher-monthly-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-teacher-performance'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-payroll-unified'] });
+      invalidateAllTrialCaches(queryClient);
     },
   });
 }

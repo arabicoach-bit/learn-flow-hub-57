@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { invalidateAllTrialCaches } from '@/lib/trial-cache-utils';
 import type { TrialLessonCalendarData } from './TrialLessonCalendarCard';
 
 interface UpdateTrialLessonDialogProps {
@@ -35,20 +36,6 @@ export function UpdateTrialLessonDialog({ lesson, open, onOpenChange, onSuccess 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
 
-  const invalidateAll = () => {
-    queryClient.invalidateQueries({ queryKey: ['teacher-trial-calendar'] });
-    queryClient.invalidateQueries({ queryKey: ['admin-teacher-trial-calendar'] });
-    queryClient.invalidateQueries({ queryKey: ['teacher-todays-trial-lessons'] });
-    queryClient.invalidateQueries({ queryKey: ['teacher-pending-trial-lessons'] });
-    queryClient.invalidateQueries({ queryKey: ['teacher-all-trial-lessons'] });
-    queryClient.invalidateQueries({ queryKey: ['admin-teacher-trial-lessons'] });
-    queryClient.invalidateQueries({ queryKey: ['teacher-monthly-stats'] });
-    queryClient.invalidateQueries({ queryKey: ['teacher-live-stats'] });
-    queryClient.invalidateQueries({ queryKey: ['trial-students'] });
-    queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
-    queryClient.invalidateQueries({ queryKey: ['admin-payroll-unified'] });
-  };
-
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
@@ -65,7 +52,7 @@ export function UpdateTrialLessonDialog({ lesson, open, onOpenChange, onSuccess 
       if (error) throw error;
 
       toast.success('Trial lesson updated successfully');
-      invalidateAll();
+      invalidateAllTrialCaches(queryClient);
       onOpenChange(false);
       onSuccess?.();
     } catch (error: any) {

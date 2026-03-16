@@ -6,6 +6,7 @@ import { Clock, CheckCircle, XCircle, Save, Loader2, Users, Pencil } from 'lucid
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { invalidateAllTrialCaches } from '@/lib/trial-cache-utils';
 import { UpdateTrialLessonDialog } from './UpdateTrialLessonDialog';
 
 export interface TrialLessonCalendarData {
@@ -71,20 +72,6 @@ export function TrialLessonCalendarCard({ lesson, onUpdated, readOnly }: TrialLe
 
   const isScheduled = lesson.status === 'scheduled';
 
-  const invalidateAll = () => {
-    queryClient.invalidateQueries({ queryKey: ['teacher-trial-calendar'] });
-    queryClient.invalidateQueries({ queryKey: ['admin-teacher-trial-calendar'] });
-    queryClient.invalidateQueries({ queryKey: ['teacher-todays-trial-lessons'] });
-    queryClient.invalidateQueries({ queryKey: ['teacher-pending-trial-lessons'] });
-    queryClient.invalidateQueries({ queryKey: ['teacher-all-trial-lessons'] });
-    queryClient.invalidateQueries({ queryKey: ['admin-teacher-trial-lessons'] });
-    queryClient.invalidateQueries({ queryKey: ['teacher-monthly-stats'] });
-    queryClient.invalidateQueries({ queryKey: ['teacher-live-stats'] });
-    queryClient.invalidateQueries({ queryKey: ['trial-students'] });
-    queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
-    queryClient.invalidateQueries({ queryKey: ['admin-payroll-unified'] });
-  };
-
   const handleMark = async (newStatus: 'completed' | 'absent') => {
     setIsUpdating(true);
     try {
@@ -94,7 +81,7 @@ export function TrialLessonCalendarCard({ lesson, onUpdated, readOnly }: TrialLe
         .eq('trial_lesson_id', lesson.trial_lesson_id);
       if (error) throw error;
       toast.success(`Trial lesson marked as ${newStatus}`);
-      invalidateAll();
+      invalidateAllTrialCaches(queryClient);
       onUpdated?.();
     } catch (error: any) {
       toast.error('Failed to update', { description: error.message });
@@ -112,7 +99,7 @@ export function TrialLessonCalendarCard({ lesson, onUpdated, readOnly }: TrialLe
         .eq('trial_lesson_id', lesson.trial_lesson_id);
       if (error) throw error;
       toast.success('Note saved');
-      invalidateAll();
+      invalidateAllTrialCaches(queryClient);
     } catch (error: any) {
       toast.error('Failed to save note', { description: error.message });
     } finally {

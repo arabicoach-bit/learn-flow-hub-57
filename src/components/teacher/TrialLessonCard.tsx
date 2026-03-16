@@ -9,6 +9,7 @@ import { Check, X, Clock, Loader2, Users, Save } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import { invalidateAllTrialCaches } from '@/lib/trial-cache-utils';
 import type { TeacherTrialLesson } from '@/hooks/use-teacher-trial-lessons';
 
 interface TrialLessonCardProps {
@@ -31,20 +32,6 @@ export function TrialLessonCard({ lesson, onLessonMarked }: TrialLessonCardProps
     return `${hour12}:${minutes} ${ampm}`;
   };
 
-  const invalidateAll = () => {
-    queryClient.invalidateQueries({ queryKey: ['teacher-todays-trial-lessons'] });
-    queryClient.invalidateQueries({ queryKey: ['teacher-pending-trial-lessons'] });
-    queryClient.invalidateQueries({ queryKey: ['teacher-all-trial-lessons'] });
-    queryClient.invalidateQueries({ queryKey: ['teacher-monthly-stats'] });
-    queryClient.invalidateQueries({ queryKey: ['teacher-live-stats'] });
-    queryClient.invalidateQueries({ queryKey: ['teacher-trial-calendar'] });
-    queryClient.invalidateQueries({ queryKey: ['admin-teacher-trial-calendar'] });
-    queryClient.invalidateQueries({ queryKey: ['admin-teacher-trial-lessons'] });
-    queryClient.invalidateQueries({ queryKey: ['trial-students'] });
-    queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
-    queryClient.invalidateQueries({ queryKey: ['admin-payroll-unified'] });
-  };
-
   const handleStatusChange = async (newStatus: string) => {
     setIsUpdatingStatus(true);
     try {
@@ -57,7 +44,7 @@ export function TrialLessonCard({ lesson, onLessonMarked }: TrialLessonCardProps
 
       const label = newStatus === 'completed' ? 'Completed' : newStatus === 'absent' ? 'Absent' : 'Scheduled';
       toast.success(`Trial lesson marked as ${label}`);
-      invalidateAll();
+      invalidateAllTrialCaches(queryClient);
       onLessonMarked?.();
     } catch (error: any) {
       toast.error('Failed to update trial lesson', { description: error.message });
@@ -76,7 +63,7 @@ export function TrialLessonCard({ lesson, onLessonMarked }: TrialLessonCardProps
 
       if (error) throw error;
       toast.success('Note saved');
-      invalidateAll();
+      invalidateAllTrialCaches(queryClient);
     } catch (error: any) {
       toast.error('Failed to save note', { description: error.message });
     } finally {
