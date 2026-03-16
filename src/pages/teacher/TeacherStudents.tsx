@@ -304,15 +304,14 @@ export default function TeacherStudents() {
                     {filteredStudents.map(student => {
                       const programName = getProgramName(student.program_id);
                       const wallet = student.wallet_balance || 0;
-                      const isOverdue = student.status === 'Active' && wallet <= 0;
-                      const lowCredit = wallet > 0 && wallet <= 2;
+                      const isLowCredit = student.status === 'Active' && wallet <= 2;
                       const next = nextLessonMap.get(student.student_id);
                       const lessonStats = lessonStatsMap.get(student.student_id);
 
                       return (
                         <TableRow
                           key={student.student_id}
-                          className={`cursor-pointer hover:bg-muted/30 ${isOverdue ? 'bg-destructive/5' : ''}`}
+                          className={`cursor-pointer hover:bg-muted/30 ${isLowCredit ? 'bg-amber-500/5' : ''}`}
                           onClick={() => toggleStudent(student.student_id)}
                         >
                           <TableCell>
@@ -323,8 +322,7 @@ export default function TeacherStudents() {
                               <div>
                                 <div className="flex items-center gap-1.5">
                                   <span className="font-medium">{student.name}</span>
-                                  {isOverdue && <AlertTriangle className="w-3.5 h-3.5 text-destructive" />}
-                                  {lowCredit && !isOverdue && <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />}
+                                  {isLowCredit && <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />}
                                 </div>
                                 {student.parent_guardian_name && (
                                   <p className="text-xs text-muted-foreground">{student.parent_guardian_name}</p>
