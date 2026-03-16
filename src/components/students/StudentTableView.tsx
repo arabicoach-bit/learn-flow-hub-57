@@ -26,6 +26,13 @@ interface StudentTableViewProps {
   onPageChange: (page: number) => void;
 }
 
+function getRowHighlight(student: Student) {
+  if (student.status === 'Left') return 'bg-red-500/5 hover:bg-red-500/10';
+  if (student.status === 'Temporary Stop') return 'bg-amber-500/5 hover:bg-amber-500/10';
+  if (student.status === 'Active' && (student.wallet_balance || 0) <= 2) return 'bg-orange-500/5 hover:bg-orange-500/10';
+  return 'hover:bg-muted/50';
+}
+
 export function StudentTableView({
   students, batchStats, isLoading, onEdit, onDelete,
   page, pageSize, totalCount, onPageChange,
@@ -41,16 +48,30 @@ export function StudentTableView({
         <table className="data-table">
           <thead>
             <tr>
-              <th className="w-8"></th>
+              <th className="w-7 px-2"></th>
               <th>Student</th>
               <th>Teacher</th>
-              <th>Status</th>
-              <th>Wallet</th>
-              <th>Lessons</th>
-              <th>Next Lesson</th>
-              <th>Packages</th>
-              <th>Payment</th>
-              <th className="text-right">Actions</th>
+              {/* Status group */}
+              <th className="border-l border-border/50">
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Status</span>
+              </th>
+              <th>
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Wallet</span>
+              </th>
+              <th>
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Lessons</span>
+              </th>
+              <th className="border-r border-border/50">
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Next Lesson</span>
+              </th>
+              {/* Package group */}
+              <th className="border-l border-border/50">
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Packages</span>
+              </th>
+              <th className="border-r border-border/50">
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Payment</span>
+              </th>
+              <th className="text-right w-[90px]">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -65,110 +86,111 @@ export function StudentTableView({
                 const wallet = student.wallet_balance || 0;
                 const stats = batchStats[student.student_id];
                 const paymentStatus = getPaymentStatus(student.status, wallet, stats?.hasAnyPendingPackage ?? false);
-                
-                const isLowCredit = student.status === 'Active' && wallet <= 2;
 
                 return (
-                      <tr
-                        key={student.student_id}
-                        className={`cursor-pointer hover:bg-muted/50 transition-colors ${isLowCredit ? 'bg-amber-500/5' : ''}`}
-                        onClick={() => navigate(`/admin/students/${student.student_id}`)}
+                  <tr
+                    key={student.student_id}
+                    className={`cursor-pointer transition-colors ${getRowHighlight(student)}`}
+                    onClick={() => navigate(`/admin/students/${student.student_id}`)}
+                  >
+                    <td className="w-7 px-2 py-2">
+                      <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+                    </td>
+                    <td className="py-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                          <span className="text-xs font-semibold text-primary">{student.name.charAt(0)}</span>
+                        </div>
+                        <span className="font-medium text-sm truncate">{student.name}</span>
+                      </div>
+                    </td>
+                    <td className="py-2">
+                      <span className="text-sm text-muted-foreground">{student.teachers?.name || '—'}</span>
+                    </td>
+
+                    {/* Status group */}
+                    <td className="py-2 border-l border-border/30" onClick={e => e.stopPropagation()}>
+                      <Select
+                        value={student.status}
+                        onValueChange={(value: 'Active' | 'Temporary Stop' | 'Left') => {
+                          updateStudent.mutate(
+                            { studentId: student.student_id, status: value },
+                            {
+                              onSuccess: () => toast({ title: `Status updated to ${getStatusDisplayLabel(value)}` }),
+                              onError: () => toast({ title: 'Failed to update status', variant: 'destructive' }),
+                            }
+                          );
+                        }}
                       >
-                        <td className="w-8 pr-0">
-                          <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                        </td>
-                        <td>
-                          <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                              <span className="text-xs font-semibold text-primary">{student.name.charAt(0)}</span>
-                            </div>
-                            <div className="min-w-0">
-                              <span className="font-medium text-sm truncate block">{student.name}</span>
-                            </div>
-                          </div>
-                        </td>
-                        <td>
-                          <span className="text-sm text-muted-foreground">{student.teachers?.name || '—'}</span>
-                        </td>
-                        <td onClick={e => e.stopPropagation()}>
-                          <Select
-                            value={student.status}
-                            onValueChange={(value: 'Active' | 'Temporary Stop' | 'Left') => {
-                              updateStudent.mutate(
-                                { studentId: student.student_id, status: value },
-                                {
-                                  onSuccess: () => toast({ title: `Status updated to ${getStatusDisplayLabel(value)}` }),
-                                  onError: () => toast({ title: 'Failed to update status', variant: 'destructive' }),
-                                }
-                              );
-                            }}
-                          >
-                            <SelectTrigger className="w-[100px] h-7 text-xs border-0 bg-transparent px-1">
-                              <Badge variant="outline" className={`${getStatusBadgeClass(student.status)} border-0 text-[11px]`}>
-                                {getStatusDisplayLabel(student.status)}
-                              </Badge>
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Active">
-                                <Badge variant="outline" className={getStatusBadgeClass('Active')}>Active</Badge>
-                              </SelectItem>
-                              <SelectItem value="Temporary Stop">
-                                <Badge variant="outline" className={getStatusBadgeClass('Temporary Stop')}>Stop</Badge>
-                              </SelectItem>
-                              <SelectItem value="Left">
-                                <Badge variant="outline" className={getStatusBadgeClass('Left')}>Left</Badge>
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </td>
-                        <td>
-                          <WalletBadge balance={wallet} />
-                        </td>
-                        <td onClick={e => e.stopPropagation()}>
-                          {stats ? (
-                            <LessonsBadge used={stats.lessonsUsed} total={stats.lessonsTotal} />
-                          ) : <span className="text-muted-foreground text-xs">—</span>}
-                        </td>
-                        <td onClick={e => e.stopPropagation()}>
-                          <span className="text-xs text-muted-foreground">
-                            {stats?.nextLessonDate
-                              ? format(new Date(`${stats.nextLessonDate}T${stats.nextLessonTime || '00:00'}`), 'dd MMM · HH:mm')
-                              : '—'}
-                          </span>
-                        </td>
-                        <td onClick={e => e.stopPropagation()}>
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-xs font-medium">{stats?.inProgressPackages ?? '—'}</span>
-                            <span className="text-muted-foreground text-[10px]">/</span>
-                            <span className="text-xs text-muted-foreground">{stats?.finishedPackages ?? '—'}</span>
-                          </div>
-                        </td>
-                        <td onClick={e => e.stopPropagation()}>
-                          {paymentStatus ? (
-                            <Badge variant="outline" className={`${getPaymentStatusBadgeClass(paymentStatus)} text-[11px]`}>
-                              {paymentStatus}
-                            </Badge>
-                          ) : (
-                            <span className="text-muted-foreground text-xs">—</span>
-                          )}
-                        </td>
-                        <td className="text-right" onClick={e => e.stopPropagation()}>
-                          <div className="flex gap-0.5 justify-end">
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
-                              const phone = student.phone?.replace(/[^0-9]/g, '');
-                              if (phone) window.open(`https://wa.me/${phone}`, '_blank');
-                            }}>
-                              <MessageCircle className="h-3.5 w-3.5 text-emerald-600" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(student)}>
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => onDelete(student)}>
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
+                        <SelectTrigger className="w-[95px] h-6 text-xs border-0 bg-transparent px-0.5 focus:ring-0">
+                          <Badge variant="outline" className={`${getStatusBadgeClass(student.status)} border-0 text-[11px] px-1.5 py-0`}>
+                            {getStatusDisplayLabel(student.status)}
+                          </Badge>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Active">
+                            <Badge variant="outline" className={getStatusBadgeClass('Active')}>Active</Badge>
+                          </SelectItem>
+                          <SelectItem value="Temporary Stop">
+                            <Badge variant="outline" className={getStatusBadgeClass('Temporary Stop')}>Stop</Badge>
+                          </SelectItem>
+                          <SelectItem value="Left">
+                            <Badge variant="outline" className={getStatusBadgeClass('Left')}>Left</Badge>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </td>
+                    <td className="py-2">
+                      <WalletBadge balance={wallet} />
+                    </td>
+                    <td className="py-2" onClick={e => e.stopPropagation()}>
+                      {stats ? (
+                        <LessonsBadge used={stats.lessonsUsed} total={stats.lessonsTotal} />
+                      ) : <span className="text-muted-foreground text-xs">—</span>}
+                    </td>
+                    <td className="py-2 border-r border-border/30" onClick={e => e.stopPropagation()}>
+                      <span className="text-xs text-muted-foreground">
+                        {stats?.nextLessonDate
+                          ? format(new Date(`${stats.nextLessonDate}T${stats.nextLessonTime || '00:00'}`), 'dd MMM · HH:mm')
+                          : '—'}
+                      </span>
+                    </td>
+
+                    {/* Package group */}
+                    <td className="py-2 border-l border-border/30" onClick={e => e.stopPropagation()}>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-medium">{stats?.inProgressPackages ?? '—'}</span>
+                        <span className="text-muted-foreground text-[10px]">/</span>
+                        <span className="text-xs text-muted-foreground">{stats?.finishedPackages ?? '—'}</span>
+                      </div>
+                    </td>
+                    <td className="py-2 border-r border-border/30" onClick={e => e.stopPropagation()}>
+                      {paymentStatus ? (
+                        <Badge variant="outline" className={`${getPaymentStatusBadgeClass(paymentStatus)} text-[11px] px-1.5 py-0`}>
+                          {paymentStatus}
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">—</span>
+                      )}
+                    </td>
+
+                    <td className="text-right py-2" onClick={e => e.stopPropagation()}>
+                      <div className="flex gap-0.5 justify-end">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
+                          const phone = student.phone?.replace(/[^0-9]/g, '');
+                          if (phone) window.open(`https://wa.me/${phone}`, '_blank');
+                        }}>
+                          <MessageCircle className="h-3.5 w-3.5 text-emerald-600" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(student)}>
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => onDelete(student)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
                 );
               })
             )}

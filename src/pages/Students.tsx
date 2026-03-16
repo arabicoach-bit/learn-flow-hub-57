@@ -6,16 +6,18 @@ import { useTeachers } from '@/hooks/use-teachers';
 import { usePrograms } from '@/hooks/use-programs';
 import { useStudentsBatchStats, useStudentsPaymentStats } from '@/hooks/use-students-batch-stats';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { exportStudents, type StudentExport } from '@/lib/excel-export';
 import { EditStudentDialog } from '@/components/teacher/EditStudentDialog';
 import { getFilterDateRange, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
-import { StudentStatsCards } from '@/components/students/StudentStatsCards';
+import { StudentStatsBar } from '@/components/students/StudentStatsBar';
 import { StudentFiltersBar } from '@/components/students/StudentFiltersBar';
 import { StudentTableView } from '@/components/students/StudentTableView';
 import { StudentCardView } from '@/components/students/StudentCardView';
@@ -24,6 +26,8 @@ import type { Student } from '@/hooks/use-students';
 
 const STUDENT_LEVELS = ['Beginner', 'Elementary', 'Intermediate', 'Upper Intermediate', 'Advanced'];
 const PAGE_SIZE = 20;
+
+type TabValue = 'all' | 'active' | 'stop' | 'left' | 'paid' | 'pending';
 
 export default function Students() {
   const [search, setSearch] = useSearchParamState('q', '');
@@ -37,6 +41,7 @@ export default function Students() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editStudent, setEditStudent] = useState<Student | null>(null);
   const [deleteStudent, setDeleteStudent] = useState<Student | null>(null);
+  const [activeTab, setActiveTab] = useState<TabValue>('all');
   const { toast } = useToast();
 
   const { data: students, isLoading } = useStudents({ search, status: statusFilter || undefined, teacher_id: teacherFilter || undefined });
@@ -56,7 +61,7 @@ export default function Students() {
     });
   }, [students, dateFilter]);
 
-  // Payment stats for all filtered students (needed for payment filter + stats)
+  // Payment stats
   const allFilteredIds = useMemo(() => dateFiltered.map(s => s.student_id), [dateFiltered]);
   const { data: paymentStatsMap } = useStudentsPaymentStats(allFilteredIds);
 
@@ -64,7 +69,7 @@ export default function Students() {
   const paymentFiltered = useMemo(() => {
     if (!paymentFilter) return dateFiltered;
     return dateFiltered.filter(s => {
-      if (s.status !== 'Active') return false; // non-active students have no payment status
+      if (s.status !== 'Active') return false;
       const hasPending = paymentStatsMap?.[s.student_id] ?? false;
       const wallet = s.wallet_balance || 0;
       if (paymentFilter === 'Paid') return !hasPending && wallet > 0;
@@ -88,23 +93,40 @@ export default function Students() {
     }
   }, [paymentFiltered, sortField]);
 
+  // Tab-filtered
+  const tabFiltered = useMemo(() => {
+    if (activeTab === 'all') return sorted;
+    if (activeTab === 'active') return sorted.filter(s => s.status === 'Active');
+    if (activeTab === 'stop') return sorted.filter(s => s.status === 'Temporary Stop');
+    if (activeTab === 'left') return sorted.filter(s => s.status === 'Left');
+    if (activeTab === 'paid') return sorted.filter(s => {
+      if (s.status !== 'Active') return false;
+      const hasPending = paymentStatsMap?.[s.student_id] ?? false;
+      return !hasPending && (s.wallet_balance || 0) > 0;
+    });
+    if (activeTab === 'pending') return sorted.filter(s => {
+      if (s.status !== 'Active') return false;
+      return paymentStatsMap?.[s.student_id] ?? false;
+    });
+    return sorted;
+  }, [sorted, activeTab, paymentStatsMap]);
+
   // Pagination
   const paginatedStudents = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE;
-    return sorted.slice(start, start + PAGE_SIZE);
-  }, [sorted, page]);
+    return tabFiltered.slice(start, start + PAGE_SIZE);
+  }, [tabFiltered, page]);
 
   // Batch stats for visible students
   const visibleIds = useMemo(() => paginatedStudents.map(s => s.student_id), [paginatedStudents]);
   const { data: batchStats } = useStudentsBatchStats(visibleIds);
 
-  // Stats
+  // Stats from dateFiltered (base, not tab-filtered)
   const totalStudents = dateFiltered.length;
   const activeCount = dateFiltered.filter(s => s.status === 'Active').length;
   const tempStopCount = dateFiltered.filter(s => s.status === 'Temporary Stop').length;
   const leftCount = dateFiltered.filter(s => s.status === 'Left').length;
 
-  // Payment status counts
   const { paidCount, pendingCount, needsRenewalCount } = useMemo(() => {
     let paid = 0, pending = 0, needsRenewal = 0;
     dateFiltered.forEach(s => {
@@ -118,8 +140,17 @@ export default function Students() {
     return { paidCount: paid, pendingCount: pending, needsRenewalCount: needsRenewal };
   }, [dateFiltered, paymentStatsMap]);
 
-  // Reset page when filters change
+  const tabCounts = {
+    all: sorted.length,
+    active: sorted.filter(s => s.status === 'Active').length,
+    stop: sorted.filter(s => s.status === 'Temporary Stop').length,
+    left: sorted.filter(s => s.status === 'Left').length,
+    paid: paidCount,
+    pending: pendingCount,
+  };
+
   const handleFilterChange = (setter: (v: any) => void) => (v: any) => { setter(v); setPage(1); };
+  const handleTabChange = (v: string) => { setActiveTab(v as TabValue); setPage(1); };
 
   // Form
   const [formData, setFormData] = useState({
@@ -162,17 +193,53 @@ export default function Students() {
     }
   };
 
+  const renderContent = () => {
+    if (viewMode === 'table') {
+      return (
+        <StudentTableView
+          students={paginatedStudents}
+          batchStats={batchStats || {}}
+          isLoading={isLoading}
+          onEdit={setEditStudent}
+          onDelete={setDeleteStudent}
+          page={page}
+          pageSize={PAGE_SIZE}
+          totalCount={tabFiltered.length}
+          onPageChange={setPage}
+        />
+      );
+    }
+    return (
+      <>
+        <StudentCardView
+          students={paginatedStudents}
+          batchStats={batchStats || {}}
+          onEdit={setEditStudent}
+          onDelete={setDeleteStudent}
+        />
+        {Math.ceil(tabFiltered.length / PAGE_SIZE) > 1 && (
+          <div className="flex items-center justify-between pt-2">
+            <p className="text-sm text-muted-foreground">
+              Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, tabFiltered.length)} of {tabFiltered.length}
+            </p>
+            <div className="flex gap-1">
+              <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>Previous</Button>
+              <Button variant="outline" size="sm" disabled={page >= Math.ceil(tabFiltered.length / PAGE_SIZE)} onClick={() => setPage(p => p + 1)}>Next</Button>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  };
+
   return (
     <AdminLayout>
-      <div className="space-y-6 animate-fade-in">
+      <div className="space-y-4 animate-fade-in">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-display font-bold">OAC Students</h1>
-            <p className="text-muted-foreground">Manage your academy students</p>
-          </div>
+          <h1 className="text-3xl font-display font-bold">OAC Students</h1>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => {
+            <Button variant="outline" size="sm" onClick={() => {
               if (!dateFiltered.length) { toast({ title: 'No data to export', variant: 'destructive' }); return; }
               const exportData: StudentExport[] = dateFiltered.map(s => ({
                 name: s.name, phone: s.phone, parent_phone: s.parent_phone,
@@ -186,11 +253,11 @@ export default function Students() {
               exportStudents(exportData);
               toast({ title: 'Exported successfully!' });
             }}>
-              <Download className="w-4 h-4 mr-2" /> Export Excel
+              <Download className="w-4 h-4 mr-1.5" /> Export
             </Button>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="gap-2"><Plus className="w-4 h-4" /> Add Student</Button>
+                <Button size="sm" className="gap-1.5"><Plus className="w-4 h-4" /> Add Student</Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
                 <DialogHeader><DialogTitle>Add New Student</DialogTitle></DialogHeader>
@@ -243,8 +310,10 @@ export default function Students() {
           </div>
         </div>
 
-        <StudentStatsCards total={totalStudents} active={activeCount} paid={paidCount} pending={pendingCount} renewal={needsRenewalCount} stop={tempStopCount} left={leftCount} />
+        {/* Compact Stats */}
+        <StudentStatsBar total={totalStudents} active={activeCount} paid={paidCount} pending={pendingCount} renewal={needsRenewalCount} stop={tempStopCount} left={leftCount} />
 
+        {/* Filters */}
         <StudentFiltersBar
           search={search} onSearchChange={handleFilterChange(setSearch)}
           teacherFilter={teacherFilter} onTeacherFilterChange={handleFilterChange(setTeacherFilter)}
@@ -255,39 +324,33 @@ export default function Students() {
           sortField={sortField} onSortFieldChange={setSortField}
         />
 
-        {viewMode === 'table' ? (
-          <StudentTableView
-            students={paginatedStudents}
-            batchStats={batchStats || {}}
-            isLoading={isLoading}
-            onEdit={setEditStudent}
-            onDelete={setDeleteStudent}
-            page={page}
-            pageSize={PAGE_SIZE}
-            totalCount={sorted.length}
-            onPageChange={setPage}
-          />
-        ) : (
-          <StudentCardView
-            students={paginatedStudents}
-            batchStats={batchStats || {}}
-            onEdit={setEditStudent}
-            onDelete={setDeleteStudent}
-          />
-        )}
+        {/* Tabs + Content */}
+        <Tabs value={activeTab} onValueChange={handleTabChange}>
+          <TabsList className="bg-muted/50 h-9">
+            <TabsTrigger value="all" className="text-xs h-7 px-3">
+              All <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4">{tabCounts.all}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="active" className="text-xs h-7 px-3">
+              Active <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-emerald-500/20 text-emerald-500">{tabCounts.active}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="paid" className="text-xs h-7 px-3">
+              Paid <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-emerald-500/20 text-emerald-500">{tabCounts.paid}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="pending" className="text-xs h-7 px-3">
+              Pending <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-amber-500/20 text-amber-500">{tabCounts.pending}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="stop" className="text-xs h-7 px-3">
+              Stop <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-amber-500/20 text-amber-500">{tabCounts.stop}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="left" className="text-xs h-7 px-3">
+              Left <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-red-500/20 text-red-500">{tabCounts.left}</Badge>
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Pagination for cards view */}
-        {viewMode === 'cards' && Math.ceil(sorted.length / PAGE_SIZE) > 1 && (
-          <div className="flex items-center justify-between pt-2">
-            <p className="text-sm text-muted-foreground">
-              Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, sorted.length)} of {sorted.length}
-            </p>
-            <div className="flex gap-1">
-              <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>Previous</Button>
-              <Button variant="outline" size="sm" disabled={page >= Math.ceil(sorted.length / PAGE_SIZE)} onClick={() => setPage(p => p + 1)}>Next</Button>
-            </div>
-          </div>
-        )}
+          <TabsContent value={activeTab} className="mt-3">
+            {renderContent()}
+          </TabsContent>
+        </Tabs>
       </div>
 
       <EditStudentDialog student={editStudent} open={!!editStudent} onOpenChange={(open) => { if (!open) setEditStudent(null); }} />
