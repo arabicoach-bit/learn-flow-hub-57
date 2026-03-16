@@ -124,24 +124,20 @@ export default function TeacherStudents() {
     staleTime: 60_000,
   });
 
-  // Lesson stats per student — active/current package only
+  // Lesson stats per student — active package only (using queried active packages)
   const lessonStatsMap = useMemo(() => {
     const map = new Map<string, { used: number; total: number }>();
     if (!allLessons) return map;
-    // Build set of current package IDs
-    const activePackageIds = new Set<string>();
-    myStudents.forEach(s => {
-      if (s.current_package_id) activePackageIds.add(s.current_package_id);
-    });
+    const activePkgIds = new Set(activePackageIds);
     allLessons.forEach(l => {
-      if (!l.student_id || !l.package_id || !activePackageIds.has(l.package_id)) return;
+      if (!l.student_id || !l.package_id || !activePkgIds.has(l.package_id)) return;
       if (!map.has(l.student_id)) map.set(l.student_id, { used: 0, total: 0 });
       const entry = map.get(l.student_id)!;
       entry.total++;
       if (l.status === 'completed' || l.status === 'absent') entry.used++;
     });
     return map;
-  }, [allLessons, myStudents]);
+  }, [allLessons, activePackageIds]);
 
   // Next lesson per student
   const nextLessonMap = useMemo(() => {
