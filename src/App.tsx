@@ -79,7 +79,7 @@ const AppRoutes = () => (
     <Route path="/admin/trial-students" element={<ProtectedRoute allowedRoles={['admin']}><TrialStudents /></ProtectedRoute>} />
     <Route path="/admin/leads" element={<ProtectedRoute allowedRoles={['admin']}><Leads /></ProtectedRoute>} />
     <Route path="/admin/packages" element={<ProtectedRoute allowedRoles={['admin']}><Packages /></ProtectedRoute>} />
-    <Route path="/admin/payroll" element={<ProtectedRoute allowedRoles={['admin']}><AdminPayroll /></ProtectedRoute>} />
+    <Route path="/admin/payroll" element={<Navigate to="/admin/teachers?tab=payroll" replace />} />
     <Route path="/admin/quarter-analysis" element={<ProtectedRoute allowedRoles={['admin']}><QuarterAnalysis /></ProtectedRoute>} />
     
     {/* Teacher routes */}
