@@ -68,7 +68,8 @@ export function useScheduledLessons(filters?: {
         .from('scheduled_lessons')
         .select('*, students(name, phone, status, wallet_balance), teachers(name)')
         .order('scheduled_date', { ascending: true })
-        .order('scheduled_time', { ascending: true });
+        .order('scheduled_time', { ascending: true })
+        .limit(5000);
 
       if (filters?.student_id) query = query.eq('student_id', filters.student_id);
       if (filters?.teacher_id) query = query.eq('teacher_id', filters.teacher_id);
