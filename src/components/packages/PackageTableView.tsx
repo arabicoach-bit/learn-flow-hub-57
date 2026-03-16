@@ -1,13 +1,10 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { Card, CardContent } from '@/components/ui/card';
-import { CheckCircle, Pencil, FileText, Info, ChevronRight, Calendar, Clock, CreditCard } from 'lucide-react';
+import { CheckCircle, Pencil, FileText, Info } from 'lucide-react';
 import { formatCurrency } from '@/lib/wallet-utils';
 import { WalletBadge } from '@/components/shared/WalletBadge';
 import { LessonsBadge } from '@/components/shared/LessonsBadge';
