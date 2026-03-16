@@ -125,8 +125,8 @@ export function TeacherStudentsTab({ students, teacherId }: TeacherStudentsTabPr
       
       // Build reverse map: package_id → student_id using active packages
       const pkgToStudent = new Map<string, string>();
-      studentActivePackageMap.forEach((pkgId, studentId) => {
-        pkgToStudent.set(pkgId, studentId);
+      studentActivePackageMap.forEach((val, studentId) => {
+        pkgToStudent.set(val.packageId, studentId);
       });
       
       const result = new Map<string, { day: number; time: string }[]>();
@@ -142,20 +142,23 @@ export function TeacherStudentsTab({ students, teacherId }: TeacherStudentsTabPr
     staleTime: 60_000,
   });
 
-  // Lesson stats per student (active package only — using queried active packages, not stale current_package_id)
+  // Lesson stats per student — uses lessons_purchased for total (accurate), counts used from lesson rows
   const lessonStatsMap = useMemo(() => {
     const map = new Map<string, { used: number; total: number }>();
+    // Initialize with lessons_purchased from packages
+    studentActivePackageMap.forEach((val, studentId) => {
+      map.set(studentId, { used: 0, total: val.lessonsPurchased });
+    });
     if (!allLessons) return map;
     const activePkgIds = new Set(activePackageIds);
     allLessons.forEach(l => {
       if (!l.student_id || !l.package_id || !activePkgIds.has(l.package_id)) return;
       if (!map.has(l.student_id)) map.set(l.student_id, { used: 0, total: 0 });
       const entry = map.get(l.student_id)!;
-      entry.total++;
       if (l.status === 'completed' || l.status === 'absent') entry.used++;
     });
     return map;
-  }, [allLessons, activePackageIds]);
+  }, [allLessons, activePackageIds, studentActivePackageMap]);
 
   // Next lesson per student
   const nextLessonMap = useMemo(() => {
