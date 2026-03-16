@@ -2,18 +2,17 @@ import { useState, useMemo } from 'react';
 import { UserPlus, Mail, Key, Edit, Trash2, Download } from 'lucide-react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useTeachers, useUpdateTeacher, Teacher } from '@/hooks/use-teachers';
-import { useTeachersBatchStats } from '@/hooks/use-teachers-batch-stats';
-import { TeacherStatsCards } from '@/components/teachers/TeacherStatsCards';
 import { TeacherFiltersBar } from '@/components/teachers/TeacherFiltersBar';
-import { TeacherTableView } from '@/components/teachers/TeacherTableView';
+import { UnifiedTeacherStats } from '@/components/teachers/UnifiedTeacherStats';
+import { UnifiedTeacherTable } from '@/components/teachers/UnifiedTeacherTable';
 import { TeacherCardView } from '@/components/teachers/TeacherCardView';
+import { useTeachersBatchStats } from '@/hooks/use-teachers-batch-stats';
 
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useSearchParamState } from '@/hooks/use-search-param-state';
@@ -22,8 +21,7 @@ import { format } from 'date-fns';
 import { toast as sonnerToast } from 'sonner';
 import { YearMonthFilter, getDefaultFilter, getFilterDateRange, getFilterLabel, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
 import { fetchAllTeachersTotalHours, type TeacherTotalHoursResult } from '@/hooks/use-teacher-total-hours';
-import { PayrollStatsCards } from '@/components/payroll/PayrollStatsCards';
-import { PayrollTableView, type PayrollTeacher } from '@/components/payroll/PayrollTableView';
+import { type PayrollTeacher } from '@/components/payroll/PayrollTableView';
 
 export default function Teachers() {
   const { toast } = useToast();
@@ -31,8 +29,7 @@ export default function Teachers() {
   const { data: teachers, isLoading, refetch } = useTeachers();
   const updateTeacher = useUpdateTeacher();
 
-  // Tab & view mode
-  const [activeTab, setActiveTab] = useSearchParamState('tab', 'teachers') as [string, (v: string) => void];
+  // View mode
   const [viewMode, setViewMode] = useSearchParamState('view', 'table') as [string, (v: string) => void];
 
   // Dialog states
@@ -52,7 +49,7 @@ export default function Teachers() {
   const [editFormData, setEditFormData] = useState({ name: '', phone: '', rate_per_lesson: '' });
   const [tempPasswordInfo, setTempPasswordInfo] = useState<{ email: string; password: string } | null>(null);
 
-  // Batch stats
+  // Batch stats (for card view)
   const teacherIds = useMemo(() => (teachers || []).map((t) => t.teacher_id), [teachers]);
   const { data: batchStats } = useTeachersBatchStats(teacherIds);
 
@@ -71,7 +68,7 @@ export default function Teachers() {
     });
   }, [teachers, searchQuery, statusFilter]);
 
-  // ── Payroll State ─────────────────────────────────────────────────────
+  // ── Payroll ───────────────────────────────────────────────────────────
   const [payrollFilter, setPayrollFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
   const [editingBonus, setEditingBonus] = useState<string | null>(null);
   const [bonusValue, setBonusValue] = useState('');
@@ -88,7 +85,7 @@ export default function Teachers() {
     refetchInterval: 10000,
     queryFn: async () => {
       const ids = (teachers || []).map((t) => t.teacher_id);
-      if (ids.length === 0) return [];
+      if (ids.length === 0) return [] as PayrollTeacher[];
 
       const [hoursByTeacher, studentsRes, bonusesRes] = await Promise.all([
         fetchAllTeachersTotalHours(ids, startDate, endDate),
@@ -99,7 +96,7 @@ export default function Teachers() {
       const students = studentsRes.data || [];
       const bonuses = bonusesRes.data || [];
 
-      const payroll: PayrollTeacher[] = (teachers || []).map((teacher) => {
+      return (teachers || []).map((teacher): PayrollTeacher => {
         const hrs = hoursByTeacher[teacher.teacher_id] || ({} as TeacherTotalHoursResult);
         const teacherStudents = students.filter((s) => s.teacher_id === teacher.teacher_id);
         const bonus = bonuses.find((b) => b.teacher_id === teacher.teacher_id);
@@ -123,13 +120,18 @@ export default function Teachers() {
           trial_lessons: 0,
         };
       });
-
-      return payroll.sort((a, b) => b.total_pay - a.total_pay);
     },
     enabled: !!teachers,
   });
 
   const isPayrollLoading = isLoading || payrollLoading;
+
+  // Build payroll map for table
+  const payrollMap = useMemo(() => {
+    const map: Record<string, PayrollTeacher> = {};
+    payrollData?.forEach((p) => { map[p.teacher_id] = p; });
+    return map;
+  }, [payrollData]);
 
   // Payroll aggregates
   const totalLessons = payrollData?.reduce((s, t) => s + t.lessons_taken, 0) || 0;
@@ -177,7 +179,7 @@ export default function Teachers() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `payroll-${getFilterLabel(payrollFilter)}-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    a.download = `teachers-payroll-${getFilterLabel(payrollFilter)}-${format(new Date(), 'yyyy-MM-dd')}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
   };
@@ -342,100 +344,80 @@ export default function Teachers() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-display font-bold">Teachers</h1>
-            <p className="text-muted-foreground">Manage teacher accounts, performance & payroll</p>
+            <p className="text-muted-foreground">
+              Manage accounts, performance & payroll · {getFilterLabel(payrollFilter)}
+            </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            {activeTab === 'payroll' && (
-              <>
-                <YearMonthFilter value={payrollFilter} onChange={setPayrollFilter} />
-                <Button variant="outline" size="sm" onClick={exportToCSV} disabled={!payrollData?.length}>
-                  <Download className="w-4 h-4 mr-2" /> Export
-                </Button>
-              </>
-            )}
-            {activeTab === 'teachers' && (
-              <Button onClick={() => setIsAddDialogOpen(true)} className="gap-2">
-                <UserPlus className="w-4 h-4" /> Add Teacher
-              </Button>
-            )}
+            <YearMonthFilter value={payrollFilter} onChange={setPayrollFilter} />
+            <Button variant="outline" size="sm" onClick={exportToCSV} disabled={!payrollData?.length}>
+              <Download className="w-4 h-4 mr-2" /> Export
+            </Button>
+            <Button onClick={() => setIsAddDialogOpen(true)} className="gap-2">
+              <UserPlus className="w-4 h-4" /> Add Teacher
+            </Button>
           </div>
         </div>
 
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="teachers">Teachers</TabsTrigger>
-            <TabsTrigger value="payroll">Payroll</TabsTrigger>
-          </TabsList>
+        {/* Unified Stats */}
+        {teachers && (
+          <UnifiedTeacherStats
+            teachers={teachers}
+            batchStats={batchStats}
+            isPayrollLoading={isPayrollLoading}
+            activeTeachers={activeTeachers}
+            totalLessons={totalLessons}
+            totalHours={totalHours}
+            totalSalary={totalSalary}
+            totalBonus={totalBonus}
+            totalPay={totalPay}
+            totalActiveStudents={totalActiveStudents}
+          />
+        )}
 
-          {/* Teachers Tab */}
-          <TabsContent value="teachers" className="space-y-6 mt-4">
-            {teachers && <TeacherStatsCards teachers={teachers} batchStats={batchStats} />}
+        {/* Filters */}
+        <TeacherFiltersBar
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          statusFilter={statusFilter as 'all' | 'active' | 'inactive'}
+          onStatusFilterChange={setStatusFilter}
+          viewMode={viewMode as 'table' | 'card'}
+          onViewModeChange={setViewMode}
+          teacherCount={teachers?.length ?? 0}
+        />
 
-            <TeacherFiltersBar
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-              statusFilter={statusFilter as 'all' | 'active' | 'inactive'}
-              onStatusFilterChange={setStatusFilter}
-              viewMode={viewMode as 'table' | 'card'}
-              onViewModeChange={setViewMode}
-              teacherCount={teachers?.length ?? 0}
-            />
-
-            {viewMode === 'table' ? (
-              <TeacherTableView
-                teachers={filteredTeachers}
-                batchStats={batchStats}
-                isLoading={isLoading}
-                onEdit={openEditDialog}
-                onResetPassword={(t) => { setSelectedTeacher(t); setIsResetPasswordDialogOpen(true); }}
-                onToggleActive={handleToggleActive}
-                onDelete={(t) => { setSelectedTeacher(t); setIsDeleteDialogOpen(true); }}
-              />
-            ) : (
-              <TeacherCardView
-                teachers={filteredTeachers}
-                batchStats={batchStats}
-                isLoading={isLoading}
-                onEdit={openEditDialog}
-                onResetPassword={(t) => { setSelectedTeacher(t); setIsResetPasswordDialogOpen(true); }}
-                onToggleActive={handleToggleActive}
-                onDelete={(t) => { setSelectedTeacher(t); setIsDeleteDialogOpen(true); }}
-              />
-            )}
-          </TabsContent>
-
-          {/* Payroll Tab */}
-          <TabsContent value="payroll" className="space-y-6 mt-4">
-            <p className="text-sm text-muted-foreground">{getFilterLabel(payrollFilter)}</p>
-
-            <PayrollStatsCards
-              isLoading={isPayrollLoading}
-              activeTeachers={activeTeachers}
-              totalLessons={totalLessons}
-              totalHours={totalHours}
-              totalSalary={totalSalary}
-              totalBonus={totalBonus}
-              totalPay={totalPay}
-              totalActiveStudents={totalActiveStudents}
-            />
-
-            <PayrollTableView
-              data={payrollData || []}
-              isLoading={isPayrollLoading}
-              editingBonusId={editingBonus}
-              bonusValue={bonusValue}
-              onBonusValueChange={setBonusValue}
-              onStartEditBonus={(t) => {
-                setEditingBonus(t.teacher_id);
-                setBonusValue(t.bonus.toString());
-                setBonusNotes(t.bonus_notes || '');
-              }}
-              onSaveBonus={saveBonus}
-              onCancelEditBonus={() => setEditingBonus(null)}
-            />
-          </TabsContent>
-        </Tabs>
+        {/* Unified Table / Card View */}
+        {viewMode === 'table' ? (
+          <UnifiedTeacherTable
+            teachers={filteredTeachers}
+            payrollMap={payrollMap}
+            isLoading={isPayrollLoading}
+            editingBonusId={editingBonus}
+            bonusValue={bonusValue}
+            onBonusValueChange={setBonusValue}
+            onStartEditBonus={(pr) => {
+              setEditingBonus(pr.teacher_id);
+              setBonusValue(pr.bonus.toString());
+              setBonusNotes(pr.bonus_notes || '');
+            }}
+            onSaveBonus={saveBonus}
+            onCancelEditBonus={() => setEditingBonus(null)}
+            onEdit={openEditDialog}
+            onResetPassword={(t) => { setSelectedTeacher(t); setIsResetPasswordDialogOpen(true); }}
+            onToggleActive={handleToggleActive}
+            onDelete={(t) => { setSelectedTeacher(t); setIsDeleteDialogOpen(true); }}
+          />
+        ) : (
+          <TeacherCardView
+            teachers={filteredTeachers}
+            batchStats={batchStats}
+            isLoading={isLoading}
+            onEdit={openEditDialog}
+            onResetPassword={(t) => { setSelectedTeacher(t); setIsResetPasswordDialogOpen(true); }}
+            onToggleActive={handleToggleActive}
+            onDelete={(t) => { setSelectedTeacher(t); setIsDeleteDialogOpen(true); }}
+          />
+        )}
       </div>
 
       {/* ── Dialogs ────────────────────────────────────────────────────── */}
