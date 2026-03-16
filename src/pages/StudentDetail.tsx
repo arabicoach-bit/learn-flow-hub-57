@@ -119,7 +119,7 @@ function StudentPackagesTab({
     }
     const matchStatus =
       pkgStatusFilter === 'all'
-      || (pkgStatusFilter === 'Running' && (pkg.status === 'Active' || (pkg.status as string) === 'Running'))
+      || (pkgStatusFilter === 'Active' && pkg.status === 'Active')
       || (pkgStatusFilter === 'Completed' && pkg.status === 'Completed');
     const matchPayment =
       pkgPaymentFilter === 'all'
@@ -129,7 +129,7 @@ function StudentPackagesTab({
 
   const paidRev = fp.filter(p => p.payment_status === 'Paid').reduce((s,p) => s + (p.amount||0), 0);
   const pendingRev = fp.filter(p => p.payment_status !== 'Paid').reduce((s,p) => s + (p.amount||0), 0);
-  const runningCnt = fp.filter(p => p.status === 'Active' || (p.status as string) === 'Running').length;
+  const runningCnt = fp.filter(p => p.status === 'Active').length;
   const completedCnt = fp.filter(p => p.status === 'Completed').length;
 
   return (
@@ -137,8 +137,8 @@ function StudentPackagesTab({
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Card><CardContent className="p-4"><div className="text-xl font-bold text-primary">AED {paidRev.toLocaleString()}</div><div className="text-xs text-muted-foreground">Total Revenue</div></CardContent></Card>
         <Card><CardContent className="p-4"><div className="text-xl font-bold text-amber-500">AED {pendingRev.toLocaleString()}</div><div className="text-xs text-muted-foreground">Pending Payments</div></CardContent></Card>
-        <Card><CardContent className="p-4"><div className="text-xl font-bold text-emerald-500">{runningCnt}</div><div className="text-xs text-muted-foreground">Running</div></CardContent></Card>
-        <Card><CardContent className="p-4"><div className="text-xl font-bold text-muted-foreground">{completedCnt}</div><div className="text-xs text-muted-foreground">Completed</div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="text-xl font-bold text-emerald-500">{runningCnt}</div><div className="text-xs text-muted-foreground">In Progress</div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="text-xl font-bold text-muted-foreground">{completedCnt}</div><div className="text-xs text-muted-foreground">Finished</div></CardContent></Card>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -148,8 +148,8 @@ function StudentPackagesTab({
           <SelectTrigger className="w-[130px] h-8 text-xs"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="Running">Running</SelectItem>
-            <SelectItem value="Completed">Completed</SelectItem>
+            <SelectItem value="Active">In Progress</SelectItem>
+            <SelectItem value="Completed">Finished</SelectItem>
           </SelectContent>
         </Select>
         <Select value={pkgPaymentFilter} onValueChange={setPkgPaymentFilter}>
@@ -223,7 +223,7 @@ function StudentPackagesTab({
                           <TableCell>{endDates[pkg.package_id] || '—'}</TableCell>
                           <TableCell className="font-medium">{pkg.package_types?.name || 'Custom'}</TableCell>
                           <TableCell className="text-muted-foreground text-sm">{(pkg as any).description || '—'}</TableCell>
-                          <TableCell><Badge variant="outline" className={pkg.status === 'Active' ? 'status-active' : 'status-grace'}>{pkg.status === 'Active' ? 'Running' : pkg.status}</Badge></TableCell>
+                          <TableCell><Badge variant="outline" className={pkg.status === 'Active' ? 'status-active' : 'status-grace'}>{pkg.status === 'Active' ? 'In Progress' : 'Finished'}</Badge></TableCell>
                           <TableCell>{used}/{pkg.lessons_purchased}</TableCell>
                           <TableCell>{nextLesson ? <span className="text-xs text-muted-foreground">{nextLesson}</span> : <span className="text-muted-foreground">—</span>}</TableCell>
                           <TableCell>
