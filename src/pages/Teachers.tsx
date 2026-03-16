@@ -49,9 +49,8 @@ export default function Teachers() {
   const [editFormData, setEditFormData] = useState({ name: '', phone: '', rate_per_lesson: '' });
   const [tempPasswordInfo, setTempPasswordInfo] = useState<{ email: string; password: string } | null>(null);
 
-  // Batch stats (for card view)
+  // Teacher IDs for payroll
   const teacherIds = useMemo(() => (teachers || []).map((t) => t.teacher_id), [teachers]);
-  const { data: batchStats } = useTeachersBatchStats(teacherIds);
 
   // Filtered teachers
   const filteredTeachers = useMemo(() => {
