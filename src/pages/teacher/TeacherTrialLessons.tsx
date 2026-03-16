@@ -133,7 +133,7 @@ export default function TeacherTrialLessons() {
   const todayStr = format(new Date(), 'yyyy-MM-dd');
   const tomorrowStr = format(addDays(new Date(), 1), 'yyyy-MM-dd');
 
-  // Stats
+  // Stats — includes conversion metrics from joined trial_students data
   const stats = useMemo(() => {
     const total = allLessons.length;
     const scheduled = allLessons.filter(l => l.status === 'scheduled').length;
@@ -141,7 +141,13 @@ export default function TeacherTrialLessons() {
     const absent = allLessons.filter(l => l.status === 'absent').length;
     const todayCount = allLessons.filter(l => l.lesson_date === todayStr).length;
     const unmarked = allLessons.filter(l => l.status === 'scheduled' && l.lesson_date < todayStr).length;
-    return { total, scheduled, completed, absent, todayCount, unmarked };
+    // Conversion stats from joined trial_students
+    const pending = allLessons.filter(l => l.conversion_status === 'Pending').length;
+    const converted = allLessons.filter(l => l.conversion_status === 'Converted').length;
+    const lost = allLessons.filter(l => l.conversion_status === 'Lost').length;
+    // KPI: Conversion Rate = Converted / Completed trials
+    const conversionRate = completed > 0 ? Math.round((converted / completed) * 100) : 0;
+    return { total, scheduled, completed, absent, todayCount, unmarked, pending, converted, lost, conversionRate };
   }, [allLessons, todayStr]);
 
   // Today + Tomorrow
@@ -221,28 +227,51 @@ export default function TeacherTrialLessons() {
           <YearMonthFilter value={filter} onChange={setFilter} />
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          {[
-            { label: 'Today', value: stats.todayCount, icon: Sun, color: 'purple' },
-            { label: 'Total', value: stats.total, icon: Users, color: 'purple' },
-            { label: 'Scheduled', value: stats.scheduled, icon: Clock, color: 'purple' },
-            { label: 'Completed', value: stats.completed, icon: Check, color: 'emerald' },
-            { label: 'Absent', value: stats.absent, icon: X, color: 'amber' },
-            { label: 'Unmarked', value: stats.unmarked, icon: AlertCircle, color: 'destructive' },
-          ].map(s => (
-            <Card key={s.label} className={`border-${s.color === 'destructive' ? 'destructive' : s.color + '-500'}/20 bg-${s.color === 'destructive' ? 'destructive' : s.color + '-500'}/5`}>
-              <CardContent className="p-3 flex items-center gap-3">
-                <div className={`w-9 h-9 rounded-lg bg-${s.color === 'destructive' ? 'destructive' : s.color + '-500'}/20 flex items-center justify-center shrink-0`}>
-                  <s.icon className={`w-4 h-4 text-${s.color === 'destructive' ? 'destructive' : s.color + '-400'}`} />
-                </div>
-                <div>
+        {/* Attendance Stats */}
+        <div className="space-y-2">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Attendance</h3>
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+            {[
+              { label: 'Today', value: stats.todayCount, icon: Sun, color: 'purple' },
+              { label: 'Total', value: stats.total, icon: Users, color: 'purple' },
+              { label: 'Scheduled', value: stats.scheduled, icon: Clock, color: 'purple' },
+              { label: 'Completed', value: stats.completed, icon: Check, color: 'emerald' },
+              { label: 'Absent', value: stats.absent, icon: X, color: 'amber' },
+              { label: 'Unmarked', value: stats.unmarked, icon: AlertCircle, color: 'destructive' },
+            ].map(s => (
+              <Card key={s.label} className={`border-${s.color === 'destructive' ? 'destructive' : s.color + '-500'}/20 bg-${s.color === 'destructive' ? 'destructive' : s.color + '-500'}/5`}>
+                <CardContent className="p-3 flex items-center gap-3">
+                  <div className={`w-9 h-9 rounded-lg bg-${s.color === 'destructive' ? 'destructive' : s.color + '-500'}/20 flex items-center justify-center shrink-0`}>
+                    <s.icon className={`w-4 h-4 text-${s.color === 'destructive' ? 'destructive' : s.color + '-400'}`} />
+                  </div>
+                  <div>
+                    <p className="text-xl font-bold">{isLoading ? '-' : s.value}</p>
+                    <p className="text-xs text-muted-foreground">{s.label}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* Conversion Stats (read-only for teacher) */}
+        <div className="space-y-2">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Conversion Outcomes</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              { label: 'Pending', value: stats.pending, color: 'amber' },
+              { label: 'Converted', value: stats.converted, color: 'emerald' },
+              { label: 'Lost', value: stats.lost, color: 'destructive' },
+              { label: 'Conv. Rate', value: `${stats.conversionRate}%`, color: 'purple' },
+            ].map(s => (
+              <Card key={s.label} className={`border-${s.color === 'destructive' ? 'destructive' : s.color + '-500'}/20 bg-${s.color === 'destructive' ? 'destructive' : s.color + '-500'}/5`}>
+                <CardContent className="p-3">
                   <p className="text-xl font-bold">{isLoading ? '-' : s.value}</p>
                   <p className="text-xs text-muted-foreground">{s.label}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
 
         {/* Tabs */}
