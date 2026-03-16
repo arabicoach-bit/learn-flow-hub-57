@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Edit, Key, UserX, UserCheck, Trash2, MoreVertical, MessageCircle, Gift, Users } from 'lucide-react';
+import { Edit, Key, UserX, UserCheck, Trash2, MoreVertical, MessageCircle, Gift, Users, ArrowUpDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,10 @@ import {
 import { Teacher } from '@/hooks/use-teachers';
 import { PayrollTeacher } from '@/components/payroll/PayrollTableView';
 import { formatSalary } from '@/lib/wallet-utils';
+import { useState, useMemo } from 'react';
+
+type SortKey = 'name' | 'students' | 'lessons' | 'hours' | 'salary' | 'totalPay';
+type SortDir = 'asc' | 'desc';
 
 interface UnifiedTeacherTableProps {
   teachers: Teacher[];
@@ -57,6 +61,36 @@ export function UnifiedTeacherTable({
   onDelete,
 }: UnifiedTeacherTableProps) {
   const navigate = useNavigate();
+  const [sortKey, setSortKey] = useState<SortKey>('totalPay');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDir('desc');
+    }
+  };
+
+  const sortedTeachers = useMemo(() => {
+    const list = [...teachers];
+    const dir = sortDir === 'asc' ? 1 : -1;
+    list.sort((a, b) => {
+      const pa = payrollMap[a.teacher_id];
+      const pb = payrollMap[b.teacher_id];
+      switch (sortKey) {
+        case 'name': return dir * a.name.localeCompare(b.name);
+        case 'students': return dir * ((pa?.active_students ?? 0) - (pb?.active_students ?? 0));
+        case 'lessons': return dir * ((pa?.lessons_taken ?? 0) - (pb?.lessons_taken ?? 0));
+        case 'hours': return dir * ((pa?.total_hours ?? 0) - (pb?.total_hours ?? 0));
+        case 'salary': return dir * ((pa?.salary_earned ?? 0) - (pb?.salary_earned ?? 0));
+        case 'totalPay': return dir * ((pa?.total_pay ?? 0) - (pb?.total_pay ?? 0));
+        default: return 0;
+      }
+    });
+    return list;
+  }, [teachers, payrollMap, sortKey, sortDir]);
 
   if (isLoading) {
     return (
@@ -78,7 +112,6 @@ export function UnifiedTeacherTable({
     );
   }
 
-  // Totals from payroll data
   const totals = Object.values(payrollMap).reduce(
     (acc, t) => ({
       lessons: acc.lessons + t.lessons_taken,
@@ -87,10 +120,20 @@ export function UnifiedTeacherTable({
       bonus: acc.bonus + t.bonus,
       totalPay: acc.totalPay + t.total_pay,
       active: acc.active + t.active_students,
-      tempStop: acc.tempStop + t.temp_stop_students,
-      left: acc.left + t.left_students,
     }),
-    { lessons: 0, hours: 0, salary: 0, bonus: 0, totalPay: 0, active: 0, tempStop: 0, left: 0 },
+    { lessons: 0, hours: 0, salary: 0, bonus: 0, totalPay: 0, active: 0 },
+  );
+
+  const SortableHead = ({ label, sortId, className = '' }: { label: string; sortId: SortKey; className?: string }) => (
+    <TableHead className={className}>
+      <button
+        className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
+        onClick={() => toggleSort(sortId)}
+      >
+        {label}
+        <ArrowUpDown className={`w-3 h-3 ${sortKey === sortId ? 'text-primary' : 'text-muted-foreground/50'}`} />
+      </button>
+    </TableHead>
   );
 
   return (
@@ -99,20 +142,20 @@ export function UnifiedTeacherTable({
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
-              <TableHead>Teacher</TableHead>
+              <SortableHead label="Teacher" sortId="name" />
               <TableHead className="text-center">Status</TableHead>
-              <TableHead className="text-center hidden sm:table-cell">Students</TableHead>
+              <SortableHead label="Students" sortId="students" className="text-center hidden sm:table-cell" />
               <TableHead className="text-center hidden sm:table-cell">Rate/hr</TableHead>
-              <TableHead className="text-center">Lessons</TableHead>
-              <TableHead className="text-center hidden md:table-cell">Hours</TableHead>
-              <TableHead className="text-center">Salary</TableHead>
+              <SortableHead label="Lessons" sortId="lessons" className="text-center" />
+              <SortableHead label="Hours" sortId="hours" className="text-center hidden md:table-cell" />
+              <SortableHead label="Salary" sortId="salary" className="text-center" />
               <TableHead className="text-center hidden md:table-cell">Bonus</TableHead>
-              <TableHead className="text-center">Total Pay</TableHead>
+              <SortableHead label="Total Pay" sortId="totalPay" className="text-center" />
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {teachers.map((teacher) => {
+            {sortedTeachers.map((teacher) => {
               const isActive = teacher.is_active !== false;
               const pr = payrollMap[teacher.teacher_id];
               const wa = whatsappUrl(teacher.phone);
@@ -123,7 +166,6 @@ export function UnifiedTeacherTable({
                   className="cursor-pointer hover:bg-muted/50 transition-colors"
                   onClick={() => navigate(`/admin/teachers/${teacher.teacher_id}`)}
                 >
-                  {/* Teacher */}
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-medium">
@@ -143,14 +185,12 @@ export function UnifiedTeacherTable({
                     </div>
                   </TableCell>
 
-                  {/* Status */}
                   <TableCell className="text-center">
                     <Badge variant={isActive ? 'default' : 'secondary'} className="text-xs">
                       {isActive ? 'Active' : 'Inactive'}
                     </Badge>
                   </TableCell>
 
-                  {/* Students */}
                   <TableCell className="text-center hidden sm:table-cell">
                     <div className="flex items-center justify-center gap-1">
                       <Badge variant="outline" className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 text-xs">
@@ -169,27 +209,22 @@ export function UnifiedTeacherTable({
                     </div>
                   </TableCell>
 
-                  {/* Rate */}
                   <TableCell className="text-center hidden sm:table-cell font-medium">
                     {formatSalary(teacher.rate_per_lesson)}
                   </TableCell>
 
-                  {/* Lessons */}
                   <TableCell className="text-center font-medium">
                     {pr?.lessons_taken ?? '-'}
                   </TableCell>
 
-                  {/* Hours */}
                   <TableCell className="text-center hidden md:table-cell font-medium">
                     {pr ? `${pr.total_hours.toFixed(1)}h` : '-'}
                   </TableCell>
 
-                  {/* Salary */}
                   <TableCell className="text-center font-semibold text-emerald-600 dark:text-emerald-400">
                     {pr ? formatSalary(pr.salary_earned) : '-'}
                   </TableCell>
 
-                  {/* Bonus */}
                   <TableCell className="text-center hidden md:table-cell" onClick={(e) => e.stopPropagation()}>
                     {pr && editingBonusId === teacher.teacher_id ? (
                       <div className="flex items-center gap-1 min-w-[140px] justify-center">
@@ -204,23 +239,36 @@ export function UnifiedTeacherTable({
                         <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => onSaveBonus(teacher.teacher_id)}>✓</Button>
                         <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={onCancelEditBonus}>✗</Button>
                       </div>
+                    ) : pr && pr.bonus > 0 ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 hover:underline cursor-pointer"
+                            onClick={() => onStartEditBonus(pr)}
+                          >
+                            {formatSalary(pr.bonus)}
+                            <Gift className="w-3 h-3" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {pr.bonus_notes ? <span>{pr.bonus_notes}</span> : <span className="text-muted-foreground italic">No notes</span>}
+                        </TooltipContent>
+                      </Tooltip>
                     ) : (
                       <button
-                        className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 hover:underline cursor-pointer"
+                        className="inline-flex items-center gap-1 text-muted-foreground hover:text-amber-600 dark:hover:text-amber-400 cursor-pointer"
                         onClick={() => pr && onStartEditBonus(pr)}
                       >
-                        {pr && pr.bonus > 0 ? formatSalary(pr.bonus) : '—'}
+                        —
                         <Gift className="w-3 h-3" />
                       </button>
                     )}
                   </TableCell>
 
-                  {/* Total Pay */}
                   <TableCell className="text-center font-bold text-primary">
                     {pr ? formatSalary(pr.total_pay) : '-'}
                   </TableCell>
 
-                  {/* Actions */}
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

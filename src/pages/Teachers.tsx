@@ -6,7 +6,7 @@ import { TeacherFiltersBar } from '@/components/teachers/TeacherFiltersBar';
 import { UnifiedTeacherStats } from '@/components/teachers/UnifiedTeacherStats';
 import { UnifiedTeacherTable } from '@/components/teachers/UnifiedTeacherTable';
 import { TeacherCardView } from '@/components/teachers/TeacherCardView';
-import { useTeachersBatchStats } from '@/hooks/use-teachers-batch-stats';
+
 
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -49,9 +49,8 @@ export default function Teachers() {
   const [editFormData, setEditFormData] = useState({ name: '', phone: '', rate_per_lesson: '' });
   const [tempPasswordInfo, setTempPasswordInfo] = useState<{ email: string; password: string } | null>(null);
 
-  // Batch stats (for card view)
+  // Teacher IDs for payroll
   const teacherIds = useMemo(() => (teachers || []).map((t) => t.teacher_id), [teachers]);
-  const { data: batchStats } = useTeachersBatchStats(teacherIds);
 
   // Filtered teachers
   const filteredTeachers = useMemo(() => {
@@ -363,7 +362,6 @@ export default function Teachers() {
         {teachers && (
           <UnifiedTeacherStats
             teachers={teachers}
-            batchStats={batchStats}
             isPayrollLoading={isPayrollLoading}
             activeTeachers={activeTeachers}
             totalLessons={totalLessons}
@@ -410,8 +408,8 @@ export default function Teachers() {
         ) : (
           <TeacherCardView
             teachers={filteredTeachers}
-            batchStats={batchStats}
-            isLoading={isLoading}
+            payrollMap={payrollMap}
+            isLoading={isPayrollLoading}
             onEdit={openEditDialog}
             onResetPassword={(t) => { setSelectedTeacher(t); setIsResetPasswordDialogOpen(true); }}
             onToggleActive={handleToggleActive}

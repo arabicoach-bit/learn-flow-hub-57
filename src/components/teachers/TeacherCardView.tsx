@@ -3,33 +3,19 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  Edit,
-  Key,
-  UserX,
-  UserCheck,
-  Trash2,
-  MoreVertical,
-  MessageCircle,
-  Users,
-  Clock,
-  Wallet,
+  Edit, Key, UserX, UserCheck, Trash2, MoreVertical, MessageCircle, Users, Clock, Wallet, BookOpen,
 } from 'lucide-react';
 import { Teacher } from '@/hooks/use-teachers';
-import { TeacherBatchStats } from '@/hooks/use-teachers-batch-stats';
+import { PayrollTeacher } from '@/components/payroll/PayrollTableView';
 import { formatSalary } from '@/lib/wallet-utils';
-import { formatDistanceToNow } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface TeacherCardViewProps {
   teachers: Teacher[];
-  batchStats: Record<string, TeacherBatchStats> | undefined;
+  payrollMap: Record<string, PayrollTeacher>;
   isLoading: boolean;
   onEdit: (teacher: Teacher) => void;
   onResetPassword: (teacher: Teacher) => void;
@@ -49,7 +35,7 @@ function whatsappUrl(phone: string | null) {
 
 export function TeacherCardView({
   teachers,
-  batchStats,
+  payrollMap,
   isLoading,
   onEdit,
   onResetPassword,
@@ -62,7 +48,7 @@ export function TeacherCardView({
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={i} className="h-52 w-full rounded-xl" />
+          <Skeleton key={i} className="h-56 w-full rounded-xl" />
         ))}
       </div>
     );
@@ -82,9 +68,8 @@ export function TeacherCardView({
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {teachers.map((teacher) => {
         const isActive = teacher.is_active !== false;
-        const stats = batchStats?.[teacher.teacher_id];
+        const pr = payrollMap[teacher.teacher_id];
         const wa = whatsappUrl(teacher.phone);
-        const totalHours = stats ? stats.monthlyHours + stats.trialLessons * 0.5 : 0;
 
         return (
           <Card
@@ -108,13 +93,7 @@ export function TeacherCardView({
                         {teacher.email || '-'}
                       </span>
                       {wa && (
-                        <a
-                          href={wa}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-emerald-500 hover:text-emerald-400"
-                          onClick={(e) => e.stopPropagation()}
-                        >
+                        <a href={wa} target="_blank" rel="noopener noreferrer" className="text-emerald-500 hover:text-emerald-400" onClick={(e) => e.stopPropagation()}>
                           <MessageCircle className="w-3.5 h-3.5" />
                         </a>
                       )}
@@ -128,12 +107,7 @@ export function TeacherCardView({
                   </Badge>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={(e) => e.stopPropagation()}
-                      >
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
                         <MoreVertical className="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -163,32 +137,37 @@ export function TeacherCardView({
               </div>
 
               {/* Stats grid */}
-              <div className="grid grid-cols-3 gap-3 mb-3">
-                <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-center">
-                  <Users className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 mx-auto mb-1" />
-                  <p className="text-lg font-bold">{stats?.activeStudents ?? '-'}</p>
-                  <p className="text-[10px] text-muted-foreground">Students</p>
+              <div className="grid grid-cols-4 gap-2 mb-3">
+                <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-center">
+                  <Users className="w-3 h-3 text-emerald-600 dark:text-emerald-400 mx-auto mb-0.5" />
+                  <p className="text-base font-bold">{pr?.active_students ?? '-'}</p>
+                  <p className="text-[9px] text-muted-foreground">Students</p>
                 </div>
-                <div className="p-2.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-center">
-                  <Clock className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 mx-auto mb-1" />
-                  <p className="text-lg font-bold">{stats ? `${totalHours.toFixed(1)}` : '-'}</p>
-                  <p className="text-[10px] text-muted-foreground">Hours</p>
+                <div className="p-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-center">
+                  <BookOpen className="w-3 h-3 text-indigo-600 dark:text-indigo-400 mx-auto mb-0.5" />
+                  <p className="text-base font-bold">{pr?.lessons_taken ?? '-'}</p>
+                  <p className="text-[9px] text-muted-foreground">Lessons</p>
                 </div>
-                <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-center">
-                  <Wallet className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 mx-auto mb-1" />
-                  <p className="text-lg font-bold">{stats ? formatSalary(stats.monthlySalary) : '-'}</p>
-                  <p className="text-[10px] text-muted-foreground">Salary</p>
+                <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/20 text-center">
+                  <Clock className="w-3 h-3 text-blue-600 dark:text-blue-400 mx-auto mb-0.5" />
+                  <p className="text-base font-bold">{pr ? `${pr.total_hours.toFixed(1)}` : '-'}</p>
+                  <p className="text-[9px] text-muted-foreground">Hours</p>
+                </div>
+                <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-center">
+                  <Wallet className="w-3 h-3 text-amber-600 dark:text-amber-400 mx-auto mb-0.5" />
+                  <p className="text-base font-bold">{pr ? formatSalary(pr.total_pay) : '-'}</p>
+                  <p className="text-[9px] text-muted-foreground">Total Pay</p>
                 </div>
               </div>
 
               {/* Footer */}
               <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
                 <span>Rate: {formatSalary(teacher.rate_per_lesson)}/hr</span>
-                <span>
-                  {stats?.lastLogin
-                    ? `Login ${formatDistanceToNow(new Date(stats.lastLogin), { addSuffix: true })}`
-                    : 'Never logged in'}
-                </span>
+                {pr && pr.bonus > 0 && (
+                  <span className="text-amber-600 dark:text-amber-400">
+                    Bonus: {formatSalary(pr.bonus)}
+                  </span>
+                )}
               </div>
             </CardContent>
           </Card>
