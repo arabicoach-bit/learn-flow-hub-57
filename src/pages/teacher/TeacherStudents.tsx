@@ -358,6 +358,7 @@ export default function TeacherStudents() {
                         </Button>
                       </TableHead>
                       <TableHead>Lessons</TableHead>
+                      <TableHead>Schedule</TableHead>
                       <TableHead>
                         <Button variant="ghost" size="sm" className="gap-1 -ml-3 font-semibold" onClick={() => toggleSort('nextLesson')}>
                           Next Lesson <ArrowUpDown className="w-3 h-3" />
