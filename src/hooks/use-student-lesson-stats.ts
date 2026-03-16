@@ -96,17 +96,29 @@ export function useStudentLessonStats(
       l => l.package_id && activePackageIds.has(l.package_id) && (l.status === 'completed' || l.status === 'absent')
     ).length;
 
+    // All-time stats for active package (unaffected by date filter)
+    const activePackageLessons = (lessons || []).filter(
+      l => l.package_id && activePackageIds.has(l.package_id)
+    );
+    const allTimeCompleted = activePackageLessons.filter(l => l.status === 'completed').length;
+    const allTimeAbsent = activePackageLessons.filter(l => l.status === 'absent').length;
+    const allTimeScheduled = activePackageLessons.filter(l => l.status === 'scheduled').length;
+    const allTimeTotalHours = activePackageLessons
+      .filter(l => l.status === 'completed')
+      .reduce((sum, l) => sum + (l.duration_minutes || 45) / 60, 0);
+
     return {
       completedCount,
       absentCount,
       scheduledCount,
       totalHours,
-      // Wallet = count of scheduled lessons across active packages (matches DB logic)
-      walletBalance: (lessons || []).filter(
-        l => l.package_id && activePackageIds.has(l.package_id) && l.status === 'scheduled'
-      ).length,
+      walletBalance: allTimeScheduled,
       activePackageLessonsUsed,
       activePackageLessonsTotal,
+      allTimeCompleted,
+      allTimeAbsent,
+      allTimeScheduled,
+      allTimeTotalHours,
     };
   }, [lessons, startDate, endDate, student, activePackages]);
 
