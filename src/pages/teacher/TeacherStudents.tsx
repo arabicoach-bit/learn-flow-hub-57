@@ -567,6 +567,23 @@ export default function TeacherStudents() {
                           )}
                         </div>
 
+                        {/* Weekly Schedule Row */}
+                        {(() => {
+                          const sched = scheduleMap?.get(student.student_id);
+                          if (!sched || sched.length === 0) return null;
+                          return (
+                            <div className="flex items-center gap-1.5 flex-wrap mb-3 pl-[52px]">
+                              <CalendarDays className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                              {sched.map((s, i) => (
+                                <Badge key={i} variant="outline" className="text-[10px] px-1.5 py-0.5 font-normal gap-0.5">
+                                  <span className="font-medium">{DAY_ABBR[s.day]}</span>
+                                  <span className="text-muted-foreground">{formatTime12(s.time)}</span>
+                                </Badge>
+                              ))}
+                            </div>
+                          );
+                        })()}
+
                         {/* Metrics Row */}
                         <div className="flex items-center gap-2.5 flex-wrap pl-[52px]">
                           {/* Wallet - only for Active */}
