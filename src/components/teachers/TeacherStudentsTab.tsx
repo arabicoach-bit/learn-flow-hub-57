@@ -431,6 +431,7 @@ export function TeacherStudentsTab({ students, teacherId }: TeacherStudentsTabPr
                               </div>
                             );
                           })()}
+                        </TableCell>
                         <TableCell className="hidden sm:table-cell">
                           {next ? (
                             <div className="flex items-center gap-1.5 text-sm">
