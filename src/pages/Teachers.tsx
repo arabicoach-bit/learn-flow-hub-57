@@ -1,12 +1,13 @@
 import { useState, useMemo } from 'react';
-import { UserPlus, Mail, Key, Edit, Trash2, Download } from 'lucide-react';
+import { UserPlus, Mail, Key, Edit, Trash2, Download, Users } from 'lucide-react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useTeachers, useUpdateTeacher, Teacher } from '@/hooks/use-teachers';
 import { TeacherFiltersBar } from '@/components/teachers/TeacherFiltersBar';
 import { UnifiedTeacherStats } from '@/components/teachers/UnifiedTeacherStats';
 import { UnifiedTeacherTable } from '@/components/teachers/UnifiedTeacherTable';
 import { TeacherCardView } from '@/components/teachers/TeacherCardView';
-
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
