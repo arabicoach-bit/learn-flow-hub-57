@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -18,11 +19,27 @@ import { StudentInfoView } from '@/components/student/StudentInfoView';
 import {
   GraduationCap, Search, Phone, ChevronDown, User, BookOpen,
   AlertTriangle, Users, UserCheck, PauseCircle, UserX, TrendingUp,
-  LayoutGrid, TableIcon, Calendar, Clock, RefreshCw,
+  LayoutGrid, TableIcon, Calendar, Clock, RefreshCw, ArrowUpDown,
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
 import { YearMonthFilter, getFilterDateRange, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
+
+/* ─── Progress Ring ─── */
+function ProgressRing({ value, size = 64, stroke = 5, color }: { value: number; size?: number; stroke?: number; color: string }) {
+  const radius = (size - stroke) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (Math.min(value, 100) / 100) * circumference;
+  return (
+    <svg width={size} height={size} className="shrink-0 -rotate-90">
+      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="currentColor" strokeWidth={stroke} className="text-muted/30" />
+      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={color} strokeWidth={stroke} strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" className="transition-all duration-700" />
+    </svg>
+  );
+}
+
+type SortField = 'name' | 'status' | 'wallet' | 'nextLesson';
+type SortDir = 'asc' | 'desc';
 
 export default function TeacherStudents() {
   const { profile } = useAuth();
@@ -30,10 +47,11 @@ export default function TeacherStudents() {
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  
   const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const [studentFilter, setStudentFilter] = useState<YearMonthFilterValue>({ year: null, month: null });
+  const [sortField, setSortField] = useState<SortField>('name');
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
 
   const { data: students, isLoading: studentsLoading, refetch } = useStudents();
   const { data: programs } = usePrograms();
@@ -41,6 +59,20 @@ export default function TeacherStudents() {
 
   const myStudents = students?.filter(s => s.teacher_id === teacherId) || [];
   const studentRange = getFilterDateRange(studentFilter);
+
+  // Lesson stats per student
+  const lessonStatsMap = useMemo(() => {
+    const map = new Map<string, { used: number; total: number }>();
+    if (!allLessons) return map;
+    allLessons.forEach(l => {
+      if (!l.student_id) return;
+      if (!map.has(l.student_id)) map.set(l.student_id, { used: 0, total: 0 });
+      const entry = map.get(l.student_id)!;
+      entry.total++;
+      if (l.status === 'completed' || l.status === 'absent') entry.used++;
+    });
+    return map;
+  }, [allLessons]);
 
   // Next lesson per student
   const nextLessonMap = useMemo(() => {
@@ -59,11 +91,10 @@ export default function TeacherStudents() {
   }, [allLessons]);
 
   const filteredStudents = useMemo(() => {
-    return myStudents.filter((student) => {
+    let results = myStudents.filter((student) => {
       const matchesSearch = student.name.toLowerCase().includes(search.toLowerCase()) ||
         student.phone.includes(search);
       const matchesStatus = !statusFilter || student.status === statusFilter;
-      
       const createdAt = student.created_at ? new Date(student.created_at) : null;
       const matchesDate = !createdAt || (
         (!studentRange.startDate || createdAt >= new Date(studentRange.startDate)) &&
@@ -71,7 +102,26 @@ export default function TeacherStudents() {
       );
       return matchesSearch && matchesStatus && matchesDate;
     });
-  }, [myStudents, search, statusFilter, studentRange]);
+
+    // Sort
+    results.sort((a, b) => {
+      let cmp = 0;
+      if (sortField === 'name') cmp = a.name.localeCompare(b.name);
+      else if (sortField === 'status') cmp = (a.status || '').localeCompare(b.status || '');
+      else if (sortField === 'wallet') cmp = (a.wallet_balance || 0) - (b.wallet_balance || 0);
+      else if (sortField === 'nextLesson') {
+        const na = nextLessonMap.get(a.student_id);
+        const nb = nextLessonMap.get(b.student_id);
+        if (!na && !nb) cmp = 0;
+        else if (!na) cmp = 1;
+        else if (!nb) cmp = -1;
+        else cmp = na.date.localeCompare(nb.date) || na.time.localeCompare(nb.time);
+      }
+      return sortDir === 'desc' ? -cmp : cmp;
+    });
+
+    return results;
+  }, [myStudents, search, statusFilter, studentRange, sortField, sortDir, nextLessonMap]);
 
   // Stats
   const totalStudents = filteredStudents.length;
@@ -80,8 +130,7 @@ export default function TeacherStudents() {
   const leftStudents = filteredStudents.filter(s => s.status === 'Left').length;
   const overdueStudents = filteredStudents.filter(s => s.status === 'Active' && (s.wallet_balance || 0) <= 0).length;
   const retentionRate = totalStudents > 0 ? Math.round((activeStudents / totalStudents) * 100) : 0;
-
-  // Unique programs for filter
+  const attritionRate = totalStudents > 0 ? Math.round(((tempStopStudents + leftStudents) / totalStudents) * 100) : 0;
 
   const toggleStudent = (studentId: string) => {
     setExpandedStudents(prev => {
@@ -112,6 +161,11 @@ export default function TeacherStudents() {
     }
   };
 
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortField(field); setSortDir('asc'); }
+  };
+
   return (
     <TeacherLayout>
       <div className="space-y-6 animate-fade-in">
@@ -126,42 +180,63 @@ export default function TeacherStudents() {
           </Button>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          <Card className="glass-card">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10"><Users className="w-4 h-4 text-primary" /></div>
-              <div><p className="text-xl font-bold">{totalStudents}</p><p className="text-xs text-muted-foreground">Total</p></div>
+        {/* ═══════ STATS DASHBOARD ═══════ */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Student Overview */}
+          <Card className="border-primary/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Student Overview</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-6">
+                <div className="relative flex items-center justify-center">
+                  <ProgressRing value={retentionRate} size={64} stroke={5} color="hsl(160, 84%, 39%)" />
+                  <span className="absolute text-sm font-bold">{studentsLoading ? '-' : `${retentionRate}%`}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-x-6 gap-y-2 flex-1">
+                  <div>
+                    <p className="text-2xl font-bold">{studentsLoading ? '-' : totalStudents}</p>
+                    <p className="text-xs text-muted-foreground">Total</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-emerald-500">{studentsLoading ? '-' : activeStudents}</p>
+                    <p className="text-xs text-muted-foreground">Active</p>
+                  </div>
+                  <div>
+                    <p className={`text-2xl font-bold ${overdueStudents > 0 ? 'text-destructive' : ''}`}>{studentsLoading ? '-' : overdueStudents}</p>
+                    <p className="text-xs text-muted-foreground">Overdue</p>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
-          <Card className="glass-card">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-emerald-500/10"><UserCheck className="w-4 h-4 text-emerald-500" /></div>
-              <div><p className="text-xl font-bold">{activeStudents}</p><p className="text-xs text-muted-foreground">Active</p></div>
-            </CardContent>
-          </Card>
-          <Card className="glass-card">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-red-500/10"><AlertTriangle className="w-4 h-4 text-red-500" /></div>
-              <div><p className="text-xl font-bold">{overdueStudents}</p><p className="text-xs text-muted-foreground">Overdue</p></div>
-            </CardContent>
-          </Card>
-          <Card className="glass-card">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-amber-500/10"><PauseCircle className="w-4 h-4 text-amber-500" /></div>
-              <div><p className="text-xl font-bold">{tempStopStudents}</p><p className="text-xs text-muted-foreground">Temp Stop</p></div>
-            </CardContent>
-          </Card>
-          <Card className="glass-card">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-destructive/10"><UserX className="w-4 h-4 text-destructive" /></div>
-              <div><p className="text-xl font-bold">{leftStudents}</p><p className="text-xs text-muted-foreground">Left</p></div>
-            </CardContent>
-          </Card>
-          <Card className="glass-card">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-500/10"><TrendingUp className="w-4 h-4 text-blue-500" /></div>
-              <div><p className="text-xl font-bold">{retentionRate}%</p><p className="text-xs text-muted-foreground">Retention</p></div>
+
+          {/* Status Breakdown */}
+          <Card className="border-amber-500/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Status Breakdown</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-6">
+                <div className="relative flex items-center justify-center">
+                  <ProgressRing value={attritionRate} size={64} stroke={5} color="hsl(0, 72%, 51%)" />
+                  <span className="absolute text-sm font-bold">{studentsLoading ? '-' : `${attritionRate}%`}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-x-6 gap-y-2 flex-1">
+                  <div>
+                    <p className="text-2xl font-bold text-amber-500">{studentsLoading ? '-' : tempStopStudents}</p>
+                    <p className="text-xs text-muted-foreground">Temp Stop</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-destructive">{studentsLoading ? '-' : leftStudents}</p>
+                    <p className="text-xs text-muted-foreground">Left</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-blue-500">{studentsLoading ? '-' : `${retentionRate}%`}</p>
+                    <p className="text-xs text-muted-foreground">Retention</p>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -184,6 +259,9 @@ export default function TeacherStudents() {
                 </SelectContent>
               </Select>
               <YearMonthFilter value={studentFilter} onChange={setStudentFilter} />
+              <Badge variant="outline" className="text-xs py-1.5 px-3">
+                {filteredStudents.length} student{filteredStudents.length !== 1 ? 's' : ''}
+              </Badge>
               <div className="flex border rounded-md">
                 <Button variant={viewMode === 'cards' ? 'secondary' : 'ghost'} size="sm" onClick={() => setViewMode('cards')}>
                   <LayoutGrid className="w-4 h-4" />
@@ -212,24 +290,35 @@ export default function TeacherStudents() {
         ) : viewMode === 'table' ? (
           /* ===== TABLE VIEW ===== */
           <Card className="glass-card">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <GraduationCap className="w-5 h-5 text-emerald-500" />
-                Students ({filteredStudents.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="rounded-md border">
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Student</TableHead>
+                      <TableHead>
+                        <Button variant="ghost" size="sm" className="gap-1 -ml-3 font-semibold" onClick={() => toggleSort('name')}>
+                          Student <ArrowUpDown className="w-3 h-3" />
+                        </Button>
+                      </TableHead>
                       <TableHead>Phone</TableHead>
                       <TableHead>Programme</TableHead>
                       <TableHead>Level</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Wallet</TableHead>
-                      <TableHead>Next Lesson</TableHead>
+                      <TableHead>
+                        <Button variant="ghost" size="sm" className="gap-1 -ml-3 font-semibold" onClick={() => toggleSort('status')}>
+                          Status <ArrowUpDown className="w-3 h-3" />
+                        </Button>
+                      </TableHead>
+                      <TableHead>
+                        <Button variant="ghost" size="sm" className="gap-1 -ml-3 font-semibold" onClick={() => toggleSort('wallet')}>
+                          Wallet <ArrowUpDown className="w-3 h-3" />
+                        </Button>
+                      </TableHead>
+                      <TableHead>Lessons</TableHead>
+                      <TableHead>
+                        <Button variant="ghost" size="sm" className="gap-1 -ml-3 font-semibold" onClick={() => toggleSort('nextLesson')}>
+                          Next Lesson <ArrowUpDown className="w-3 h-3" />
+                        </Button>
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -237,7 +326,9 @@ export default function TeacherStudents() {
                       const programName = getProgramName(student.program_id);
                       const wallet = student.wallet_balance || 0;
                       const isOverdue = student.status === 'Active' && wallet <= 0;
+                      const lowCredit = wallet > 0 && wallet <= 2;
                       const next = nextLessonMap.get(student.student_id);
+                      const lessonStats = lessonStatsMap.get(student.student_id);
 
                       return (
                         <TableRow
@@ -246,21 +337,29 @@ export default function TeacherStudents() {
                           onClick={() => toggleStudent(student.student_id)}
                         >
                           <TableCell>
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">{student.name}</span>
-                              {isOverdue && <AlertTriangle className="w-3.5 h-3.5 text-destructive" />}
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                <User className="w-4 h-4 text-primary" />
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-medium">{student.name}</span>
+                                  {isOverdue && <AlertTriangle className="w-3.5 h-3.5 text-destructive" />}
+                                  {lowCredit && !isOverdue && <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />}
+                                </div>
+                                {student.parent_guardian_name && (
+                                  <p className="text-xs text-muted-foreground">{student.parent_guardian_name}</p>
+                                )}
+                              </div>
                             </div>
-                            {student.parent_guardian_name && (
-                              <p className="text-xs text-muted-foreground">{student.parent_guardian_name}</p>
-                            )}
                           </TableCell>
-                          <TableCell className="text-muted-foreground">{student.phone}</TableCell>
+                          <TableCell className="text-muted-foreground text-sm">{student.phone}</TableCell>
                           <TableCell>
                             {programName ? (
                               <Badge variant="secondary" className="text-xs">{programName}</Badge>
-                            ) : '—'}
+                            ) : <span className="text-muted-foreground">—</span>}
                           </TableCell>
-                          <TableCell className="text-muted-foreground">{student.student_level || '—'}</TableCell>
+                          <TableCell className="text-muted-foreground text-sm">{student.student_level || '—'}</TableCell>
                           <TableCell>
                             <Badge variant="outline" className={getStatusBadgeClass(student.status)}>
                               {getStatusDisplayLabel(student.status)}
@@ -270,6 +369,19 @@ export default function TeacherStudents() {
                             <Badge className={`${getWalletColor(wallet)} text-xs`}>
                               💰 {wallet}
                             </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {lessonStats ? (
+                              <div className="flex items-center gap-2 min-w-[100px]">
+                                <span className="text-sm font-medium whitespace-nowrap">{lessonStats.used}/{lessonStats.total}</span>
+                                <Progress
+                                  value={lessonStats.total > 0 ? (lessonStats.used / lessonStats.total) * 100 : 0}
+                                  className="h-1.5 flex-1"
+                                />
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">—</span>
+                            )}
                           </TableCell>
                           <TableCell>
                             {next ? (
@@ -292,7 +404,7 @@ export default function TeacherStudents() {
 
               {/* Expanded student detail (shown below table) */}
               {filteredStudents.filter(s => expandedStudents.has(s.student_id)).map(student => (
-                <div key={student.student_id} className="mt-4 border rounded-lg bg-muted/10 p-1">
+                <div key={student.student_id} className="mt-4 border rounded-lg bg-muted/10 p-1 mx-4 mb-4">
                   <div className="flex items-center justify-between px-4 py-2 border-b">
                     <h3 className="font-semibold">{student.name}</h3>
                     <Button variant="ghost" size="sm" onClick={() => toggleStudent(student.student_id)}>
@@ -331,6 +443,8 @@ export default function TeacherStudents() {
               const isOverdue = student.status === 'Active' && wallet <= 0;
               const lowCredit = wallet > 0 && wallet <= 2;
               const next = nextLessonMap.get(student.student_id);
+              const lessonStats = lessonStatsMap.get(student.student_id);
+              const lessonProgress = lessonStats && lessonStats.total > 0 ? (lessonStats.used / lessonStats.total) * 100 : 0;
 
               return (
                 <Collapsible
@@ -338,42 +452,69 @@ export default function TeacherStudents() {
                   open={isExpanded}
                   onOpenChange={() => toggleStudent(student.student_id)}
                 >
-                  <div className={`rounded-lg border bg-card/50 overflow-hidden ${isOverdue ? 'border-destructive/40 bg-destructive/5' : 'border-border/50'}`}>
+                  <div className={`rounded-xl border bg-card/50 overflow-hidden transition-all ${isOverdue ? 'border-destructive/40 bg-destructive/5' : 'border-border/50'}`}>
                     <CollapsibleTrigger className="w-full">
                       <div className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 hover:bg-muted/30 transition-colors cursor-pointer">
-                        <div className="flex-1 text-left">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <p className="font-medium text-base">{student.name}</p>
-                            <Badge variant="outline" className={getStatusBadgeClass(student.status)}>
-                              {getStatusDisplayLabel(student.status)}
-                            </Badge>
-                            {isOverdue && (
-                              <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-xs gap-1">
-                                <AlertTriangle className="w-3 h-3" /> Overdue
-                              </Badge>
-                            )}
-                            {lowCredit && (
-                              <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs gap-1">
-                                <AlertTriangle className="w-3 h-3" /> Low Credit
-                              </Badge>
-                            )}
+                        {/* Left: Avatar + Info */}
+                        <div className="flex items-start gap-3 flex-1 text-left">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                            <User className="w-5 h-5 text-primary" />
                           </div>
-                          <div className="flex items-center gap-4 mt-1.5 text-sm text-muted-foreground flex-wrap">
-                            <span className="flex items-center gap-1"><Phone className="w-3 h-3" /> {student.phone}</span>
-                            {programName && <span className="flex items-center gap-1"><BookOpen className="w-3 h-3" /> {programName}</span>}
-                            {student.student_level && <span className="flex items-center gap-1"><GraduationCap className="w-3 h-3" /> {student.student_level}</span>}
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="font-semibold text-base">{student.name}</p>
+                              <Badge variant="outline" className={getStatusBadgeClass(student.status)}>
+                                {getStatusDisplayLabel(student.status)}
+                              </Badge>
+                              {isOverdue && (
+                                <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-xs gap-1">
+                                  <AlertTriangle className="w-3 h-3" /> Overdue
+                                </Badge>
+                              )}
+                              {lowCredit && !isOverdue && (
+                                <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/30 text-xs gap-1">
+                                  <AlertTriangle className="w-3 h-3" /> Low Credit
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-3 mt-1.5 text-sm text-muted-foreground flex-wrap">
+                              <span className="flex items-center gap-1"><Phone className="w-3 h-3" /> {student.phone}</span>
+                              {programName && (
+                                <Badge variant="secondary" className="text-xs font-normal gap-1">
+                                  <GraduationCap className="w-3 h-3" /> {programName}
+                                </Badge>
+                              )}
+                              {student.student_level && (
+                                <Badge variant="secondary" className="text-xs font-normal">Level: {student.student_level}</Badge>
+                              )}
+                            </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-4 flex-wrap">
-                          {/* Next lesson preview */}
+
+                        {/* Right: Metrics */}
+                        <div className="flex items-center gap-3 flex-wrap">
+                          {/* Lessons Progress */}
+                          {lessonStats && lessonStats.total > 0 && (
+                            <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-1.5 min-w-[110px]">
+                              <BookOpen className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                              <div className="flex-1">
+                                <p className="text-xs font-medium">{lessonStats.used}/{lessonStats.total}</p>
+                                <Progress value={lessonProgress} className="h-1 mt-0.5" />
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Next Lesson */}
                           {next && (
-                            <div className="flex items-center gap-1.5 text-sm text-muted-foreground bg-muted/50 rounded-md px-2.5 py-1">
-                              <Calendar className="w-3.5 h-3.5" />
+                            <div className="flex items-center gap-1.5 text-sm text-muted-foreground bg-muted/50 rounded-lg px-2.5 py-1.5">
+                              <Calendar className="w-3.5 h-3.5 shrink-0" />
                               <span>{format(new Date(next.date + 'T00:00:00'), 'MMM d')}</span>
                               <span className="text-xs">•</span>
                               <span>{formatTime12(next.time)}</span>
                             </div>
                           )}
+
+                          {/* Wallet */}
                           <Badge className={`${getWalletColor(wallet)} text-xs gap-1`}>
                             💰 {wallet} lessons
                           </Badge>
