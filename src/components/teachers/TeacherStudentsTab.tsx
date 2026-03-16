@@ -437,15 +437,12 @@ export function TeacherStudentsTab({ students, teacherId }: TeacherStudentsTabPr
                         </TableCell>
                         <TableCell className="text-center">
                           {student.status === 'Active' ? (
-                            <span className={`font-medium ${getWalletColor(wallet)}`}>{wallet}</span>
+                            <WalletBadge balance={wallet} />
                           ) : <span className="text-muted-foreground">—</span>}
                         </TableCell>
                         <TableCell className="text-center hidden md:table-cell">
                           {lessonStats ? (
-                            <div className="flex items-center gap-2 min-w-[90px]">
-                              <span className="text-sm font-medium whitespace-nowrap">{lessonStats.used}/{lessonStats.total}</span>
-                              <Progress value={lessonStats.total > 0 ? (lessonStats.used / lessonStats.total) * 100 : 0} className="h-1.5 flex-1" />
-                            </div>
+                            <LessonsBadge used={lessonStats.used} total={lessonStats.total} />
                           ) : <span className="text-muted-foreground">—</span>}
                         </TableCell>
                         <TableCell className="hidden lg:table-cell">
