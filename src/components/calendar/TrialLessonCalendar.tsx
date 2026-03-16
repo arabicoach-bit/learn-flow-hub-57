@@ -443,7 +443,7 @@ export function TrialLessonCalendar({ teacherId, isAdmin }: TrialLessonCalendarP
                         </TableHead>
                         <TableHead>Result</TableHead>
                         <TableHead>Conversion</TableHead>
-                        <TableHead className="text-center">Notes</TableHead>
+                        <TableHead>Teacher Notes</TableHead>
                         <TableHead className="text-center">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
