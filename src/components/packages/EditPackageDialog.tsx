@@ -26,7 +26,6 @@ export function EditPackageDialog({ package_, open, onOpenChange, onSuccess }: E
     package_type_id: '',
     amount: '',
     lessons_purchased: '',
-    lessons_used: '',
     lesson_duration: '',
     start_date: '',
     payment_status: 'Pending',
@@ -40,15 +39,12 @@ export function EditPackageDialog({ package_, open, onOpenChange, onSuccess }: E
         package_type_id: package_.package_type_id || '',
         amount: package_.amount.toString(),
         lessons_purchased: package_.lessons_purchased.toString(),
-        lessons_used: (package_.lessons_used || 0).toString(),
         lesson_duration: (package_.lesson_duration || '').toString(),
         start_date: package_.start_date || '',
-        payment_status: (package_ as any)
-          .payment_status || 'Pending',
+        payment_status: (package_ as any).payment_status || 'Pending',
         due_date: (package_ as any).due_date || '',
         paid_date: (package_ as any).paid_date
-          ? new Date((package_ as any).paid_date)
-              .toISOString().split('T')[0]
+          ? new Date((package_ as any).paid_date).toISOString().split('T')[0]
           : '',
       });
     }
@@ -64,7 +60,6 @@ export function EditPackageDialog({ package_, open, onOpenChange, onSuccess }: E
           package_type_id: data.package_type_id || null,
           amount: parseFloat(data.amount),
           lessons_purchased: parseInt(data.lessons_purchased),
-          lessons_used: parseInt(data.lessons_used),
           lesson_duration: data.lesson_duration ? parseInt(data.lesson_duration) : null,
           start_date: data.start_date || null,
           payment_status: data.payment_status,
@@ -78,12 +73,20 @@ export function EditPackageDialog({ package_, open, onOpenChange, onSuccess }: E
         .eq('package_id', package_.package_id);
       
       if (error) throw error;
+
+      // Recalculate wallet + package status after any package edit
+      await supabase.rpc('recalculate_student_wallet', { p_student_id: package_.student_id });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['packages'] });
       queryClient.invalidateQueries({ queryKey: ['packages-recent'] });
+      queryClient.invalidateQueries({ queryKey: ['packages-batch-stats'] });
       queryClient.invalidateQueries({ queryKey: ['students'] });
       queryClient.invalidateQueries({ queryKey: ['student'] });
+      queryClient.invalidateQueries({ queryKey: ['student-wallet'] });
+      queryClient.invalidateQueries({ queryKey: ['student-all-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['student-active-packages'] });
+      queryClient.invalidateQueries({ queryKey: ['students-batch-stats'] });
       queryClient.invalidateQueries({ queryKey: ['scheduled-lessons'] });
       queryClient.invalidateQueries({ queryKey: ['teacher-todays-lessons'] });
       queryClient.invalidateQueries({ queryKey: ['teacher-tomorrows-lessons'] });
@@ -177,12 +180,12 @@ export function EditPackageDialog({ package_, open, onOpenChange, onSuccess }: E
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="lessons_used">Lessons Used</Label>
+              <Label>Lessons Used</Label>
               <Input
-                id="lessons_used"
                 type="number"
-                value={formData.lessons_used}
-                onChange={(e) => setFormData({ ...formData, lessons_used: e.target.value })}
+                value={package_?.lessons_used || 0}
+                disabled
+                className="opacity-60"
               />
             </div>
           </div>
