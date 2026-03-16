@@ -13,12 +13,6 @@ import { LessonsBadge } from '@/components/shared/LessonsBadge';
 import { useUpdateStudent, type Student } from '@/hooks/use-students';
 import { useToast } from '@/hooks/use-toast';
 import type { StudentBatchStats } from '@/hooks/use-students-batch-stats';
-import { getStatusBadgeClass, getStatusDisplayLabel, getPaymentStatus, getPaymentStatusBadgeClass } from '@/lib/wallet-utils';
-import { WalletBadge } from '@/components/shared/WalletBadge';
-import { LessonsBadge } from '@/components/shared/LessonsBadge';
-import { useUpdateStudent, type Student } from '@/hooks/use-students';
-import { useToast } from '@/hooks/use-toast';
-import type { StudentBatchStats } from '@/hooks/use-students-batch-stats';
 
 interface StudentTableViewProps {
   students: Student[];
