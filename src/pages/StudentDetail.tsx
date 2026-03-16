@@ -137,8 +137,8 @@ function StudentPackagesTab({
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Card><CardContent className="p-4"><div className="text-xl font-bold text-primary">AED {paidRev.toLocaleString()}</div><div className="text-xs text-muted-foreground">Total Revenue</div></CardContent></Card>
         <Card><CardContent className="p-4"><div className="text-xl font-bold text-amber-500">AED {pendingRev.toLocaleString()}</div><div className="text-xs text-muted-foreground">Pending Payments</div></CardContent></Card>
-        <Card><CardContent className="p-4"><div className="text-xl font-bold text-emerald-500">{runningCnt}</div><div className="text-xs text-muted-foreground">Running</div></CardContent></Card>
-        <Card><CardContent className="p-4"><div className="text-xl font-bold text-muted-foreground">{completedCnt}</div><div className="text-xs text-muted-foreground">Completed</div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="text-xl font-bold text-emerald-500">{runningCnt}</div><div className="text-xs text-muted-foreground">In Progress</div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="text-xl font-bold text-muted-foreground">{completedCnt}</div><div className="text-xs text-muted-foreground">Finished</div></CardContent></Card>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
