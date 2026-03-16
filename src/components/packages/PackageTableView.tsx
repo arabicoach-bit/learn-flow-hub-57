@@ -91,13 +91,11 @@ export function PackageTableView({
                           {pkg.status === 'Active' ? 'In Progress' : 'Finished'}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-center font-medium text-sm">
-                        {used}/{pkg.lessons_purchased}
+                      <TableCell className="text-center">
+                        <LessonsBadge used={used} total={pkg.lessons_purchased} />
                       </TableCell>
                       <TableCell className="text-center">
-                        <span className={remaining <= 2 ? 'text-destructive font-bold' : 'text-emerald-600 font-medium'}>
-                          {remaining}
-                        </span>
+                        <WalletBadge balance={remaining} />
                       </TableCell>
                       <TableCell className="text-center">
                         <div className="flex flex-col items-center gap-0.5">
