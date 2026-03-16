@@ -409,8 +409,8 @@ export default function Teachers() {
         ) : (
           <TeacherCardView
             teachers={filteredTeachers}
-            batchStats={batchStats}
-            isLoading={isLoading}
+            payrollMap={payrollMap}
+            isLoading={isPayrollLoading}
             onEdit={openEditDialog}
             onResetPassword={(t) => { setSelectedTeacher(t); setIsResetPasswordDialogOpen(true); }}
             onToggleActive={handleToggleActive}
