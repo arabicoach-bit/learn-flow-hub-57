@@ -57,16 +57,10 @@ export default function Teachers() {
   const filteredTeachers = useMemo(() => {
     if (!teachers) return [];
     return teachers.filter((teacher) => {
-      const matchesSearch =
-        teacher.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      return teacher.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         teacher.email?.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus =
-        activeTab === 'all' ||
-        (activeTab === 'active' && teacher.is_active !== false) ||
-        (activeTab === 'inactive' && teacher.is_active === false);
-      return matchesSearch && matchesStatus;
     });
-  }, [teachers, searchQuery, activeTab]);
+  }, [teachers, searchQuery]);
 
   // ── Payroll ───────────────────────────────────────────────────────────
   const [payrollFilter, setPayrollFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
