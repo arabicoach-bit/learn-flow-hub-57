@@ -277,7 +277,7 @@ export default function TeacherDetail() {
           </TabsList>
 
           <TabsContent value="students">
-            <TeacherStudentsTab students={teacherStudents} />
+            <TeacherStudentsTab students={teacherStudents} teacherId={id} />
           </TabsContent>
 
           <TabsContent value="payroll">
