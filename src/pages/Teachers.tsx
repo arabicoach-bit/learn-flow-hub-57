@@ -43,7 +43,7 @@ export default function Teachers() {
 
   // Search and filter
   const [searchQuery, setSearchQuery] = useSearchParamState('q', '');
-  const [activeTab, setActiveTab] = useState<'all' | 'active' | 'inactive'>('all');
+  
 
   // Form states
   const [formData, setFormData] = useState({ name: '', phone: '', email: '', rate_per_lesson: '' });
