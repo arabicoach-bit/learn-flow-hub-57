@@ -16,10 +16,34 @@ export function usePackagesBatchStats(packageIds: string[]) {
     queryFn: async () => {
       if (packageIds.length === 0) return {} as Record<string, PackageBatchStats>;
 
-      const { data: lessons } = await supabase
-        .from('scheduled_lessons')
-        .select('package_id, status')
-        .in('package_id', packageIds);
+      // Fetch all lessons in batches to avoid the 1000-row default limit
+      let allLessons: { package_id: string | null; status: string }[] = [];
+      const batchSize = 500;
+      
+      // Also split package IDs into chunks to avoid too-large IN clauses
+      const idChunks: string[][] = [];
+      for (let i = 0; i < packageIds.length; i += batchSize) {
+        idChunks.push(packageIds.slice(i, i + batchSize));
+      }
+
+      for (const chunk of idChunks) {
+        let from = 0;
+        const pageSize = 1000;
+        while (true) {
+          const { data: lessons, error } = await supabase
+            .from('scheduled_lessons')
+            .select('package_id, status')
+            .in('package_id', chunk)
+            .range(from, from + pageSize - 1);
+          
+          if (error) throw error;
+          if (lessons) allLessons = allLessons.concat(lessons);
+          if (!lessons || lessons.length < pageSize) break;
+          from += pageSize;
+        }
+      }
+
+      const lessons = allLessons;
 
       const result: Record<string, PackageBatchStats> = {};
       
