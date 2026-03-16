@@ -606,20 +606,12 @@ export default function TeacherStudents() {
                         <div className="flex items-center gap-2.5 flex-wrap pl-[52px]">
                           {/* Wallet - only for Active */}
                           {isActive && (
-                            <div className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium ${getWalletColor(wallet)}`}>
-                              💰 {wallet} lessons
-                            </div>
+                            <WalletBadge balance={wallet} variant="chip" showLabel />
                           )}
 
                           {/* Lessons Progress */}
                           {lessonStats && lessonStats.total > 0 && (
-                            <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-2.5 py-1.5 min-w-[100px]">
-                              <BookOpen className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                              <div className="flex-1">
-                                <p className="text-xs font-medium">{lessonStats.used}/{lessonStats.total} lessons</p>
-                                <Progress value={lessonProgress} className="h-1 mt-0.5" />
-                              </div>
-                            </div>
+                            <LessonsBadge used={lessonStats.used} total={lessonStats.total} variant="chip" />
                           )}
 
                           {/* Next Lesson - only for Active */}
