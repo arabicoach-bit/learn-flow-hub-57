@@ -51,10 +51,10 @@ export function PackageTableView({
               </TableHeader>
               <TableBody>
                 {packages.map((pkg) => {
-                  const stats = batchStats[pkg.package_id];
-                  const used = stats?.used ?? 0;
-                  const remaining = Math.max(0, pkg.lessons_purchased - used);
-                  const description = (pkg as any).description;
+                   const stats = batchStats[pkg.package_id];
+                   const used = stats?.used ?? 0;
+                   const remaining = stats?.scheduled ?? 0;
+                   const description = (pkg as any).description;
 
                   return (
                     <TableRow key={pkg.package_id}>

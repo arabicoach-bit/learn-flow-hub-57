@@ -75,7 +75,12 @@ export function StudentLessonsView({ studentId, studentName, walletBalance, role
 
   const invalidateStudentData = () => {
     queryClient.invalidateQueries({ queryKey: ['student-all-lessons', studentId] });
+    queryClient.invalidateQueries({ queryKey: ['student-active-packages', studentId] });
+    queryClient.invalidateQueries({ queryKey: ['student-wallet', studentId] });
     queryClient.invalidateQueries({ queryKey: ['scheduled-lessons'] });
+    queryClient.invalidateQueries({ queryKey: ['packages'] });
+    queryClient.invalidateQueries({ queryKey: ['packages-batch-stats'] });
+    queryClient.invalidateQueries({ queryKey: ['students-batch-stats'] });
     queryClient.invalidateQueries({ queryKey: ['admin-teacher-today-lessons'] });
     queryClient.invalidateQueries({ queryKey: ['teacher-todays-lessons'] });
     queryClient.invalidateQueries({ queryKey: ['teacher-week-lessons'] });
