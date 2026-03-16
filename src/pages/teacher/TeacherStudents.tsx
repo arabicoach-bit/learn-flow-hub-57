@@ -21,7 +21,7 @@ import { StudentInfoView } from '@/components/student/StudentInfoView';
 import {
   GraduationCap, Search, Phone, ChevronDown, User, BookOpen,
   AlertTriangle, Users, UserCheck, PauseCircle, UserX, TrendingUp,
-  LayoutGrid, TableIcon, Calendar, Clock, RefreshCw, ArrowUpDown,
+  LayoutGrid, TableIcon, Calendar, CalendarDays, Clock, RefreshCw, ArrowUpDown,
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
