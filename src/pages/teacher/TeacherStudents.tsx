@@ -417,8 +417,7 @@ export default function TeacherStudents() {
               const isExpanded = expandedStudents.has(student.student_id);
               const programName = getProgramName(student.program_id);
               const wallet = student.wallet_balance || 0;
-              const isOverdue = student.status === 'Active' && wallet <= 0;
-              const lowCredit = wallet > 0 && wallet <= 2;
+              const isLowCredit = student.status === 'Active' && wallet <= 2;
               const next = nextLessonMap.get(student.student_id);
               const lessonStats = lessonStatsMap.get(student.student_id);
               const lessonProgress = lessonStats && lessonStats.total > 0 ? (lessonStats.used / lessonStats.total) * 100 : 0;
@@ -429,7 +428,7 @@ export default function TeacherStudents() {
                   open={isExpanded}
                   onOpenChange={() => toggleStudent(student.student_id)}
                 >
-                  <div className={`rounded-xl border bg-card/50 overflow-hidden transition-all ${isOverdue ? 'border-destructive/40 bg-destructive/5' : 'border-border/50'}`}>
+                  <div className={`rounded-xl border bg-card/50 overflow-hidden transition-all ${isLowCredit ? 'border-amber-500/40 bg-amber-500/5' : 'border-border/50'}`}>
                     <CollapsibleTrigger className="w-full">
                       <div className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 hover:bg-muted/30 transition-colors cursor-pointer">
                         {/* Left: Avatar + Info */}
@@ -443,12 +442,7 @@ export default function TeacherStudents() {
                               <Badge variant="outline" className={getStatusBadgeClass(student.status)}>
                                 {getStatusDisplayLabel(student.status)}
                               </Badge>
-                              {isOverdue && (
-                                <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-xs gap-1">
-                                  <AlertTriangle className="w-3 h-3" /> Overdue
-                                </Badge>
-                              )}
-                              {lowCredit && !isOverdue && (
+                              {isLowCredit && (
                                 <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/30 text-xs gap-1">
                                   <AlertTriangle className="w-3 h-3" /> Low Credit
                                 </Badge>
