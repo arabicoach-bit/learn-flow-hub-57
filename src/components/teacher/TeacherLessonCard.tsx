@@ -64,12 +64,7 @@ export function TeacherLessonCard({ lesson, onLessonMarked, showDate, date }: Te
     return formatTime(`${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`);
   };
 
-  const getWalletBadgeColor = (balance: number) => {
-    if (balance >= 5) return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
-    if (balance >= 3) return 'bg-lime-500/20 text-lime-400 border-lime-500/30';
-    if (balance >= 1) return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
-    return 'bg-red-500/20 text-red-400 border-red-500/30';
-  };
+  // Removed local getWalletBadgeColor — using shared WalletBadge instead
 
   const handleSaveEdit = async () => {
     setIsSaving(true);
