@@ -24,18 +24,21 @@ const items = [
 export function PackageStatsBar(props: PackageStatsBarProps) {
   return (
     <div className="flex items-center gap-1 p-2 rounded-lg bg-card border overflow-x-auto">
-      {items.map(({ key, label, icon: Icon, color, isCurrency }) => (
-        <div
-          key={key}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-muted/40 min-w-fit"
-        >
-          <Icon className={`w-3.5 h-3.5 ${color}`} />
-          <span className="text-xs text-muted-foreground">{label}</span>
-          <span className="text-sm font-semibold">
-            {isCurrency ? formatCurrency(props[key]) : props[key]}
-          </span>
-        </div>
-      ))}
+      {items.map((item) => {
+        const { key, label, icon: Icon, color } = item;
+        const val = props[key];
+        const display = 'isCurrency' in item && item.isCurrency ? formatCurrency(val) : val;
+        return (
+          <div
+            key={key}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-muted/40 min-w-fit"
+          >
+            <Icon className={`w-3.5 h-3.5 ${color}`} />
+            <span className="text-xs text-muted-foreground">{label}</span>
+            <span className="text-sm font-semibold">{display}</span>
+          </div>
+        );
+      })}
     </div>
   );
 }

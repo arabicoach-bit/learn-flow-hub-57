@@ -208,12 +208,8 @@ export function PackageTableView({
                                     <h4 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Lesson Breakdown</h4>
                                     <div className="space-y-1.5">
                                       <div className="flex justify-between text-sm">
-                                        <span className="text-muted-foreground">Completed</span>
-                                        <span className="font-medium text-green-500">{stats?.completed ?? 0}</span>
-                                      </div>
-                                      <div className="flex justify-between text-sm">
-                                        <span className="text-muted-foreground">Absent</span>
-                                        <span className="font-medium text-red-500">{stats?.absent ?? 0}</span>
+                                        <span className="text-muted-foreground">Used (Completed + Absent)</span>
+                                        <span className="font-medium">{used}</span>
                                       </div>
                                       <div className="flex justify-between text-sm">
                                         <span className="text-muted-foreground">Scheduled</span>
