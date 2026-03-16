@@ -478,9 +478,9 @@ export function TrialLessonCalendar({ teacherId, isAdmin }: TrialLessonCalendarP
                             <TableCell>{getStatusBadge(lesson.status)}</TableCell>
                             <TableCell>{getResultBadge(lesson.trial_result)}</TableCell>
                             <TableCell>{getConversionBadge(lesson.conversion_status)}</TableCell>
-                            <TableCell className="text-center">
+                            <TableCell className="max-w-[200px]">
                               {lesson.notes ? (
-                                <span title={lesson.notes}><MessageSquare className="w-4 h-4 text-muted-foreground mx-auto" /></span>
+                                <p className="text-sm text-muted-foreground truncate" title={lesson.notes}>{lesson.notes}</p>
                               ) : (
                                 <span className="text-muted-foreground text-xs">-</span>
                               )}
