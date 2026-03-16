@@ -119,7 +119,7 @@ function StudentPackagesTab({
     }
     const matchStatus =
       pkgStatusFilter === 'all'
-      || (pkgStatusFilter === 'Running' && (pkg.status === 'Active' || (pkg.status as string) === 'Running'))
+      || (pkgStatusFilter === 'Active' && pkg.status === 'Active')
       || (pkgStatusFilter === 'Completed' && pkg.status === 'Completed');
     const matchPayment =
       pkgPaymentFilter === 'all'
@@ -129,7 +129,7 @@ function StudentPackagesTab({
 
   const paidRev = fp.filter(p => p.payment_status === 'Paid').reduce((s,p) => s + (p.amount||0), 0);
   const pendingRev = fp.filter(p => p.payment_status !== 'Paid').reduce((s,p) => s + (p.amount||0), 0);
-  const runningCnt = fp.filter(p => p.status === 'Active' || (p.status as string) === 'Running').length;
+  const runningCnt = fp.filter(p => p.status === 'Active').length;
   const completedCnt = fp.filter(p => p.status === 'Completed').length;
 
   return (
