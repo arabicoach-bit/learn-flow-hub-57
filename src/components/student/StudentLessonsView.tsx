@@ -17,7 +17,7 @@ import type { LessonCardData } from '@/components/schedule/LessonCard';
 import { useDeleteScheduledLesson } from '@/hooks/use-scheduled-lessons';
 import { useStudentLessonStats } from '@/hooks/use-student-lesson-stats';
 import { toast } from 'sonner';
-import { Loader2, AlertTriangle, Pencil } from 'lucide-react';
+import { Loader2, AlertTriangle } from 'lucide-react';
 import { YearMonthFilter, getDefaultFilter, getFilterDateRange, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
 
 interface StudentLessonsViewProps {
