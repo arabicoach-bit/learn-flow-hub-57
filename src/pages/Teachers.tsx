@@ -1,12 +1,13 @@
 import { useState, useMemo } from 'react';
-import { UserPlus, Mail, Key, Edit, Trash2, Download } from 'lucide-react';
+import { UserPlus, Mail, Key, Edit, Trash2, Download, Users } from 'lucide-react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useTeachers, useUpdateTeacher, Teacher } from '@/hooks/use-teachers';
 import { TeacherFiltersBar } from '@/components/teachers/TeacherFiltersBar';
 import { UnifiedTeacherStats } from '@/components/teachers/UnifiedTeacherStats';
 import { UnifiedTeacherTable } from '@/components/teachers/UnifiedTeacherTable';
 import { TeacherCardView } from '@/components/teachers/TeacherCardView';
-
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -42,7 +43,7 @@ export default function Teachers() {
 
   // Search and filter
   const [searchQuery, setSearchQuery] = useSearchParamState('q', '');
-  const [statusFilter, setStatusFilter] = useSearchParamState('status', 'all') as [string, (v: string) => void];
+  const [activeTab, setActiveTab] = useState<'all' | 'active' | 'inactive'>('all');
 
   // Form states
   const [formData, setFormData] = useState({ name: '', phone: '', email: '', rate_per_lesson: '' });
@@ -60,12 +61,12 @@ export default function Teachers() {
         teacher.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         teacher.email?.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus =
-        statusFilter === 'all' ||
-        (statusFilter === 'active' && teacher.is_active !== false) ||
-        (statusFilter === 'inactive' && teacher.is_active === false);
+        activeTab === 'all' ||
+        (activeTab === 'active' && teacher.is_active !== false) ||
+        (activeTab === 'inactive' && teacher.is_active === false);
       return matchesSearch && matchesStatus;
     });
-  }, [teachers, searchQuery, statusFilter]);
+  }, [teachers, searchQuery, activeTab]);
 
   // ── Payroll ───────────────────────────────────────────────────────────
   const [payrollFilter, setPayrollFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
@@ -377,45 +378,59 @@ export default function Teachers() {
         <TeacherFiltersBar
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
-          statusFilter={statusFilter as 'all' | 'active' | 'inactive'}
-          onStatusFilterChange={setStatusFilter}
           viewMode={viewMode as 'table' | 'card'}
           onViewModeChange={setViewMode}
           teacherCount={teachers?.length ?? 0}
         />
 
-        {/* Unified Table / Card View */}
-        {viewMode === 'table' ? (
-          <UnifiedTeacherTable
-            teachers={filteredTeachers}
-            payrollMap={payrollMap}
-            isLoading={isPayrollLoading}
-            editingBonusId={editingBonus}
-            bonusValue={bonusValue}
-            onBonusValueChange={setBonusValue}
-            onStartEditBonus={(pr) => {
-              setEditingBonus(pr.teacher_id);
-              setBonusValue(pr.bonus.toString());
-              setBonusNotes(pr.bonus_notes || '');
-            }}
-            onSaveBonus={saveBonus}
-            onCancelEditBonus={() => setEditingBonus(null)}
-            onEdit={openEditDialog}
-            onResetPassword={(t) => { setSelectedTeacher(t); setIsResetPasswordDialogOpen(true); }}
-            onToggleActive={handleToggleActive}
-            onDelete={(t) => { setSelectedTeacher(t); setIsDeleteDialogOpen(true); }}
-          />
-        ) : (
-          <TeacherCardView
-            teachers={filteredTeachers}
-            payrollMap={payrollMap}
-            isLoading={isPayrollLoading}
-            onEdit={openEditDialog}
-            onResetPassword={(t) => { setSelectedTeacher(t); setIsResetPasswordDialogOpen(true); }}
-            onToggleActive={handleToggleActive}
-            onDelete={(t) => { setSelectedTeacher(t); setIsDeleteDialogOpen(true); }}
-          />
-        )}
+        {/* Tabs + Content */}
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'all' | 'active' | 'inactive')}>
+          <TabsList className="bg-muted/50 h-9">
+            <TabsTrigger value="all" className="text-xs h-7 px-3">
+              All <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4">{teachers?.length ?? 0}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="active" className="text-xs h-7 px-3">
+              Active <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-emerald-500/20 text-emerald-500">{teachers?.filter(t => t.is_active !== false).length ?? 0}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="inactive" className="text-xs h-7 px-3">
+              Inactive <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-amber-500/20 text-amber-500">{teachers?.filter(t => t.is_active === false).length ?? 0}</Badge>
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value={activeTab} className="mt-3">
+            {viewMode === 'table' ? (
+              <UnifiedTeacherTable
+                teachers={filteredTeachers}
+                payrollMap={payrollMap}
+                isLoading={isPayrollLoading}
+                editingBonusId={editingBonus}
+                bonusValue={bonusValue}
+                onBonusValueChange={setBonusValue}
+                onStartEditBonus={(pr) => {
+                  setEditingBonus(pr.teacher_id);
+                  setBonusValue(pr.bonus.toString());
+                  setBonusNotes(pr.bonus_notes || '');
+                }}
+                onSaveBonus={saveBonus}
+                onCancelEditBonus={() => setEditingBonus(null)}
+                onEdit={openEditDialog}
+                onResetPassword={(t) => { setSelectedTeacher(t); setIsResetPasswordDialogOpen(true); }}
+                onToggleActive={handleToggleActive}
+                onDelete={(t) => { setSelectedTeacher(t); setIsDeleteDialogOpen(true); }}
+              />
+            ) : (
+              <TeacherCardView
+                teachers={filteredTeachers}
+                payrollMap={payrollMap}
+                isLoading={isPayrollLoading}
+                onEdit={openEditDialog}
+                onResetPassword={(t) => { setSelectedTeacher(t); setIsResetPasswordDialogOpen(true); }}
+                onToggleActive={handleToggleActive}
+                onDelete={(t) => { setSelectedTeacher(t); setIsDeleteDialogOpen(true); }}
+              />
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* ── Dialogs ────────────────────────────────────────────────────── */}
