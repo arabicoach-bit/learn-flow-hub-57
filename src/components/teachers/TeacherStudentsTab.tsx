@@ -327,6 +327,7 @@ export function TeacherStudentsTab({ students, teacherId }: TeacherStudentsTabPr
                     </button>
                   </TableHead>
                   <TableHead className="text-center hidden md:table-cell">Lessons</TableHead>
+                  <TableHead className="hidden lg:table-cell">Schedule</TableHead>
                   <TableHead className="hidden sm:table-cell">
                     <button className="inline-flex items-center gap-1 hover:text-foreground" onClick={() => toggleSort('nextLesson')}>
                       Next Lesson <ArrowUpDown className={`w-3 h-3 ${sortField === 'nextLesson' ? 'text-primary' : 'text-muted-foreground/50'}`} />
