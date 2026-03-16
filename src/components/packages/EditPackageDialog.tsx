@@ -26,7 +26,6 @@ export function EditPackageDialog({ package_, open, onOpenChange, onSuccess }: E
     package_type_id: '',
     amount: '',
     lessons_purchased: '',
-    lessons_used: '',
     lesson_duration: '',
     start_date: '',
     payment_status: 'Pending',
