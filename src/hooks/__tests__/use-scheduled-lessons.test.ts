@@ -62,84 +62,99 @@ describe('Lesson Status System', () => {
     });
   });
 
-  describe('Wallet Calculation (DB Source of Truth)', () => {
-    // Wallet = total_purchased - (completed + absent)
-    const calcWallet = (purchased: number, completed: number, absent: number) => {
+  describe('Single Source of Truth: lessons_purchased = total rows', () => {
+    // Core invariant: lessons_purchased is ALWAYS equal to total lesson rows
+    // Wallet = scheduled count
+    // Used = completed + absent count
+    // Total = scheduled + completed + absent = lessons_purchased
+
+    const calcFromRows = (scheduled: number, completed: number, absent: number) => {
       const used = completed + absent;
-      const wallet = Math.max(0, purchased - used);
-      const debt = used > purchased ? used - purchased : 0;
-      return { wallet, debt };
+      const total = scheduled + completed + absent; // = lessons_purchased
+      const wallet = scheduled;
+      return { wallet, used, total };
     };
 
-    it('completed lesson should deduct 1 from wallet', () => {
-      const { wallet, debt } = calcWallet(5, 1, 0);
-      expect(wallet).toBe(4);
-      expect(debt).toBe(0);
-    });
-
-    it('absent lesson should also deduct 1 from wallet', () => {
-      const { wallet, debt } = calcWallet(5, 0, 1);
-      expect(wallet).toBe(4);
-      expect(debt).toBe(0);
-    });
-
-    it('both completed and absent deduct from wallet', () => {
-      const { wallet, debt } = calcWallet(10, 3, 2);
+    it('wallet = scheduled count', () => {
+      const { wallet } = calcFromRows(5, 0, 0);
       expect(wallet).toBe(5);
-      expect(debt).toBe(0);
     });
 
-    it('wallet should never go negative, excess becomes debt', () => {
-      const { wallet, debt } = calcWallet(5, 4, 3);
-      expect(wallet).toBe(0);
-      expect(debt).toBe(2);
+    it('used = completed + absent', () => {
+      const { used } = calcFromRows(3, 4, 1);
+      expect(used).toBe(5);
     });
 
-    it('scheduled lesson should NOT affect wallet', () => {
-      // scheduled lessons are not counted in used
-      const { wallet, debt } = calcWallet(5, 0, 0);
-      expect(wallet).toBe(5);
-      expect(debt).toBe(0);
+    it('total = all rows = lessons_purchased', () => {
+      const { total } = calcFromRows(3, 4, 1);
+      expect(total).toBe(8);
     });
 
-    it('adding package should increase wallet by N', () => {
-      const { wallet, debt } = calcWallet(10 + 8, 3, 2);
-      expect(wallet).toBe(13);
-      expect(debt).toBe(0);
+    it('invariant: wallet + used = total always', () => {
+      const { wallet, used, total } = calcFromRows(3, 4, 1);
+      expect(wallet + used).toBe(total);
     });
 
-    it('adding package with debt should cover debt', () => {
-      // Before: purchased=5, used=8 → debt=3
-      // After adding 8: purchased=13, used=8 → wallet=5
-      const { wallet, debt } = calcWallet(13, 5, 3);
-      expect(wallet).toBe(5);
-      expect(debt).toBe(0);
+    it('completing a lesson: wallet decreases, used increases, total unchanged', () => {
+      const before = calcFromRows(5, 3, 0);
+      // One scheduled → completed
+      const after = calcFromRows(4, 4, 0);
+      expect(after.wallet).toBe(before.wallet - 1);
+      expect(after.used).toBe(before.used + 1);
+      expect(after.total).toBe(before.total); // total unchanged
     });
 
-    it('deleting completed lesson recalculates wallet up', () => {
-      // Before delete: purchased=5, completed=3, absent=1 → wallet=1
-      const before = calcWallet(5, 3, 1);
-      expect(before.wallet).toBe(1);
-      // After delete completed: purchased=5, completed=2, absent=1 → wallet=2
-      const after = calcWallet(5, 2, 1);
-      expect(after.wallet).toBe(2);
+    it('marking absent: wallet decreases, used increases, total unchanged', () => {
+      const before = calcFromRows(5, 3, 0);
+      const after = calcFromRows(4, 3, 1);
+      expect(after.wallet).toBe(before.wallet - 1);
+      expect(after.used).toBe(before.used + 1);
+      expect(after.total).toBe(before.total);
     });
 
-    it('deleting scheduled lesson does not change wallet', () => {
-      const before = calcWallet(5, 2, 1);
-      const after = calcWallet(5, 2, 1); // same - scheduled not counted
-      expect(after.wallet).toBe(before.wallet);
+    it('adding a scheduled lesson: wallet increases, total increases', () => {
+      const before = calcFromRows(5, 3, 0);
+      const after = calcFromRows(6, 3, 0);
+      expect(after.wallet).toBe(before.wallet + 1);
+      expect(after.total).toBe(before.total + 1);
     });
 
-    it('deleting absent lesson recalculates wallet up', () => {
-      const before = calcWallet(5, 2, 2);
-      expect(before.wallet).toBe(1);
-      const after = calcWallet(5, 2, 1);
-      expect(after.wallet).toBe(2);
+    it('deleting a scheduled lesson: wallet decreases, total decreases', () => {
+      const before = calcFromRows(5, 3, 0);
+      const after = calcFromRows(4, 3, 0);
+      expect(after.wallet).toBe(before.wallet - 1);
+      expect(after.total).toBe(before.total - 1);
+    });
+
+    it('reverting completed to scheduled: wallet increases, used decreases, total unchanged', () => {
+      const before = calcFromRows(2, 6, 0);
+      const after = calcFromRows(3, 5, 0);
+      expect(after.wallet).toBe(before.wallet + 1);
+      expect(after.used).toBe(before.used - 1);
+      expect(after.total).toBe(before.total);
+    });
+
+    it('lessons display format: used / total', () => {
+      const { used, total } = calcFromRows(3, 4, 1);
+      expect(`${used}/${total}`).toBe('5/8');
     });
   });
 
-  describe('Status Thresholds', () => {
+  describe('Package Status Derived from Scheduled Count', () => {
+    const getPackageStatus = (scheduled: number) =>
+      scheduled > 0 ? 'In Progress' : 'Finished';
+
+    it('scheduled > 0 → In Progress', () => {
+      expect(getPackageStatus(1)).toBe('In Progress');
+      expect(getPackageStatus(5)).toBe('In Progress');
+    });
+
+    it('scheduled = 0 → Finished', () => {
+      expect(getPackageStatus(0)).toBe('Finished');
+    });
+  });
+
+  describe('Student Status Thresholds', () => {
     const getStatus = (w: number, d: number) =>
       w >= 1 ? 'Active' : d >= 2 ? 'Left' : 'Temporary Stop';
 
@@ -156,15 +171,6 @@ describe('Lesson Status System', () => {
     it('wallet 0, debt < 2 → Temporary Stop', () => {
       expect(getStatus(0, 0)).toBe('Temporary Stop');
       expect(getStatus(0, 1)).toBe('Temporary Stop');
-    });
-  });
-
-  describe('Overdue Display', () => {
-    it('should show Overdue when wallet <= 0', () => {
-      const getLabel = (w: number) => w <= 0 ? 'Overdue' : `${w}`;
-      expect(getLabel(0)).toBe('Overdue');
-      expect(getLabel(-1)).toBe('Overdue');
-      expect(getLabel(1)).toBe('1');
     });
   });
 });
