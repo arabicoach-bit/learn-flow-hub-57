@@ -1,9 +1,11 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Search, UserCheck, PauseCircle, UserX, Users, TrendingUp, AlertTriangle,
   ChevronRight, ChevronDown, Pencil, Eye, MessageCircle, Phone, BookOpen,
-  LayoutGrid, TableIcon, Calendar, Clock, User, ArrowUpDown, GraduationCap,
+  LayoutGrid, TableIcon, Calendar, CalendarDays, Clock, User, ArrowUpDown, GraduationCap,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
