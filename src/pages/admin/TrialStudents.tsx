@@ -2,13 +2,14 @@ import { useState, useMemo } from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Users, Loader2, Download } from 'lucide-react';
 import { useTrialStudents, useUpdateTrialStudent, useDeleteTrialStudent, type TrialStudent } from '@/hooks/use-trial-students';
 import { useTeachers } from '@/hooks/use-teachers';
 import { AddTrialStudentForm } from '@/components/trial/AddTrialStudentForm';
 import { TrialStudentCard } from '@/components/trial/TrialStudentCard';
 import { TrialTableView } from '@/components/trial/TrialTableView';
-import { TrialStatsCards } from '@/components/trial/TrialStatsCards';
+import { TrialStatsBar } from '@/components/trial/TrialStatsBar';
 import { TrialFiltersBar } from '@/components/trial/TrialFiltersBar';
 import { type TrialSortOption } from '@/components/trial/TrialFiltersBar';
 import { EditTrialStudentDialog } from '@/components/trial/EditTrialStudentDialog';
@@ -22,6 +23,8 @@ type TrialStatus = Database['public']['Enums']['trial_status'];
 type TrialResult = Database['public']['Enums']['trial_result'];
 type TrialConversionStatus = 'Pending' | 'Converted' | 'Lost';
 
+type TabValue = 'all' | 'pending' | 'completed' | 'converted' | 'lost';
+
 export default function TrialStudents() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<TrialStatus | 'all'>('all');
@@ -34,6 +37,7 @@ export default function TrialStudents() {
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<TrialStudent | null>(null);
   const [convertingStudent, setConvertingStudent] = useState<TrialStudent | null>(null);
+  const [activeTab, setActiveTab] = useState<TabValue>('all');
   const { toast } = useToast();
 
   const { data: teachers } = useTeachers();
@@ -46,7 +50,7 @@ export default function TrialStudents() {
 
   const { startDate: filterStart, endDate: filterEnd } = getFilterDateRange(dateFilter);
 
-  const filteredStudents = useMemo(() => {
+  const baseFiltered = useMemo(() => {
     if (!trialStudents) return [];
     return trialStudents.filter(s => {
       if (filterStart && filterEnd) {
@@ -69,14 +73,33 @@ export default function TrialStudents() {
     });
   }, [trialStudents, filterStart, filterEnd, teacherFilter, conversionFilter, resultFilter, sortBy]);
 
+  // Tab-filtered list
+  const filteredStudents = useMemo(() => {
+    if (activeTab === 'all') return baseFiltered;
+    if (activeTab === 'pending') return baseFiltered.filter(s => s.conversion_status === 'Pending');
+    if (activeTab === 'completed') return baseFiltered.filter(s => s.status === 'Completed' && s.conversion_status === 'Pending');
+    if (activeTab === 'converted') return baseFiltered.filter(s => s.conversion_status === 'Converted');
+    if (activeTab === 'lost') return baseFiltered.filter(s => s.conversion_status === 'Lost');
+    return baseFiltered;
+  }, [baseFiltered, activeTab]);
+
+  // Stats based on baseFiltered (not tab-filtered)
   const stats = {
-    total: filteredStudents.length,
-    scheduled: filteredStudents.filter(s => s.status === 'Scheduled').length,
-    completed: filteredStudents.filter(s => s.status === 'Completed').length,
-    absent: filteredStudents.filter(s => s.status === 'Absent').length,
-    converted: filteredStudents.filter(s => s.conversion_status === 'Converted').length,
-    pending: filteredStudents.filter(s => s.conversion_status === 'Pending').length,
-    lost: filteredStudents.filter(s => s.conversion_status === 'Lost').length,
+    total: baseFiltered.length,
+    scheduled: baseFiltered.filter(s => s.status === 'Scheduled').length,
+    completed: baseFiltered.filter(s => s.status === 'Completed').length,
+    absent: baseFiltered.filter(s => s.status === 'Absent').length,
+    converted: baseFiltered.filter(s => s.conversion_status === 'Converted').length,
+    pending: baseFiltered.filter(s => s.conversion_status === 'Pending').length,
+    lost: baseFiltered.filter(s => s.conversion_status === 'Lost').length,
+  };
+
+  const tabCounts = {
+    all: baseFiltered.length,
+    pending: stats.pending,
+    completed: baseFiltered.filter(s => s.status === 'Completed' && s.conversion_status === 'Pending').length,
+    converted: stats.converted,
+    lost: stats.lost,
   };
 
   const conversionRate = (stats.converted + stats.lost) > 0
@@ -160,29 +183,88 @@ export default function TrialStudents() {
     toast({ title: 'Exported successfully!' });
   };
 
+  const renderContent = (students: TrialStudent[]) => {
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      );
+    }
+
+    if (students.length === 0) {
+      return (
+        <Card className="bg-card">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Users className="w-12 h-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No trial students found</h3>
+            <p className="text-muted-foreground text-center mb-4">
+              {search || statusFilter !== 'all' || conversionFilter !== 'all' || resultFilter !== 'all'
+                ? 'Try adjusting your filters'
+                : 'Add your first trial student to get started'}
+            </p>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    if (viewMode === 'table') {
+      return (
+        <TrialTableView
+          students={students}
+          onUpdateStatus={handleUpdateStatus}
+          onUpdateConversion={handleUpdateConversion}
+          onUpdateResult={handleUpdateResult}
+          onUpdateFollowUp={handleUpdateFollowUp}
+          onUpdateHandledBy={handleUpdateHandledBy}
+          onEdit={setEditingStudent}
+          onConvert={setConvertingStudent}
+          onDelete={handleDelete}
+        />
+      );
+    }
+
+    return (
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {students.map(student => (
+          <TrialStudentCard
+            key={student.trial_id}
+            student={student}
+            onUpdateStatus={handleUpdateStatus}
+            onUpdateConversion={handleUpdateConversion}
+            onUpdateResult={handleUpdateResult}
+            onEdit={setEditingStudent}
+            onConvert={setConvertingStudent}
+            onDelete={handleDelete}
+          />
+        ))}
+      </div>
+    );
+  };
+
   return (
     <AdminLayout>
-      <div className="space-y-6 animate-fade-in">
+      <div className="space-y-4 animate-fade-in">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-display font-bold">Trial Students</h1>
-            <p className="text-muted-foreground">
-              Manage trial lesson students with 30-minute sessions and 50/50 payment split
+            <p className="text-muted-foreground text-sm">
+              Manage trial lessons · 30-min sessions · 50/50 payment split
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleExport}>
-              <Download className="w-4 h-4 mr-2" />Export Excel
+            <Button variant="outline" size="sm" onClick={handleExport}>
+              <Download className="w-4 h-4 mr-1.5" />Export
             </Button>
-            <Button onClick={() => setIsAddFormOpen(true)}>
-              <Plus className="w-4 h-4 mr-2" />Add Trial Student
+            <Button size="sm" onClick={() => setIsAddFormOpen(true)}>
+              <Plus className="w-4 h-4 mr-1.5" />Add Trial
             </Button>
           </div>
         </div>
 
-        {/* Stats */}
-        <TrialStatsCards stats={stats} conversionRate={conversionRate} />
+        {/* Compact Stats */}
+        <TrialStatsBar stats={stats} conversionRate={conversionRate} />
 
         {/* Filters */}
         <TrialFiltersBar
@@ -197,53 +279,30 @@ export default function TrialStudents() {
           teachers={teachers}
         />
 
-        {/* Content */}
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          </div>
-        ) : filteredStudents.length > 0 ? (
-          viewMode === 'table' ? (
-            <TrialTableView
-              students={filteredStudents}
-              onUpdateStatus={handleUpdateStatus}
-              onUpdateConversion={handleUpdateConversion}
-              onUpdateResult={handleUpdateResult}
-              onUpdateFollowUp={handleUpdateFollowUp}
-              onUpdateHandledBy={handleUpdateHandledBy}
-              onEdit={setEditingStudent}
-              onConvert={setConvertingStudent}
-              onDelete={handleDelete}
-            />
-          ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredStudents.map(student => (
-                <TrialStudentCard
-                  key={student.trial_id}
-                  student={student}
-                  onUpdateStatus={handleUpdateStatus}
-                  onUpdateConversion={handleUpdateConversion}
-                  onUpdateResult={handleUpdateResult}
-                  onEdit={setEditingStudent}
-                  onConvert={setConvertingStudent}
-                  onDelete={handleDelete}
-                />
-              ))}
-            </div>
-          )
-        ) : (
-          <Card className="bg-card">
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Users className="w-12 h-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No trial students found</h3>
-              <p className="text-muted-foreground text-center mb-4">
-                {search || statusFilter !== 'all' || conversionFilter !== 'all' || resultFilter !== 'all'
-                  ? 'Try adjusting your filters'
-                  : 'Add your first trial student to get started'}
-              </p>
-            </CardContent>
-          </Card>
-        )}
+        {/* Tabs + Content */}
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)}>
+          <TabsList className="bg-muted/50 h-9">
+            <TabsTrigger value="all" className="text-xs h-7 px-3">
+              All <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4">{tabCounts.all}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="pending" className="text-xs h-7 px-3">
+              Pending <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-amber-500/20 text-amber-400">{tabCounts.pending}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="completed" className="text-xs h-7 px-3">
+              Awaiting <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-blue-500/20 text-blue-400">{tabCounts.completed}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="converted" className="text-xs h-7 px-3">
+              Converted <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-emerald-500/20 text-emerald-400">{tabCounts.converted}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="lost" className="text-xs h-7 px-3">
+              Lost <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-red-500/20 text-red-400">{tabCounts.lost}</Badge>
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value={activeTab} className="mt-3">
+            {renderContent(filteredStudents)}
+          </TabsContent>
+        </Tabs>
 
         <AddTrialStudentForm open={isAddFormOpen} onOpenChange={setIsAddFormOpen} />
         <EditTrialStudentDialog student={editingStudent} open={!!editingStudent} onOpenChange={(open) => !open && setEditingStudent(null)} />
