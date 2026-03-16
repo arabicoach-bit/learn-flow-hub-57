@@ -28,6 +28,8 @@ import { Student, useUpdateStudent } from '@/hooks/use-students';
 import { usePrograms } from '@/hooks/use-programs';
 import { useScheduledLessons } from '@/hooks/use-scheduled-lessons';
 import { getWalletColor, getStatusDisplayLabel } from '@/lib/wallet-utils';
+import { WalletBadge } from '@/components/shared/WalletBadge';
+import { LessonsBadge } from '@/components/shared/LessonsBadge';
 import { toast as sonnerToast } from 'sonner';
 import { format } from 'date-fns';
 
