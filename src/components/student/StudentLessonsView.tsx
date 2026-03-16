@@ -11,7 +11,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from '@/components/ui/alert-dialog';
 import { WeeklyScheduleCard } from '@/components/schedule/WeeklyScheduleCard';
-import { EditScheduleDialog } from '@/components/schedule/EditScheduleDialog';
+
 import { LessonCard } from '@/components/schedule/LessonCard';
 import type { LessonCardData } from '@/components/schedule/LessonCard';
 import { useDeleteScheduledLesson } from '@/hooks/use-scheduled-lessons';
