@@ -220,14 +220,6 @@ export function StudentLessonsView({ studentId, studentName, walletBalance, role
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Edit Schedule Dialog (admin only) */}
-      {role === 'admin' && (
-        <EditScheduleDialog
-          studentId={studentId}
-          open={isEditScheduleOpen}
-          onOpenChange={setIsEditScheduleOpen}
-        />
-      )}
     </div>
   );
 }
