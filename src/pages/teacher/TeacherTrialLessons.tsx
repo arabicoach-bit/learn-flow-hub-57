@@ -7,6 +7,7 @@ import { format, addDays, isToday as isTodayFn } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Calendar } from '@/components/ui/calendar';
@@ -14,10 +15,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { YearMonthFilter, getFilterDateRange, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
 import { TrialLessonCalendarCard, type TrialLessonCalendarData } from '@/components/schedule/TrialLessonCalendarCard';
+import { toast } from 'sonner';
+import { invalidateAllTrialCaches } from '@/lib/trial-cache-utils';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Users, Clock, Check, X, CalendarDays, Search,
-  AlertCircle, Sunrise, Sun, ListFilter
+  AlertCircle, Sunrise, Sun, ListFilter, TrendingUp,
+  CheckCircle, XCircle, Loader2, ArrowUpDown, MessageSquare,
 } from 'lucide-react';
+
+type TrialLesson = TrialLessonCalendarData & { conversion_status?: string; trial_result?: string | null };
 
 function useTeacherTrialData(teacherId: string, startDate: string | null, endDate: string | null) {
   return useQuery({
@@ -68,7 +75,7 @@ function useTeacherTrialData(teacherId: string, startDate: string | null, endDat
         parent_guardian_name: lesson.trial_students?.parent_guardian_name,
         conversion_status: lesson.trial_students?.conversion_status,
         trial_result: lesson.trial_students?.trial_result,
-      })) as (TrialLessonCalendarData & { conversion_status?: string; trial_result?: string })[];
+      })) as TrialLesson[];
     },
     enabled: !!teacherId,
     refetchInterval: 60000,
@@ -117,15 +124,36 @@ function getResultBadge(result?: string | null) {
   return <Badge className={`${colors[result] || ''} text-xs`}>{result}</Badge>;
 }
 
+/* ─── Progress ring SVG ─── */
+function ProgressRing({ value, size = 48, stroke = 4, color }: { value: number; size?: number; stroke?: number; color: string }) {
+  const radius = (size - stroke) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (Math.min(value, 100) / 100) * circumference;
+  return (
+    <svg width={size} height={size} className="shrink-0 -rotate-90">
+      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="currentColor" strokeWidth={stroke} className="text-muted/30" />
+      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={color} strokeWidth={stroke} strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" className="transition-all duration-700" />
+    </svg>
+  );
+}
+
+type SortField = 'date' | 'name' | 'status';
+type SortDir = 'asc' | 'desc';
+
 export default function TeacherTrialLessons() {
   const { profile } = useAuth();
   const teacherId = profile?.teacher_id;
+  const queryClient = useQueryClient();
   const [tab, setTab] = useState('today');
   const [filter, setFilter] = useState<YearMonthFilterValue>({ year: null, month: null });
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [conversionFilter, setConversionFilter] = useState<string>('all');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [viewMonth, setViewMonth] = useState<Date>(new Date());
+  const [sortField, setSortField] = useState<SortField>('date');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const { startDate, endDate } = getFilterDateRange(filter);
   const { data: allLessons = [], isLoading, refetch } = useTeacherTrialData(teacherId || '', startDate, endDate);
@@ -133,7 +161,7 @@ export default function TeacherTrialLessons() {
   const todayStr = format(new Date(), 'yyyy-MM-dd');
   const tomorrowStr = format(addDays(new Date(), 1), 'yyyy-MM-dd');
 
-  // Stats — includes conversion metrics from joined trial_students data
+  // ─── Stats ───
   const stats = useMemo(() => {
     const total = allLessons.length;
     const scheduled = allLessons.filter(l => l.status === 'scheduled').length;
@@ -141,16 +169,16 @@ export default function TeacherTrialLessons() {
     const absent = allLessons.filter(l => l.status === 'absent').length;
     const todayCount = allLessons.filter(l => l.lesson_date === todayStr).length;
     const unmarked = allLessons.filter(l => l.status === 'scheduled' && l.lesson_date < todayStr).length;
-    // Conversion stats from joined trial_students
     const pending = allLessons.filter(l => l.conversion_status === 'Pending').length;
     const converted = allLessons.filter(l => l.conversion_status === 'Converted').length;
     const lost = allLessons.filter(l => l.conversion_status === 'Lost').length;
-    // KPI: Conversion Rate = Converted / Completed trials
     const conversionRate = completed > 0 ? Math.round((converted / completed) * 100) : 0;
-    return { total, scheduled, completed, absent, todayCount, unmarked, pending, converted, lost, conversionRate };
+    const attendanceRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+    const absenceRate = total > 0 ? Math.round((absent / total) * 100) : 0;
+    return { total, scheduled, completed, absent, todayCount, unmarked, pending, converted, lost, conversionRate, attendanceRate, absenceRate };
   }, [allLessons, todayStr]);
 
-  // Today + Tomorrow
+  // ─── Today/Tomorrow/Unmarked ───
   const todayLessons = useMemo(() =>
     allLessons.filter(l => l.lesson_date === todayStr).sort((a, b) => (a.lesson_time || '').localeCompare(b.lesson_time || '')),
     [allLessons, todayStr]);
@@ -163,22 +191,29 @@ export default function TeacherTrialLessons() {
     allLessons.filter(l => l.status === 'scheduled' && l.lesson_date < todayStr).sort((a, b) => b.lesson_date.localeCompare(a.lesson_date)),
     [allLessons, todayStr]);
 
-  // Filtered for table
+  // ─── Filtered + Sorted for table ───
   const filteredLessons = useMemo(() => {
     let results = [...allLessons];
     if (search) {
       const q = search.toLowerCase();
       results = results.filter(l => l.student_name.toLowerCase().includes(q));
     }
-    if (statusFilter !== 'all') {
-      results = results.filter(l => l.status === statusFilter);
-    }
-    return results.sort((a, b) => b.lesson_date.localeCompare(a.lesson_date) || (a.lesson_time || '').localeCompare(b.lesson_time || ''));
-  }, [allLessons, search, statusFilter]);
+    if (statusFilter !== 'all') results = results.filter(l => l.status === statusFilter);
+    if (conversionFilter !== 'all') results = results.filter(l => (l.conversion_status || 'Pending') === conversionFilter);
 
-  // Calendar data
+    results.sort((a, b) => {
+      let cmp = 0;
+      if (sortField === 'date') cmp = a.lesson_date.localeCompare(b.lesson_date) || (a.lesson_time || '').localeCompare(b.lesson_time || '');
+      else if (sortField === 'name') cmp = a.student_name.localeCompare(b.student_name);
+      else if (sortField === 'status') cmp = a.status.localeCompare(b.status);
+      return sortDir === 'desc' ? -cmp : cmp;
+    });
+    return results;
+  }, [allLessons, search, statusFilter, conversionFilter, sortField, sortDir]);
+
+  // ─── Calendar helpers ───
   const lessonsByDate = useMemo(() => {
-    const grouped = new Map<string, typeof allLessons>();
+    const grouped = new Map<string, TrialLesson[]>();
     allLessons.forEach(l => {
       if (!grouped.has(l.lesson_date)) grouped.set(l.lesson_date, []);
       grouped.get(l.lesson_date)!.push(l);
@@ -205,6 +240,30 @@ export default function TeacherTrialLessons() {
     );
   };
 
+  // ─── Inline status update ───
+  const handleInlineStatus = async (lessonId: string, newStatus: string) => {
+    setUpdatingId(lessonId);
+    try {
+      const { error } = await supabase
+        .from('trial_lessons_log')
+        .update({ status: newStatus })
+        .eq('trial_lesson_id', lessonId);
+      if (error) throw error;
+      toast.success(`Marked as ${newStatus}`);
+      invalidateAllTrialCaches(queryClient);
+      refetch();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update');
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortField(field); setSortDir('desc'); }
+  };
+
   if (!teacherId) {
     return (
       <TeacherLayout>
@@ -227,54 +286,80 @@ export default function TeacherTrialLessons() {
           <YearMonthFilter value={filter} onChange={setFilter} />
         </div>
 
-        {/* Attendance Stats */}
-        <div className="space-y-2">
-          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Attendance</h3>
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-            {[
-              { label: 'Today', value: stats.todayCount, icon: Sun, color: 'purple' },
-              { label: 'Total', value: stats.total, icon: Users, color: 'purple' },
-              { label: 'Scheduled', value: stats.scheduled, icon: Clock, color: 'purple' },
-              { label: 'Completed', value: stats.completed, icon: Check, color: 'emerald' },
-              { label: 'Absent', value: stats.absent, icon: X, color: 'amber' },
-              { label: 'Unmarked', value: stats.unmarked, icon: AlertCircle, color: 'destructive' },
-            ].map(s => (
-              <Card key={s.label} className={`border-${s.color === 'destructive' ? 'destructive' : s.color + '-500'}/20 bg-${s.color === 'destructive' ? 'destructive' : s.color + '-500'}/5`}>
-                <CardContent className="p-3 flex items-center gap-3">
-                  <div className={`w-9 h-9 rounded-lg bg-${s.color === 'destructive' ? 'destructive' : s.color + '-500'}/20 flex items-center justify-center shrink-0`}>
-                    <s.icon className={`w-4 h-4 text-${s.color === 'destructive' ? 'destructive' : s.color + '-400'}`} />
+        {/* ═══════ STATS DASHBOARD ═══════ */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Attendance Stats */}
+          <Card className="border-purple-500/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Attendance</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-6">
+                <div className="relative flex items-center justify-center">
+                  <ProgressRing value={stats.attendanceRate} size={64} stroke={5} color="hsl(160, 84%, 39%)" />
+                  <span className="absolute text-sm font-bold">{isLoading ? '-' : `${stats.attendanceRate}%`}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-x-6 gap-y-2 flex-1">
+                  <div>
+                    <p className="text-2xl font-bold">{isLoading ? '-' : stats.total}</p>
+                    <p className="text-xs text-muted-foreground">Total</p>
                   </div>
                   <div>
-                    <p className="text-xl font-bold">{isLoading ? '-' : s.value}</p>
-                    <p className="text-xs text-muted-foreground">{s.label}</p>
+                    <p className="text-2xl font-bold text-emerald-500">{isLoading ? '-' : stats.completed}</p>
+                    <p className="text-xs text-muted-foreground">Completed</p>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  <div>
+                    <p className="text-2xl font-bold text-destructive">{isLoading ? '-' : stats.absent}</p>
+                    <p className="text-xs text-muted-foreground">Absent</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-purple-500">{isLoading ? '-' : stats.scheduled}</p>
+                    <p className="text-xs text-muted-foreground">Scheduled</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-amber-500">{isLoading ? '-' : stats.todayCount}</p>
+                    <p className="text-xs text-muted-foreground">Today</p>
+                  </div>
+                  <div>
+                    <p className={`text-2xl font-bold ${stats.unmarked > 0 ? 'text-destructive' : ''}`}>{isLoading ? '-' : stats.unmarked}</p>
+                    <p className="text-xs text-muted-foreground">Unmarked</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Conversion Stats */}
+          <Card className="border-emerald-500/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Conversion Outcomes</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-6">
+                <div className="relative flex items-center justify-center">
+                  <ProgressRing value={stats.conversionRate} size={64} stroke={5} color="hsl(271, 91%, 65%)" />
+                  <span className="absolute text-sm font-bold">{isLoading ? '-' : `${stats.conversionRate}%`}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-x-6 gap-y-2 flex-1">
+                  <div>
+                    <p className="text-2xl font-bold text-amber-500">{isLoading ? '-' : stats.pending}</p>
+                    <p className="text-xs text-muted-foreground">Pending</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-emerald-500">{isLoading ? '-' : stats.converted}</p>
+                    <p className="text-xs text-muted-foreground">Converted</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-destructive">{isLoading ? '-' : stats.lost}</p>
+                    <p className="text-xs text-muted-foreground">Lost</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Conversion Stats (read-only for teacher) */}
-        <div className="space-y-2">
-          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Conversion Outcomes</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {[
-              { label: 'Pending', value: stats.pending, color: 'amber' },
-              { label: 'Converted', value: stats.converted, color: 'emerald' },
-              { label: 'Lost', value: stats.lost, color: 'destructive' },
-              { label: 'Conv. Rate', value: `${stats.conversionRate}%`, color: 'purple' },
-            ].map(s => (
-              <Card key={s.label} className={`border-${s.color === 'destructive' ? 'destructive' : s.color + '-500'}/20 bg-${s.color === 'destructive' ? 'destructive' : s.color + '-500'}/5`}>
-                <CardContent className="p-3">
-                  <p className="text-xl font-bold">{isLoading ? '-' : s.value}</p>
-                  <p className="text-xs text-muted-foreground">{s.label}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-
-        {/* Tabs */}
+        {/* ═══════ TABS ═══════ */}
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="grid w-full grid-cols-3 max-w-md">
             <TabsTrigger value="today" className="gap-1.5">
@@ -289,9 +374,8 @@ export default function TeacherTrialLessons() {
             </TabsTrigger>
           </TabsList>
 
-          {/* === TODAY TAB === */}
+          {/* ══ TODAY TAB ══ */}
           <TabsContent value="today" className="space-y-6 mt-4">
-            {/* Unmarked Warning */}
             {unmarkedLessons.length > 0 && (
               <Card className="border-destructive/30 bg-destructive/5">
                 <CardHeader className="pb-2">
@@ -308,7 +392,6 @@ export default function TeacherTrialLessons() {
               </Card>
             )}
 
-            {/* Today's Lessons */}
             <Card className="glass-card">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -337,7 +420,6 @@ export default function TeacherTrialLessons() {
               </CardContent>
             </Card>
 
-            {/* Tomorrow Preview */}
             {tomorrowLessons.length > 0 && (
               <Card className="glass-card opacity-80">
                 <CardHeader className="pb-2">
@@ -358,25 +440,39 @@ export default function TeacherTrialLessons() {
             )}
           </TabsContent>
 
-          {/* === ALL TRIALS TAB === */}
+          {/* ══ ALL TRIALS TAB ══ */}
           <TabsContent value="list" className="space-y-4 mt-4">
-            {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-3">
+            {/* Filters Row */}
+            <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
               <div className="relative flex-1 max-w-sm">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input placeholder="Search student..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Status" />
+                  <SelectValue placeholder="Attendance" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="all">All Attendance</SelectItem>
                   <SelectItem value="scheduled">Scheduled</SelectItem>
                   <SelectItem value="completed">Completed</SelectItem>
                   <SelectItem value="absent">Absent</SelectItem>
                 </SelectContent>
               </Select>
+              <Select value={conversionFilter} onValueChange={setConversionFilter}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="Conversion" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Conversion</SelectItem>
+                  <SelectItem value="Pending">Pending</SelectItem>
+                  <SelectItem value="Converted">Converted</SelectItem>
+                  <SelectItem value="Lost">Lost</SelectItem>
+                </SelectContent>
+              </Select>
+              <Badge variant="outline" className="self-center text-xs py-1.5 px-3">
+                {filteredLessons.length} result{filteredLessons.length !== 1 ? 's' : ''}
+              </Badge>
             </div>
 
             {/* Table */}
@@ -394,42 +490,96 @@ export default function TeacherTrialLessons() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Date</TableHead>
+                          <TableHead>
+                            <Button variant="ghost" size="sm" className="gap-1 -ml-3 font-semibold" onClick={() => toggleSort('date')}>
+                              Date <ArrowUpDown className="w-3 h-3" />
+                            </Button>
+                          </TableHead>
                           <TableHead>Time</TableHead>
-                          <TableHead>Student</TableHead>
+                          <TableHead>
+                            <Button variant="ghost" size="sm" className="gap-1 -ml-3 font-semibold" onClick={() => toggleSort('name')}>
+                              Student <ArrowUpDown className="w-3 h-3" />
+                            </Button>
+                          </TableHead>
                           <TableHead>Program</TableHead>
                           <TableHead>Level</TableHead>
-                          <TableHead>Duration</TableHead>
-                          <TableHead>Status</TableHead>
+                          <TableHead>
+                            <Button variant="ghost" size="sm" className="gap-1 -ml-3 font-semibold" onClick={() => toggleSort('status')}>
+                              Status <ArrowUpDown className="w-3 h-3" />
+                            </Button>
+                          </TableHead>
                           <TableHead>Result</TableHead>
                           <TableHead>Conversion</TableHead>
+                          <TableHead className="text-center">Notes</TableHead>
+                          <TableHead className="text-center">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {filteredLessons.map(lesson => {
                           const lessonDate = new Date(lesson.lesson_date + 'T00:00:00');
                           const isToday = lesson.lesson_date === todayStr;
+                          const isPast = lesson.lesson_date < todayStr;
+                          const isUnmarked = lesson.status === 'scheduled' && isPast;
+                          const isThisUpdating = updatingId === lesson.trial_lesson_id;
                           return (
-                            <TableRow key={lesson.trial_lesson_id} className={isToday ? 'bg-purple-500/5' : ''}>
+                            <TableRow
+                              key={lesson.trial_lesson_id}
+                              className={`${isToday ? 'bg-purple-500/5' : ''} ${isUnmarked ? 'bg-amber-500/5' : ''}`}
+                            >
                               <TableCell className="whitespace-nowrap">
                                 <div className="flex items-center gap-2">
                                   {format(lessonDate, 'MMM d')}
                                   {isToday && <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-[10px] px-1">Today</Badge>}
+                                  {isUnmarked && <Badge className="bg-amber-500/20 text-amber-600 border-amber-500/30 text-[10px] px-1">!</Badge>}
                                 </div>
                               </TableCell>
                               <TableCell className="whitespace-nowrap">{formatTime12(lesson.lesson_time)}</TableCell>
                               <TableCell>
                                 <div>
                                   <span className="font-medium">{lesson.student_name}</span>
-                                  {lesson.age && <span className="text-xs text-muted-foreground ml-1">({lesson.age}y)</span>}
+                                  {lesson.age != null && <span className="text-xs text-muted-foreground ml-1">({lesson.age}y)</span>}
                                 </div>
                               </TableCell>
                               <TableCell className="text-sm">{lesson.interested_program || '-'}</TableCell>
                               <TableCell className="text-sm">{lesson.student_level || '-'}</TableCell>
-                              <TableCell>{lesson.duration_minutes}m</TableCell>
                               <TableCell>{getStatusBadge(lesson.status)}</TableCell>
                               <TableCell>{getResultBadge(lesson.trial_result)}</TableCell>
                               <TableCell>{getConversionBadge(lesson.conversion_status)}</TableCell>
+                              <TableCell className="text-center">
+                                {lesson.notes ? (
+                                  <span title={lesson.notes}><MessageSquare className="w-4 h-4 text-muted-foreground mx-auto" /></span>
+                                ) : (
+                                  <span className="text-muted-foreground text-xs">-</span>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {lesson.status === 'scheduled' ? (
+                                  <div className="flex items-center gap-1 justify-center">
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      className="h-7 w-7 text-emerald-600 hover:bg-emerald-500/20"
+                                      onClick={() => handleInlineStatus(lesson.trial_lesson_id, 'completed')}
+                                      disabled={isThisUpdating}
+                                      title="Mark Completed"
+                                    >
+                                      {isThisUpdating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                                    </Button>
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      className="h-7 w-7 text-destructive hover:bg-destructive/20"
+                                      onClick={() => handleInlineStatus(lesson.trial_lesson_id, 'absent')}
+                                      disabled={isThisUpdating}
+                                      title="Mark Absent"
+                                    >
+                                      <XCircle className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <span className="text-muted-foreground text-xs">—</span>
+                                )}
+                              </TableCell>
                             </TableRow>
                           );
                         })}
@@ -441,7 +591,7 @@ export default function TeacherTrialLessons() {
             </Card>
           </TabsContent>
 
-          {/* === CALENDAR TAB === */}
+          {/* ══ CALENDAR TAB ══ */}
           <TabsContent value="calendar" className="space-y-6 mt-4">
             <Card className="glass-card">
               <CardHeader className="pb-2">
@@ -489,7 +639,6 @@ export default function TeacherTrialLessons() {
               </CardContent>
             </Card>
 
-            {/* Day Detail */}
             <Card className="glass-card">
               <CardHeader>
                 <div className="flex items-center justify-between">
