@@ -32,7 +32,7 @@ export function StudentLessonsView({ studentId, studentName, walletBalance, role
   const [dateFilter, setDateFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [deleteLessonId, setDeleteLessonId] = useState<string | null>(null);
-  const [isEditScheduleOpen, setIsEditScheduleOpen] = useState(false);
+  
   const deleteLesson = useDeleteScheduledLesson();
   const queryClient = useQueryClient();
 
