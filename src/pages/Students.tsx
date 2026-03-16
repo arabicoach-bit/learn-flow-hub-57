@@ -103,7 +103,6 @@ export default function Students() {
   const activeCount = dateFiltered.filter(s => s.status === 'Active').length;
   const tempStopCount = dateFiltered.filter(s => s.status === 'Temporary Stop').length;
   const leftCount = dateFiltered.filter(s => s.status === 'Left').length;
-  const retentionRate = totalStudents > 0 ? Math.round(((tempStopCount + leftCount) / totalStudents) * 100) : 0;
 
   // Payment status counts
   const { paidCount, pendingCount, needsRenewalCount } = useMemo(() => {
@@ -244,7 +243,7 @@ export default function Students() {
           </div>
         </div>
 
-        <StudentStatsCards total={totalStudents} active={activeCount} paid={paidCount} pending={pendingCount} renewal={needsRenewalCount} stop={tempStopCount} left={leftCount} retentionRate={retentionRate} />
+        <StudentStatsCards total={totalStudents} active={activeCount} paid={paidCount} pending={pendingCount} renewal={needsRenewalCount} stop={tempStopCount} left={leftCount} />
 
         <StudentFiltersBar
           search={search} onSearchChange={handleFilterChange(setSearch)}
