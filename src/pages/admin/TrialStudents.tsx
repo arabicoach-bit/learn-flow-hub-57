@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Users, Loader2, Download } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { useTrialStudents, useUpdateTrialStudent, useDeleteTrialStudent, type TrialStudent } from '@/hooks/use-trial-students';
 import { useTeachers } from '@/hooks/use-teachers';
 import { AddTrialStudentForm } from '@/components/trial/AddTrialStudentForm';
