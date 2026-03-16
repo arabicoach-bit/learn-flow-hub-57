@@ -431,6 +431,21 @@ export default function TeacherStudents() {
                             )}
                           </TableCell>
                           <TableCell>
+                            {(() => {
+                              const sched = scheduleMap?.get(student.student_id);
+                              if (!sched || sched.length === 0) return <span className="text-muted-foreground text-sm">—</span>;
+                              return (
+                                <div className="flex flex-wrap gap-1">
+                                  {sched.map((s, i) => (
+                                    <Badge key={i} variant="outline" className="text-[10px] px-1.5 py-0 font-normal">
+                                      {DAY_ABBR[s.day]} {formatTime12(s.time)}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              );
+                            })()}
+                          </TableCell>
+                          <TableCell>
                             {next ? (
                               <div className="flex items-center gap-1.5 text-sm">
                                 <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
