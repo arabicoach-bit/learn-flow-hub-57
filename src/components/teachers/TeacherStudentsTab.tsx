@@ -417,6 +417,20 @@ export function TeacherStudentsTab({ students, teacherId }: TeacherStudentsTabPr
                             </div>
                           ) : <span className="text-muted-foreground">—</span>}
                         </TableCell>
+                        <TableCell className="hidden lg:table-cell">
+                          {(() => {
+                            const sched = scheduleMap?.get(student.student_id);
+                            if (!sched || sched.length === 0) return <span className="text-muted-foreground text-sm">—</span>;
+                            return (
+                              <div className="flex flex-wrap gap-1">
+                                {sched.map((s, i) => (
+                                  <Badge key={i} variant="outline" className="text-[10px] px-1.5 py-0 font-normal">
+                                    {DAY_ABBR[s.day]} {formatTime12(s.time)}
+                                  </Badge>
+                                ))}
+                              </div>
+                            );
+                          })()}
                         <TableCell className="hidden sm:table-cell">
                           {next ? (
                             <div className="flex items-center gap-1.5 text-sm">
