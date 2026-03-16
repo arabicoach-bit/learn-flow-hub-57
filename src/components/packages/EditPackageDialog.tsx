@@ -39,15 +39,12 @@ export function EditPackageDialog({ package_, open, onOpenChange, onSuccess }: E
         package_type_id: package_.package_type_id || '',
         amount: package_.amount.toString(),
         lessons_purchased: package_.lessons_purchased.toString(),
-        lessons_used: (package_.lessons_used || 0).toString(),
         lesson_duration: (package_.lesson_duration || '').toString(),
         start_date: package_.start_date || '',
-        payment_status: (package_ as any)
-          .payment_status || 'Pending',
+        payment_status: (package_ as any).payment_status || 'Pending',
         due_date: (package_ as any).due_date || '',
         paid_date: (package_ as any).paid_date
-          ? new Date((package_ as any).paid_date)
-              .toISOString().split('T')[0]
+          ? new Date((package_ as any).paid_date).toISOString().split('T')[0]
           : '',
       });
     }
