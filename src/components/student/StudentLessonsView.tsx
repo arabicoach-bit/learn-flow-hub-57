@@ -113,18 +113,7 @@ export function StudentLessonsView({ studentId, studentName, walletBalance, role
     <div className="space-y-6">
       {/* Weekly Schedule (admin only) */}
       {role === 'admin' && (
-        <div className="relative">
-          <WeeklyScheduleCard studentId={studentId} />
-          <Button
-            variant="outline"
-            size="sm"
-            className="absolute top-4 right-4 gap-2"
-            onClick={() => setIsEditScheduleOpen(true)}
-          >
-            <Pencil className="w-4 h-4" />
-            Edit Schedule
-          </Button>
-        </div>
+        <WeeklyScheduleCard studentId={studentId} />
       )}
 
       {/* Statistics */}
