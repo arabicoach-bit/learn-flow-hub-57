@@ -143,9 +143,21 @@ export function useAddPackageWithSchedule() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['students'] });
       queryClient.invalidateQueries({ queryKey: ['student'] });
+      queryClient.invalidateQueries({ queryKey: ['student-wallet'] });
+      queryClient.invalidateQueries({ queryKey: ['student-all-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['student-active-packages'] });
+      queryClient.invalidateQueries({ queryKey: ['students-batch-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['students-payment-stats'] });
       queryClient.invalidateQueries({ queryKey: ['packages'] });
+      queryClient.invalidateQueries({ queryKey: ['packages-recent'] });
+      queryClient.invalidateQueries({ queryKey: ['packages-batch-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['package-stats'] });
       queryClient.invalidateQueries({ queryKey: ['scheduled-lessons'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-students'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-todays-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-week-lessons'] });
     },
   });
 }
