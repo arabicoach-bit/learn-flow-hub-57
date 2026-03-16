@@ -436,22 +436,14 @@ export default function TeacherStudents() {
                           </TableCell>
                           <TableCell>
                             {student.status === 'Active' ? (
-                              <Badge className={`${getWalletColor(wallet)} text-xs`}>
-                                💰 {wallet}
-                              </Badge>
+                              <WalletBadge balance={wallet} />
                             ) : (
                               <span className="text-muted-foreground text-sm">—</span>
                             )}
                           </TableCell>
                           <TableCell>
                             {lessonStats ? (
-                              <div className="flex items-center gap-2 min-w-[100px]">
-                                <span className="text-sm font-medium whitespace-nowrap">{lessonStats.used}/{lessonStats.total}</span>
-                                <Progress
-                                  value={lessonStats.total > 0 ? (lessonStats.used / lessonStats.total) * 100 : 0}
-                                  className="h-1.5 flex-1"
-                                />
-                              </div>
+                              <LessonsBadge used={lessonStats.used} total={lessonStats.total} />
                             ) : (
                               <span className="text-muted-foreground text-sm">—</span>
                             )}
