@@ -105,10 +105,10 @@ export default function TeacherStudents() {
         .in('package_id', activePackageIds)
         .order('day_of_week');
       
-      // Build student→schedules map via package
+      // Build reverse map using active packages
       const pkgToStudent = new Map<string, string>();
-      myStudents.forEach(s => {
-        if (s.current_package_id) pkgToStudent.set(s.current_package_id, s.student_id);
+      studentActivePackageMap.forEach((pkgId, studentId) => {
+        pkgToStudent.set(pkgId, studentId);
       });
       
       const result = new Map<string, { day: number; time: string }[]>();
