@@ -12,6 +12,11 @@ interface StudentLessonStats {
   /** Active package: used/total for the "Lessons" display */
   activePackageLessonsUsed: number;
   activePackageLessonsTotal: number;
+  /** All-time counts for active package (unaffected by date filter) */
+  allTimeCompleted: number;
+  allTimeAbsent: number;
+  allTimeScheduled: number;
+  allTimeTotalHours: number;
 }
 
 /**
