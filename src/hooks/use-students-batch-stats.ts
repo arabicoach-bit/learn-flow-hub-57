@@ -50,13 +50,31 @@ export function useStudentsBatchStats(studentIds: string[]) {
         }
       });
 
-      // 2. Get all scheduled lessons for these students
-      const { data: lessons } = await supabase
-        .from('scheduled_lessons')
-        .select('scheduled_lesson_id, package_id, student_id, status, scheduled_date, scheduled_time')
-        .in('student_id', studentIds)
-        .order('scheduled_date', { ascending: true })
-        .order('scheduled_time', { ascending: true });
+      // 2. Get all scheduled lessons for these students (paginated to avoid 1000-row limit)
+      let allLessons: any[] = [];
+      const pageSize = 1000;
+      // Split student IDs into chunks for large IN clauses
+      const idChunks: string[][] = [];
+      for (let i = 0; i < studentIds.length; i += 500) {
+        idChunks.push(studentIds.slice(i, i + 500));
+      }
+      for (const chunk of idChunks) {
+        let from = 0;
+        while (true) {
+          const { data: lessons, error } = await supabase
+            .from('scheduled_lessons')
+            .select('scheduled_lesson_id, package_id, student_id, status, scheduled_date, scheduled_time')
+            .in('student_id', chunk)
+            .order('scheduled_date', { ascending: true })
+            .order('scheduled_time', { ascending: true })
+            .range(from, from + pageSize - 1);
+          if (error) throw error;
+          if (lessons) allLessons = allLessons.concat(lessons);
+          if (!lessons || lessons.length < pageSize) break;
+          from += pageSize;
+        }
+      }
+      const lessons = allLessons;
 
       // Build stats per student
       const result: Record<string, StudentBatchStats> = {};
