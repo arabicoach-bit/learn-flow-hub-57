@@ -547,7 +547,7 @@ export default function TeacherTrialLessons() {
                               <TableCell>{getConversionBadge(lesson.conversion_status)}</TableCell>
                               <TableCell className="text-center">
                                 {lesson.notes ? (
-                                  <MessageSquare className="w-4 h-4 text-muted-foreground mx-auto" title={lesson.notes} />
+                                  <span title={lesson.notes}><MessageSquare className="w-4 h-4 text-muted-foreground mx-auto" /></span>
                                 ) : (
                                   <span className="text-muted-foreground text-xs">-</span>
                                 )}
