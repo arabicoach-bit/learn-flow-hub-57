@@ -123,9 +123,10 @@ export function TeacherStudentsTab({ students, teacherId }: TeacherStudentsTabPr
         .in('package_id', activePackageIds)
         .order('day_of_week');
       
+      // Build reverse map: package_id → student_id using active packages
       const pkgToStudent = new Map<string, string>();
-      students.forEach(s => {
-        if (s.current_package_id) pkgToStudent.set(s.current_package_id, s.student_id);
+      studentActivePackageMap.forEach((pkgId, studentId) => {
+        pkgToStudent.set(pkgId, studentId);
       });
       
       const result = new Map<string, { day: number; time: string }[]>();
