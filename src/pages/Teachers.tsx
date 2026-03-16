@@ -61,12 +61,12 @@ export default function Teachers() {
         teacher.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         teacher.email?.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus =
-        statusFilter === 'all' ||
-        (statusFilter === 'active' && teacher.is_active !== false) ||
-        (statusFilter === 'inactive' && teacher.is_active === false);
+        activeTab === 'all' ||
+        (activeTab === 'active' && teacher.is_active !== false) ||
+        (activeTab === 'inactive' && teacher.is_active === false);
       return matchesSearch && matchesStatus;
     });
-  }, [teachers, searchQuery, statusFilter]);
+  }, [teachers, searchQuery, activeTab]);
 
   // ── Payroll ───────────────────────────────────────────────────────────
   const [payrollFilter, setPayrollFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
