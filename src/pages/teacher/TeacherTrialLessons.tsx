@@ -133,7 +133,7 @@ export default function TeacherTrialLessons() {
   const todayStr = format(new Date(), 'yyyy-MM-dd');
   const tomorrowStr = format(addDays(new Date(), 1), 'yyyy-MM-dd');
 
-  // Stats
+  // Stats — includes conversion metrics from joined trial_students data
   const stats = useMemo(() => {
     const total = allLessons.length;
     const scheduled = allLessons.filter(l => l.status === 'scheduled').length;
@@ -141,7 +141,13 @@ export default function TeacherTrialLessons() {
     const absent = allLessons.filter(l => l.status === 'absent').length;
     const todayCount = allLessons.filter(l => l.lesson_date === todayStr).length;
     const unmarked = allLessons.filter(l => l.status === 'scheduled' && l.lesson_date < todayStr).length;
-    return { total, scheduled, completed, absent, todayCount, unmarked };
+    // Conversion stats from joined trial_students
+    const pending = allLessons.filter(l => l.conversion_status === 'Pending').length;
+    const converted = allLessons.filter(l => l.conversion_status === 'Converted').length;
+    const lost = allLessons.filter(l => l.conversion_status === 'Lost').length;
+    // KPI: Conversion Rate = Converted / Completed trials
+    const conversionRate = completed > 0 ? Math.round((converted / completed) * 100) : 0;
+    return { total, scheduled, completed, absent, todayCount, unmarked, pending, converted, lost, conversionRate };
   }, [allLessons, todayStr]);
 
   // Today + Tomorrow
