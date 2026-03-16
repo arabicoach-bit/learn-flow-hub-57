@@ -62,6 +62,42 @@ export default function TeacherStudents() {
   const myStudents = students?.filter(s => s.teacher_id === teacherId) || [];
   const studentRange = getFilterDateRange(studentFilter);
 
+  const DAY_ABBR = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  // Batch-fetch weekly schedules for all active packages
+  const activePackageIds = useMemo(() => {
+    return myStudents.filter(s => s.current_package_id).map(s => s.current_package_id!);
+  }, [myStudents]);
+
+  const { data: scheduleMap } = useQuery({
+    queryKey: ['teacher-student-schedules', activePackageIds.sort().join(',')],
+    queryFn: async () => {
+      if (activePackageIds.length === 0) return new Map<string, { day: number; time: string }[]>();
+      const { data } = await supabase
+        .from('lesson_schedules')
+        .select('package_id, day_of_week, time_slot')
+        .in('package_id', activePackageIds)
+        .order('day_of_week');
+      
+      // Build student→schedules map via package
+      const pkgToStudent = new Map<string, string>();
+      myStudents.forEach(s => {
+        if (s.current_package_id) pkgToStudent.set(s.current_package_id, s.student_id);
+      });
+      
+      const result = new Map<string, { day: number; time: string }[]>();
+      (data || []).forEach(row => {
+        const studentId = pkgToStudent.get(row.package_id!);
+        if (!studentId) return;
+        if (!result.has(studentId)) result.set(studentId, []);
+        result.get(studentId)!.push({ day: row.day_of_week, time: row.time_slot });
+      });
+      return result;
+    },
+    enabled: activePackageIds.length > 0,
+    staleTime: 60_000,
+  });
+
   // Lesson stats per student — active/current package only
   const lessonStatsMap = useMemo(() => {
     const map = new Map<string, { used: number; total: number }>();
