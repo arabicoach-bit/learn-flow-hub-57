@@ -148,8 +148,8 @@ function StudentPackagesTab({
           <SelectTrigger className="w-[130px] h-8 text-xs"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="Running">Running</SelectItem>
-            <SelectItem value="Completed">Completed</SelectItem>
+            <SelectItem value="Active">In Progress</SelectItem>
+            <SelectItem value="Completed">Finished</SelectItem>
           </SelectContent>
         </Select>
         <Select value={pkgPaymentFilter} onValueChange={setPkgPaymentFilter}>
