@@ -61,6 +61,15 @@ export function getWalletBgColor(balance: number): string {
   return 'bg-red-500/20';
 }
 
+/** Combined text + background classes for wallet badge */
+export function getWalletBadgeClasses(balance: number): string {
+  if (balance >= 5) return 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400';
+  if (balance >= 3) return 'bg-lime-500/15 text-lime-700 dark:text-lime-400';
+  if (balance >= 1) return 'bg-amber-500/15 text-amber-700 dark:text-amber-400';
+  if (balance === 0) return 'bg-orange-500/15 text-orange-700 dark:text-orange-400';
+  return 'bg-red-500/15 text-red-700 dark:text-red-400';
+}
+
 export function getStatusBadgeClass(status: string): string {
   switch (status) {
     case 'Active':
