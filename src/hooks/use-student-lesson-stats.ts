@@ -96,7 +96,10 @@ export function useStudentLessonStats(
       absentCount,
       scheduledCount,
       totalHours,
-      walletBalance: student?.wallet_balance ?? 0,
+      // Wallet = count of scheduled lessons across active packages (matches DB logic)
+      walletBalance: (lessons || []).filter(
+        l => l.package_id && activePackageIds.has(l.package_id) && l.status === 'scheduled'
+      ).length,
       activePackageLessonsUsed,
       activePackageLessonsTotal,
     };
