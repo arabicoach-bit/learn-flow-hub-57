@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Clock, CheckCircle, XCircle, Save, Loader2, Users, Pencil } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, Save, Loader2, Users, Pencil, GraduationCap, Phone, User } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -26,6 +26,8 @@ export interface TrialLessonCalendarData {
   interested_program?: string | null;
   student_level?: string | null;
   parent_guardian_name?: string | null;
+  conversion_status?: string;
+  trial_result?: string | null;
 }
 
 interface TrialLessonCalendarCardProps {
@@ -52,16 +54,24 @@ function getEndTime(time: string | null, duration: number) {
   return formatTime12(`${endHour.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0')}`);
 }
 
-function getStatusStyle(status: string) {
-  switch (status) {
-    case 'completed':
-      return 'border-emerald-500/40 bg-emerald-500/5';
-    case 'absent':
-      return 'border-destructive/40 bg-destructive/5';
-    default:
-      return 'border-purple-500/30 bg-purple-500/5';
-  }
-}
+const STATUS_STYLES: Record<string, string> = {
+  completed: 'border-emerald-500/40 bg-emerald-500/5',
+  absent: 'border-destructive/40 bg-destructive/5',
+  scheduled: 'border-purple-500/30 bg-purple-500/5',
+};
+
+const RESULT_COLORS: Record<string, string> = {
+  'Very Positive': 'bg-emerald-500/20 text-emerald-600 border-emerald-500/30',
+  'Positive': 'bg-sky-500/20 text-sky-600 border-sky-500/30',
+  'Neutral': 'bg-amber-500/20 text-amber-600 border-amber-500/30',
+  'Negative': 'bg-destructive/20 text-destructive border-destructive/30',
+};
+
+const CONVERSION_STYLES: Record<string, string> = {
+  Converted: 'bg-emerald-500/20 text-emerald-600 border-emerald-500/30',
+  Lost: 'bg-destructive/20 text-destructive border-destructive/30',
+  Pending: 'bg-amber-500/20 text-amber-600 border-amber-500/30',
+};
 
 export function TrialLessonCalendarCard({ lesson, onUpdated, readOnly }: TrialLessonCalendarCardProps) {
   const queryClient = useQueryClient();
@@ -121,15 +131,28 @@ export function TrialLessonCalendarCard({ lesson, onUpdated, readOnly }: TrialLe
     </Badge>
   );
 
+  const conversionKey = lesson.conversion_status || 'Pending';
+  const conversionBadge = (
+    <Badge variant="outline" className={`${CONVERSION_STYLES[conversionKey] || CONVERSION_STYLES.Pending} text-xs gap-1`}>
+      {conversionKey}
+    </Badge>
+  );
+
+  const resultBadge = lesson.trial_result ? (
+    <Badge variant="outline" className={`${RESULT_COLORS[lesson.trial_result] || ''} text-xs`}>
+      {lesson.trial_result}
+    </Badge>
+  ) : null;
+
   return (
     <>
-      <div className={`p-4 rounded-xl border transition-all ${getStatusStyle(lesson.status)}`}>
-        {/* Header: Time range + duration + Edit */}
+      <div className={`p-4 rounded-xl border transition-all ${STATUS_STYLES[lesson.status] || STATUS_STYLES.scheduled}`}>
+        {/* Row 1: Time + Status + Edit */}
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3 flex-wrap">
-            <Clock className="w-4 h-4 text-muted-foreground" />
-            <span className="font-semibold">
-              {formatTime12(lesson.lesson_time)} - {getEndTime(lesson.lesson_time, lesson.duration_minutes)}
+          <div className="flex items-center gap-2 flex-wrap">
+            <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
+            <span className="font-semibold text-sm">
+              {formatTime12(lesson.lesson_time)} – {getEndTime(lesson.lesson_time, lesson.duration_minutes)}
             </span>
             <Badge variant="outline" className="text-xs font-medium">
               {lesson.duration_minutes} min
@@ -138,29 +161,61 @@ export function TrialLessonCalendarCard({ lesson, onUpdated, readOnly }: TrialLe
               <Users className="w-3 h-3" /> Trial
             </Badge>
           </div>
-          {!readOnly && (
-            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setEditOpen(true)}>
-              <Pencil className="w-3.5 h-3.5" /> Edit
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {statusBadge}
+            {!readOnly && (
+              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditOpen(true)}>
+                <Pencil className="w-3.5 h-3.5" />
+              </Button>
+            )}
+          </div>
         </div>
 
-        {/* Student info */}
-        <div className="flex items-center gap-3 mb-2">
-          <span className="font-medium text-base">{lesson.student_name}</span>
+        {/* Row 2: Student identity */}
+        <div className="flex items-center gap-3 mb-2 flex-wrap">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center shrink-0">
+              <User className="w-4 h-4 text-purple-500" />
+            </div>
+            <div>
+              <span className="font-semibold">{lesson.student_name}</span>
+              {lesson.age != null && (
+                <span className="text-xs text-muted-foreground ml-1.5">({lesson.age}y)</span>
+              )}
+            </div>
+          </div>
           {lesson.student_phone && (
-            <span className="text-sm text-muted-foreground">{lesson.student_phone}</span>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Phone className="w-3 h-3" /> {lesson.student_phone}
+            </div>
           )}
         </div>
 
-        {/* Extra student details */}
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mb-3">
-          {lesson.age && <span>Age: {lesson.age}</span>}
-          {lesson.student_level && <span>Level: {lesson.student_level}</span>}
-          {lesson.interested_program && <span>Program: {lesson.interested_program}</span>}
-          {lesson.year_group && <span>Year: {lesson.year_group}</span>}
-          {lesson.school && <span>School: {lesson.school}</span>}
-          {lesson.parent_guardian_name && <span>Parent: {lesson.parent_guardian_name}</span>}
+        {/* Row 3: Student details chips */}
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {lesson.interested_program && (
+            <Badge variant="secondary" className="text-xs gap-1 font-normal">
+              <GraduationCap className="w-3 h-3" /> {lesson.interested_program}
+            </Badge>
+          )}
+          {lesson.student_level && (
+            <Badge variant="secondary" className="text-xs font-normal">Level: {lesson.student_level}</Badge>
+          )}
+          {lesson.year_group && (
+            <Badge variant="secondary" className="text-xs font-normal">Year: {lesson.year_group}</Badge>
+          )}
+          {lesson.school && (
+            <Badge variant="secondary" className="text-xs font-normal">{lesson.school}</Badge>
+          )}
+          {lesson.parent_guardian_name && (
+            <Badge variant="secondary" className="text-xs font-normal">Parent: {lesson.parent_guardian_name}</Badge>
+          )}
+        </div>
+
+        {/* Row 4: Conversion + Result badges */}
+        <div className="flex items-center gap-2 mb-3 flex-wrap">
+          {conversionBadge}
+          {resultBadge}
         </div>
 
         {/* Notes */}
@@ -188,7 +243,7 @@ export function TrialLessonCalendarCard({ lesson, onUpdated, readOnly }: TrialLe
           </div>
         )}
 
-        {/* Actions / Status */}
+        {/* Actions */}
         <div className="flex items-center gap-2 flex-wrap">
           {isScheduled && !readOnly ? (
             <>
@@ -214,7 +269,17 @@ export function TrialLessonCalendarCard({ lesson, onUpdated, readOnly }: TrialLe
               </Button>
             </>
           ) : (
-            statusBadge
+            !readOnly && lesson.status !== 'scheduled' && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-xs text-muted-foreground"
+                onClick={() => handleMark('scheduled' as any)}
+                disabled={isUpdating}
+              >
+                Reset to Scheduled
+              </Button>
+            )
           )}
         </div>
       </div>
