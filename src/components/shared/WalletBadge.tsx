@@ -24,7 +24,7 @@ export function WalletBadge({ balance, variant = 'badge', showLabel = false }: W
 
   return (
     <span className={`inline-flex items-center gap-1 font-bold text-xs px-2 py-0.5 rounded ${classes}`}>
-      💰 {balance}
+      {balance}
     </span>
   );
 }
