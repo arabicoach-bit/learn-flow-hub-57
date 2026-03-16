@@ -128,9 +128,8 @@ export default function TeacherStudents() {
   const activeStudents = filteredStudents.filter(s => s.status === 'Active').length;
   const tempStopStudents = filteredStudents.filter(s => s.status === 'Temporary Stop').length;
   const leftStudents = filteredStudents.filter(s => s.status === 'Left').length;
-  const overdueStudents = filteredStudents.filter(s => s.status === 'Active' && (s.wallet_balance || 0) <= 0).length;
+  const lowCreditStudents = filteredStudents.filter(s => s.status === 'Active' && (s.wallet_balance || 0) <= 2).length;
   const retentionRate = totalStudents > 0 ? Math.round((activeStudents / totalStudents) * 100) : 0;
-  const attritionRate = totalStudents > 0 ? Math.round(((tempStopStudents + leftStudents) / totalStudents) * 100) : 0;
 
   const toggleStudent = (studentId: string) => {
     setExpandedStudents(prev => {
