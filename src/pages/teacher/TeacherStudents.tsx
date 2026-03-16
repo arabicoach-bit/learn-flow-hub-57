@@ -343,9 +343,13 @@ export default function TeacherStudents() {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Badge className={`${getWalletColor(wallet)} text-xs`}>
-                              💰 {wallet}
-                            </Badge>
+                            {student.status === 'Active' ? (
+                              <Badge className={`${getWalletColor(wallet)} text-xs`}>
+                                💰 {wallet}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">—</span>
+                            )}
                           </TableCell>
                           <TableCell>
                             {lessonStats ? (
