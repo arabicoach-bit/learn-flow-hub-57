@@ -59,7 +59,6 @@ export function EditPackageDialog({ package_, open, onOpenChange, onSuccess }: E
         .update({
           package_type_id: data.package_type_id || null,
           amount: parseFloat(data.amount),
-          lessons_purchased: parseInt(data.lessons_purchased),
           lesson_duration: data.lesson_duration ? parseInt(data.lesson_duration) : null,
           start_date: data.start_date || null,
           payment_status: data.payment_status,

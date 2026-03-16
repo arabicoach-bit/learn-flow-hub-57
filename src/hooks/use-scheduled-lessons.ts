@@ -317,23 +317,7 @@ export function useDeleteScheduledLesson() {
 
       if (error) throw error;
 
-      // Decrement lessons_purchased on the package (removing a lesson decreases total)
-      if (lesson.package_id) {
-        const { data: pkg } = await supabase
-          .from('packages')
-          .select('lessons_purchased')
-          .eq('package_id', lesson.package_id)
-          .single();
-
-        if (pkg && pkg.lessons_purchased > 0) {
-          await supabase
-            .from('packages')
-            .update({ lessons_purchased: pkg.lessons_purchased - 1 })
-            .eq('package_id', lesson.package_id);
-        }
-      }
-
-      // Recalculate wallet after delete
+      // Recalculate wallet after delete (also syncs lessons_purchased from actual rows)
       if (lesson.student_id) {
         await supabase.rpc('recalculate_student_wallet', { p_student_id: lesson.student_id });
       }
