@@ -1,16 +1,18 @@
 import { useState, useMemo } from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Package as PackageIcon, FileSpreadsheet } from 'lucide-react';
 import { usePackages, type Package } from '@/hooks/use-packages';
 import { usePackageSummary } from '@/hooks/use-package-summary';
 import { usePackagesBatchStats } from '@/hooks/use-packages-batch-stats';
 import { EditPackageDialog } from '@/components/packages/EditPackageDialog';
-import { PackageStatsCards } from '@/components/packages/PackageStatsCards';
+import { PackageStatsBar } from '@/components/packages/PackageStatsBar';
 import { PackageFiltersBar, type PackageSortOption } from '@/components/packages/PackageFiltersBar';
 import { PackageTableView } from '@/components/packages/PackageTableView';
 import { PackageSummaryDialog } from '@/components/packages/PackageSummaryDialog';
@@ -24,6 +26,7 @@ import { toast } from 'sonner';
 import { useSearchParamState, useSearchParamYearMonth } from '@/hooks/use-search-param-state';
 
 type StatusFilter = 'all' | 'Active' | 'Completed';
+type TabValue = 'all' | 'in_progress' | 'finished' | 'paid' | 'pending';
 
 export default function Packages() {
   const queryClient = useQueryClient();
@@ -37,6 +40,7 @@ export default function Packages() {
   const [sortBy, setSortBy] = useSearchParamState('sort', 'newest') as [string, (v: string) => void];
   const [editPackage, setEditPackage] = useState<Package | null>(null);
   const [summaryPkg, setSummaryPkg] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<TabValue>('all');
 
   // Edit Payment Dialog
   const [isEditPaymentOpen, setIsEditPaymentOpen] = useState(false);
@@ -49,7 +53,7 @@ export default function Packages() {
   const { startDate, endDate } = getFilterDateRange(filter);
   const { data: summary, isLoading: summaryLoading } = usePackageSummary(summaryPkg);
 
-  const filteredPackages = useMemo(() => {
+  const baseFiltered = useMemo(() => {
     const filtered = (packages || []).filter(pkg => {
       const studentName = pkg.students?.name?.toLowerCase() || '';
       const packageType = pkg.package_types?.name?.toLowerCase() || '';
@@ -71,38 +75,47 @@ export default function Packages() {
 
     return filtered.sort((a, b) => {
       switch (sortBy) {
-        case 'oldest':
-          return (a.created_at || '').localeCompare(b.created_at || '');
-        case 'alpha_asc':
-          return (a.students?.name || '').localeCompare(b.students?.name || '');
-        case 'alpha_desc':
-          return (b.students?.name || '').localeCompare(a.students?.name || '');
-        case 'due_date':
-          return ((a as any).due_date || '9999').localeCompare((b as any).due_date || '9999');
-        case 'payment_date':
-          return (b.payment_date || '').localeCompare(a.payment_date || '');
-        case 'amount_high':
-          return (b.amount || 0) - (a.amount || 0);
-        case 'amount_low':
-          return (a.amount || 0) - (b.amount || 0);
-        case 'newest':
-        default:
-          return (b.created_at || '').localeCompare(a.created_at || '');
+        case 'oldest': return (a.created_at || '').localeCompare(b.created_at || '');
+        case 'alpha_asc': return (a.students?.name || '').localeCompare(b.students?.name || '');
+        case 'alpha_desc': return (b.students?.name || '').localeCompare(a.students?.name || '');
+        case 'due_date': return ((a as any).due_date || '9999').localeCompare((b as any).due_date || '9999');
+        case 'payment_date': return (b.payment_date || '').localeCompare(a.payment_date || '');
+        case 'amount_high': return (b.amount || 0) - (a.amount || 0);
+        case 'amount_low': return (a.amount || 0) - (b.amount || 0);
+        case 'newest': default: return (b.created_at || '').localeCompare(a.created_at || '');
       }
     });
   }, [packages, searchQuery, startDate, endDate, statusFilter, teacherFilter, paymentFilter, sortBy]);
+
+  // Tab-filtered list
+  const filteredPackages = useMemo(() => {
+    if (activeTab === 'all') return baseFiltered;
+    if (activeTab === 'in_progress') return baseFiltered.filter(p => p.status === 'Active');
+    if (activeTab === 'finished') return baseFiltered.filter(p => p.status === 'Completed');
+    if (activeTab === 'paid') return baseFiltered.filter(p => p.payment_status === 'Paid');
+    if (activeTab === 'pending') return baseFiltered.filter(p => p.payment_status !== 'Paid');
+    return baseFiltered;
+  }, [baseFiltered, activeTab]);
 
   // Batch stats for visible packages
   const visiblePackageIds = useMemo(() => filteredPackages.map(p => p.package_id), [filteredPackages]);
   const { data: batchStats } = usePackagesBatchStats(visiblePackageIds);
 
-  // Aggregated stats
-  const paidRev = filteredPackages.filter(p => p.payment_status === 'Paid').reduce((s, p) => s + (p.amount || 0), 0);
-  const pendingRev = filteredPackages.filter(p => p.payment_status !== 'Paid').reduce((s, p) => s + (p.amount || 0), 0);
-  const runningCount = filteredPackages.filter(p => p.status === 'Active').length;
-  const completedCount = filteredPackages.filter(p => p.status === 'Completed').length;
-  const renewalCount = filteredPackages.filter(p => p.is_renewal).length;
-  const newCount = filteredPackages.filter(p => !p.is_renewal).length;
+  // Stats from baseFiltered (not tab-filtered)
+  const paidRev = baseFiltered.filter(p => p.payment_status === 'Paid').reduce((s, p) => s + (p.amount || 0), 0);
+  const pendingRev = baseFiltered.filter(p => p.payment_status !== 'Paid').reduce((s, p) => s + (p.amount || 0), 0);
+  const runningCount = baseFiltered.filter(p => p.status === 'Active').length;
+  const completedCount = baseFiltered.filter(p => p.status === 'Completed').length;
+  const renewalCount = baseFiltered.filter(p => p.is_renewal).length;
+  const newCount = baseFiltered.filter(p => !p.is_renewal).length;
+
+  const tabCounts = {
+    all: baseFiltered.length,
+    in_progress: runningCount,
+    finished: completedCount,
+    paid: baseFiltered.filter(p => p.payment_status === 'Paid').length,
+    pending: baseFiltered.filter(p => p.payment_status !== 'Paid').length,
+  };
 
   const handleExport = () => {
     if (filteredPackages.length > 0) exportPackages(filteredPackages);
@@ -148,33 +161,32 @@ export default function Packages() {
   };
 
   const summaryFallbackDesc = summaryPkg
-    ? (filteredPackages.find(p => p.package_id === summaryPkg) as any)?.description
+    ? (baseFiltered.find(p => p.package_id === summaryPkg) as any)?.description
     : null;
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-display font-bold flex items-center gap-2">
-              <PackageIcon className="h-6 w-6 text-primary" />
-              Packages
-            </h1>
-            <p className="text-muted-foreground">Track all student packages and renewals</p>
-          </div>
-          <Button onClick={handleExport} variant="outline" className="gap-2">
+          <h1 className="text-2xl font-display font-bold flex items-center gap-2">
+            <PackageIcon className="h-6 w-6 text-primary" />
+            Packages
+          </h1>
+          <Button onClick={handleExport} variant="outline" size="sm" className="gap-1.5">
             <FileSpreadsheet className="h-4 w-4" />
-            Export Excel
+            Export
           </Button>
         </div>
 
-        <PackageStatsCards
+        {/* Compact Stats */}
+        <PackageStatsBar
           paidRevenue={paidRev} pendingRevenue={pendingRev}
           runningCount={runningCount} completedCount={completedCount}
-          totalCount={filteredPackages.length} renewalCount={renewalCount} newCount={newCount}
+          totalCount={baseFiltered.length} renewalCount={renewalCount} newCount={newCount}
         />
 
+        {/* Filters */}
         <PackageFiltersBar
           searchQuery={searchQuery} onSearchChange={setSearchQuery}
           filter={filter} onFilterChange={setFilter}
@@ -185,14 +197,37 @@ export default function Packages() {
           sortBy={sortBy as PackageSortOption} onSortChange={setSortBy}
         />
 
-        <PackageTableView
-          packages={filteredPackages}
-          batchStats={batchStats || {}}
-          isLoading={isLoading}
-          onMarkPaid={handleMarkPaid}
-          onEdit={setEditPackage}
-          onViewSummary={setSummaryPkg}
-        />
+        {/* Tabs + Content */}
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)}>
+          <TabsList className="bg-muted/50 h-9">
+            <TabsTrigger value="all" className="text-xs h-7 px-3">
+              All <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4">{tabCounts.all}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="in_progress" className="text-xs h-7 px-3">
+              In Progress <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-emerald-500/20 text-emerald-500">{tabCounts.in_progress}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="finished" className="text-xs h-7 px-3">
+              Finished <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4">{tabCounts.finished}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="paid" className="text-xs h-7 px-3">
+              Paid <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-emerald-500/20 text-emerald-500">{tabCounts.paid}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="pending" className="text-xs h-7 px-3">
+              Pending <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-amber-500/20 text-amber-500">{tabCounts.pending}</Badge>
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value={activeTab} className="mt-3">
+            <PackageTableView
+              packages={filteredPackages}
+              batchStats={batchStats || {}}
+              isLoading={isLoading}
+              onMarkPaid={handleMarkPaid}
+              onEdit={setEditPackage}
+              onViewSummary={setSummaryPkg}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Edit Payment Dialog */}
