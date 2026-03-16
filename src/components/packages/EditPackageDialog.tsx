@@ -169,14 +169,14 @@ export function EditPackageDialog({ package_, open, onOpenChange, onSuccess }: E
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="lessons_purchased">Lessons Purchased *</Label>
+              <Label>Total Lessons</Label>
               <Input
-                id="lessons_purchased"
                 type="number"
-                value={formData.lessons_purchased}
-                onChange={(e) => setFormData({ ...formData, lessons_purchased: e.target.value })}
-                required
+                value={package_?.lessons_purchased || 0}
+                disabled
+                className="opacity-60"
               />
+              <p className="text-[11px] text-muted-foreground">Auto-calculated from lesson rows</p>
             </div>
             
             <div className="space-y-2">
