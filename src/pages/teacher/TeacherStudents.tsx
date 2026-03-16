@@ -64,10 +64,36 @@ export default function TeacherStudents() {
 
   const DAY_ABBR = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+  // Fetch active packages for these students (not relying on stale current_package_id)
+  const myStudentIds = useMemo(() => myStudents.map(s => s.student_id), [myStudents]);
+  const { data: activePackagesData } = useQuery({
+    queryKey: ['teacher-active-packages', teacherId, myStudentIds.sort().join(',')],
+    queryFn: async () => {
+      if (myStudentIds.length === 0) return [];
+      const { data } = await supabase
+        .from('packages')
+        .select('package_id, student_id')
+        .in('student_id', myStudentIds)
+        .eq('status', 'Active')
+        .order('created_at', { ascending: false });
+      return data || [];
+    },
+    enabled: myStudentIds.length > 0,
+    staleTime: 60_000,
+  });
+
+  const studentActivePackageMap = useMemo(() => {
+    const map = new Map<string, string>();
+    (activePackagesData || []).forEach(p => {
+      if (!map.has(p.student_id)) map.set(p.student_id, p.package_id);
+    });
+    return map;
+  }, [activePackagesData]);
+
   // Batch-fetch weekly schedules for all active packages
   const activePackageIds = useMemo(() => {
-    return myStudents.filter(s => s.current_package_id).map(s => s.current_package_id!);
-  }, [myStudents]);
+    return Array.from(studentActivePackageMap.values());
+  }, [studentActivePackageMap]);
 
   const { data: scheduleMap } = useQuery({
     queryKey: ['teacher-student-schedules', activePackageIds.sort().join(',')],
