@@ -105,8 +105,8 @@ export function EditPackageDialog({ package_, open, onOpenChange, onSuccess }: E
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.amount || !formData.lessons_purchased) {
-      toast.error('Please fill in required fields');
+    if (!formData.amount) {
+      toast.error('Please fill in the amount');
       return;
     }
     
