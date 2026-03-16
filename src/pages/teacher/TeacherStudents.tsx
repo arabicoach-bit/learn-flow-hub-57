@@ -13,13 +13,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useStudents } from '@/hooks/use-students';
 import { usePrograms } from '@/hooks/use-programs';
 import { useScheduledLessons } from '@/hooks/use-scheduled-lessons';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { getWalletColor, getStatusDisplayLabel } from '@/lib/wallet-utils';
 import { StudentLessonsView } from '@/components/student/StudentLessonsView';
 import { StudentInfoView } from '@/components/student/StudentInfoView';
 import {
   GraduationCap, Search, Phone, ChevronDown, User, BookOpen,
   AlertTriangle, Users, UserCheck, PauseCircle, UserX, TrendingUp,
-  LayoutGrid, TableIcon, Calendar, Clock, RefreshCw, ArrowUpDown,
+  LayoutGrid, TableIcon, Calendar, CalendarDays, Clock, RefreshCw, ArrowUpDown,
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
@@ -59,6 +61,42 @@ export default function TeacherStudents() {
 
   const myStudents = students?.filter(s => s.teacher_id === teacherId) || [];
   const studentRange = getFilterDateRange(studentFilter);
+
+  const DAY_ABBR = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  // Batch-fetch weekly schedules for all active packages
+  const activePackageIds = useMemo(() => {
+    return myStudents.filter(s => s.current_package_id).map(s => s.current_package_id!);
+  }, [myStudents]);
+
+  const { data: scheduleMap } = useQuery({
+    queryKey: ['teacher-student-schedules', activePackageIds.sort().join(',')],
+    queryFn: async () => {
+      if (activePackageIds.length === 0) return new Map<string, { day: number; time: string }[]>();
+      const { data } = await supabase
+        .from('lesson_schedules')
+        .select('package_id, day_of_week, time_slot')
+        .in('package_id', activePackageIds)
+        .order('day_of_week');
+      
+      // Build student→schedules map via package
+      const pkgToStudent = new Map<string, string>();
+      myStudents.forEach(s => {
+        if (s.current_package_id) pkgToStudent.set(s.current_package_id, s.student_id);
+      });
+      
+      const result = new Map<string, { day: number; time: string }[]>();
+      (data || []).forEach(row => {
+        const studentId = pkgToStudent.get(row.package_id!);
+        if (!studentId) return;
+        if (!result.has(studentId)) result.set(studentId, []);
+        result.get(studentId)!.push({ day: row.day_of_week, time: row.time_slot });
+      });
+      return result;
+    },
+    enabled: activePackageIds.length > 0,
+    staleTime: 60_000,
+  });
 
   // Lesson stats per student — active/current package only
   const lessonStatsMap = useMemo(() => {
@@ -320,6 +358,7 @@ export default function TeacherStudents() {
                         </Button>
                       </TableHead>
                       <TableHead>Lessons</TableHead>
+                      <TableHead>Schedule</TableHead>
                       <TableHead>
                         <Button variant="ghost" size="sm" className="gap-1 -ml-3 font-semibold" onClick={() => toggleSort('nextLesson')}>
                           Next Lesson <ArrowUpDown className="w-3 h-3" />
@@ -390,6 +429,21 @@ export default function TeacherStudents() {
                             ) : (
                               <span className="text-muted-foreground text-sm">—</span>
                             )}
+                          </TableCell>
+                          <TableCell>
+                            {(() => {
+                              const sched = scheduleMap?.get(student.student_id);
+                              if (!sched || sched.length === 0) return <span className="text-muted-foreground text-sm">—</span>;
+                              return (
+                                <div className="flex flex-wrap gap-1">
+                                  {sched.map((s, i) => (
+                                    <Badge key={i} variant="outline" className="text-[10px] px-1.5 py-0 font-normal">
+                                      {DAY_ABBR[s.day]} {formatTime12(s.time)}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              );
+                            })()}
                           </TableCell>
                           <TableCell>
                             {next ? (
@@ -512,6 +566,23 @@ export default function TeacherStudents() {
                             <Badge variant="secondary" className="text-xs font-normal">Level: {student.student_level}</Badge>
                           )}
                         </div>
+
+                        {/* Weekly Schedule Row */}
+                        {(() => {
+                          const sched = scheduleMap?.get(student.student_id);
+                          if (!sched || sched.length === 0) return null;
+                          return (
+                            <div className="flex items-center gap-1.5 flex-wrap mb-3 pl-[52px]">
+                              <CalendarDays className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                              {sched.map((s, i) => (
+                                <Badge key={i} variant="outline" className="text-[10px] px-1.5 py-0.5 font-normal gap-0.5">
+                                  <span className="font-medium">{DAY_ABBR[s.day]}</span>
+                                  <span className="text-muted-foreground">{formatTime12(s.time)}</span>
+                                </Badge>
+                              ))}
+                            </div>
+                          );
+                        })()}
 
                         {/* Metrics Row */}
                         <div className="flex items-center gap-2.5 flex-wrap pl-[52px]">
