@@ -128,9 +128,8 @@ export default function TeacherStudents() {
   const activeStudents = filteredStudents.filter(s => s.status === 'Active').length;
   const tempStopStudents = filteredStudents.filter(s => s.status === 'Temporary Stop').length;
   const leftStudents = filteredStudents.filter(s => s.status === 'Left').length;
-  const overdueStudents = filteredStudents.filter(s => s.status === 'Active' && (s.wallet_balance || 0) <= 0).length;
+  const lowCreditStudents = filteredStudents.filter(s => s.status === 'Active' && (s.wallet_balance || 0) <= 2).length;
   const retentionRate = totalStudents > 0 ? Math.round((activeStudents / totalStudents) * 100) : 0;
-  const attritionRate = totalStudents > 0 ? Math.round(((tempStopStudents + leftStudents) / totalStudents) * 100) : 0;
 
   const toggleStudent = (studentId: string) => {
     setExpandedStudents(prev => {
@@ -181,65 +180,45 @@ export default function TeacherStudents() {
         </div>
 
         {/* ═══════ STATS DASHBOARD ═══════ */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Student Overview */}
-          <Card className="border-primary/20">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Student Overview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-6">
-                <div className="relative flex items-center justify-center">
-                  <ProgressRing value={retentionRate} size={64} stroke={5} color="hsl(160, 84%, 39%)" />
-                  <span className="absolute text-sm font-bold">{studentsLoading ? '-' : `${retentionRate}%`}</span>
+        <Card className="border-primary/20">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Student Overview</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-6">
+              <div className="relative flex items-center justify-center">
+                <ProgressRing value={retentionRate} size={64} stroke={5} color="hsl(160, 84%, 39%)" />
+                <span className="absolute text-sm font-bold">{studentsLoading ? '-' : `${retentionRate}%`}</span>
+              </div>
+              <div className="grid grid-cols-3 md:grid-cols-6 gap-x-6 gap-y-2 flex-1">
+                <div>
+                  <p className="text-2xl font-bold">{studentsLoading ? '-' : totalStudents}</p>
+                  <p className="text-xs text-muted-foreground">Total</p>
                 </div>
-                <div className="grid grid-cols-3 gap-x-6 gap-y-2 flex-1">
-                  <div>
-                    <p className="text-2xl font-bold">{studentsLoading ? '-' : totalStudents}</p>
-                    <p className="text-xs text-muted-foreground">Total</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-emerald-500">{studentsLoading ? '-' : activeStudents}</p>
-                    <p className="text-xs text-muted-foreground">Active</p>
-                  </div>
-                  <div>
-                    <p className={`text-2xl font-bold ${overdueStudents > 0 ? 'text-destructive' : ''}`}>{studentsLoading ? '-' : overdueStudents}</p>
-                    <p className="text-xs text-muted-foreground">Overdue</p>
-                  </div>
+                <div>
+                  <p className="text-2xl font-bold text-emerald-500">{studentsLoading ? '-' : activeStudents}</p>
+                  <p className="text-xs text-muted-foreground">Active</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-amber-500">{studentsLoading ? '-' : tempStopStudents}</p>
+                  <p className="text-xs text-muted-foreground">Temp Stop</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-destructive">{studentsLoading ? '-' : leftStudents}</p>
+                  <p className="text-xs text-muted-foreground">Left</p>
+                </div>
+                <div>
+                  <p className={`text-2xl font-bold ${lowCreditStudents > 0 ? 'text-amber-500' : ''}`}>{studentsLoading ? '-' : lowCreditStudents}</p>
+                  <p className="text-xs text-muted-foreground">Low Credit</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-blue-500">{studentsLoading ? '-' : `${retentionRate}%`}</p>
+                  <p className="text-xs text-muted-foreground">Retention</p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Status Breakdown */}
-          <Card className="border-amber-500/20">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Status Breakdown</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-6">
-                <div className="relative flex items-center justify-center">
-                  <ProgressRing value={attritionRate} size={64} stroke={5} color="hsl(0, 72%, 51%)" />
-                  <span className="absolute text-sm font-bold">{studentsLoading ? '-' : `${attritionRate}%`}</span>
-                </div>
-                <div className="grid grid-cols-3 gap-x-6 gap-y-2 flex-1">
-                  <div>
-                    <p className="text-2xl font-bold text-amber-500">{studentsLoading ? '-' : tempStopStudents}</p>
-                    <p className="text-xs text-muted-foreground">Temp Stop</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-destructive">{studentsLoading ? '-' : leftStudents}</p>
-                    <p className="text-xs text-muted-foreground">Left</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-blue-500">{studentsLoading ? '-' : `${retentionRate}%`}</p>
-                    <p className="text-xs text-muted-foreground">Retention</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Filters */}
         <Card className="glass-card">
@@ -325,15 +304,14 @@ export default function TeacherStudents() {
                     {filteredStudents.map(student => {
                       const programName = getProgramName(student.program_id);
                       const wallet = student.wallet_balance || 0;
-                      const isOverdue = student.status === 'Active' && wallet <= 0;
-                      const lowCredit = wallet > 0 && wallet <= 2;
+                      const isLowCredit = student.status === 'Active' && wallet <= 2;
                       const next = nextLessonMap.get(student.student_id);
                       const lessonStats = lessonStatsMap.get(student.student_id);
 
                       return (
                         <TableRow
                           key={student.student_id}
-                          className={`cursor-pointer hover:bg-muted/30 ${isOverdue ? 'bg-destructive/5' : ''}`}
+                          className={`cursor-pointer hover:bg-muted/30 ${isLowCredit ? 'bg-amber-500/5' : ''}`}
                           onClick={() => toggleStudent(student.student_id)}
                         >
                           <TableCell>
@@ -344,8 +322,7 @@ export default function TeacherStudents() {
                               <div>
                                 <div className="flex items-center gap-1.5">
                                   <span className="font-medium">{student.name}</span>
-                                  {isOverdue && <AlertTriangle className="w-3.5 h-3.5 text-destructive" />}
-                                  {lowCredit && !isOverdue && <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />}
+                                  {isLowCredit && <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />}
                                 </div>
                                 {student.parent_guardian_name && (
                                   <p className="text-xs text-muted-foreground">{student.parent_guardian_name}</p>
@@ -440,8 +417,7 @@ export default function TeacherStudents() {
               const isExpanded = expandedStudents.has(student.student_id);
               const programName = getProgramName(student.program_id);
               const wallet = student.wallet_balance || 0;
-              const isOverdue = student.status === 'Active' && wallet <= 0;
-              const lowCredit = wallet > 0 && wallet <= 2;
+              const isLowCredit = student.status === 'Active' && wallet <= 2;
               const next = nextLessonMap.get(student.student_id);
               const lessonStats = lessonStatsMap.get(student.student_id);
               const lessonProgress = lessonStats && lessonStats.total > 0 ? (lessonStats.used / lessonStats.total) * 100 : 0;
@@ -452,7 +428,7 @@ export default function TeacherStudents() {
                   open={isExpanded}
                   onOpenChange={() => toggleStudent(student.student_id)}
                 >
-                  <div className={`rounded-xl border bg-card/50 overflow-hidden transition-all ${isOverdue ? 'border-destructive/40 bg-destructive/5' : 'border-border/50'}`}>
+                  <div className={`rounded-xl border bg-card/50 overflow-hidden transition-all ${isLowCredit ? 'border-amber-500/40 bg-amber-500/5' : 'border-border/50'}`}>
                     <CollapsibleTrigger className="w-full">
                       <div className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 hover:bg-muted/30 transition-colors cursor-pointer">
                         {/* Left: Avatar + Info */}
@@ -466,12 +442,7 @@ export default function TeacherStudents() {
                               <Badge variant="outline" className={getStatusBadgeClass(student.status)}>
                                 {getStatusDisplayLabel(student.status)}
                               </Badge>
-                              {isOverdue && (
-                                <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-xs gap-1">
-                                  <AlertTriangle className="w-3 h-3" /> Overdue
-                                </Badge>
-                              )}
-                              {lowCredit && !isOverdue && (
+                              {isLowCredit && (
                                 <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/30 text-xs gap-1">
                                   <AlertTriangle className="w-3 h-3" /> Low Credit
                                 </Badge>
