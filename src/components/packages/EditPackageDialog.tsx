@@ -180,12 +180,12 @@ export function EditPackageDialog({ package_, open, onOpenChange, onSuccess }: E
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="lessons_used">Lessons Used</Label>
+              <Label>Lessons Used</Label>
               <Input
-                id="lessons_used"
                 type="number"
-                value={formData.lessons_used}
-                onChange={(e) => setFormData({ ...formData, lessons_used: e.target.value })}
+                value={package_?.lessons_used || 0}
+                disabled
+                className="opacity-60"
               />
             </div>
           </div>
