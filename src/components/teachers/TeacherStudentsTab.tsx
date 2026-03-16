@@ -102,15 +102,15 @@ export function TeacherStudentsTab({ students, teacherId }: TeacherStudentsTabPr
 
   // Map: student_id → latest active package_id
   const studentActivePackageMap = useMemo(() => {
-    const map = new Map<string, string>();
+    const map = new Map<string, { packageId: string; lessonsPurchased: number }>();
     (activePackagesData || []).forEach(p => {
-      if (!map.has(p.student_id)) map.set(p.student_id, p.package_id);
+      if (!map.has(p.student_id)) map.set(p.student_id, { packageId: p.package_id, lessonsPurchased: p.lessons_purchased });
     });
     return map;
   }, [activePackagesData]);
 
   const activePackageIds = useMemo(() => {
-    return Array.from(studentActivePackageMap.values());
+    return Array.from(studentActivePackageMap.values()).map(v => v.packageId);
   }, [studentActivePackageMap]);
 
   const { data: scheduleMap } = useQuery({
