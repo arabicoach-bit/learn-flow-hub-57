@@ -116,22 +116,22 @@ export function StudentLessonsView({ studentId, studentName, walletBalance, role
         <WeeklyScheduleCard studentId={studentId} />
       )}
 
-      {/* Statistics */}
+      {/* Statistics (all-time for active package) */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3 text-center">
-          <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{allStats.completedCount}</p>
+          <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{allStats.allTimeCompleted}</p>
           <p className="text-xs text-muted-foreground">Completed</p>
         </div>
         <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-center">
-          <p className="text-2xl font-bold text-red-600 dark:text-red-400">{allStats.absentCount}</p>
+          <p className="text-2xl font-bold text-red-600 dark:text-red-400">{allStats.allTimeAbsent}</p>
           <p className="text-xs text-muted-foreground">Absent</p>
         </div>
         <div className="rounded-lg bg-blue-500/10 border border-blue-500/20 p-3 text-center">
-          <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{allStats.scheduledCount}</p>
+          <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{allStats.allTimeScheduled}</p>
           <p className="text-xs text-muted-foreground">Scheduled</p>
         </div>
         <div className="rounded-lg bg-purple-500/10 border border-purple-500/20 p-3 text-center">
-          <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{allStats.totalHours.toFixed(1)}</p>
+          <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{allStats.allTimeTotalHours.toFixed(1)}</p>
           <p className="text-xs text-muted-foreground">Total Hours</p>
         </div>
       </div>
