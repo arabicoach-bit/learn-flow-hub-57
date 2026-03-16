@@ -25,7 +25,7 @@ import AdminNotifications from "./pages/admin/Notifications";
 import TrialStudents from "./pages/admin/TrialStudents";
 import Leads from "./pages/Leads";
 import Packages from "./pages/admin/Packages";
-import AdminPayroll from "./pages/admin/AdminPayroll";
+// AdminPayroll merged into Teachers page
 import QuarterAnalysis from "./pages/admin/QuarterAnalysis";
 
 // Teacher pages

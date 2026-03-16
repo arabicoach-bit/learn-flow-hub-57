@@ -24,7 +24,6 @@ import {
   User,
   UserCheck,
   Package,
-  Wallet
 } from 'lucide-react';
 import { useUnreadNotificationsCount } from '@/hooks/use-notifications';
 import { cn } from '@/lib/utils';
