@@ -6,7 +6,7 @@ import { TeacherFiltersBar } from '@/components/teachers/TeacherFiltersBar';
 import { UnifiedTeacherStats } from '@/components/teachers/UnifiedTeacherStats';
 import { UnifiedTeacherTable } from '@/components/teachers/UnifiedTeacherTable';
 import { TeacherCardView } from '@/components/teachers/TeacherCardView';
-import { useTeachersBatchStats } from '@/hooks/use-teachers-batch-stats';
+
 
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
