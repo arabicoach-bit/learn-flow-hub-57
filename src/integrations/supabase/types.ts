@@ -793,6 +793,8 @@ export type Database = {
           lesson_time: string | null
           notes: string | null
           status: string
+          status_updated_at: string | null
+          status_updated_by: string | null
           teacher_id: string | null
           teacher_payment_amount: number | null
           trial_lesson_id: string
@@ -806,6 +808,8 @@ export type Database = {
           lesson_time?: string | null
           notes?: string | null
           status?: string
+          status_updated_at?: string | null
+          status_updated_by?: string | null
           teacher_id?: string | null
           teacher_payment_amount?: number | null
           trial_lesson_id?: string
@@ -819,6 +823,8 @@ export type Database = {
           lesson_time?: string | null
           notes?: string | null
           status?: string
+          status_updated_at?: string | null
+          status_updated_by?: string | null
           teacher_id?: string | null
           teacher_payment_amount?: number | null
           trial_lesson_id?: string
@@ -852,7 +858,11 @@ export type Database = {
         Row: {
           admin_payment_amount: number | null
           age: number | null
+          attendance_updated_at: string | null
+          attendance_updated_by: string | null
           conversion_status: Database["public"]["Enums"]["trial_conversion_status"]
+          conversion_updated_at: string | null
+          conversion_updated_by: string | null
           converted_student_id: string | null
           created_at: string | null
           duration_minutes: number
@@ -862,6 +872,7 @@ export type Database = {
           handled_by: string | null
           interested_program: string | null
           last_contact_date: string | null
+          last_updated_by: string | null
           lead_id: string | null
           name: string
           notes: string | null
@@ -885,7 +896,11 @@ export type Database = {
         Insert: {
           admin_payment_amount?: number | null
           age?: number | null
+          attendance_updated_at?: string | null
+          attendance_updated_by?: string | null
           conversion_status?: Database["public"]["Enums"]["trial_conversion_status"]
+          conversion_updated_at?: string | null
+          conversion_updated_by?: string | null
           converted_student_id?: string | null
           created_at?: string | null
           duration_minutes?: number
@@ -895,6 +910,7 @@ export type Database = {
           handled_by?: string | null
           interested_program?: string | null
           last_contact_date?: string | null
+          last_updated_by?: string | null
           lead_id?: string | null
           name: string
           notes?: string | null
@@ -918,7 +934,11 @@ export type Database = {
         Update: {
           admin_payment_amount?: number | null
           age?: number | null
+          attendance_updated_at?: string | null
+          attendance_updated_by?: string | null
           conversion_status?: Database["public"]["Enums"]["trial_conversion_status"]
+          conversion_updated_at?: string | null
+          conversion_updated_by?: string | null
           converted_student_id?: string | null
           created_at?: string | null
           duration_minutes?: number
@@ -928,6 +948,7 @@ export type Database = {
           handled_by?: string | null
           interested_program?: string | null
           last_contact_date?: string | null
+          last_updated_by?: string | null
           lead_id?: string | null
           name?: string
           notes?: string | null
