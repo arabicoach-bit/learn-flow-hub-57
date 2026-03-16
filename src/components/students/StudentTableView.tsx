@@ -34,15 +34,6 @@ export function StudentTableView({
   const updateStudent = useUpdateStudent();
   const { toast } = useToast();
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-
-  const toggleExpand = (id: string) => {
-    setExpandedIds(prev => {
-      const s = new Set(prev);
-      if (s.has(id)) s.delete(id); else s.add(id);
-      return s;
-    });
-  };
 
   return (
     <>
