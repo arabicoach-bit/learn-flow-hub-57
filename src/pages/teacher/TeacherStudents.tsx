@@ -180,65 +180,45 @@ export default function TeacherStudents() {
         </div>
 
         {/* ═══════ STATS DASHBOARD ═══════ */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Student Overview */}
-          <Card className="border-primary/20">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Student Overview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-6">
-                <div className="relative flex items-center justify-center">
-                  <ProgressRing value={retentionRate} size={64} stroke={5} color="hsl(160, 84%, 39%)" />
-                  <span className="absolute text-sm font-bold">{studentsLoading ? '-' : `${retentionRate}%`}</span>
+        <Card className="border-primary/20">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Student Overview</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-6">
+              <div className="relative flex items-center justify-center">
+                <ProgressRing value={retentionRate} size={64} stroke={5} color="hsl(160, 84%, 39%)" />
+                <span className="absolute text-sm font-bold">{studentsLoading ? '-' : `${retentionRate}%`}</span>
+              </div>
+              <div className="grid grid-cols-3 md:grid-cols-6 gap-x-6 gap-y-2 flex-1">
+                <div>
+                  <p className="text-2xl font-bold">{studentsLoading ? '-' : totalStudents}</p>
+                  <p className="text-xs text-muted-foreground">Total</p>
                 </div>
-                <div className="grid grid-cols-3 gap-x-6 gap-y-2 flex-1">
-                  <div>
-                    <p className="text-2xl font-bold">{studentsLoading ? '-' : totalStudents}</p>
-                    <p className="text-xs text-muted-foreground">Total</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-emerald-500">{studentsLoading ? '-' : activeStudents}</p>
-                    <p className="text-xs text-muted-foreground">Active</p>
-                  </div>
-                  <div>
-                    <p className={`text-2xl font-bold ${overdueStudents > 0 ? 'text-destructive' : ''}`}>{studentsLoading ? '-' : overdueStudents}</p>
-                    <p className="text-xs text-muted-foreground">Overdue</p>
-                  </div>
+                <div>
+                  <p className="text-2xl font-bold text-emerald-500">{studentsLoading ? '-' : activeStudents}</p>
+                  <p className="text-xs text-muted-foreground">Active</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-amber-500">{studentsLoading ? '-' : tempStopStudents}</p>
+                  <p className="text-xs text-muted-foreground">Temp Stop</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-destructive">{studentsLoading ? '-' : leftStudents}</p>
+                  <p className="text-xs text-muted-foreground">Left</p>
+                </div>
+                <div>
+                  <p className={`text-2xl font-bold ${lowCreditStudents > 0 ? 'text-amber-500' : ''}`}>{studentsLoading ? '-' : lowCreditStudents}</p>
+                  <p className="text-xs text-muted-foreground">Low Credit</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-blue-500">{studentsLoading ? '-' : `${retentionRate}%`}</p>
+                  <p className="text-xs text-muted-foreground">Retention</p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Status Breakdown */}
-          <Card className="border-amber-500/20">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Status Breakdown</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-6">
-                <div className="relative flex items-center justify-center">
-                  <ProgressRing value={attritionRate} size={64} stroke={5} color="hsl(0, 72%, 51%)" />
-                  <span className="absolute text-sm font-bold">{studentsLoading ? '-' : `${attritionRate}%`}</span>
-                </div>
-                <div className="grid grid-cols-3 gap-x-6 gap-y-2 flex-1">
-                  <div>
-                    <p className="text-2xl font-bold text-amber-500">{studentsLoading ? '-' : tempStopStudents}</p>
-                    <p className="text-xs text-muted-foreground">Temp Stop</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-destructive">{studentsLoading ? '-' : leftStudents}</p>
-                    <p className="text-xs text-muted-foreground">Left</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-blue-500">{studentsLoading ? '-' : `${retentionRate}%`}</p>
-                    <p className="text-xs text-muted-foreground">Retention</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Filters */}
         <Card className="glass-card">
