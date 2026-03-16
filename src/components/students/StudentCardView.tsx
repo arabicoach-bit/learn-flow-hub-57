@@ -3,8 +3,10 @@ import { format } from 'date-fns';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Pencil, Trash2, MessageCircle, Calendar, BookOpen, Wallet, Package } from 'lucide-react';
-import { getWalletColor, getStatusBadgeClass, getStatusDisplayLabel, getPaymentStatus, getPaymentStatusBadgeClass } from '@/lib/wallet-utils';
+import { Pencil, Trash2, MessageCircle, Calendar, Package } from 'lucide-react';
+import { getStatusBadgeClass, getStatusDisplayLabel, getPaymentStatus, getPaymentStatusBadgeClass } from '@/lib/wallet-utils';
+import { WalletBadge } from '@/components/shared/WalletBadge';
+import { LessonsBadge } from '@/components/shared/LessonsBadge';
 import type { Student } from '@/hooks/use-students';
 import type { StudentBatchStats } from '@/hooks/use-students-batch-stats';
 
