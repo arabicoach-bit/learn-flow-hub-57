@@ -343,9 +343,13 @@ export default function TeacherStudents() {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Badge className={`${getWalletColor(wallet)} text-xs`}>
-                              💰 {wallet}
-                            </Badge>
+                            {student.status === 'Active' ? (
+                              <Badge className={`${getWalletColor(wallet)} text-xs`}>
+                                💰 {wallet}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">—</span>
+                            )}
                           </TableCell>
                           <TableCell>
                             {lessonStats ? (
@@ -417,10 +421,18 @@ export default function TeacherStudents() {
               const isExpanded = expandedStudents.has(student.student_id);
               const programName = getProgramName(student.program_id);
               const wallet = student.wallet_balance || 0;
-              const isLowCredit = student.status === 'Active' && wallet <= 2;
+              const isActive = student.status === 'Active';
+              const isLowCredit = isActive && wallet <= 2;
+              const isInactive = student.status === 'Temporary Stop' || student.status === 'Left';
               const next = nextLessonMap.get(student.student_id);
               const lessonStats = lessonStatsMap.get(student.student_id);
               const lessonProgress = lessonStats && lessonStats.total > 0 ? (lessonStats.used / lessonStats.total) * 100 : 0;
+
+              const borderClass = isInactive
+                ? 'border-muted/60 opacity-75'
+                : isLowCredit
+                  ? 'border-amber-500/40 bg-amber-500/5'
+                  : 'border-border/50';
 
               return (
                 <Collapsible
@@ -428,68 +440,88 @@ export default function TeacherStudents() {
                   open={isExpanded}
                   onOpenChange={() => toggleStudent(student.student_id)}
                 >
-                  <div className={`rounded-xl border bg-card/50 overflow-hidden transition-all ${isLowCredit ? 'border-amber-500/40 bg-amber-500/5' : 'border-border/50'}`}>
+                  <div className={`rounded-xl border bg-card/50 overflow-hidden transition-all ${borderClass}`}>
                     <CollapsibleTrigger className="w-full">
-                      <div className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 hover:bg-muted/30 transition-colors cursor-pointer">
-                        {/* Left: Avatar + Info */}
-                        <div className="flex items-start gap-3 flex-1 text-left">
-                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                            <User className="w-5 h-5 text-primary" />
-                          </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <p className="font-semibold text-base">{student.name}</p>
-                              <Badge variant="outline" className={getStatusBadgeClass(student.status)}>
-                                {getStatusDisplayLabel(student.status)}
-                              </Badge>
-                              {isLowCredit && (
-                                <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/30 text-xs gap-1">
-                                  <AlertTriangle className="w-3 h-3" /> Low Credit
-                                </Badge>
-                              )}
+                      <div className="p-4 hover:bg-muted/30 transition-colors cursor-pointer">
+                        {/* Top Row: Avatar + Name + Badges */}
+                        <div className="flex items-center justify-between gap-3 mb-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-sm font-bold ${
+                              isActive ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+                            }`}>
+                              {student.name.charAt(0).toUpperCase()}
                             </div>
-                            <div className="flex items-center gap-3 mt-1.5 text-sm text-muted-foreground flex-wrap">
-                              <span className="flex items-center gap-1"><Phone className="w-3 h-3" /> {student.phone}</span>
-                              {programName && (
-                                <Badge variant="secondary" className="text-xs font-normal gap-1">
-                                  <GraduationCap className="w-3 h-3" /> {programName}
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className="font-semibold text-base truncate">{student.name}</p>
+                                <Badge variant="outline" className={getStatusBadgeClass(student.status)}>
+                                  {getStatusDisplayLabel(student.status)}
                                 </Badge>
-                              )}
-                              {student.student_level && (
-                                <Badge variant="secondary" className="text-xs font-normal">Level: {student.student_level}</Badge>
+                                {isLowCredit && (
+                                  <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/30 text-xs gap-1">
+                                    <AlertTriangle className="w-3 h-3" /> Low Credit
+                                  </Badge>
+                                )}
+                              </div>
+                              {student.parent_guardian_name && (
+                                <p className="text-xs text-muted-foreground mt-0.5">Parent: {student.parent_guardian_name}</p>
                               )}
                             </div>
                           </div>
+                          <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform shrink-0 ${isExpanded ? 'rotate-180' : ''}`} />
                         </div>
 
-                        {/* Right: Metrics */}
-                        <div className="flex items-center gap-3 flex-wrap">
+                        {/* Info Chips Row */}
+                        <div className="flex items-center gap-2 flex-wrap mb-3 pl-[52px]">
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Phone className="w-3 h-3" /> {student.phone}
+                          </div>
+                          {programName && (
+                            <Badge variant="secondary" className="text-xs font-normal gap-1">
+                              <GraduationCap className="w-3 h-3" /> {programName}
+                            </Badge>
+                          )}
+                          {student.student_level && (
+                            <Badge variant="secondary" className="text-xs font-normal">Level: {student.student_level}</Badge>
+                          )}
+                        </div>
+
+                        {/* Metrics Row */}
+                        <div className="flex items-center gap-2.5 flex-wrap pl-[52px]">
+                          {/* Wallet - only for Active */}
+                          {isActive && (
+                            <div className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium ${getWalletColor(wallet)}`}>
+                              💰 {wallet} lessons
+                            </div>
+                          )}
+
                           {/* Lessons Progress */}
                           {lessonStats && lessonStats.total > 0 && (
-                            <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-1.5 min-w-[110px]">
+                            <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-2.5 py-1.5 min-w-[100px]">
                               <BookOpen className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                               <div className="flex-1">
-                                <p className="text-xs font-medium">{lessonStats.used}/{lessonStats.total}</p>
+                                <p className="text-xs font-medium">{lessonStats.used}/{lessonStats.total} lessons</p>
                                 <Progress value={lessonProgress} className="h-1 mt-0.5" />
                               </div>
                             </div>
                           )}
 
-                          {/* Next Lesson */}
-                          {next && (
-                            <div className="flex items-center gap-1.5 text-sm text-muted-foreground bg-muted/50 rounded-lg px-2.5 py-1.5">
+                          {/* Next Lesson - only for Active */}
+                          {isActive && next && (
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 rounded-lg px-2.5 py-1.5">
                               <Calendar className="w-3.5 h-3.5 shrink-0" />
                               <span>{format(new Date(next.date + 'T00:00:00'), 'MMM d')}</span>
-                              <span className="text-xs">•</span>
+                              <span>•</span>
                               <span>{formatTime12(next.time)}</span>
                             </div>
                           )}
 
-                          {/* Wallet */}
-                          <Badge className={`${getWalletColor(wallet)} text-xs gap-1`}>
-                            💰 {wallet} lessons
-                          </Badge>
-                          <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                          {/* Inactive label */}
+                          {isInactive && (
+                            <span className="text-xs text-muted-foreground italic">
+                              {student.status === 'Temporary Stop' ? 'Currently paused' : 'No longer enrolled'}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </CollapsibleTrigger>
