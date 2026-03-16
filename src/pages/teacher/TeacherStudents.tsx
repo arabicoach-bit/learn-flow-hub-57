@@ -16,6 +16,8 @@ import { useScheduledLessons } from '@/hooks/use-scheduled-lessons';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { getWalletColor, getStatusDisplayLabel } from '@/lib/wallet-utils';
+import { WalletBadge } from '@/components/shared/WalletBadge';
+import { LessonsBadge } from '@/components/shared/LessonsBadge';
 import { StudentLessonsView } from '@/components/student/StudentLessonsView';
 import { StudentInfoView } from '@/components/student/StudentInfoView';
 import {
@@ -434,22 +436,14 @@ export default function TeacherStudents() {
                           </TableCell>
                           <TableCell>
                             {student.status === 'Active' ? (
-                              <Badge className={`${getWalletColor(wallet)} text-xs`}>
-                                💰 {wallet}
-                              </Badge>
+                              <WalletBadge balance={wallet} />
                             ) : (
                               <span className="text-muted-foreground text-sm">—</span>
                             )}
                           </TableCell>
                           <TableCell>
                             {lessonStats ? (
-                              <div className="flex items-center gap-2 min-w-[100px]">
-                                <span className="text-sm font-medium whitespace-nowrap">{lessonStats.used}/{lessonStats.total}</span>
-                                <Progress
-                                  value={lessonStats.total > 0 ? (lessonStats.used / lessonStats.total) * 100 : 0}
-                                  className="h-1.5 flex-1"
-                                />
-                              </div>
+                              <LessonsBadge used={lessonStats.used} total={lessonStats.total} />
                             ) : (
                               <span className="text-muted-foreground text-sm">—</span>
                             )}
@@ -612,20 +606,12 @@ export default function TeacherStudents() {
                         <div className="flex items-center gap-2.5 flex-wrap pl-[52px]">
                           {/* Wallet - only for Active */}
                           {isActive && (
-                            <div className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium ${getWalletColor(wallet)}`}>
-                              💰 {wallet} lessons
-                            </div>
+                            <WalletBadge balance={wallet} variant="chip" showLabel />
                           )}
 
                           {/* Lessons Progress */}
                           {lessonStats && lessonStats.total > 0 && (
-                            <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-2.5 py-1.5 min-w-[100px]">
-                              <BookOpen className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                              <div className="flex-1">
-                                <p className="text-xs font-medium">{lessonStats.used}/{lessonStats.total} lessons</p>
-                                <Progress value={lessonProgress} className="h-1 mt-0.5" />
-                              </div>
-                            </div>
+                            <LessonsBadge used={lessonStats.used} total={lessonStats.total} variant="chip" />
                           )}
 
                           {/* Next Lesson - only for Active */}

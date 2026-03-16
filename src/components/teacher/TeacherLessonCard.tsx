@@ -6,7 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { getWalletColor, getStatusDisplayLabel } from '@/lib/wallet-utils';
+import { getStatusDisplayLabel } from '@/lib/wallet-utils';
+import { WalletBadge } from '@/components/shared/WalletBadge';
 import { Check, X, Ban, Clock, Loader2, Edit2, Save } from 'lucide-react';
 import { useMarkScheduledLesson, useUpdateScheduledLesson } from '@/hooks/use-scheduled-lessons';
 import { supabase } from '@/integrations/supabase/client';
@@ -63,12 +64,7 @@ export function TeacherLessonCard({ lesson, onLessonMarked, showDate, date }: Te
     return formatTime(`${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`);
   };
 
-  const getWalletBadgeColor = (balance: number) => {
-    if (balance >= 5) return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
-    if (balance >= 3) return 'bg-lime-500/20 text-lime-400 border-lime-500/30';
-    if (balance >= 1) return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
-    return 'bg-red-500/20 text-red-400 border-red-500/30';
-  };
+  // Removed local getWalletBadgeColor — using shared WalletBadge instead
 
   const handleSaveEdit = async () => {
     setIsSaving(true);
@@ -141,9 +137,7 @@ export function TeacherLessonCard({ lesson, onLessonMarked, showDate, date }: Te
                 <span className={`font-semibold text-lg ${isBlocked ? 'text-muted-foreground' : ''}`}>
                   {lesson.student_name}
                 </span>
-                <Badge variant="outline" className={getWalletBadgeColor(lesson.wallet_balance)}>
-                  💰 {lesson.wallet_balance}
-                </Badge>
+                <WalletBadge balance={lesson.wallet_balance} />
                 {lesson.program_name && (
                   <Badge variant="secondary" className="text-xs">{lesson.program_name}</Badge>
                 )}

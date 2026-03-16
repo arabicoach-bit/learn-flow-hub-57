@@ -5,7 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Pencil, Trash2, MessageCircle } from 'lucide-react';
-import { getWalletColor, getStatusBadgeClass, getStatusDisplayLabel, getPaymentStatus, getPaymentStatusBadgeClass } from '@/lib/wallet-utils';
+import { getStatusBadgeClass, getStatusDisplayLabel, getPaymentStatus, getPaymentStatusBadgeClass } from '@/lib/wallet-utils';
+import { WalletBadge } from '@/components/shared/WalletBadge';
+import { LessonsBadge } from '@/components/shared/LessonsBadge';
 import { useUpdateStudent, type Student } from '@/hooks/use-students';
 import { useToast } from '@/hooks/use-toast';
 import type { StudentBatchStats } from '@/hooks/use-students-batch-stats';
@@ -109,23 +111,12 @@ export function StudentTableView({
                       </Select>
                     </td>
                     <td>
-                      <span
-                        className={`font-bold px-2 py-0.5 rounded ${getWalletColor(wallet)}`}
-                        style={{
-                          backgroundColor: wallet >= 5 ? 'rgb(16 185 129 / 0.15)' :
-                            wallet >= 3 ? 'rgb(132 204 22 / 0.15)' :
-                            wallet >= 1 ? 'rgb(245 158 11 / 0.15)' :
-                            wallet === 0 ? 'rgb(249 115 22 / 0.15)' :
-                            'rgb(239 68 68 / 0.15)'
-                        }}
-                      >
-                        {wallet}
-                      </span>
+                      <WalletBadge balance={wallet} />
                     </td>
                     <td onClick={e => e.stopPropagation()}>
-                      <span className="text-sm font-medium">
-                        {stats ? `${stats.lessonsUsed}/${stats.lessonsTotal}` : '—'}
-                      </span>
+                      {stats ? (
+                        <LessonsBadge used={stats.lessonsUsed} total={stats.lessonsTotal} />
+                      ) : <span className="text-muted-foreground">—</span>}
                     </td>
                     <td onClick={e => e.stopPropagation()}>
                       <span className="text-sm">

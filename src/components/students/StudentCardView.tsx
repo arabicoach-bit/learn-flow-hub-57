@@ -3,8 +3,10 @@ import { format } from 'date-fns';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Pencil, Trash2, MessageCircle, Calendar, BookOpen, Wallet, Package } from 'lucide-react';
-import { getWalletColor, getStatusBadgeClass, getStatusDisplayLabel, getPaymentStatus, getPaymentStatusBadgeClass } from '@/lib/wallet-utils';
+import { Pencil, Trash2, MessageCircle, Calendar, Package } from 'lucide-react';
+import { getStatusBadgeClass, getStatusDisplayLabel, getPaymentStatus, getPaymentStatusBadgeClass } from '@/lib/wallet-utils';
+import { WalletBadge } from '@/components/shared/WalletBadge';
+import { LessonsBadge } from '@/components/shared/LessonsBadge';
 import type { Student } from '@/hooks/use-students';
 import type { StudentBatchStats } from '@/hooks/use-students-batch-stats';
 
@@ -56,17 +58,15 @@ export function StudentCardView({ students, batchStats, onEdit, onDelete }: Stud
 
               {/* Stats Row */}
               <div className="grid grid-cols-4 gap-2 text-center">
-                <div className="rounded-lg bg-muted/50 p-2">
-                  <Wallet className="h-3.5 w-3.5 mx-auto mb-1 text-muted-foreground" />
-                  <span className={`text-sm font-bold ${getWalletColor(wallet)}`}>{wallet}</span>
-                  <p className="text-[10px] text-muted-foreground">Wallet</p>
+                <div className="rounded-lg bg-muted/50 p-2 flex flex-col items-center">
+                  <WalletBadge balance={wallet} />
+                  <p className="text-[10px] text-muted-foreground mt-1">Wallet</p>
                 </div>
-                <div className="rounded-lg bg-muted/50 p-2">
-                  <BookOpen className="h-3.5 w-3.5 mx-auto mb-1 text-muted-foreground" />
-                  <span className="text-sm font-bold">
-                    {stats ? `${stats.lessonsUsed}/${stats.lessonsTotal}` : '—'}
-                  </span>
-                  <p className="text-[10px] text-muted-foreground">Lessons</p>
+                <div className="rounded-lg bg-muted/50 p-2 flex flex-col items-center">
+                  {stats ? (
+                    <span className="text-sm font-bold">{stats.lessonsUsed}/{stats.lessonsTotal}</span>
+                  ) : <span className="text-sm font-bold">—</span>}
+                  <p className="text-[10px] text-muted-foreground mt-1">Lessons</p>
                 </div>
                 <div className="rounded-lg bg-muted/50 p-2">
                   <Calendar className="h-3.5 w-3.5 mx-auto mb-1 text-muted-foreground" />
