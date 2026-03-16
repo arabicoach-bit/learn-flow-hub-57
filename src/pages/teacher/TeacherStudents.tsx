@@ -72,7 +72,7 @@ export default function TeacherStudents() {
       if (myStudentIds.length === 0) return [];
       const { data } = await supabase
         .from('packages')
-        .select('package_id, student_id')
+        .select('package_id, student_id, lessons_purchased')
         .in('student_id', myStudentIds)
         .eq('status', 'Active')
         .order('created_at', { ascending: false });

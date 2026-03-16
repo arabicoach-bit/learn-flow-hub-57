@@ -90,7 +90,7 @@ export function TeacherStudentsTab({ students, teacherId }: TeacherStudentsTabPr
       if (studentIds.length === 0) return [];
       const { data } = await supabase
         .from('packages')
-        .select('package_id, student_id')
+        .select('package_id, student_id, lessons_purchased')
         .in('student_id', studentIds)
         .eq('status', 'Active')
         .order('created_at', { ascending: false });
