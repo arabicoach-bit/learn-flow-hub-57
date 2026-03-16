@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { format } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Pencil, Trash2, UserPlus } from 'lucide-react';
+import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
+import { ChevronRight, Pencil, Trash2, UserPlus, Phone, Calendar, GraduationCap, User, School, FileText, Clock } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import type { TrialStudent } from '@/hooks/use-trial-students';
 import type { Database } from '@/integrations/supabase/types';
@@ -23,33 +25,25 @@ interface TrialTableViewProps {
   onDelete: (trialId: string) => void;
 }
 
-const statusBadge = (status: string) => {
-  const colors: Record<string, string> = {
-    Scheduled: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-    Completed: 'bg-green-500/20 text-green-400 border-green-500/30',
-    Absent: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-  };
-  return colors[status] || 'bg-muted text-muted-foreground';
+const statusColors: Record<string, string> = {
+  Scheduled: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+  Completed: 'bg-green-500/20 text-green-400 border-green-500/30',
+  Absent: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
 };
 
-const conversionBadge = (status: string) => {
-  const colors: Record<string, string> = {
-    Pending: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-    Converted: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-    Lost: 'bg-red-500/20 text-red-400 border-red-500/30',
-  };
-  return colors[status] || 'bg-muted text-muted-foreground';
+const conversionColors: Record<string, string> = {
+  Pending: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+  Converted: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+  Lost: 'bg-red-500/20 text-red-400 border-red-500/30',
 };
 
-const resultBadge = (result: string) => {
-  const colors: Record<string, string> = {
-    'Very Positive': 'bg-emerald-500/20 text-emerald-400',
-    Positive: 'bg-green-500/20 text-green-400',
-    Neutral: 'bg-amber-500/20 text-amber-400',
-    Negative: 'bg-red-500/20 text-red-400',
-  };
-  return colors[result] || 'bg-muted text-muted-foreground';
+const resultColors: Record<string, string> = {
+  'Very Positive': 'bg-emerald-500/20 text-emerald-400',
+  Positive: 'bg-green-500/20 text-green-400',
+  Neutral: 'bg-amber-500/20 text-amber-400',
+  Negative: 'bg-red-500/20 text-red-400',
 };
+
 const followUpOptions = [
   'F.1 – Student Motivation', 'F.2 – Free Resources', 'F.3 – Parent Feedback',
   'F.4 – Special Offer', 'F.5 – Help Offer', 'F.6 – Soft Reminder', 'F.7 – Arabic Challenge',
@@ -67,177 +61,304 @@ const followUpColors: Record<string, string> = {
 
 const handledByOptions = ['Amira', 'Hind', 'Mona', 'Ahmed', 'Eman'];
 
+function getRowHighlight(student: TrialStudent) {
+  if (student.conversion_status === 'Converted') return 'bg-emerald-500/5 hover:bg-emerald-500/10';
+  if (student.conversion_status === 'Lost') return 'bg-red-500/5 hover:bg-red-500/10';
+  if (student.status === 'Absent') return 'bg-orange-500/5 hover:bg-orange-500/10';
+  if (student.status === 'Completed' && student.conversion_status === 'Pending') return 'bg-amber-500/5 hover:bg-amber-500/10';
+  return 'hover:bg-muted/50';
+}
+
 export function TrialTableView({ students, onUpdateStatus, onUpdateConversion, onUpdateResult, onUpdateFollowUp, onUpdateHandledBy, onEdit, onConvert, onDelete }: TrialTableViewProps) {
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+
+  const toggleExpand = (id: string) => {
+    setExpandedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
   return (
     <Card className="bg-card">
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead className="w-[40px]">#</TableHead>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="w-[28px] px-2"></TableHead>
+                <TableHead className="w-[32px] px-1">#</TableHead>
                 <TableHead>Student</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>Program</TableHead>
                 <TableHead>Teacher</TableHead>
                 <TableHead>Trial Date</TableHead>
-                <TableHead>Attendance</TableHead>
-                <TableHead>Conversion</TableHead>
-                <TableHead>Result</TableHead>
-                <TableHead>Follow-Up</TableHead>
-                <TableHead>Follow-Up Date</TableHead>
-                <TableHead>Handled By</TableHead>
-                <TableHead>Notes</TableHead>
-                <TableHead className="w-[100px]">Actions</TableHead>
+                {/* Status group */}
+                <TableHead className="text-center border-l border-border/50">
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Attendance</span>
+                </TableHead>
+                <TableHead className="text-center">
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Conversion</span>
+                </TableHead>
+                <TableHead className="text-center border-r border-border/50">
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Result</span>
+                </TableHead>
+                {/* CRM group */}
+                <TableHead className="text-center border-l border-border/50">
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Follow-Up</span>
+                </TableHead>
+                <TableHead className="text-center border-r border-border/50">
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Handled By</span>
+                </TableHead>
+                <TableHead className="w-[90px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {students.map((student, index) => {
+                const isExpanded = expandedIds.has(student.trial_id);
                 const canConvert = student.conversion_status === 'Pending' && student.status !== 'Absent';
+
                 return (
-                  <TableRow key={student.trial_id} className="hover:bg-muted/50">
-                    <TableCell className="text-muted-foreground text-xs">{index + 1}</TableCell>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{student.name}</p>
-                        {student.parent_guardian_name && (
-                          <p className="text-xs text-muted-foreground">{student.parent_guardian_name}</p>
-                        )}
-                        {student.age && (
-                          <p className="text-xs text-muted-foreground">
-                            {student.age} yrs{student.gender ? ` • ${student.gender}` : ''}
-                          </p>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm">{student.phone}</TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        {student.interested_program && <p>{student.interested_program}</p>}
-                        {student.student_level && <p className="text-xs text-muted-foreground">{student.student_level}</p>}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm">{student.teachers?.name || '—'}</TableCell>
-                    <TableCell>
-                      {student.trial_date ? (
-                        <div className="text-sm">
-                          <p>{format(new Date(student.trial_date), 'MMM d, yyyy')}</p>
-                          {student.trial_time && <p className="text-xs text-muted-foreground">{student.trial_time}</p>}
-                        </div>
-                      ) : <span className="text-muted-foreground">—</span>}
-                    </TableCell>
-                    <TableCell>
-                      <Select value={student.status} onValueChange={(v) => onUpdateStatus(student.trial_id, v as TrialStatus)}>
-                        <SelectTrigger className="h-7 w-[120px] text-xs border-0 bg-transparent px-1 focus:ring-0">
-                          <Badge className={statusBadge(student.status)}>{student.status}</Badge>
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Scheduled">Scheduled</SelectItem>
-                          <SelectItem value="Completed">Completed</SelectItem>
-                          <SelectItem value="Absent">Absent</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <Select value={student.conversion_status} onValueChange={(v) => onUpdateConversion(student.trial_id, v as any)}>
-                        <SelectTrigger className="h-7 w-[120px] text-xs border-0 bg-transparent px-1 focus:ring-0">
-                          <Badge className={conversionBadge(student.conversion_status)}>{student.conversion_status}</Badge>
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Pending">Pending</SelectItem>
-                          <SelectItem value="Converted">Converted</SelectItem>
-                          <SelectItem value="Lost">Lost</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <Select value={student.trial_result || '_none'} onValueChange={(v) => onUpdateResult(student.trial_id, v as TrialResult)}>
-                        <SelectTrigger className="h-7 w-[130px] text-xs border-0 bg-transparent px-1 focus:ring-0">
-                          {student.trial_result ? (
-                            <Badge className={resultBadge(student.trial_result)}>{student.trial_result}</Badge>
-                          ) : (
-                            <span className="text-muted-foreground text-xs">Set result</span>
-                          )}
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Very Positive">Very Positive</SelectItem>
-                          <SelectItem value="Positive">Positive</SelectItem>
-                          <SelectItem value="Neutral">Neutral</SelectItem>
-                          <SelectItem value="Negative">Negative</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    {/* Follow-Up */}
-                    <TableCell>
-                      <Select
-                        value={student.follow_up || '__none__'}
-                        onValueChange={(v) => onUpdateFollowUp(student.trial_id, v === '__none__' ? '' : v)}
+                  <Collapsible key={student.trial_id} open={isExpanded} onOpenChange={() => toggleExpand(student.trial_id)} asChild>
+                    <>
+                      <TableRow
+                        className={`cursor-pointer transition-colors ${getRowHighlight(student)} ${isExpanded ? 'border-b-0' : ''}`}
+                        onClick={() => toggleExpand(student.trial_id)}
                       >
-                        <SelectTrigger className="h-7 w-[180px] text-xs border-0 bg-transparent px-1 focus:ring-0">
-                          {student.follow_up ? (
-                            <Badge className={followUpColors[student.follow_up] || 'bg-muted text-muted-foreground'}>{student.follow_up}</Badge>
-                          ) : (
-                            <span className="text-muted-foreground text-xs">Set Follow-Up</span>
-                          )}
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="__none__">— None —</SelectItem>
-                          {followUpOptions.map(o => (
-                            <SelectItem key={o} value={o}>{o}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    {/* Follow-Up Date */}
-                    <TableCell>
-                      {student.last_contact_date ? (
-                        <span className="text-sm text-muted-foreground">
-                          {format(new Date(student.last_contact_date), 'MMM d, yyyy')}
-                        </span>
-                      ) : '—'}
-                    </TableCell>
-                    {/* Handled By */}
-                    <TableCell>
-                      <Select
-                        value={student.handled_by || '__none__'}
-                        onValueChange={(v) => onUpdateHandledBy(student.trial_id, v === '__none__' ? '' : v)}
-                      >
-                        <SelectTrigger className="h-7 w-[130px] text-xs border-0 bg-transparent px-1 focus:ring-0">
-                          {student.handled_by ? (
-                            <span className="text-sm">{student.handled_by}</span>
-                          ) : (
-                            <span className="text-muted-foreground text-xs">Assign</span>
-                          )}
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="__none__">— None —</SelectItem>
-                          {handledByOptions.map(h => (
-                            <SelectItem key={h} value={h}>{h}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      {student.notes ? (
-                        <p className="text-xs text-muted-foreground max-w-[150px] truncate" title={student.notes}>{student.notes}</p>
-                      ) : <span className="text-muted-foreground text-xs">—</span>}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        {canConvert && (
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:text-primary" onClick={() => onConvert(student)} title="Convert to Student">
-                            <UserPlus className="h-4 w-4" />
-                          </Button>
-                        )}
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(student)} title="Edit">
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => onDelete(student.trial_id)} title="Delete">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                        <TableCell className="px-2 py-2">
+                          <ChevronRight className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-xs px-1 py-2">{index + 1}</TableCell>
+                        <TableCell className="py-2">
+                          <div className="min-w-[120px]">
+                            <p className="font-medium text-sm leading-tight">{student.name}</p>
+                            {student.parent_guardian_name && (
+                              <p className="text-[11px] text-muted-foreground leading-tight">{student.parent_guardian_name}</p>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm py-2">{student.teachers?.name || '—'}</TableCell>
+                        <TableCell className="py-2">
+                          {student.trial_date ? (
+                            <div className="min-w-[85px]">
+                              <p className="text-sm leading-tight">{format(new Date(student.trial_date), 'MMM d, yyyy')}</p>
+                              {student.trial_time && <p className="text-[11px] text-muted-foreground leading-tight">{student.trial_time}</p>}
+                            </div>
+                          ) : <span className="text-muted-foreground text-sm">—</span>}
+                        </TableCell>
+
+                        {/* Status group */}
+                        <TableCell className="py-2 border-l border-border/30" onClick={e => e.stopPropagation()}>
+                          <Select value={student.status} onValueChange={(v) => onUpdateStatus(student.trial_id, v as TrialStatus)}>
+                            <SelectTrigger className="h-6 w-[105px] text-xs border-0 bg-transparent px-0.5 focus:ring-0">
+                              <Badge className={`text-[11px] px-1.5 py-0 ${statusColors[student.status] || ''}`}>{student.status}</Badge>
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Scheduled">Scheduled</SelectItem>
+                              <SelectItem value="Completed">Completed</SelectItem>
+                              <SelectItem value="Absent">Absent</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell className="py-2" onClick={e => e.stopPropagation()}>
+                          <Select value={student.conversion_status} onValueChange={(v) => onUpdateConversion(student.trial_id, v as any)}>
+                            <SelectTrigger className="h-6 w-[105px] text-xs border-0 bg-transparent px-0.5 focus:ring-0">
+                              <Badge className={`text-[11px] px-1.5 py-0 ${conversionColors[student.conversion_status] || ''}`}>{student.conversion_status}</Badge>
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Pending">Pending</SelectItem>
+                              <SelectItem value="Converted">Converted</SelectItem>
+                              <SelectItem value="Lost">Lost</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell className="py-2 border-r border-border/30" onClick={e => e.stopPropagation()}>
+                          <Select value={student.trial_result || '_none'} onValueChange={(v) => onUpdateResult(student.trial_id, v as TrialResult)}>
+                            <SelectTrigger className="h-6 w-[115px] text-xs border-0 bg-transparent px-0.5 focus:ring-0">
+                              {student.trial_result ? (
+                                <Badge className={`text-[11px] px-1.5 py-0 ${resultColors[student.trial_result] || ''}`}>{student.trial_result}</Badge>
+                              ) : (
+                                <span className="text-muted-foreground text-[11px]">Set result</span>
+                              )}
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Very Positive">Very Positive</SelectItem>
+                              <SelectItem value="Positive">Positive</SelectItem>
+                              <SelectItem value="Neutral">Neutral</SelectItem>
+                              <SelectItem value="Negative">Negative</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+
+                        {/* CRM group */}
+                        <TableCell className="py-2 border-l border-border/30" onClick={e => e.stopPropagation()}>
+                          <Select
+                            value={student.follow_up || '__none__'}
+                            onValueChange={(v) => onUpdateFollowUp(student.trial_id, v === '__none__' ? '' : v)}
+                          >
+                            <SelectTrigger className="h-6 w-[160px] text-xs border-0 bg-transparent px-0.5 focus:ring-0">
+                              {student.follow_up ? (
+                                <Badge className={`text-[11px] px-1.5 py-0 ${followUpColors[student.follow_up] || 'bg-muted text-muted-foreground'}`}>{student.follow_up}</Badge>
+                              ) : (
+                                <span className="text-muted-foreground text-[11px]">Set Follow-Up</span>
+                              )}
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__none__">— None —</SelectItem>
+                              {followUpOptions.map(o => (
+                                <SelectItem key={o} value={o}>{o}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell className="py-2 border-r border-border/30" onClick={e => e.stopPropagation()}>
+                          <Select
+                            value={student.handled_by || '__none__'}
+                            onValueChange={(v) => onUpdateHandledBy(student.trial_id, v === '__none__' ? '' : v)}
+                          >
+                            <SelectTrigger className="h-6 w-[100px] text-xs border-0 bg-transparent px-0.5 focus:ring-0">
+                              {student.handled_by ? (
+                                <span className="text-xs">{student.handled_by}</span>
+                              ) : (
+                                <span className="text-muted-foreground text-[11px]">Assign</span>
+                              )}
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__none__">— None —</SelectItem>
+                              {handledByOptions.map(h => (
+                                <SelectItem key={h} value={h}>{h}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+
+                        <TableCell className="py-2" onClick={e => e.stopPropagation()}>
+                          <div className="flex items-center gap-0.5">
+                            {canConvert && (
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-primary hover:text-primary" onClick={() => onConvert(student)} title="Convert">
+                                <UserPlus className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(student)} title="Edit">
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => onDelete(student.trial_id)} title="Delete">
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+
+                      {isExpanded && (
+                        <tr className="bg-muted/20 border-b">
+                          <td colSpan={11} className="p-0">
+                            <CollapsibleContent forceMount className="px-6 py-4">
+                              <div className="grid grid-cols-4 gap-6 text-sm">
+                                {/* Contact */}
+                                <div className="space-y-2">
+                                  <h4 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Contact</h4>
+                                  <div className="space-y-1.5">
+                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                      <Phone className="w-3.5 h-3.5" />
+                                      <span>{student.phone}</span>
+                                    </div>
+                                    {student.parent_guardian_name && (
+                                      <div className="flex items-center gap-2 text-muted-foreground">
+                                        <User className="w-3.5 h-3.5" />
+                                        <span>Parent: {student.parent_guardian_name}</span>
+                                      </div>
+                                    )}
+                                    {student.age && (
+                                      <div className="flex items-center gap-2 text-muted-foreground">
+                                        <User className="w-3.5 h-3.5" />
+                                        <span>{student.age} yrs{student.gender ? ` • ${student.gender}` : ''}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Academic */}
+                                <div className="space-y-2">
+                                  <h4 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Academic</h4>
+                                  <div className="space-y-1.5">
+                                    {student.interested_program && (
+                                      <div className="flex items-center gap-2 text-muted-foreground">
+                                        <GraduationCap className="w-3.5 h-3.5" />
+                                        <span>{student.interested_program}</span>
+                                      </div>
+                                    )}
+                                    {student.student_level && (
+                                      <div className="flex items-center gap-2 text-muted-foreground">
+                                        <GraduationCap className="w-3.5 h-3.5" />
+                                        <span>Level: {student.student_level}</span>
+                                      </div>
+                                    )}
+                                    {student.school && (
+                                      <div className="flex items-center gap-2 text-muted-foreground">
+                                        <School className="w-3.5 h-3.5" />
+                                        <span>{student.school}</span>
+                                      </div>
+                                    )}
+                                    {student.year_group && (
+                                      <div className="flex items-center gap-2 text-muted-foreground">
+                                        <Calendar className="w-3.5 h-3.5" />
+                                        <span>Year: {student.year_group}</span>
+                                      </div>
+                                    )}
+                                    {!student.interested_program && !student.student_level && !student.school && !student.year_group && (
+                                      <p className="text-muted-foreground text-xs">No academic info</p>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Trial Info */}
+                                <div className="space-y-2">
+                                  <h4 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Trial Details</h4>
+                                  <div className="space-y-1.5">
+                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                      <Clock className="w-3.5 h-3.5" />
+                                      <span>{student.duration_minutes} min session</span>
+                                    </div>
+                                    {student.teacher_payment_amount !== null && (
+                                      <div className="text-muted-foreground text-xs">
+                                        Teacher: EGP {student.teacher_payment_amount} · Admin: EGP {student.admin_payment_amount}
+                                      </div>
+                                    )}
+                                    {student.last_contact_date && (
+                                      <div className="flex items-center gap-2 text-muted-foreground">
+                                        <Calendar className="w-3.5 h-3.5" />
+                                        <span>Last contact: {format(new Date(student.last_contact_date), 'MMM d, yyyy')}</span>
+                                      </div>
+                                    )}
+                                    {student.registration_date && (
+                                      <div className="text-muted-foreground text-xs">
+                                        Registered: {format(new Date(student.registration_date), 'MMM d, yyyy')}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Notes */}
+                                <div className="space-y-2">
+                                  <h4 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Notes</h4>
+                                  {student.notes ? (
+                                    <p className="text-muted-foreground text-xs leading-relaxed whitespace-pre-wrap">{student.notes}</p>
+                                  ) : (
+                                    <p className="text-muted-foreground text-xs">No notes</p>
+                                  )}
+                                  {student.follow_up_notes && (
+                                    <div>
+                                      <p className="text-[11px] font-medium text-muted-foreground mb-0.5">Follow-up notes:</p>
+                                      <p className="text-muted-foreground text-xs leading-relaxed">{student.follow_up_notes}</p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </CollapsibleContent>
+                          </td>
+                        </tr>
+                      )}
+                    </>
+                  </Collapsible>
                 );
               })}
             </TableBody>
