@@ -103,8 +103,8 @@ export default function TrialStudents() {
     lost: stats.lost,
   };
 
-  const conversionRate = (stats.converted + stats.lost) > 0
-    ? ((stats.converted / (stats.converted + stats.lost)) * 100).toFixed(1)
+  const conversionRate = stats.completed > 0
+    ? ((stats.converted / stats.completed) * 100).toFixed(1)
     : '0.0';
 
   const handleUpdateStatus = async (trialId: string, status: TrialStatus) => {
