@@ -82,10 +82,36 @@ export function TeacherStudentsTab({ students, teacherId }: TeacherStudentsTabPr
 
   const DAY_ABBR = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  // Batch-fetch weekly schedules for all active packages
+  // Fetch active packages for these students (not relying on current_package_id which can be stale)
+  const studentIds = useMemo(() => students.map(s => s.student_id), [students]);
+  const { data: activePackagesData } = useQuery({
+    queryKey: ['admin-teacher-active-packages', teacherId, studentIds.sort().join(',')],
+    queryFn: async () => {
+      if (studentIds.length === 0) return [];
+      const { data } = await supabase
+        .from('packages')
+        .select('package_id, student_id')
+        .in('student_id', studentIds)
+        .eq('status', 'Active')
+        .order('created_at', { ascending: false });
+      return data || [];
+    },
+    enabled: studentIds.length > 0,
+    staleTime: 60_000,
+  });
+
+  // Map: student_id → latest active package_id
+  const studentActivePackageMap = useMemo(() => {
+    const map = new Map<string, string>();
+    (activePackagesData || []).forEach(p => {
+      if (!map.has(p.student_id)) map.set(p.student_id, p.package_id);
+    });
+    return map;
+  }, [activePackagesData]);
+
   const activePackageIds = useMemo(() => {
-    return students.filter(s => s.current_package_id).map(s => s.current_package_id!);
-  }, [students]);
+    return Array.from(studentActivePackageMap.values());
+  }, [studentActivePackageMap]);
 
   const { data: scheduleMap } = useQuery({
     queryKey: ['admin-teacher-student-schedules', teacherId, activePackageIds.sort().join(',')],
@@ -97,9 +123,10 @@ export function TeacherStudentsTab({ students, teacherId }: TeacherStudentsTabPr
         .in('package_id', activePackageIds)
         .order('day_of_week');
       
+      // Build reverse map: package_id → student_id using active packages
       const pkgToStudent = new Map<string, string>();
-      students.forEach(s => {
-        if (s.current_package_id) pkgToStudent.set(s.current_package_id, s.student_id);
+      studentActivePackageMap.forEach((pkgId, studentId) => {
+        pkgToStudent.set(pkgId, studentId);
       });
       
       const result = new Map<string, { day: number; time: string }[]>();
@@ -115,21 +142,20 @@ export function TeacherStudentsTab({ students, teacherId }: TeacherStudentsTabPr
     staleTime: 60_000,
   });
 
-  // Lesson stats per student (active package only)
+  // Lesson stats per student (active package only — using queried active packages, not stale current_package_id)
   const lessonStatsMap = useMemo(() => {
     const map = new Map<string, { used: number; total: number }>();
     if (!allLessons) return map;
-    const activePackageIds = new Set<string>();
-    students.forEach(s => { if (s.current_package_id) activePackageIds.add(s.current_package_id); });
+    const activePkgIds = new Set(activePackageIds);
     allLessons.forEach(l => {
-      if (!l.student_id || !l.package_id || !activePackageIds.has(l.package_id)) return;
+      if (!l.student_id || !l.package_id || !activePkgIds.has(l.package_id)) return;
       if (!map.has(l.student_id)) map.set(l.student_id, { used: 0, total: 0 });
       const entry = map.get(l.student_id)!;
       entry.total++;
       if (l.status === 'completed' || l.status === 'absent') entry.used++;
     });
     return map;
-  }, [allLessons, students]);
+  }, [allLessons, activePackageIds]);
 
   // Next lesson per student
   const nextLessonMap = useMemo(() => {
