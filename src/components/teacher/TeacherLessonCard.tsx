@@ -6,7 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { getWalletColor, getStatusDisplayLabel } from '@/lib/wallet-utils';
+import { getStatusDisplayLabel } from '@/lib/wallet-utils';
+import { WalletBadge } from '@/components/shared/WalletBadge';
 import { Check, X, Ban, Clock, Loader2, Edit2, Save } from 'lucide-react';
 import { useMarkScheduledLesson, useUpdateScheduledLesson } from '@/hooks/use-scheduled-lessons';
 import { supabase } from '@/integrations/supabase/client';
