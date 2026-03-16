@@ -81,15 +81,13 @@ export function StudentTableView({
                 const isLowCredit = student.status === 'Active' && wallet <= 2;
 
                 return (
-                  <Collapsible key={student.student_id} open={isExpanded} onOpenChange={() => toggleExpand(student.student_id)} asChild>
-                    <>
-                      {/* Main Row */}
                       <tr
+                        key={student.student_id}
                         className={`cursor-pointer hover:bg-muted/50 transition-colors ${isLowCredit ? 'bg-amber-500/5' : ''}`}
-                        onClick={() => toggleExpand(student.student_id)}
+                        onClick={() => navigate(`/admin/students/${student.student_id}`)}
                       >
                         <td className="w-8 pr-0">
-                          <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                          <ChevronRight className="w-4 h-4 text-muted-foreground" />
                         </td>
                         <td>
                           <div className="flex items-center gap-2">
@@ -183,121 +181,6 @@ export function StudentTableView({
                           </div>
                         </td>
                       </tr>
-
-                      {/* Expanded Details Row */}
-                      {isExpanded && (
-                        <tr className="bg-muted/30">
-                          <td colSpan={10} className="p-0">
-                            <CollapsibleContent forceMount className="overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
-                              <div className="px-6 py-4 border-t border-border/30">
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                  {/* Contact Info */}
-                                  <div className="space-y-2">
-                                    <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Contact</p>
-                                    <div className="space-y-1.5">
-                                      <div className="flex items-center gap-1.5 text-sm">
-                                        <Phone className="w-3 h-3 text-muted-foreground" />
-                                        <span>{student.phone}</span>
-                                      </div>
-                                      {student.parent_guardian_name && (
-                                        <div className="flex items-center gap-1.5 text-sm">
-                                          <User className="w-3 h-3 text-muted-foreground" />
-                                          <span className="text-muted-foreground">{student.parent_guardian_name}</span>
-                                        </div>
-                                      )}
-                                      {student.parent_phone && (
-                                        <div className="flex items-center gap-1.5 text-sm">
-                                          <Phone className="w-3 h-3 text-muted-foreground" />
-                                          <span className="text-muted-foreground">{student.parent_phone}</span>
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-
-                                  {/* Academic Info */}
-                                  <div className="space-y-2">
-                                    <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Academic</p>
-                                    <div className="space-y-1.5">
-                                      {student.programs?.name && (
-                                        <div className="flex items-center gap-1.5 text-sm">
-                                          <GraduationCap className="w-3 h-3 text-muted-foreground" />
-                                          <span>{student.programs.name}</span>
-                                        </div>
-                                      )}
-                                      {student.student_level && (
-                                        <p className="text-sm text-muted-foreground">Level: {student.student_level}</p>
-                                      )}
-                                      {student.year_group && (
-                                        <p className="text-sm text-muted-foreground">Year: {student.year_group}</p>
-                                      )}
-                                      {student.school && (
-                                        <p className="text-sm text-muted-foreground">{student.school}</p>
-                                      )}
-                                    </div>
-                                  </div>
-
-                                  {/* Package Summary */}
-                                  <div className="space-y-2">
-                                    <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Packages</p>
-                                    <div className="space-y-1.5">
-                                      <div className="flex items-center gap-1.5 text-sm">
-                                        <Package className="w-3 h-3 text-muted-foreground" />
-                                        <span>{stats?.inProgressPackages ?? 0} in progress</span>
-                                      </div>
-                                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                                        <Package className="w-3 h-3" />
-                                        <span>{stats?.finishedPackages ?? 0} finished</span>
-                                      </div>
-                                      {student.number_of_renewals != null && student.number_of_renewals > 0 && (
-                                        <p className="text-sm text-muted-foreground">{student.number_of_renewals} renewal{student.number_of_renewals > 1 ? 's' : ''}</p>
-                                      )}
-                                    </div>
-                                  </div>
-
-                                  {/* Dates & Meta */}
-                                  <div className="space-y-2">
-                                    <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Info</p>
-                                    <div className="space-y-1.5">
-                                      {student.created_at && (
-                                        <div className="flex items-center gap-1.5 text-sm">
-                                          <Calendar className="w-3 h-3 text-muted-foreground" />
-                                          <span>Joined {format(new Date(student.created_at), 'dd MMM yyyy')}</span>
-                                        </div>
-                                      )}
-                                      {student.age && (
-                                        <p className="text-sm text-muted-foreground">Age: {student.age}</p>
-                                      )}
-                                      {student.gender && (
-                                        <p className="text-sm text-muted-foreground">{student.gender}</p>
-                                      )}
-                                      {student.nationality && (
-                                        <p className="text-sm text-muted-foreground">{student.nationality}</p>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {/* Quick Action */}
-                                <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border/20">
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="h-7 text-xs"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      navigate(`/admin/students/${student.student_id}`);
-                                    }}
-                                  >
-                                    View Full Profile →
-                                  </Button>
-                                </div>
-                              </div>
-                            </CollapsibleContent>
-                          </td>
-                        </tr>
-                      )}
-                    </>
-                  </Collapsible>
                 );
               })
             )}
