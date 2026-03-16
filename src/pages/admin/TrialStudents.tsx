@@ -250,9 +250,6 @@ export default function TrialStudents() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-display font-bold">Trial Students</h1>
-            <p className="text-muted-foreground text-sm">
-              Manage trial lessons · 30-min sessions · 50/50 payment split
-            </p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={handleExport}>
