@@ -1,15 +1,18 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
-  Pencil, Trash2, MessageCircle, ChevronRight, User, Phone,
-  Calendar, Package, CreditCard, GraduationCap,
+  Pencil, Trash2, MessageCircle, ChevronRight,
 } from 'lucide-react';
+import { getStatusBadgeClass, getStatusDisplayLabel, getPaymentStatus, getPaymentStatusBadgeClass } from '@/lib/wallet-utils';
+import { WalletBadge } from '@/components/shared/WalletBadge';
+import { LessonsBadge } from '@/components/shared/LessonsBadge';
+import { useUpdateStudent, type Student } from '@/hooks/use-students';
+import { useToast } from '@/hooks/use-toast';
+import type { StudentBatchStats } from '@/hooks/use-students-batch-stats';
 import { getStatusBadgeClass, getStatusDisplayLabel, getPaymentStatus, getPaymentStatusBadgeClass } from '@/lib/wallet-utils';
 import { WalletBadge } from '@/components/shared/WalletBadge';
 import { LessonsBadge } from '@/components/shared/LessonsBadge';
