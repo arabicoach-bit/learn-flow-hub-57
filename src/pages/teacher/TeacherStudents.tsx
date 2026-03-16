@@ -13,6 +13,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useStudents } from '@/hooks/use-students';
 import { usePrograms } from '@/hooks/use-programs';
 import { useScheduledLessons } from '@/hooks/use-scheduled-lessons';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { getWalletColor, getStatusDisplayLabel } from '@/lib/wallet-utils';
 import { StudentLessonsView } from '@/components/student/StudentLessonsView';
 import { StudentInfoView } from '@/components/student/StudentInfoView';
