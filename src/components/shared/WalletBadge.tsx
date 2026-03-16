@@ -17,7 +17,7 @@ export function WalletBadge({ balance, variant = 'badge', showLabel = false }: W
   if (variant === 'chip') {
     return (
       <div className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium ${classes}`}>
-        💰 {balance}{showLabel ? ' lessons' : ''}
+        {balance}{showLabel ? ' lessons' : ''}
       </div>
     );
   }
