@@ -223,7 +223,7 @@ function StudentPackagesTab({
                           <TableCell>{endDates[pkg.package_id] || '—'}</TableCell>
                           <TableCell className="font-medium">{pkg.package_types?.name || 'Custom'}</TableCell>
                           <TableCell className="text-muted-foreground text-sm">{(pkg as any).description || '—'}</TableCell>
-                          <TableCell><Badge variant="outline" className={pkg.status === 'Active' ? 'status-active' : 'status-grace'}>{pkg.status === 'Active' ? 'Running' : pkg.status}</Badge></TableCell>
+                          <TableCell><Badge variant="outline" className={pkg.status === 'Active' ? 'status-active' : 'status-grace'}>{pkg.status === 'Active' ? 'In Progress' : 'Finished'}</Badge></TableCell>
                           <TableCell>{used}/{pkg.lessons_purchased}</TableCell>
                           <TableCell>{nextLesson ? <span className="text-xs text-muted-foreground">{nextLesson}</span> : <span className="text-muted-foreground">—</span>}</TableCell>
                           <TableCell>
