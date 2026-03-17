@@ -14,7 +14,7 @@ import { useTeacherLiveStats } from '@/hooks/use-teacher-live-stats';
 import { format, isToday, isTomorrow, addDays, startOfWeek, endOfWeek } from 'date-fns';
 import {
   CalendarDays, Clock, CheckCircle, XCircle, BookOpen,
-  Sun, Sunrise, ChevronRight, RefreshCw, TrendingUp,
+  Sun, Sunrise, ChevronRight, RefreshCw, TrendingUp, AlertCircle,
 } from 'lucide-react';
 
 export default function TeacherSchedule() {
@@ -40,6 +40,12 @@ export default function TeacherSchedule() {
 
   // Today's lessons (all statuses)
   const todayStr = format(new Date(), 'yyyy-MM-dd');
+
+  // Unmarked lessons (scheduled but in the past)
+  const unmarkedLessons = useMemo(() =>
+    (allLessons || []).filter(l => l.status === 'scheduled' && l.scheduled_date < todayStr).sort((a, b) => b.scheduled_date.localeCompare(a.scheduled_date)),
+    [allLessons, todayStr]);
+
   const todaysLessons = useMemo(() => {
     if (!allLessons) return [];
     return allLessons
@@ -214,6 +220,23 @@ export default function TeacherSchedule() {
               <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-28" />)}</div>
             ) : (
               <>
+                {/* Unmarked Warning */}
+                {unmarkedLessons.length > 0 && (
+                  <Card className="border-destructive/30 bg-destructive/5">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base flex items-center gap-2 text-destructive">
+                        <AlertCircle className="w-4 h-4" />
+                        {unmarkedLessons.length} Unmarked Lesson{unmarkedLessons.length !== 1 ? 's' : ''}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3 max-h-[300px] overflow-y-auto">
+                      {unmarkedLessons.map(lesson => (
+                        <LessonCard key={lesson.scheduled_lesson_id} lesson={lesson} onUpdated={() => refetch()} />
+                      ))}
+                    </CardContent>
+                  </Card>
+                )}
+
                 {/* Today's Lessons */}
                 <Card className="glass-card">
                   <CardHeader className="pb-3">
