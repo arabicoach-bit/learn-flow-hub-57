@@ -26,7 +26,7 @@ import { toast } from 'sonner';
 import { useSearchParamState, useSearchParamYearMonth } from '@/hooks/use-search-param-state';
 
 type StatusFilter = 'all' | 'Active' | 'Completed';
-type TabValue = 'all' | 'in_progress' | 'finished' | 'paid' | 'pending';
+type TabValue = 'all' | 'in_progress' | 'finished' | 'paid' | 'pending' | 'new';
 
 export default function Packages() {
   const queryClient = useQueryClient();
