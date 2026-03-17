@@ -1,4 +1,4 @@
-import { Users, UserCheck, CreditCard, Clock, PauseCircle, XCircle, TrendingUp, TrendingDown, CheckCircle } from 'lucide-react';
+import { Users, UserCheck, CreditCard, Clock, PauseCircle, XCircle, TrendingUp, TrendingDown, CheckCircle, UserPlus } from 'lucide-react';
 
 interface StudentStatsBarProps {
   total: number;
@@ -8,15 +8,17 @@ interface StudentStatsBarProps {
   renewal: number;
   stop: number;
   left: number;
+  newThisMonth?: number;
 }
 
-export function StudentStatsBar({ total, active, paid, pending, renewal, stop, left }: StudentStatsBarProps) {
+export function StudentStatsBar({ total, active, paid, pending, renewal, stop, left, newThisMonth = 0 }: StudentStatsBarProps) {
   const retentionRate = total > 0 ? Math.round((active / total) * 100) : 0;
   const attritionRate = total > 0 ? Math.round(((stop + left) / total) * 100) : 0;
 
   const items = [
     { label: 'Total', value: total, icon: Users, color: 'text-muted-foreground', bg: 'bg-muted/60' },
     { label: 'Active', value: active, icon: UserCheck, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+    { label: 'New', value: newThisMonth, icon: UserPlus, color: 'text-blue-500', bg: 'bg-blue-500/10' },
     { label: 'Paid', value: paid, icon: CheckCircle, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
     { label: 'Pending', value: pending, icon: CreditCard, color: 'text-amber-500', bg: 'bg-amber-500/10' },
     { label: 'Renewal', value: renewal, icon: Clock, color: 'text-orange-500', bg: 'bg-orange-500/10' },
@@ -27,7 +29,7 @@ export function StudentStatsBar({ total, active, paid, pending, renewal, stop, l
   ];
 
   return (
-    <div className="grid grid-cols-9 gap-2">
+    <div className="grid grid-cols-5 md:grid-cols-10 gap-2">
       {items.map(({ label, value, icon: Icon, color, bg }) => (
         <div
           key={label}

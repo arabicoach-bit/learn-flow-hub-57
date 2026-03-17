@@ -27,7 +27,7 @@ import type { Student } from '@/hooks/use-students';
 const STUDENT_LEVELS = ['Beginner', 'Elementary', 'Intermediate', 'Upper Intermediate', 'Advanced'];
 const PAGE_SIZE = 20;
 
-type TabValue = 'all' | 'active' | 'stop' | 'left' | 'paid' | 'pending';
+type TabValue = 'all' | 'active' | 'stop' | 'left' | 'paid' | 'pending' | 'new';
 
 export default function Students() {
   const [search, setSearch] = useSearchParamState('q', '');
@@ -108,6 +108,16 @@ export default function Students() {
       if (s.status !== 'Active') return false;
       return paymentStatsMap?.[s.student_id] ?? false;
     });
+    if (activeTab === 'new') {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = now.getMonth();
+      return sorted.filter(s => {
+        if (!s.created_at) return false;
+        const d = new Date(s.created_at);
+        return d.getFullYear() === y && d.getMonth() === m;
+      });
+    }
     return sorted;
   }, [sorted, activeTab, paymentStatsMap]);
 
@@ -127,6 +137,18 @@ export default function Students() {
   const tempStopCount = dateFiltered.filter(s => s.status === 'Temporary Stop').length;
   const leftCount = dateFiltered.filter(s => s.status === 'Left').length;
 
+  // New this month
+  const newThisMonthCount = useMemo(() => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth();
+    return dateFiltered.filter(s => {
+      if (!s.created_at) return false;
+      const d = new Date(s.created_at);
+      return d.getFullYear() === y && d.getMonth() === m;
+    }).length;
+  }, [dateFiltered]);
+
   const { paidCount, pendingCount, needsRenewalCount } = useMemo(() => {
     let paid = 0, pending = 0, needsRenewal = 0;
     dateFiltered.forEach(s => {
@@ -140,6 +162,17 @@ export default function Students() {
     return { paidCount: paid, pendingCount: pending, needsRenewalCount: needsRenewal };
   }, [dateFiltered, paymentStatsMap]);
 
+  const newTabCount = useMemo(() => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth();
+    return sorted.filter(s => {
+      if (!s.created_at) return false;
+      const d = new Date(s.created_at);
+      return d.getFullYear() === y && d.getMonth() === m;
+    }).length;
+  }, [sorted]);
+
   const tabCounts = {
     all: sorted.length,
     active: sorted.filter(s => s.status === 'Active').length,
@@ -147,6 +180,7 @@ export default function Students() {
     left: sorted.filter(s => s.status === 'Left').length,
     paid: paidCount,
     pending: pendingCount,
+    new: newTabCount,
   };
 
   const handleFilterChange = (setter: (v: any) => void) => (v: any) => { setter(v); setPage(1); };
@@ -311,7 +345,7 @@ export default function Students() {
         </div>
 
         {/* Compact Stats */}
-        <StudentStatsBar total={totalStudents} active={activeCount} paid={paidCount} pending={pendingCount} renewal={needsRenewalCount} stop={tempStopCount} left={leftCount} />
+        <StudentStatsBar total={totalStudents} active={activeCount} paid={paidCount} pending={pendingCount} renewal={needsRenewalCount} stop={tempStopCount} left={leftCount} newThisMonth={newThisMonthCount} />
 
         {/* Filters */}
         <StudentFiltersBar
@@ -344,6 +378,9 @@ export default function Students() {
             </TabsTrigger>
             <TabsTrigger value="left" className="text-xs h-7 px-3">
               Left <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-red-500/20 text-red-500">{tabCounts.left}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="new" className="text-xs h-7 px-3">
+              New <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-blue-500/20 text-blue-500">{tabCounts.new}</Badge>
             </TabsTrigger>
           </TabsList>
 
