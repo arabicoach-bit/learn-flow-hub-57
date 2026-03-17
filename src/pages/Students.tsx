@@ -162,6 +162,17 @@ export default function Students() {
     return { paidCount: paid, pendingCount: pending, needsRenewalCount: needsRenewal };
   }, [dateFiltered, paymentStatsMap]);
 
+  const newTabCount = useMemo(() => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth();
+    return sorted.filter(s => {
+      if (!s.created_at) return false;
+      const d = new Date(s.created_at);
+      return d.getFullYear() === y && d.getMonth() === m;
+    }).length;
+  }, [sorted]);
+
   const tabCounts = {
     all: sorted.length,
     active: sorted.filter(s => s.status === 'Active').length,
@@ -169,6 +180,7 @@ export default function Students() {
     left: sorted.filter(s => s.status === 'Left').length,
     paid: paidCount,
     pending: pendingCount,
+    new: newTabCount,
   };
 
   const handleFilterChange = (setter: (v: any) => void) => (v: any) => { setter(v); setPage(1); };
