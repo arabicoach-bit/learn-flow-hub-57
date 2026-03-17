@@ -318,7 +318,7 @@ export default function TeacherSchedule() {
                           key={lesson.scheduled_lesson_id}
                           lesson={lesson}
                           onUpdated={() => refetch()}
-                          readOnly={!dayIsToday}
+                          readOnly={false}
                         />
                       ))}
                     </CardContent>
