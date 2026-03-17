@@ -40,6 +40,12 @@ export default function TeacherSchedule() {
 
   // Today's lessons (all statuses)
   const todayStr = format(new Date(), 'yyyy-MM-dd');
+
+  // Unmarked lessons (scheduled but in the past)
+  const unmarkedLessons = useMemo(() =>
+    (allLessons || []).filter(l => l.status === 'scheduled' && l.scheduled_date < todayStr).sort((a, b) => b.scheduled_date.localeCompare(a.scheduled_date)),
+    [allLessons, todayStr]);
+
   const todaysLessons = useMemo(() => {
     if (!allLessons) return [];
     return allLessons
