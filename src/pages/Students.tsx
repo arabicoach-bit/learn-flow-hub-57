@@ -27,7 +27,7 @@ import type { Student } from '@/hooks/use-students';
 const STUDENT_LEVELS = ['Beginner', 'Elementary', 'Intermediate', 'Upper Intermediate', 'Advanced'];
 const PAGE_SIZE = 20;
 
-type TabValue = 'all' | 'active' | 'stop' | 'left' | 'paid' | 'pending';
+type TabValue = 'all' | 'active' | 'stop' | 'left' | 'paid' | 'pending' | 'new';
 
 export default function Students() {
   const [search, setSearch] = useSearchParamState('q', '');
