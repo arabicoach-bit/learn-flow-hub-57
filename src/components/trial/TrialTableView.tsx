@@ -165,16 +165,21 @@ export function TrialTableView({ students, onUpdateStatus, onUpdateConversion, o
                           </div>
                         </TableCell>
                         <TableCell className="py-2" onClick={e => e.stopPropagation()}>
-                          <Select value={student.conversion_status} onValueChange={(v) => onUpdateConversion(student.trial_id, v as any)}>
-                            <SelectTrigger className="h-6 w-[105px] text-xs border-0 bg-transparent px-0.5 focus:ring-0">
-                              <Badge className={`text-[11px] px-1.5 py-0 ${conversionColors[student.conversion_status] || ''}`}>{student.conversion_status}</Badge>
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Pending">Pending</SelectItem>
-                              <SelectItem value="Converted">Converted</SelectItem>
-                              <SelectItem value="Lost">Lost</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <div className="flex flex-col gap-0.5">
+                            <Select value={student.conversion_status} onValueChange={(v) => onUpdateConversion(student.trial_id, v as any)}>
+                              <SelectTrigger className="h-6 w-[105px] text-xs border-0 bg-transparent px-0.5 focus:ring-0">
+                                <Badge className={`text-[11px] px-1.5 py-0 ${conversionColors[student.conversion_status] || ''}`}>{student.conversion_status}</Badge>
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Pending">Pending</SelectItem>
+                                <SelectItem value="Converted">Converted</SelectItem>
+                                <SelectItem value="Lost">Lost</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <span className="text-[10px] text-muted-foreground/70 pl-0.5">
+                              {student.conversion_updated_at ? format(new Date(student.conversion_updated_at), 'dd MMM yyyy') : '—'}
+                            </span>
+                          </div>
                         </TableCell>
                         <TableCell className="py-2 border-r border-border/30" onClick={e => e.stopPropagation()}>
                           <Select value={student.trial_result || '_none'} onValueChange={(v) => onUpdateResult(student.trial_id, v as TrialResult)}>
