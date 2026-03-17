@@ -69,11 +69,12 @@ export default function Students() {
   const paymentFiltered = useMemo(() => {
     if (!paymentFilter) return dateFiltered;
     return dateFiltered.filter(s => {
-      if (s.status !== 'Active') return false;
       const hasPending = paymentStatsMap?.[s.student_id] ?? false;
       const wallet = s.wallet_balance || 0;
-      if (paymentFilter === 'Paid') return !hasPending && wallet > 0;
       if (paymentFilter === 'Pending') return hasPending;
+      // For Paid/Renewal, only Active students qualify
+      if (s.status !== 'Active') return false;
+      if (paymentFilter === 'Paid') return !hasPending && wallet > 0;
       if (paymentFilter === 'Renewal') return !hasPending && wallet <= 0;
       return true;
     });
