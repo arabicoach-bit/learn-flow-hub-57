@@ -345,7 +345,7 @@ export default function Students() {
         </div>
 
         {/* Compact Stats */}
-        <StudentStatsBar total={totalStudents} active={activeCount} paid={paidCount} pending={pendingCount} renewal={needsRenewalCount} stop={tempStopCount} left={leftCount} />
+        <StudentStatsBar total={totalStudents} active={activeCount} paid={paidCount} pending={pendingCount} renewal={needsRenewalCount} stop={tempStopCount} left={leftCount} newThisMonth={newThisMonthCount} />
 
         {/* Filters */}
         <StudentFiltersBar
