@@ -28,8 +28,9 @@ export function getPaymentStatus(
   walletBalance: number,
   hasAnyPendingPackage: boolean
 ): PaymentStatusType {
-  if (studentStatus !== 'Active') return '';
+  // Any student with unpaid packages shows as Pending, regardless of activity status
   if (hasAnyPendingPackage) return 'Pending';
+  if (studentStatus !== 'Active') return '';
   if (walletBalance > 0) return 'Paid';
   return 'Renewal';
 }

@@ -152,11 +152,12 @@ export default function Students() {
   const { paidCount, pendingCount, needsRenewalCount } = useMemo(() => {
     let paid = 0, pending = 0, needsRenewal = 0;
     dateFiltered.forEach(s => {
-      if (s.status !== 'Active') return;
       const hasPending = paymentStatsMap?.[s.student_id] ?? false;
+      // Any student with unpaid packages counts as pending, regardless of status
+      if (hasPending) { pending++; return; }
+      if (s.status !== 'Active') return;
       const wallet = s.wallet_balance || 0;
-      if (hasPending) pending++;
-      else if (wallet > 0) paid++;
+      if (wallet > 0) paid++;
       else needsRenewal++;
     });
     return { paidCount: paid, pendingCount: pending, needsRenewalCount: needsRenewal };
