@@ -281,7 +281,7 @@ export function TeacherCalendar({ teacherId }: TeacherCalendarProps) {
                   </CardHeader>
                   <CardContent className="space-y-2">
                     {lessons.map(lesson => (
-                      <LessonCard key={lesson.scheduled_lesson_id} lesson={lesson} onUpdated={() => refetch()} readOnly={!dayIsToday} />
+                      <LessonCard key={lesson.scheduled_lesson_id} lesson={lesson} onUpdated={() => refetch()} readOnly={false} />
                     ))}
                   </CardContent>
                 </Card>
