@@ -108,6 +108,16 @@ export default function Students() {
       if (s.status !== 'Active') return false;
       return paymentStatsMap?.[s.student_id] ?? false;
     });
+    if (activeTab === 'new') {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = now.getMonth();
+      return sorted.filter(s => {
+        if (!s.created_at) return false;
+        const d = new Date(s.created_at);
+        return d.getFullYear() === y && d.getMonth() === m;
+      });
+    }
     return sorted;
   }, [sorted, activeTab, paymentStatsMap]);
 
