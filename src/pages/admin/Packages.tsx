@@ -119,12 +119,24 @@ export default function Packages() {
   const renewalCount = baseFiltered.filter(p => p.is_renewal).length;
   const newCount = baseFiltered.filter(p => !p.is_renewal).length;
 
+  const newThisMonthCount = useMemo(() => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth();
+    return baseFiltered.filter(p => {
+      if (!p.created_at) return false;
+      const d = new Date(p.created_at);
+      return d.getFullYear() === y && d.getMonth() === m;
+    }).length;
+  }, [baseFiltered]);
+
   const tabCounts = {
     all: baseFiltered.length,
     in_progress: runningCount,
     finished: completedCount,
     paid: baseFiltered.filter(p => p.payment_status === 'Paid').length,
     pending: baseFiltered.filter(p => p.payment_status !== 'Paid').length,
+    new: newThisMonthCount,
   };
 
   const handleExport = () => {
