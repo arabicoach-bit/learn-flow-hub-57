@@ -14,7 +14,7 @@ import { useTeacherLiveStats } from '@/hooks/use-teacher-live-stats';
 import { format, isToday, isTomorrow, addDays, startOfWeek, endOfWeek } from 'date-fns';
 import {
   CalendarDays, Clock, CheckCircle, XCircle, BookOpen,
-  Sun, Sunrise, ChevronRight, RefreshCw, TrendingUp,
+  Sun, Sunrise, ChevronRight, RefreshCw, TrendingUp, AlertCircle,
 } from 'lucide-react';
 
 export default function TeacherSchedule() {
