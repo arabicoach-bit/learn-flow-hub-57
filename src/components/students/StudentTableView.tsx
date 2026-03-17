@@ -110,35 +110,43 @@ export function StudentTableView({
 
                     {/* Status group */}
                     <td className="py-2 border-l border-border/30" onClick={e => e.stopPropagation()}>
-                      <Select
-                        value={student.status}
-                        onValueChange={(value: 'Active' | 'Temporary Stop' | 'Left') => {
-                          updateStudent.mutate(
-                            { studentId: student.student_id, status: value },
-                            {
-                              onSuccess: () => toast({ title: `Status updated to ${getStatusDisplayLabel(value)}` }),
-                              onError: () => toast({ title: 'Failed to update status', variant: 'destructive' }),
-                            }
-                          );
-                        }}
-                      >
-                        <SelectTrigger className="w-[95px] h-6 text-xs border-0 bg-transparent px-0.5 focus:ring-0">
-                          <Badge variant="outline" className={`${getStatusBadgeClass(student.status)} border-0 text-[11px] px-1.5 py-0`}>
-                            {getStatusDisplayLabel(student.status)}
-                          </Badge>
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Active">
-                            <Badge variant="outline" className={getStatusBadgeClass('Active')}>Active</Badge>
-                          </SelectItem>
-                          <SelectItem value="Temporary Stop">
-                            <Badge variant="outline" className={getStatusBadgeClass('Temporary Stop')}>Stop</Badge>
-                          </SelectItem>
-                          <SelectItem value="Left">
-                            <Badge variant="outline" className={getStatusBadgeClass('Left')}>Left</Badge>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <div className="flex flex-col gap-0.5">
+                        <Select
+                          value={student.status}
+                          onValueChange={(value: 'Active' | 'Temporary Stop' | 'Left') => {
+                            updateStudent.mutate(
+                              { studentId: student.student_id, status: value },
+                              {
+                                onSuccess: () => toast({ title: `Status updated to ${getStatusDisplayLabel(value)}` }),
+                                onError: () => toast({ title: 'Failed to update status', variant: 'destructive' }),
+                              }
+                            );
+                          }}
+                        >
+                          <SelectTrigger className="w-[95px] h-6 text-xs border-0 bg-transparent px-0.5 focus:ring-0">
+                            <Badge variant="outline" className={`${getStatusBadgeClass(student.status)} border-0 text-[11px] px-1.5 py-0`}>
+                              {getStatusDisplayLabel(student.status)}
+                            </Badge>
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Active">
+                              <Badge variant="outline" className={getStatusBadgeClass('Active')}>Active</Badge>
+                            </SelectItem>
+                            <SelectItem value="Temporary Stop">
+                              <Badge variant="outline" className={getStatusBadgeClass('Temporary Stop')}>Stop</Badge>
+                            </SelectItem>
+                            <SelectItem value="Left">
+                              <Badge variant="outline" className={getStatusBadgeClass('Left')}>Left</Badge>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <span className="text-[10px] text-muted-foreground/70 pl-0.5">
+                          {student.status === 'Active'
+                            ? student.created_at ? format(new Date(student.created_at), 'dd MMM yyyy') : '—'
+                            : student.updated_at ? format(new Date(student.updated_at), 'dd MMM yyyy') : '—'
+                          }
+                        </span>
+                      </div>
                     </td>
                     <td className="py-2">
                       <WalletBadge balance={wallet} />
