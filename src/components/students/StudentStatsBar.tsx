@@ -29,7 +29,7 @@ export function StudentStatsBar({ total, active, paid, pending, renewal, stop, l
   ];
 
   return (
-    <div className="grid grid-cols-9 gap-2">
+    <div className="grid grid-cols-5 md:grid-cols-10 gap-2">
       {items.map(({ label, value, icon: Icon, color, bg }) => (
         <div
           key={label}

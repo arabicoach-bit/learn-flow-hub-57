@@ -379,6 +379,9 @@ export default function Students() {
             <TabsTrigger value="left" className="text-xs h-7 px-3">
               Left <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-red-500/20 text-red-500">{tabCounts.left}</Badge>
             </TabsTrigger>
+            <TabsTrigger value="new" className="text-xs h-7 px-3">
+              New <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-blue-500/20 text-blue-500">{tabCounts.new}</Badge>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value={activeTab} className="mt-3">
