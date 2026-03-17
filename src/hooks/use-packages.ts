@@ -26,6 +26,7 @@ export interface Package {
   description: string | null;
   payment_status: string;
   payment_received: boolean | null;
+  paid_date: string | null;
   completed_date: string | null;
   created_at: string;
   students?: { 

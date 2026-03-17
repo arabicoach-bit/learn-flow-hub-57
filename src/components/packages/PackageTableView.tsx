@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -116,11 +117,20 @@ export function PackageTableView({
                       </TableCell>
 
                       <TableCell className="text-center py-2 border-l border-border/30" onClick={e => e.stopPropagation()}>
-                        {pkg.payment_status === 'Paid' ? (
-                          <Badge className="bg-emerald-600 hover:bg-emerald-700 text-[11px] px-1.5 py-0">Paid</Badge>
-                        ) : (
-                          <Badge variant="outline" className="border-amber-500 text-amber-600 text-[11px] px-1.5 py-0">Pending</Badge>
-                        )}
+                        <div className="flex flex-col items-center gap-0.5">
+                          {pkg.payment_status === 'Paid' ? (
+                            <Badge className="bg-emerald-600 hover:bg-emerald-700 text-[11px] px-1.5 py-0">Paid</Badge>
+                          ) : (
+                            <Badge variant="outline" className="border-amber-500 text-amber-600 text-[11px] px-1.5 py-0">Pending</Badge>
+                          )}
+                          <span className="text-[10px] text-muted-foreground/70">
+                            {pkg.payment_status === 'Paid' && pkg.paid_date
+                              ? format(new Date(pkg.paid_date), 'dd MMM yyyy')
+                              : pkg.created_at
+                                ? format(new Date(pkg.created_at), 'dd MMM yyyy')
+                                : '—'}
+                          </span>
+                        </div>
                       </TableCell>
                       <TableCell className="text-right py-2 font-medium text-sm" onClick={e => e.stopPropagation()}>
                         {formatCurrency(pkg.amount)}
