@@ -37,6 +37,8 @@ export interface TrialStudent {
   follow_up_notes: string | null;
   converted_student_id: string | null;
   registration_date: string | null;
+  attendance_updated_at: string | null;
+  conversion_updated_at: string | null;
   created_at: string;
   updated_at: string;
   teachers?: { name: string; rate_per_lesson: number } | null;

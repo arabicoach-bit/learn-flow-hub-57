@@ -148,28 +148,38 @@ export function TrialTableView({ students, onUpdateStatus, onUpdateConversion, o
 
                         {/* Status group */}
                         <TableCell className="py-2 border-l border-border/30" onClick={e => e.stopPropagation()}>
-                          <Select value={student.status} onValueChange={(v) => onUpdateStatus(student.trial_id, v as TrialStatus)}>
-                            <SelectTrigger className="h-6 w-[105px] text-xs border-0 bg-transparent px-0.5 focus:ring-0">
-                              <Badge className={`text-[11px] px-1.5 py-0 ${statusColors[student.status] || ''}`}>{student.status}</Badge>
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Scheduled">Scheduled</SelectItem>
-                              <SelectItem value="Completed">Completed</SelectItem>
-                              <SelectItem value="Absent">Absent</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <div className="flex flex-col gap-0.5">
+                            <Select value={student.status} onValueChange={(v) => onUpdateStatus(student.trial_id, v as TrialStatus)}>
+                              <SelectTrigger className="h-6 w-[105px] text-xs border-0 bg-transparent px-0.5 focus:ring-0">
+                                <Badge className={`text-[11px] px-1.5 py-0 ${statusColors[student.status] || ''}`}>{student.status}</Badge>
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Scheduled">Scheduled</SelectItem>
+                                <SelectItem value="Completed">Completed</SelectItem>
+                                <SelectItem value="Absent">Absent</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <span className="text-[10px] text-muted-foreground/70 pl-0.5">
+                              {student.attendance_updated_at ? format(new Date(student.attendance_updated_at), 'dd MMM yyyy') : '—'}
+                            </span>
+                          </div>
                         </TableCell>
                         <TableCell className="py-2" onClick={e => e.stopPropagation()}>
-                          <Select value={student.conversion_status} onValueChange={(v) => onUpdateConversion(student.trial_id, v as any)}>
-                            <SelectTrigger className="h-6 w-[105px] text-xs border-0 bg-transparent px-0.5 focus:ring-0">
-                              <Badge className={`text-[11px] px-1.5 py-0 ${conversionColors[student.conversion_status] || ''}`}>{student.conversion_status}</Badge>
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Pending">Pending</SelectItem>
-                              <SelectItem value="Converted">Converted</SelectItem>
-                              <SelectItem value="Lost">Lost</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <div className="flex flex-col gap-0.5">
+                            <Select value={student.conversion_status} onValueChange={(v) => onUpdateConversion(student.trial_id, v as any)}>
+                              <SelectTrigger className="h-6 w-[105px] text-xs border-0 bg-transparent px-0.5 focus:ring-0">
+                                <Badge className={`text-[11px] px-1.5 py-0 ${conversionColors[student.conversion_status] || ''}`}>{student.conversion_status}</Badge>
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Pending">Pending</SelectItem>
+                                <SelectItem value="Converted">Converted</SelectItem>
+                                <SelectItem value="Lost">Lost</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <span className="text-[10px] text-muted-foreground/70 pl-0.5">
+                              {student.conversion_updated_at ? format(new Date(student.conversion_updated_at), 'dd MMM yyyy') : '—'}
+                            </span>
+                          </div>
                         </TableCell>
                         <TableCell className="py-2 border-r border-border/30" onClick={e => e.stopPropagation()}>
                           <Select value={student.trial_result || '_none'} onValueChange={(v) => onUpdateResult(student.trial_id, v as TrialResult)}>
@@ -191,24 +201,29 @@ export function TrialTableView({ students, onUpdateStatus, onUpdateConversion, o
 
                         {/* CRM group */}
                         <TableCell className="py-2 border-l border-border/30" onClick={e => e.stopPropagation()}>
-                          <Select
-                            value={student.follow_up || '__none__'}
-                            onValueChange={(v) => onUpdateFollowUp(student.trial_id, v === '__none__' ? '' : v)}
-                          >
-                            <SelectTrigger className="h-6 w-[160px] text-xs border-0 bg-transparent px-0.5 focus:ring-0">
-                              {student.follow_up ? (
-                                <Badge className={`text-[11px] px-1.5 py-0 ${followUpColors[student.follow_up] || 'bg-muted text-muted-foreground'}`}>{student.follow_up}</Badge>
-                              ) : (
-                                <span className="text-muted-foreground text-[11px]">Set Follow-Up</span>
-                              )}
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="__none__">— None —</SelectItem>
-                              {followUpOptions.map(o => (
-                                <SelectItem key={o} value={o}>{o}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <div className="flex flex-col gap-0.5">
+                            <Select
+                              value={student.follow_up || '__none__'}
+                              onValueChange={(v) => onUpdateFollowUp(student.trial_id, v === '__none__' ? '' : v)}
+                            >
+                              <SelectTrigger className="h-6 w-[160px] text-xs border-0 bg-transparent px-0.5 focus:ring-0">
+                                {student.follow_up ? (
+                                  <Badge className={`text-[11px] px-1.5 py-0 ${followUpColors[student.follow_up] || 'bg-muted text-muted-foreground'}`}>{student.follow_up}</Badge>
+                                ) : (
+                                  <span className="text-muted-foreground text-[11px]">Set Follow-Up</span>
+                                )}
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="__none__">— None —</SelectItem>
+                                {followUpOptions.map(o => (
+                                  <SelectItem key={o} value={o}>{o}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <span className="text-[10px] text-muted-foreground/70 pl-0.5">
+                              {student.last_contact_date ? format(new Date(student.last_contact_date), 'dd MMM yyyy') : '—'}
+                            </span>
+                          </div>
                         </TableCell>
                         <TableCell className="py-2 border-r border-border/30" onClick={e => e.stopPropagation()}>
                           <Select
