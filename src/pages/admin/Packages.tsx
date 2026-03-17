@@ -40,7 +40,7 @@ export default function Packages() {
   const [sortBy, setSortBy] = useSearchParamState('sort', 'newest') as [string, (v: string) => void];
   const [editPackage, setEditPackage] = useState<Package | null>(null);
   const [summaryPkg, setSummaryPkg] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<TabValue>('new');
+  const [activeTab, setActiveTab] = useState<TabValue>('all');
 
   // Edit Payment Dialog
   const [isEditPaymentOpen, setIsEditPaymentOpen] = useState(false);

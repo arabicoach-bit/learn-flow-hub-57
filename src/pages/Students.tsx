@@ -41,7 +41,7 @@ export default function Students() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editStudent, setEditStudent] = useState<Student | null>(null);
   const [deleteStudent, setDeleteStudent] = useState<Student | null>(null);
-  const [activeTab, setActiveTab] = useState<TabValue>('new');
+  const [activeTab, setActiveTab] = useState<TabValue>('all');
   const { toast } = useToast();
 
   const { data: students, isLoading } = useStudents({ search, status: statusFilter || undefined, teacher_id: teacherFilter || undefined });
