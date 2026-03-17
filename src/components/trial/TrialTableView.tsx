@@ -201,24 +201,29 @@ export function TrialTableView({ students, onUpdateStatus, onUpdateConversion, o
 
                         {/* CRM group */}
                         <TableCell className="py-2 border-l border-border/30" onClick={e => e.stopPropagation()}>
-                          <Select
-                            value={student.follow_up || '__none__'}
-                            onValueChange={(v) => onUpdateFollowUp(student.trial_id, v === '__none__' ? '' : v)}
-                          >
-                            <SelectTrigger className="h-6 w-[160px] text-xs border-0 bg-transparent px-0.5 focus:ring-0">
-                              {student.follow_up ? (
-                                <Badge className={`text-[11px] px-1.5 py-0 ${followUpColors[student.follow_up] || 'bg-muted text-muted-foreground'}`}>{student.follow_up}</Badge>
-                              ) : (
-                                <span className="text-muted-foreground text-[11px]">Set Follow-Up</span>
-                              )}
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="__none__">— None —</SelectItem>
-                              {followUpOptions.map(o => (
-                                <SelectItem key={o} value={o}>{o}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <div className="flex flex-col gap-0.5">
+                            <Select
+                              value={student.follow_up || '__none__'}
+                              onValueChange={(v) => onUpdateFollowUp(student.trial_id, v === '__none__' ? '' : v)}
+                            >
+                              <SelectTrigger className="h-6 w-[160px] text-xs border-0 bg-transparent px-0.5 focus:ring-0">
+                                {student.follow_up ? (
+                                  <Badge className={`text-[11px] px-1.5 py-0 ${followUpColors[student.follow_up] || 'bg-muted text-muted-foreground'}`}>{student.follow_up}</Badge>
+                                ) : (
+                                  <span className="text-muted-foreground text-[11px]">Set Follow-Up</span>
+                                )}
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="__none__">— None —</SelectItem>
+                                {followUpOptions.map(o => (
+                                  <SelectItem key={o} value={o}>{o}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <span className="text-[10px] text-muted-foreground/70 pl-0.5">
+                              {student.last_contact_date ? format(new Date(student.last_contact_date), 'dd MMM yyyy') : '—'}
+                            </span>
+                          </div>
                         </TableCell>
                         <TableCell className="py-2 border-r border-border/30" onClick={e => e.stopPropagation()}>
                           <Select
