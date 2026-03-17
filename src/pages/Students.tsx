@@ -127,6 +127,18 @@ export default function Students() {
   const tempStopCount = dateFiltered.filter(s => s.status === 'Temporary Stop').length;
   const leftCount = dateFiltered.filter(s => s.status === 'Left').length;
 
+  // New this month
+  const newThisMonthCount = useMemo(() => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth();
+    return dateFiltered.filter(s => {
+      if (!s.created_at) return false;
+      const d = new Date(s.created_at);
+      return d.getFullYear() === y && d.getMonth() === m;
+    }).length;
+  }, [dateFiltered]);
+
   const { paidCount, pendingCount, needsRenewalCount } = useMemo(() => {
     let paid = 0, pending = 0, needsRenewal = 0;
     dateFiltered.forEach(s => {
