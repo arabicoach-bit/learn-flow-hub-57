@@ -41,7 +41,7 @@ export default function Students() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editStudent, setEditStudent] = useState<Student | null>(null);
   const [deleteStudent, setDeleteStudent] = useState<Student | null>(null);
-  const [activeTab, setActiveTab] = useState<TabValue>('all');
+  const [activeTab, setActiveTab] = useState<TabValue>('new');
   const { toast } = useToast();
 
   const { data: students, isLoading } = useStudents({ search, status: statusFilter || undefined, teacher_id: teacherFilter || undefined });
@@ -361,6 +361,9 @@ export default function Students() {
         {/* Tabs + Content */}
         <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsList className="bg-muted/50 h-9">
+            <TabsTrigger value="new" className="text-xs h-7 px-3">
+              New <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-blue-500/20 text-blue-500">{tabCounts.new}</Badge>
+            </TabsTrigger>
             <TabsTrigger value="all" className="text-xs h-7 px-3">
               All <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4">{tabCounts.all}</Badge>
             </TabsTrigger>
@@ -378,9 +381,6 @@ export default function Students() {
             </TabsTrigger>
             <TabsTrigger value="left" className="text-xs h-7 px-3">
               Left <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-red-500/20 text-red-500">{tabCounts.left}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="new" className="text-xs h-7 px-3">
-              New <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-blue-500/20 text-blue-500">{tabCounts.new}</Badge>
             </TabsTrigger>
           </TabsList>
 

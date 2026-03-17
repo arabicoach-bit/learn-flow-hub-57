@@ -26,7 +26,7 @@ import { toast } from 'sonner';
 import { useSearchParamState, useSearchParamYearMonth } from '@/hooks/use-search-param-state';
 
 type StatusFilter = 'all' | 'Active' | 'Completed';
-type TabValue = 'all' | 'in_progress' | 'finished' | 'paid' | 'pending';
+type TabValue = 'all' | 'in_progress' | 'finished' | 'paid' | 'pending' | 'new';
 
 export default function Packages() {
   const queryClient = useQueryClient();
@@ -40,7 +40,7 @@ export default function Packages() {
   const [sortBy, setSortBy] = useSearchParamState('sort', 'newest') as [string, (v: string) => void];
   const [editPackage, setEditPackage] = useState<Package | null>(null);
   const [summaryPkg, setSummaryPkg] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<TabValue>('all');
+  const [activeTab, setActiveTab] = useState<TabValue>('new');
 
   // Edit Payment Dialog
   const [isEditPaymentOpen, setIsEditPaymentOpen] = useState(false);
@@ -94,6 +94,16 @@ export default function Packages() {
     if (activeTab === 'finished') return baseFiltered.filter(p => p.status === 'Completed');
     if (activeTab === 'paid') return baseFiltered.filter(p => p.payment_status === 'Paid');
     if (activeTab === 'pending') return baseFiltered.filter(p => p.payment_status !== 'Paid');
+    if (activeTab === 'new') {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = now.getMonth();
+      return baseFiltered.filter(p => {
+        if (!p.created_at) return false;
+        const d = new Date(p.created_at);
+        return d.getFullYear() === y && d.getMonth() === m;
+      });
+    }
     return baseFiltered;
   }, [baseFiltered, activeTab]);
 
@@ -109,12 +119,24 @@ export default function Packages() {
   const renewalCount = baseFiltered.filter(p => p.is_renewal).length;
   const newCount = baseFiltered.filter(p => !p.is_renewal).length;
 
+  const newThisMonthCount = useMemo(() => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth();
+    return baseFiltered.filter(p => {
+      if (!p.created_at) return false;
+      const d = new Date(p.created_at);
+      return d.getFullYear() === y && d.getMonth() === m;
+    }).length;
+  }, [baseFiltered]);
+
   const tabCounts = {
     all: baseFiltered.length,
     in_progress: runningCount,
     finished: completedCount,
     paid: baseFiltered.filter(p => p.payment_status === 'Paid').length,
     pending: baseFiltered.filter(p => p.payment_status !== 'Paid').length,
+    new: newThisMonthCount,
   };
 
   const handleExport = () => {
@@ -200,6 +222,9 @@ export default function Packages() {
         {/* Tabs + Content */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)}>
           <TabsList className="bg-muted/50 h-9">
+            <TabsTrigger value="new" className="text-xs h-7 px-3">
+              New <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-blue-500/20 text-blue-500">{tabCounts.new}</Badge>
+            </TabsTrigger>
             <TabsTrigger value="all" className="text-xs h-7 px-3">
               All <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4">{tabCounts.all}</Badge>
             </TabsTrigger>
