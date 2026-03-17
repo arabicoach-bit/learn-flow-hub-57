@@ -99,7 +99,9 @@ export function TeacherStatsBar() {
     <div className="grid grid-cols-4 gap-2">
       {/* Lessons */}
       <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border bg-emerald-500/5 border-emerald-500/20">
-        <ProgressRing value={totalLessons} max={Math.max(totalLessons, 30)} color="hsl(var(--primary))" />
+        <div className="p-1.5 rounded-lg bg-emerald-500/10 shrink-0">
+          <BookOpen className="w-5 h-5 text-emerald-500" />
+        </div>
         <div className="min-w-0">
           <p className="text-lg font-bold leading-tight">{totalLessons}</p>
           <p className="text-[10px] text-muted-foreground leading-tight">Lessons</p>
@@ -109,7 +111,9 @@ export function TeacherStatsBar() {
 
       {/* Hours */}
       <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border bg-blue-500/5 border-blue-500/20">
-        <ProgressRing value={totalHours} max={Math.max(totalHours, 40)} color="hsl(160 60% 45%)" />
+        <div className="p-1.5 rounded-lg bg-blue-500/10 shrink-0">
+          <Clock className="w-5 h-5 text-blue-500" />
+        </div>
         <div className="min-w-0">
           <p className="text-lg font-bold leading-tight">{totalHours.toFixed(1)}h</p>
           <p className="text-[10px] text-muted-foreground leading-tight">Hours</p>
