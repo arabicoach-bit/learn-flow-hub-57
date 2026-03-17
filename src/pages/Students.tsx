@@ -105,7 +105,6 @@ export default function Students() {
       return !hasPending && (s.wallet_balance || 0) > 0;
     });
     if (activeTab === 'pending') return sorted.filter(s => {
-      if (s.status !== 'Active') return false;
       return paymentStatsMap?.[s.student_id] ?? false;
     });
     if (activeTab === 'new') {
