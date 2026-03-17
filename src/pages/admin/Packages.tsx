@@ -222,11 +222,11 @@ export default function Packages() {
         {/* Tabs + Content */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)}>
           <TabsList className="bg-muted/50 h-9">
-            <TabsTrigger value="new" className="text-xs h-7 px-3">
-              New <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-blue-500/20 text-blue-500">{tabCounts.new}</Badge>
-            </TabsTrigger>
             <TabsTrigger value="all" className="text-xs h-7 px-3">
               All <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4">{tabCounts.all}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="new" className="text-xs h-7 px-3">
+              New <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-blue-500/20 text-blue-500">{tabCounts.new}</Badge>
             </TabsTrigger>
             <TabsTrigger value="in_progress" className="text-xs h-7 px-3">
               In Progress <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-emerald-500/20 text-emerald-500">{tabCounts.in_progress}</Badge>
