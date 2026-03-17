@@ -220,6 +220,23 @@ export default function TeacherSchedule() {
               <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-28" />)}</div>
             ) : (
               <>
+                {/* Unmarked Warning */}
+                {unmarkedLessons.length > 0 && (
+                  <Card className="border-destructive/30 bg-destructive/5">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base flex items-center gap-2 text-destructive">
+                        <AlertCircle className="w-4 h-4" />
+                        {unmarkedLessons.length} Unmarked Lesson{unmarkedLessons.length !== 1 ? 's' : ''}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3 max-h-[300px] overflow-y-auto">
+                      {unmarkedLessons.map(lesson => (
+                        <LessonCard key={lesson.scheduled_lesson_id} lesson={lesson} onUpdated={() => refetch()} />
+                      ))}
+                    </CardContent>
+                  </Card>
+                )}
+
                 {/* Today's Lessons */}
                 <Card className="glass-card">
                   <CardHeader className="pb-3">
