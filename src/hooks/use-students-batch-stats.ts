@@ -125,8 +125,7 @@ export function useStudentsPaymentStats(studentIds: string[]) {
       const { data: packages } = await supabase
         .from('packages')
         .select('student_id, payment_status')
-        .in('student_id', studentIds)
-        .eq('status', 'Active');
+        .in('student_id', studentIds);
 
       const result: Record<string, boolean> = {};
       (packages || []).forEach(p => {
