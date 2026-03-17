@@ -94,6 +94,16 @@ export default function Packages() {
     if (activeTab === 'finished') return baseFiltered.filter(p => p.status === 'Completed');
     if (activeTab === 'paid') return baseFiltered.filter(p => p.payment_status === 'Paid');
     if (activeTab === 'pending') return baseFiltered.filter(p => p.payment_status !== 'Paid');
+    if (activeTab === 'new') {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = now.getMonth();
+      return baseFiltered.filter(p => {
+        if (!p.created_at) return false;
+        const d = new Date(p.created_at);
+        return d.getFullYear() === y && d.getMonth() === m;
+      });
+    }
     return baseFiltered;
   }, [baseFiltered, activeTab]);
 
