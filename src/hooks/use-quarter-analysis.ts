@@ -216,7 +216,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
       const temporaryStop = students.filter(s => s.status === 'Temporary Stop').length;
       const leftStudents = students.filter(s => s.status === 'Left').length;
       const totalStudents = students.length;
-      const retentionRate = (activeStudents + leftStudents) > 0 ? (activeStudents / (activeStudents + leftStudents)) * 100 : 0;
+      const retentionRate = totalStudents > 0 ? (activeStudents / totalStudents) * 100 : 0;
 
       const newPackages = packages.filter(p => !p.is_renewal).length;
       const renewals = packages.filter(p => p.is_renewal).length;
@@ -339,7 +339,8 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         const tr = trialsByTeacher[t.teacher_id] || { conducted: 0, converted: 0 };
         const tActive = activeByTeacher[t.teacher_id] || 0;
         const tLeft = leftByTeacher[t.teacher_id] || 0;
-        const tRetention = (tActive + tLeft) > 0 ? (tActive / (tActive + tLeft)) * 100 : 100;
+        const tTotal = tActive + tLeft;
+        const tRetention = tTotal > 0 ? (tActive / tTotal) * 100 : 100;
         const tConvRate = tr.conducted > 0 ? (tr.converted / tr.conducted) * 100 : 0;
 
         const monthlyData = monthRanges.map(mr => {
