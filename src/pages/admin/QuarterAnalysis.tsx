@@ -111,6 +111,7 @@ export default function QuarterAnalysis() {
               comparePrevious={comparePrevious}
             />
             <QuarterTeachersSection data={data.teachers} />
+            <QuarterBonusSection bonuses={data.quarterlyBonuses} />
           </>
         ) : null}
       </div>
