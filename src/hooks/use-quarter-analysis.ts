@@ -659,8 +659,9 @@ function buildFullyHistoricalResult(
   const lastMonth = monthRanges[monthRanges.length - 1];
   const lastData = historicalByMonth[lastMonth.label] || [];
   const totalActive = lastData.reduce((s, d) => s + d.activeStudents, 0);
+  const totalStopped = lastData.reduce((s, d) => s + d.stoppedStudents, 0);
   const totalLeft = teacherDetails.reduce((s, t) => s + t.leftStudents, 0);
-  const totalStudents = totalActive + totalLeft;
+  const totalStudents = totalActive + totalStopped + totalLeft;
   const totalTrialsQ = teacherDetails.reduce((s, t) => s + t.trialsConducted, 0);
   const totalConvQ = teacherDetails.reduce((s, t) => s + t.trialConversions, 0);
 
