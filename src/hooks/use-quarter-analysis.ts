@@ -359,7 +359,8 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         const tr = trialsByTeacher[t.teacher_id] || { conducted: 0, converted: 0 };
         const tActive = activeByTeacher[t.teacher_id] || 0;
         const tLeft = leftByTeacher[t.teacher_id] || 0;
-        const tTotal = tActive + tLeft;
+        const tStop = stopByTeacher[t.teacher_id] || 0;
+        const tTotal = tActive + tStop + tLeft;
         const tRetention = tTotal > 0 ? (tActive / tTotal) * 100 : 100;
         const tConvRate = tr.conducted > 0 ? (tr.converted / tr.conducted) * 100 : 0;
 
