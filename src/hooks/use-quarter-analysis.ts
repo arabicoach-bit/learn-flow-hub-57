@@ -121,12 +121,30 @@ export interface QuarterTeacherKPIs {
   teacherDetails: TeacherQuarterDetail[];
 }
 
+export interface TeacherBonusRule {
+  name: string;
+  actual: number;
+  target: number;
+  suffix: string;
+  achieved: boolean;
+  amount: number;
+}
+
+export interface TeacherQuarterlyBonus {
+  teacherId: string;
+  teacherName: string;
+  rules: TeacherBonusRule[];
+  totalBonus: number;
+  monthlyHours: { month: string; hours: number; met: boolean }[];
+}
+
 export interface QuarterAnalysisData {
   students: QuarterStudentKPIs;
   packages: QuarterPackageKPIs;
   lessons: QuarterLessonKPIs;
   teachers: QuarterTeacherKPIs;
   monthlyBreakdown: MonthlyStats[];
+  quarterlyBonuses: TeacherQuarterlyBonus[];
 }
 
 export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStartYear?: number) {
