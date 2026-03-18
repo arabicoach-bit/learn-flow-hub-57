@@ -299,10 +299,12 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
       // Students per teacher
       const activeByTeacher: Record<string, number> = {};
       const leftByTeacher: Record<string, number> = {};
+      const stopByTeacher: Record<string, number> = {};
       students.forEach(s => {
         if (s.teacher_id) {
           if (s.status === 'Active') activeByTeacher[s.teacher_id] = (activeByTeacher[s.teacher_id] || 0) + 1;
           if (s.status === 'Left') leftByTeacher[s.teacher_id] = (leftByTeacher[s.teacher_id] || 0) + 1;
+          if (s.status === 'Temporary Stop') stopByTeacher[s.teacher_id] = (stopByTeacher[s.teacher_id] || 0) + 1;
         }
       });
 
