@@ -473,7 +473,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         const latestMonth = monthlyData.filter(m => m.activeStudents > 0 || m.leftStudents > 0).pop() || monthlyData[monthlyData.length - 1];
         const qActive = latestMonth.activeStudents;
         const qLeft = monthlyData.reduce((s, m) => s + m.leftStudents, 0);
-        const qTotal = qActive + qLeft;
+        const qTotal = qActive + tStop + qLeft;
         const qRetention = qTotal > 0 ? (qActive / qTotal) * 100 : 100;
 
         totalTeachingHours += qHours;
@@ -636,7 +636,9 @@ function buildFullyHistoricalResult(
     const latestMonth = monthlyData.filter(m => m.activeStudents > 0).pop() || monthlyData[monthlyData.length - 1];
     const qActive = latestMonth.activeStudents;
     const qLeft = monthlyData.reduce((s, m) => s + m.leftStudents, 0);
-    const qTotal = qActive + qLeft;
+    const latestHistMatch = (historicalByMonth[monthRanges[monthRanges.length - 1].label] || []).find(h => h.teacherName === name);
+    const qStopped = latestHistMatch?.stoppedStudents || 0;
+    const qTotal = qActive + qStopped + qLeft;
     const rate = (Object.values(historicalByMonth).flat().find(h => h.teacherName === name))?.hourRate || 0;
 
     totalTeachingHours += qHours;
@@ -645,7 +647,7 @@ function buildFullyHistoricalResult(
     return {
       teacherId: `hist-${name}`, name, ratePerHour: rate,
       totalHours: qHours, salary: qSalary, bonus: qBonus,
-      activeStudents: qActive, stoppedStudents: 0, leftStudents: qLeft,
+      activeStudents: qActive, stoppedStudents: qStopped, leftStudents: qLeft,
       retentionRate: qTotal > 0 ? Math.round((qActive / qTotal) * 100 * 10) / 10 : 0,
       trialsConducted: qTrials, trialConversions: qConversions,
       trialConversionRate: qTrials > 0 ? Math.round((qConversions / qTrials) * 100 * 10) / 10 : 0,
@@ -657,8 +659,9 @@ function buildFullyHistoricalResult(
   const lastMonth = monthRanges[monthRanges.length - 1];
   const lastData = historicalByMonth[lastMonth.label] || [];
   const totalActive = lastData.reduce((s, d) => s + d.activeStudents, 0);
+  const totalStopped = lastData.reduce((s, d) => s + d.stoppedStudents, 0);
   const totalLeft = teacherDetails.reduce((s, t) => s + t.leftStudents, 0);
-  const totalStudents = totalActive + totalLeft;
+  const totalStudents = totalActive + totalStopped + totalLeft;
   const totalTrialsQ = teacherDetails.reduce((s, t) => s + t.trialsConducted, 0);
   const totalConvQ = teacherDetails.reduce((s, t) => s + t.trialConversions, 0);
 
@@ -680,7 +683,7 @@ function buildFullyHistoricalResult(
 
   return {
     students: {
-      totalStudents, activeStudents: totalActive, temporaryStop: 0, leftStudents: totalLeft,
+      totalStudents, activeStudents: totalActive, temporaryStop: totalStopped, leftStudents: totalLeft,
       newStudents: 0,
       retentionRate: totalStudents > 0 ? Math.round((totalActive / totalStudents) * 100 * 10) / 10 : 0,
     },
