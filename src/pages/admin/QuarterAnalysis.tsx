@@ -15,6 +15,7 @@ import { QuarterPackagesSection } from '@/components/quarter/QuarterPackagesSect
 import { QuarterLessonsSection } from '@/components/quarter/QuarterLessonsSection';
 import { QuarterTeachersSection } from '@/components/quarter/QuarterTeachersSection';
 import { QuarterCharts } from '@/components/quarter/QuarterCharts';
+import { QuarterBonusSection } from '@/components/quarter/QuarterBonusSection';
 
 export default function QuarterAnalysis() {
   const academicYears = getAvailableAcademicYears();
@@ -110,6 +111,7 @@ export default function QuarterAnalysis() {
               comparePrevious={comparePrevious}
             />
             <QuarterTeachersSection data={data.teachers} />
+            <QuarterBonusSection bonuses={data.quarterlyBonuses} />
           </>
         ) : null}
       </div>
