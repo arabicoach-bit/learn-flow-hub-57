@@ -57,6 +57,7 @@ export function QuarterTeachersSection({ data }: Props) {
                     <TableCell className="text-right font-medium">{t.totalHours.toFixed(1)}</TableCell>
                     <TableCell className="text-right">{t.salary.toLocaleString()}</TableCell>
                     <TableCell className="text-right">{t.activeStudents}</TableCell>
+                    <TableCell className="text-right">{t.stoppedStudents}</TableCell>
                     <TableCell className="text-right">{t.leftStudents}</TableCell>
                     <TableCell className="text-center"><RateBadge value={t.retentionRate} good={80} /></TableCell>
                     <TableCell className="text-right">{t.trialsConducted}</TableCell>
