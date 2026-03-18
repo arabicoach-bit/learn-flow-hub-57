@@ -40,6 +40,7 @@ export function QuarterTeachersSection({ data }: Props) {
                   <TableHead className="text-right">Hours</TableHead>
                   <TableHead className="text-right">Salary</TableHead>
                   <TableHead className="text-right">Active</TableHead>
+                  <TableHead className="text-right">Stopped</TableHead>
                   <TableHead className="text-right">Left</TableHead>
                   <TableHead className="text-center">Retention %</TableHead>
                   <TableHead className="text-right">Trials</TableHead>
@@ -56,6 +57,7 @@ export function QuarterTeachersSection({ data }: Props) {
                     <TableCell className="text-right font-medium">{t.totalHours.toFixed(1)}</TableCell>
                     <TableCell className="text-right">{t.salary.toLocaleString()}</TableCell>
                     <TableCell className="text-right">{t.activeStudents}</TableCell>
+                    <TableCell className="text-right">{t.stoppedStudents}</TableCell>
                     <TableCell className="text-right">{t.leftStudents}</TableCell>
                     <TableCell className="text-center"><RateBadge value={t.retentionRate} good={80} /></TableCell>
                     <TableCell className="text-right">{t.trialsConducted}</TableCell>
@@ -70,6 +72,7 @@ export function QuarterTeachersSection({ data }: Props) {
                   <TableCell className="text-right">{data.totalTeachingHours.toFixed(1)}</TableCell>
                   <TableCell className="text-right">{data.totalSalary.toLocaleString()}</TableCell>
                   <TableCell className="text-right">{data.teacherDetails.reduce((s, t) => s + t.activeStudents, 0)}</TableCell>
+                  <TableCell className="text-right">{data.teacherDetails.reduce((s, t) => s + t.stoppedStudents, 0)}</TableCell>
                   <TableCell className="text-right">{data.teacherDetails.reduce((s, t) => s + t.leftStudents, 0)}</TableCell>
                   <TableCell />
                   <TableCell className="text-right">{data.teacherDetails.reduce((s, t) => s + t.trialsConducted, 0)}</TableCell>

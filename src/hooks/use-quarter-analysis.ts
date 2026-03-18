@@ -66,6 +66,7 @@ export interface TeacherQuarterDetail {
   salary: number;
   bonus: number;
   activeStudents: number;
+  stoppedStudents: number;
   leftStudents: number;
   retentionRate: number;
   trialsConducted: number;
@@ -387,7 +388,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         return {
           teacherId: t.teacher_id, name: t.name, ratePerHour: rate,
           totalHours: qStats.totalHours, salary: qStats.salary, bonus,
-          activeStudents: tActive, leftStudents: tLeft,
+          activeStudents: tActive, stoppedStudents: tStop, leftStudents: tLeft,
           retentionRate: Math.round(tRetention * 10) / 10,
           trialsConducted: tr.conducted, trialConversions: tr.converted,
           trialConversionRate: Math.round(tConvRate * 10) / 10,
