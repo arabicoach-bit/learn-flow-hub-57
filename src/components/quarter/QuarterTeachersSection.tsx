@@ -40,6 +40,7 @@ export function QuarterTeachersSection({ data }: Props) {
                   <TableHead className="text-right">Hours</TableHead>
                   <TableHead className="text-right">Salary</TableHead>
                   <TableHead className="text-right">Active</TableHead>
+                  <TableHead className="text-right">Stopped</TableHead>
                   <TableHead className="text-right">Left</TableHead>
                   <TableHead className="text-center">Retention %</TableHead>
                   <TableHead className="text-right">Trials</TableHead>
