@@ -72,6 +72,7 @@ export function QuarterTeachersSection({ data }: Props) {
                   <TableCell className="text-right">{data.totalTeachingHours.toFixed(1)}</TableCell>
                   <TableCell className="text-right">{data.totalSalary.toLocaleString()}</TableCell>
                   <TableCell className="text-right">{data.teacherDetails.reduce((s, t) => s + t.activeStudents, 0)}</TableCell>
+                  <TableCell className="text-right">{data.teacherDetails.reduce((s, t) => s + t.stoppedStudents, 0)}</TableCell>
                   <TableCell className="text-right">{data.teacherDetails.reduce((s, t) => s + t.leftStudents, 0)}</TableCell>
                   <TableCell />
                   <TableCell className="text-right">{data.teacherDetails.reduce((s, t) => s + t.trialsConducted, 0)}</TableCell>
