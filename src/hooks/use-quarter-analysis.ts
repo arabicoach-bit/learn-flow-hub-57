@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { startOfMonth, endOfMonth, format } from 'date-fns';
+import { isHistoricalMonth, getHistoricalDataForMonth, type HistoricalTeacherMonth } from '@/lib/historical-quarter-data';
 
 // Custom academic quarters
 // Q1: Sep, Oct, Nov | Q2: Dec, Jan, Feb, Mar | Q3: Apr, May, Jun
@@ -162,15 +163,30 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         const mStart = format(startOfMonth(mDate), 'yyyy-MM-dd');
         const mEnd = format(endOfMonth(mDate), 'yyyy-MM-dd');
         const label = format(mDate, 'MMM yyyy');
-        return { month: m, year: yr, label, start: mStart, end: mEnd, monthYear: `${yr}-${String(m).padStart(2, '0')}` };
+        return { month: m, year: yr, label, start: mStart, end: mEnd, monthYear: `${yr}-${String(m).padStart(2, '0')}`, isHistorical: isHistoricalMonth(label) };
       });
 
-      // ===== SINGLE parallel fetch for ALL data =====
+      const allHistorical = monthRanges.every(m => m.isHistorical);
+      const hasHistorical = monthRanges.some(m => m.isHistorical);
+
+      // ===== Build historical teacher data for historical months =====
+      const historicalByMonth: Record<string, HistoricalTeacherMonth[]> = {};
+      if (hasHistorical) {
+        monthRanges.filter(m => m.isHistorical).forEach(mr => {
+          historicalByMonth[mr.label] = getHistoricalDataForMonth(mr.label);
+        });
+      }
+
+      // If fully historical, build result entirely from static data
+      if (allHistorical) {
+        return buildFullyHistoricalResult(monthRanges, historicalByMonth);
+      }
+
+      // ===== SINGLE parallel fetch for ALL data (live months) =====
       const [
         studentsRes, newStudentsRes, packagesRes, lessonsRes,
         trialsRes, teachersRes, bonusesRes, trialLessonsLogRes,
       ] = await Promise.all([
-        // Fetch students created before or during the quarter (existed in this quarter)
         supabase.from('students').select('student_id, status, teacher_id, created_at')
           .lte('created_at', endDate + 'T23:59:59'),
         supabase.from('students').select('student_id, created_at')
@@ -184,7 +200,6 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         supabase.from('teachers').select('teacher_id, name, rate_per_lesson, is_active')
           .eq('is_active', true).order('name'),
         supabase.from('teacher_bonuses').select('teacher_id, amount, month_year'),
-        // Fetch trial lessons log for teacher hours
         supabase.from('trial_lessons_log').select('teacher_id, lesson_date')
           .eq('status', 'completed')
           .gte('lesson_date', startDate).lte('lesson_date', endDate),
@@ -199,10 +214,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
       const allBonuses = bonusesRes.data || [];
       const trialLessonsLog = trialLessonsLogRes.data || [];
 
-      // Build set of student IDs who had lessons during this quarter
       const studentIdsWithLessons = new Set(lessons.map(l => l.student_id).filter(Boolean));
-      
-      // Quarter-relevant students: had lessons in this quarter OR were created during this quarter
       const students = allStudentsInQuarter.filter(s =>
         studentIdsWithLessons.has(s.student_id) ||
         (s.created_at && s.created_at >= startDate && s.created_at <= endDate + 'T23:59:59')
@@ -213,6 +225,23 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
 
       // ===== MONTHLY BREAKDOWN =====
       const monthlyBreakdown: MonthlyStats[] = monthRanges.map(mr => {
+        // For historical months, aggregate from static data
+        if (mr.isHistorical) {
+          const hData = historicalByMonth[mr.label] || [];
+          const totalTrials = hData.reduce((s, d) => s + d.trialsConducted, 0);
+          const totalConversions = hData.reduce((s, d) => s + d.trialConversions, 0);
+          return {
+            monthLabel: mr.label, month: mr.month, year: mr.year,
+            newStudents: 0, totalPackages: 0, newPackages: 0, renewals: 0,
+            paidRevenue: hData.reduce((s, d) => s + d.salary, 0),
+            pendingPayments: 0,
+            totalLessons: 0, completedLessons: 0, absentLessons: 0, scheduledLessons: 0,
+            trialLessons: totalTrials,
+            trialConversions: totalConversions,
+            trialConversionRate: totalTrials > 0 ? Math.round((totalConversions / totalTrials) * 100) : 0,
+          };
+        }
+
         const matchMonth = (dateStr: string) => {
           const d = new Date(dateStr);
           return d.getMonth() + 1 === mr.month && d.getFullYear() === mr.year;
@@ -241,13 +270,31 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         };
       });
 
-      // ===== QUARTER TOTALS =====
+      // ===== QUARTER TOTALS (students section — from live data only) =====
       const activeStudents = students.filter(s => s.status === 'Active').length;
       const temporaryStop = students.filter(s => s.status === 'Temporary Stop').length;
       const leftStudents = students.filter(s => s.status === 'Left').length;
       const totalStudents = students.length;
-      const retentionDenominator = activeStudents + temporaryStop + leftStudents;
-      const retentionRate = retentionDenominator > 0 ? (activeStudents / retentionDenominator) * 100 : 0;
+
+      // If mixed quarter, augment student totals from historical data
+      let hActiveTotal = 0, hStopTotal = 0, hLeftTotal = 0;
+      if (hasHistorical) {
+        // Use the latest historical month's student snapshot
+        const lastHistMonth = monthRanges.filter(m => m.isHistorical).pop();
+        if (lastHistMonth) {
+          const hData = historicalByMonth[lastHistMonth.label] || [];
+          hActiveTotal = hData.reduce((s, d) => s + d.activeStudents, 0);
+          hStopTotal = hData.reduce((s, d) => s + d.stoppedStudents, 0);
+          hLeftTotal = hData.reduce((s, d) => s + d.leftStudents, 0);
+        }
+      }
+
+      const combinedActive = activeStudents + hActiveTotal;
+      const combinedStop = temporaryStop + hStopTotal;
+      const combinedLeft = leftStudents + hLeftTotal;
+      const combinedTotal = combinedActive + combinedStop + combinedLeft;
+      const retentionDenominator = combinedActive + combinedStop + combinedLeft;
+      const retentionRate = retentionDenominator > 0 ? (combinedActive / retentionDenominator) * 100 : 0;
 
       const newPackages = packages.filter(p => !p.is_renewal).length;
       const renewals = packages.filter(p => p.is_renewal).length;
@@ -263,12 +310,15 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
       const convertedTrials = trials.filter(t => t.conversion_status === 'Converted').length;
       const trialConversionRate = trialLessonsCount > 0 ? (convertedTrials / trialLessonsCount) * 100 : 0;
 
-      // ===== TEACHER KPIs — computed from already-fetched data (NO extra API calls) =====
+      // ===== TEACHER KPIs — computed from already-fetched data + historical =====
       const teacherIds = teachers.map(t => t.teacher_id);
       const rates: Record<string, number> = {};
-      teachers.forEach(t => { rates[t.teacher_id] = t.rate_per_lesson || 0; });
+      const teacherNameToId: Record<string, string> = {};
+      teachers.forEach(t => {
+        rates[t.teacher_id] = t.rate_per_lesson || 0;
+        teacherNameToId[t.name] = t.teacher_id;
+      });
 
-      // Build per-teacher, per-month stats from lessons + trialLessonsLog
       type TeacherMonthAgg = { regularMinutes: number; regularCount: number; trialCount: number };
       const teacherMonthStats: Record<string, Record<string, TeacherMonthAgg>> = {};
       const teacherQuarterStats: Record<string, TeacherMonthAgg> = {};
@@ -281,14 +331,13 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         });
       });
 
-      // Aggregate regular lessons
+      // Aggregate regular lessons (live data only)
       lessons.filter(l => l.status === 'completed' && l.teacher_id).forEach(l => {
         const tid = l.teacher_id!;
         if (!teacherQuarterStats[tid]) return;
         const mins = l.duration_minutes || 0;
         teacherQuarterStats[tid].regularMinutes += mins;
         teacherQuarterStats[tid].regularCount += 1;
-        // Find month
         const d = new Date(l.scheduled_date);
         const mLabel = format(d, 'MMM yyyy');
         if (teacherMonthStats[tid]?.[mLabel]) {
@@ -297,7 +346,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         }
       });
 
-      // Aggregate trial lessons
+      // Aggregate trial lessons (live data only)
       trialLessonsLog.forEach(t => {
         const tid = t.teacher_id;
         if (!tid || !teacherQuarterStats[tid]) return;
@@ -309,7 +358,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         }
       });
 
-      // Students per teacher
+      // Students per teacher (live data)
       const activeByTeacher: Record<string, number> = {};
       const leftByTeacher: Record<string, number> = {};
       const stopByTeacher: Record<string, number> = {};
@@ -321,7 +370,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         }
       });
 
-      // Trials per teacher
+      // Trials per teacher (live data)
       const trialsByTeacher: Record<string, { conducted: number; converted: number }> = {};
       const monthlyTrialsByTeacher: Record<string, Record<string, { conducted: number; converted: number }>> = {};
       trials.forEach(t => {
@@ -339,7 +388,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         }
       });
 
-      // Bonuses
+      // Bonuses (live data)
       const bonusByTeacherMonth: Record<string, Record<string, number>> = {};
       const bonusByTeacher: Record<string, number> = {};
       quarterBonuses.forEach(b => {
@@ -361,27 +410,44 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         return { totalHours, salary: Math.round(totalHours * rate * 100) / 100, totalLessons: agg.regularCount + agg.trialCount };
       };
 
+      // Build teacher details, merging historical months
       const teacherDetails: TeacherQuarterDetail[] = teachers.map(t => {
         const rate = rates[t.teacher_id] || 0;
-        const qStats = calcHoursAndSalary(teacherQuarterStats[t.teacher_id], rate);
-        const bonus = bonusByTeacher[t.teacher_id] || 0;
-        totalTeachingHours += qStats.totalHours;
-        totalSalary += qStats.salary + bonus;
-        totalLessonsTaught += qStats.totalLessons;
-
         const tr = trialsByTeacher[t.teacher_id] || { conducted: 0, converted: 0 };
         const tActive = activeByTeacher[t.teacher_id] || 0;
         const tLeft = leftByTeacher[t.teacher_id] || 0;
         const tStop = stopByTeacher[t.teacher_id] || 0;
-        const tTotal = tActive + tStop + tLeft;
-        const tRetention = tTotal > 0 ? (tActive / tTotal) * 100 : 100;
-        const tConvRate = tr.conducted > 0 ? (tr.converted / tr.conducted) * 100 : 0;
 
+        // Build monthly data, substituting historical months
         const monthlyData = monthRanges.map(mr => {
+          if (mr.isHistorical) {
+            const hRecords = historicalByMonth[mr.label] || [];
+            const hMatch = hRecords.find(h => h.teacherName === t.name);
+            if (hMatch) {
+              return {
+                monthLabel: mr.label,
+                hours: hMatch.totalHours,
+                salary: hMatch.salary,
+                activeStudents: hMatch.activeStudents,
+                leftStudents: hMatch.leftStudents,
+                retentionRate: hMatch.retentionRate,
+                trialsConducted: hMatch.trialsConducted,
+                trialConversions: hMatch.trialConversions,
+                trialConversionRate: hMatch.trialConversionRate,
+                bonus: hMatch.bonus,
+              };
+            }
+            // Teacher not in historical data for this month
+            return { monthLabel: mr.label, hours: 0, salary: 0, activeStudents: 0, leftStudents: 0, retentionRate: 0, trialsConducted: 0, trialConversions: 0, trialConversionRate: 0, bonus: 0 };
+          }
+
+          // Live month
           const mAgg = teacherMonthStats[t.teacher_id]?.[mr.label] || { regularMinutes: 0, regularCount: 0, trialCount: 0 };
           const mCalc = calcHoursAndSalary(mAgg, rate);
           const mt = monthlyTrialsByTeacher[t.teacher_id]?.[mr.label] || { conducted: 0, converted: 0 };
           const mb = bonusByTeacherMonth[t.teacher_id]?.[mr.label] || 0;
+          const tTotal = tActive + tStop + tLeft;
+          const tRetention = tTotal > 0 ? (tActive / tTotal) * 100 : 100;
           return {
             monthLabel: mr.label,
             hours: mCalc.totalHours,
@@ -396,83 +462,105 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
           };
         });
 
+        // Quarter totals from monthly data (combines historical + live)
+        const qHours = monthlyData.reduce((s, m) => s + m.hours, 0);
+        const qSalary = monthlyData.reduce((s, m) => s + m.salary, 0);
+        const qBonus = monthlyData.reduce((s, m) => s + m.bonus, 0);
+        const qTrials = monthlyData.reduce((s, m) => s + m.trialsConducted, 0);
+        const qConversions = monthlyData.reduce((s, m) => s + m.trialConversions, 0);
+
+        // Use latest month's student data for the quarter view
+        const latestMonth = monthlyData.filter(m => m.activeStudents > 0 || m.leftStudents > 0).pop() || monthlyData[monthlyData.length - 1];
+        const qActive = latestMonth.activeStudents;
+        const qLeft = monthlyData.reduce((s, m) => s + m.leftStudents, 0);
+        const qTotal = qActive + qLeft;
+        const qRetention = qTotal > 0 ? (qActive / qTotal) * 100 : 100;
+
+        totalTeachingHours += qHours;
+        totalSalary += qSalary + qBonus;
+
         return {
           teacherId: t.teacher_id, name: t.name, ratePerHour: rate,
-          totalHours: qStats.totalHours, salary: qStats.salary, bonus,
-          activeStudents: tActive, stoppedStudents: tStop, leftStudents: tLeft,
-          retentionRate: Math.round(tRetention * 10) / 10,
-          trialsConducted: tr.conducted, trialConversions: tr.converted,
-          trialConversionRate: Math.round(tConvRate * 10) / 10,
+          totalHours: qHours, salary: qSalary, bonus: qBonus,
+          activeStudents: qActive, stoppedStudents: tStop, leftStudents: qLeft,
+          retentionRate: Math.round(qRetention * 10) / 10,
+          trialsConducted: qTrials, trialConversions: qConversions,
+          trialConversionRate: qTrials > 0 ? Math.round((qConversions / qTrials) * 100 * 10) / 10 : 0,
           monthlyData,
         };
       });
 
+      // Also include historical-only teachers not in the live DB
+      if (hasHistorical) {
+        const allHistTeachers = new Set<string>();
+        Object.values(historicalByMonth).forEach(records => records.forEach(r => allHistTeachers.add(r.teacherName)));
+        const liveTeacherNames = new Set(teachers.map(t => t.name));
+        const histOnlyNames = [...allHistTeachers].filter(n => !liveTeacherNames.has(n));
+
+        histOnlyNames.forEach(name => {
+          const monthlyData = monthRanges.map(mr => {
+            if (mr.isHistorical) {
+              const hMatch = (historicalByMonth[mr.label] || []).find(h => h.teacherName === name);
+              if (hMatch) return { monthLabel: mr.label, hours: hMatch.totalHours, salary: hMatch.salary, activeStudents: hMatch.activeStudents, leftStudents: hMatch.leftStudents, retentionRate: hMatch.retentionRate, trialsConducted: hMatch.trialsConducted, trialConversions: hMatch.trialConversions, trialConversionRate: hMatch.trialConversionRate, bonus: hMatch.bonus };
+            }
+            return { monthLabel: mr.label, hours: 0, salary: 0, activeStudents: 0, leftStudents: 0, retentionRate: 0, trialsConducted: 0, trialConversions: 0, trialConversionRate: 0, bonus: 0 };
+          });
+
+          const qHours = monthlyData.reduce((s, m) => s + m.hours, 0);
+          const qSalary = monthlyData.reduce((s, m) => s + m.salary, 0);
+          const qBonus = monthlyData.reduce((s, m) => s + m.bonus, 0);
+          const qTrials = monthlyData.reduce((s, m) => s + m.trialsConducted, 0);
+          const qConversions = monthlyData.reduce((s, m) => s + m.trialConversions, 0);
+          const latestMonth = monthlyData.filter(m => m.activeStudents > 0).pop() || monthlyData[monthlyData.length - 1];
+          const qLeft = monthlyData.reduce((s, m) => s + m.leftStudents, 0);
+          const qActive = latestMonth.activeStudents;
+          const qTotal = qActive + qLeft;
+
+          totalTeachingHours += qHours;
+          totalSalary += qSalary + qBonus;
+
+          teacherDetails.push({
+            teacherId: `hist-${name}`, name, ratePerHour: (historicalByMonth[Object.keys(historicalByMonth)[0]] || []).find(h => h.teacherName === name)?.hourRate || 0,
+            totalHours: qHours, salary: qSalary, bonus: qBonus,
+            activeStudents: qActive, stoppedStudents: 0, leftStudents: qLeft,
+            retentionRate: qTotal > 0 ? Math.round((qActive / qTotal) * 100 * 10) / 10 : 0,
+            trialsConducted: qTrials, trialConversions: qConversions,
+            trialConversionRate: qTrials > 0 ? Math.round((qConversions / qTrials) * 100 * 10) / 10 : 0,
+            monthlyData,
+          });
+        });
+      }
+
       // ===== QUARTERLY BONUS CALCULATION =====
-      const BONUS_AMOUNT = 750; // EGP per rule
-      const HOURS_TARGET = 60; // per month
-      const RETENTION_TARGET = 75; // percent
-      const TRIAL_COUNT_TARGET = 10; // per quarter
-      const TRIAL_SUCCESS_TARGET = 70; // percent
+      const BONUS_AMOUNT = 750;
+      const HOURS_TARGET = 60;
+      const RETENTION_TARGET = 75;
+      const TRIAL_COUNT_TARGET = 10;
+      const TRIAL_SUCCESS_TARGET = 70;
 
       const quarterlyBonuses: TeacherQuarterlyBonus[] = teacherDetails.map(t => {
-        // Rule 1: Teaching Hours - must meet 60 hrs in EVERY month
         const monthlyHours = t.monthlyData.map(m => ({
           month: m.monthLabel,
           hours: Math.round(m.hours * 10) / 10,
           met: m.hours >= HOURS_TARGET,
         }));
         const allMonthsMet = monthlyHours.every(m => m.met);
-        const avgHours = t.monthlyData.length > 0
-          ? t.monthlyData.reduce((s, m) => s + m.hours, 0) / t.monthlyData.length
-          : 0;
+        const avgHours = t.monthlyData.length > 0 ? t.monthlyData.reduce((s, m) => s + m.hours, 0) / t.monthlyData.length : 0;
 
-        const hoursRule: TeacherBonusRule = {
-          name: 'Teaching Hours',
-          actual: Math.round(avgHours * 10) / 10,
-          target: HOURS_TARGET,
-          suffix: 'hrs/mo',
-          achieved: allMonthsMet,
-          amount: allMonthsMet ? BONUS_AMOUNT : 0,
-        };
-
-        // Rule 2: Retention - must meet hours target AND retention >= 75%
+        const hoursRule: TeacherBonusRule = { name: 'Teaching Hours', actual: Math.round(avgHours * 10) / 10, target: HOURS_TARGET, suffix: 'hrs/mo', achieved: allMonthsMet, amount: allMonthsMet ? BONUS_AMOUNT : 0 };
         const retentionAchieved = allMonthsMet && t.retentionRate >= RETENTION_TARGET;
-        const retentionRule: TeacherBonusRule = {
-          name: 'Retention Rate',
-          actual: t.retentionRate,
-          target: RETENTION_TARGET,
-          suffix: '%',
-          achieved: retentionAchieved,
-          amount: retentionAchieved ? BONUS_AMOUNT : 0,
-        };
-
-        // Rule 3: Trial Success - >= 10 trials AND success rate >= 70%
-        const trialSuccessRate = t.trialsConducted > 0
-          ? Math.round((t.trialConversions / t.trialsConducted) * 1000) / 10
-          : 0;
+        const retentionRule: TeacherBonusRule = { name: 'Retention Rate', actual: t.retentionRate, target: RETENTION_TARGET, suffix: '%', achieved: retentionAchieved, amount: retentionAchieved ? BONUS_AMOUNT : 0 };
+        const trialSuccessRate = t.trialsConducted > 0 ? Math.round((t.trialConversions / t.trialsConducted) * 1000) / 10 : 0;
         const trialAchieved = t.trialsConducted >= TRIAL_COUNT_TARGET && trialSuccessRate >= TRIAL_SUCCESS_TARGET;
-        const trialRule: TeacherBonusRule = {
-          name: 'Trial Lesson Success',
-          actual: trialSuccessRate,
-          target: TRIAL_SUCCESS_TARGET,
-          suffix: `% (${t.trialsConducted}/${TRIAL_COUNT_TARGET} trials)`,
-          achieved: trialAchieved,
-          amount: trialAchieved ? BONUS_AMOUNT : 0,
-        };
+        const trialRule: TeacherBonusRule = { name: 'Trial Lesson Success', actual: trialSuccessRate, target: TRIAL_SUCCESS_TARGET, suffix: `% (${t.trialsConducted}/${TRIAL_COUNT_TARGET} trials)`, achieved: trialAchieved, amount: trialAchieved ? BONUS_AMOUNT : 0 };
 
         const rules = [hoursRule, retentionRule, trialRule];
-        return {
-          teacherId: t.teacherId,
-          teacherName: t.name,
-          rules,
-          totalBonus: rules.reduce((s, r) => s + r.amount, 0),
-          monthlyHours,
-        };
+        return { teacherId: t.teacherId, teacherName: t.name, rules, totalBonus: rules.reduce((s, r) => s + r.amount, 0), monthlyHours };
       });
 
       return {
         students: {
-          totalStudents, activeStudents, temporaryStop, leftStudents,
+          totalStudents: combinedTotal, activeStudents: combinedActive, temporaryStop: combinedStop, leftStudents: combinedLeft,
           newStudents: newStudentsAll.length,
           retentionRate: Math.round(retentionRate * 10) / 10,
         },
@@ -483,7 +571,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
           trialConversionRate: Math.round(trialConversionRate * 10) / 10,
         },
         teachers: {
-          totalActiveTeachers: teachers.length,
+          totalActiveTeachers: teacherDetails.length,
           lessonsTaughtThisQuarter: totalLessonsTaught,
           totalTeachingHours: Math.round(totalTeachingHours * 100) / 100,
           totalSalary: Math.round(totalSalary * 100) / 100,
@@ -496,4 +584,116 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
     enabled: !!quarter,
     refetchInterval: 60000,
   });
+}
+
+// ===== Helper: Build fully historical quarter from static data =====
+function buildFullyHistoricalResult(
+  monthRanges: { month: number; year: number; label: string; isHistorical: boolean }[],
+  historicalByMonth: Record<string, HistoricalTeacherMonth[]>,
+): QuarterAnalysisData {
+  // Collect all unique teacher names
+  const allTeachers = new Set<string>();
+  Object.values(historicalByMonth).forEach(records => records.forEach(r => allTeachers.add(r.teacherName)));
+  const teacherNames = [...allTeachers];
+
+  const BONUS_AMOUNT = 750;
+  const HOURS_TARGET = 60;
+  const RETENTION_TARGET = 75;
+  const TRIAL_COUNT_TARGET = 10;
+  const TRIAL_SUCCESS_TARGET = 70;
+
+  // Monthly breakdown
+  const monthlyBreakdown: MonthlyStats[] = monthRanges.map(mr => {
+    const hData = historicalByMonth[mr.label] || [];
+    const totalTrials = hData.reduce((s, d) => s + d.trialsConducted, 0);
+    const totalConversions = hData.reduce((s, d) => s + d.trialConversions, 0);
+    return {
+      monthLabel: mr.label, month: mr.month, year: mr.year,
+      newStudents: 0, totalPackages: 0, newPackages: 0, renewals: 0,
+      paidRevenue: hData.reduce((s, d) => s + d.salary, 0),
+      pendingPayments: 0,
+      totalLessons: 0, completedLessons: 0, absentLessons: 0, scheduledLessons: 0,
+      trialLessons: totalTrials, trialConversions: totalConversions,
+      trialConversionRate: totalTrials > 0 ? Math.round((totalConversions / totalTrials) * 100) : 0,
+    };
+  });
+
+  let totalTeachingHours = 0;
+  let totalSalary = 0;
+
+  const teacherDetails: TeacherQuarterDetail[] = teacherNames.map(name => {
+    const monthlyData = monthRanges.map(mr => {
+      const hMatch = (historicalByMonth[mr.label] || []).find(h => h.teacherName === name);
+      if (hMatch) return { monthLabel: mr.label, hours: hMatch.totalHours, salary: hMatch.salary, activeStudents: hMatch.activeStudents, leftStudents: hMatch.leftStudents, retentionRate: hMatch.retentionRate, trialsConducted: hMatch.trialsConducted, trialConversions: hMatch.trialConversions, trialConversionRate: hMatch.trialConversionRate, bonus: hMatch.bonus };
+      return { monthLabel: mr.label, hours: 0, salary: 0, activeStudents: 0, leftStudents: 0, retentionRate: 0, trialsConducted: 0, trialConversions: 0, trialConversionRate: 0, bonus: 0 };
+    });
+
+    const qHours = monthlyData.reduce((s, m) => s + m.hours, 0);
+    const qSalary = monthlyData.reduce((s, m) => s + m.salary, 0);
+    const qBonus = monthlyData.reduce((s, m) => s + m.bonus, 0);
+    const qTrials = monthlyData.reduce((s, m) => s + m.trialsConducted, 0);
+    const qConversions = monthlyData.reduce((s, m) => s + m.trialConversions, 0);
+    const latestMonth = monthlyData.filter(m => m.activeStudents > 0).pop() || monthlyData[monthlyData.length - 1];
+    const qActive = latestMonth.activeStudents;
+    const qLeft = monthlyData.reduce((s, m) => s + m.leftStudents, 0);
+    const qTotal = qActive + qLeft;
+    const rate = (Object.values(historicalByMonth).flat().find(h => h.teacherName === name))?.hourRate || 0;
+
+    totalTeachingHours += qHours;
+    totalSalary += qSalary + qBonus;
+
+    return {
+      teacherId: `hist-${name}`, name, ratePerHour: rate,
+      totalHours: qHours, salary: qSalary, bonus: qBonus,
+      activeStudents: qActive, stoppedStudents: 0, leftStudents: qLeft,
+      retentionRate: qTotal > 0 ? Math.round((qActive / qTotal) * 100 * 10) / 10 : 0,
+      trialsConducted: qTrials, trialConversions: qConversions,
+      trialConversionRate: qTrials > 0 ? Math.round((qConversions / qTrials) * 100 * 10) / 10 : 0,
+      monthlyData,
+    };
+  });
+
+  // Student totals from latest month
+  const lastMonth = monthRanges[monthRanges.length - 1];
+  const lastData = historicalByMonth[lastMonth.label] || [];
+  const totalActive = lastData.reduce((s, d) => s + d.activeStudents, 0);
+  const totalLeft = teacherDetails.reduce((s, t) => s + t.leftStudents, 0);
+  const totalStudents = totalActive + totalLeft;
+  const totalTrialsQ = teacherDetails.reduce((s, t) => s + t.trialsConducted, 0);
+  const totalConvQ = teacherDetails.reduce((s, t) => s + t.trialConversions, 0);
+
+  const quarterlyBonuses: TeacherQuarterlyBonus[] = teacherDetails.map(t => {
+    const monthlyHours = t.monthlyData.map(m => ({ month: m.monthLabel, hours: Math.round(m.hours * 10) / 10, met: m.hours >= HOURS_TARGET }));
+    const allMonthsMet = monthlyHours.every(m => m.met);
+    const avgHours = t.monthlyData.length > 0 ? t.monthlyData.reduce((s, m) => s + m.hours, 0) / t.monthlyData.length : 0;
+
+    const hoursRule: TeacherBonusRule = { name: 'Teaching Hours', actual: Math.round(avgHours * 10) / 10, target: HOURS_TARGET, suffix: 'hrs/mo', achieved: allMonthsMet, amount: allMonthsMet ? BONUS_AMOUNT : 0 };
+    const retentionAchieved = allMonthsMet && t.retentionRate >= RETENTION_TARGET;
+    const retentionRule: TeacherBonusRule = { name: 'Retention Rate', actual: t.retentionRate, target: RETENTION_TARGET, suffix: '%', achieved: retentionAchieved, amount: retentionAchieved ? BONUS_AMOUNT : 0 };
+    const trialSuccessRate = t.trialsConducted > 0 ? Math.round((t.trialConversions / t.trialsConducted) * 1000) / 10 : 0;
+    const trialAchieved = t.trialsConducted >= TRIAL_COUNT_TARGET && trialSuccessRate >= TRIAL_SUCCESS_TARGET;
+    const trialRule: TeacherBonusRule = { name: 'Trial Lesson Success', actual: trialSuccessRate, target: TRIAL_SUCCESS_TARGET, suffix: `% (${t.trialsConducted}/${TRIAL_COUNT_TARGET} trials)`, achieved: trialAchieved, amount: trialAchieved ? BONUS_AMOUNT : 0 };
+
+    const rules = [hoursRule, retentionRule, trialRule];
+    return { teacherId: t.teacherId, teacherName: t.name, rules, totalBonus: rules.reduce((s, r) => s + r.amount, 0), monthlyHours };
+  });
+
+  return {
+    students: {
+      totalStudents, activeStudents: totalActive, temporaryStop: 0, leftStudents: totalLeft,
+      newStudents: 0,
+      retentionRate: totalStudents > 0 ? Math.round((totalActive / totalStudents) * 100 * 10) / 10 : 0,
+    },
+    packages: { totalPackages: 0, newPackages: 0, renewals: 0, runningPackages: 0, completedPackages: 0, pendingPayments: 0, paidRevenue: 0 },
+    lessons: { totalLessons: 0, completedLessons: 0, absentLessons: 0, scheduledLessons: 0, trialLessons: totalTrialsQ, trialConversionRate: totalTrialsQ > 0 ? Math.round((totalConvQ / totalTrialsQ) * 100 * 10) / 10 : 0 },
+    teachers: {
+      totalActiveTeachers: teacherDetails.length,
+      lessonsTaughtThisQuarter: 0,
+      totalTeachingHours: Math.round(totalTeachingHours * 100) / 100,
+      totalSalary: Math.round(totalSalary * 100) / 100,
+      teacherDetails,
+    },
+    monthlyBreakdown,
+    quarterlyBonuses,
+  };
 }
