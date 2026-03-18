@@ -234,7 +234,8 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
       const temporaryStop = students.filter(s => s.status === 'Temporary Stop').length;
       const leftStudents = students.filter(s => s.status === 'Left').length;
       const totalStudents = students.length;
-      const retentionRate = totalStudents > 0 ? (activeStudents / totalStudents) * 100 : 0;
+      const retentionDenominator = activeStudents + temporaryStop + leftStudents;
+      const retentionRate = retentionDenominator > 0 ? (activeStudents / retentionDenominator) * 100 : 0;
 
       const newPackages = packages.filter(p => !p.is_renewal).length;
       const renewals = packages.filter(p => p.is_renewal).length;
@@ -299,10 +300,12 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
       // Students per teacher
       const activeByTeacher: Record<string, number> = {};
       const leftByTeacher: Record<string, number> = {};
+      const stopByTeacher: Record<string, number> = {};
       students.forEach(s => {
         if (s.teacher_id) {
           if (s.status === 'Active') activeByTeacher[s.teacher_id] = (activeByTeacher[s.teacher_id] || 0) + 1;
           if (s.status === 'Left') leftByTeacher[s.teacher_id] = (leftByTeacher[s.teacher_id] || 0) + 1;
+          if (s.status === 'Temporary Stop') stopByTeacher[s.teacher_id] = (stopByTeacher[s.teacher_id] || 0) + 1;
         }
       });
 
@@ -357,7 +360,8 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         const tr = trialsByTeacher[t.teacher_id] || { conducted: 0, converted: 0 };
         const tActive = activeByTeacher[t.teacher_id] || 0;
         const tLeft = leftByTeacher[t.teacher_id] || 0;
-        const tTotal = tActive + tLeft;
+        const tStop = stopByTeacher[t.teacher_id] || 0;
+        const tTotal = tActive + tStop + tLeft;
         const tRetention = tTotal > 0 ? (tActive / tTotal) * 100 : 100;
         const tConvRate = tr.conducted > 0 ? (tr.converted / tr.conducted) * 100 : 0;
 
