@@ -683,7 +683,7 @@ function buildFullyHistoricalResult(
 
   return {
     students: {
-      totalStudents, activeStudents: totalActive, temporaryStop: 0, leftStudents: totalLeft,
+      totalStudents, activeStudents: totalActive, temporaryStop: totalStopped, leftStudents: totalLeft,
       newStudents: 0,
       retentionRate: totalStudents > 0 ? Math.round((totalActive / totalStudents) * 100 * 10) / 10 : 0,
     },
