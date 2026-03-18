@@ -391,6 +391,69 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         };
       });
 
+      // ===== QUARTERLY BONUS CALCULATION =====
+      const BONUS_AMOUNT = 750; // EGP per rule
+      const HOURS_TARGET = 60; // per month
+      const RETENTION_TARGET = 75; // percent
+      const TRIAL_COUNT_TARGET = 10; // per quarter
+      const TRIAL_SUCCESS_TARGET = 70; // percent
+
+      const quarterlyBonuses: TeacherQuarterlyBonus[] = teacherDetails.map(t => {
+        // Rule 1: Teaching Hours - must meet 60 hrs in EVERY month
+        const monthlyHours = t.monthlyData.map(m => ({
+          month: m.monthLabel,
+          hours: Math.round(m.hours * 10) / 10,
+          met: m.hours >= HOURS_TARGET,
+        }));
+        const allMonthsMet = monthlyHours.every(m => m.met);
+        const avgHours = t.monthlyData.length > 0
+          ? t.monthlyData.reduce((s, m) => s + m.hours, 0) / t.monthlyData.length
+          : 0;
+
+        const hoursRule: TeacherBonusRule = {
+          name: 'Teaching Hours',
+          actual: Math.round(avgHours * 10) / 10,
+          target: HOURS_TARGET,
+          suffix: 'hrs/mo',
+          achieved: allMonthsMet,
+          amount: allMonthsMet ? BONUS_AMOUNT : 0,
+        };
+
+        // Rule 2: Retention - must meet hours target AND retention >= 75%
+        const retentionAchieved = allMonthsMet && t.retentionRate >= RETENTION_TARGET;
+        const retentionRule: TeacherBonusRule = {
+          name: 'Retention Rate',
+          actual: t.retentionRate,
+          target: RETENTION_TARGET,
+          suffix: '%',
+          achieved: retentionAchieved,
+          amount: retentionAchieved ? BONUS_AMOUNT : 0,
+        };
+
+        // Rule 3: Trial Success - >= 10 trials AND success rate >= 70%
+        const trialSuccessRate = t.trialsConducted > 0
+          ? Math.round((t.trialConversions / t.trialsConducted) * 1000) / 10
+          : 0;
+        const trialAchieved = t.trialsConducted >= TRIAL_COUNT_TARGET && trialSuccessRate >= TRIAL_SUCCESS_TARGET;
+        const trialRule: TeacherBonusRule = {
+          name: 'Trial Lesson Success',
+          actual: trialSuccessRate,
+          target: TRIAL_SUCCESS_TARGET,
+          suffix: `% (${t.trialsConducted}/${TRIAL_COUNT_TARGET} trials)`,
+          achieved: trialAchieved,
+          amount: trialAchieved ? BONUS_AMOUNT : 0,
+        };
+
+        const rules = [hoursRule, retentionRule, trialRule];
+        return {
+          teacherId: t.teacherId,
+          teacherName: t.name,
+          rules,
+          totalBonus: rules.reduce((s, r) => s + r.amount, 0),
+          monthlyHours,
+        };
+      });
+
       return {
         students: {
           totalStudents, activeStudents, temporaryStop, leftStudents,
@@ -411,6 +474,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
           teacherDetails,
         },
         monthlyBreakdown,
+        quarterlyBonuses,
       };
     },
     enabled: !!quarter,
