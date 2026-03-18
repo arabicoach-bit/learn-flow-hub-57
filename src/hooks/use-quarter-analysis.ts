@@ -170,25 +170,27 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         studentsRes, newStudentsRes, packagesRes, lessonsRes,
         trialsRes, teachersRes, bonusesRes, trialLessonsLogRes,
       ] = await Promise.all([
-        supabase.from('students').select('student_id, status, teacher_id'),
+        // Fetch students created before or during the quarter (existed in this quarter)
+        supabase.from('students').select('student_id, status, teacher_id, created_at')
+          .lte('created_at', endDate + 'T23:59:59'),
         supabase.from('students').select('student_id, created_at')
           .gte('created_at', startDate).lte('created_at', endDate + 'T23:59:59'),
         supabase.from('packages').select('package_id, amount, is_renewal, status, payment_status, created_at')
           .gte('created_at', startDate).lte('created_at', endDate + 'T23:59:59'),
-        supabase.from('scheduled_lessons').select('scheduled_lesson_id, status, teacher_id, duration_minutes, scheduled_date')
+        supabase.from('scheduled_lessons').select('scheduled_lesson_id, status, teacher_id, duration_minutes, scheduled_date, student_id')
           .gte('scheduled_date', startDate).lte('scheduled_date', endDate),
         supabase.from('trial_students').select('trial_id, status, conversion_status, teacher_id, created_at')
           .gte('created_at', startDate).lte('created_at', endDate + 'T23:59:59'),
         supabase.from('teachers').select('teacher_id, name, rate_per_lesson, is_active')
           .eq('is_active', true).order('name'),
         supabase.from('teacher_bonuses').select('teacher_id, amount, month_year'),
-        // Fetch trial lessons log for teacher hours (instead of per-month sequential calls)
+        // Fetch trial lessons log for teacher hours
         supabase.from('trial_lessons_log').select('teacher_id, lesson_date')
           .eq('status', 'completed')
           .gte('lesson_date', startDate).lte('lesson_date', endDate),
       ]);
 
-      const students = studentsRes.data || [];
+      const allStudentsInQuarter = studentsRes.data || [];
       const newStudentsAll = newStudentsRes.data || [];
       const packages = packagesRes.data || [];
       const lessons = lessonsRes.data || [];
@@ -196,6 +198,15 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
       const teachers = teachersRes.data || [];
       const allBonuses = bonusesRes.data || [];
       const trialLessonsLog = trialLessonsLogRes.data || [];
+
+      // Build set of student IDs who had lessons during this quarter
+      const studentIdsWithLessons = new Set(lessons.map(l => l.student_id).filter(Boolean));
+      
+      // Quarter-relevant students: had lessons in this quarter OR were created during this quarter
+      const students = allStudentsInQuarter.filter(s =>
+        studentIdsWithLessons.has(s.student_id) ||
+        (s.created_at && s.created_at >= startDate && s.created_at <= endDate + 'T23:59:59')
+      );
 
       const quarterMonthYears = monthRanges.map(m => m.monthYear);
       const quarterBonuses = allBonuses.filter(b => quarterMonthYears.includes(b.month_year));
