@@ -169,10 +169,18 @@ export default function TeacherTrialLessons() {
     const absent = allLessons.filter(l => l.status === 'absent').length;
     const todayCount = allLessons.filter(l => l.lesson_date === todayStr).length;
     const unmarked = allLessons.filter(l => l.status === 'scheduled' && l.lesson_date < todayStr).length;
-    const pending = allLessons.filter(l => l.conversion_status === 'Pending').length;
-    const converted = allLessons.filter(l => l.conversion_status === 'Converted').length;
-    const lost = allLessons.filter(l => l.conversion_status === 'Lost').length;
-    const conversionRate = completed > 0 ? Math.round((converted / completed) * 100) : 0;
+    // Deduplicate conversion stats by trial_student_id to match admin trial page
+    const uniqueStudents = new Map<string, string>();
+    allLessons.forEach(l => {
+      if (!uniqueStudents.has(l.trial_student_id)) {
+        uniqueStudents.set(l.trial_student_id, l.conversion_status || 'Pending');
+      }
+    });
+    const pending = Array.from(uniqueStudents.values()).filter(s => s === 'Pending').length;
+    const converted = Array.from(uniqueStudents.values()).filter(s => s === 'Converted').length;
+    const lost = Array.from(uniqueStudents.values()).filter(s => s === 'Lost').length;
+    const completedStudents = new Set(allLessons.filter(l => l.status === 'completed').map(l => l.trial_student_id)).size;
+    const conversionRate = completedStudents > 0 ? Math.round((converted / completedStudents) * 100) : 0;
     const attendanceRate = total > 0 ? Math.round((completed / total) * 100) : 0;
     const absenceRate = total > 0 ? Math.round((absent / total) * 100) : 0;
     return { total, scheduled, completed, absent, todayCount, unmarked, pending, converted, lost, conversionRate, attendanceRate, absenceRate };
