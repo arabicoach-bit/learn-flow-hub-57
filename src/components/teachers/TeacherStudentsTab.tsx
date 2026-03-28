@@ -30,6 +30,7 @@ import { useScheduledLessons } from '@/hooks/use-scheduled-lessons';
 import { getWalletColor, getStatusDisplayLabel } from '@/lib/wallet-utils';
 import { WalletBadge } from '@/components/shared/WalletBadge';
 import { LessonsBadge } from '@/components/shared/LessonsBadge';
+import { StudentStatusSelect } from '@/components/shared/StudentStatusSelect';
 import { toast as sonnerToast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -419,27 +420,10 @@ export function TeacherStudentsTab({ students, teacherId }: TeacherStudentsTabPr
                           {student.student_level || '-'}
                         </TableCell>
                         <TableCell onClick={(e) => e.stopPropagation()}>
-                          <Select
-                            value={student.status || 'Active'}
-                            onValueChange={(v) => handleStudentStatusChange(student, v as any)}
-                          >
-                            <SelectTrigger className="w-[95px] h-6 text-xs border-0 bg-transparent px-0.5 focus:ring-0">
-                              <Badge variant="outline" className={`${getStatusBadgeClass(student.status)} border-0 text-[11px] px-1.5 py-0`}>
-                                {getStatusDisplayLabel(student.status)}
-                              </Badge>
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Active">
-                                <Badge variant="outline" className={getStatusBadgeClass('Active')}>Active</Badge>
-                              </SelectItem>
-                              <SelectItem value="Temporary Stop">
-                                <Badge variant="outline" className={getStatusBadgeClass('Temporary Stop')}>Stop</Badge>
-                              </SelectItem>
-                              <SelectItem value="Left">
-                                <Badge variant="outline" className={getStatusBadgeClass('Left')}>Left</Badge>
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <StudentStatusSelect
+                            value={student.status}
+                            onValueChange={(v) => handleStudentStatusChange(student, v)}
+                          />
                         </TableCell>
                         <TableCell className="text-center">
                           {student.status === 'Active' ? (

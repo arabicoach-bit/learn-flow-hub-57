@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { StudentStatusSelect } from '@/components/shared/StudentStatusSelect';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -111,9 +112,9 @@ export function StudentTableView({
                     {/* Status group */}
                     <td className="py-2 border-l border-border/30" onClick={e => e.stopPropagation()}>
                       <div className="flex flex-col gap-0.5">
-                        <Select
+                        <StudentStatusSelect
                           value={student.status}
-                          onValueChange={(value: 'Active' | 'Temporary Stop' | 'Left') => {
+                          onValueChange={(value) => {
                             updateStudent.mutate(
                               { studentId: student.student_id, status: value },
                               {
@@ -122,24 +123,7 @@ export function StudentTableView({
                               }
                             );
                           }}
-                        >
-                          <SelectTrigger className="w-[95px] h-6 text-xs border-0 bg-transparent px-0.5 focus:ring-0">
-                            <Badge variant="outline" className={`${getStatusBadgeClass(student.status)} border-0 text-[11px] px-1.5 py-0`}>
-                              {getStatusDisplayLabel(student.status)}
-                            </Badge>
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Active">
-                              <Badge variant="outline" className={getStatusBadgeClass('Active')}>Active</Badge>
-                            </SelectItem>
-                            <SelectItem value="Temporary Stop">
-                              <Badge variant="outline" className={getStatusBadgeClass('Temporary Stop')}>Stop</Badge>
-                            </SelectItem>
-                            <SelectItem value="Left">
-                              <Badge variant="outline" className={getStatusBadgeClass('Left')}>Left</Badge>
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
+                        />
                         <span className="text-[10px] text-muted-foreground/70 pl-0.5">
                           {student.status === 'Active'
                             ? student.created_at ? format(new Date(student.created_at), 'dd MMM yyyy') : '—'
