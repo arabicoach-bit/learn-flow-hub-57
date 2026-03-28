@@ -111,9 +111,9 @@ export function StudentTableView({
                     {/* Status group */}
                     <td className="py-2 border-l border-border/30" onClick={e => e.stopPropagation()}>
                       <div className="flex flex-col gap-0.5">
-                        <Select
+                        <StudentStatusSelect
                           value={student.status}
-                          onValueChange={(value: 'Active' | 'Temporary Stop' | 'Left') => {
+                          onValueChange={(value) => {
                             updateStudent.mutate(
                               { studentId: student.student_id, status: value },
                               {
