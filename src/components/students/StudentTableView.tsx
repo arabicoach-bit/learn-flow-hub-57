@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { StudentStatusSelect } from '@/components/shared/StudentStatusSelect';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
