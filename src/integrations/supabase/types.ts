@@ -523,6 +523,45 @@ export type Database = {
           },
         ]
       }
+      student_comments: {
+        Row: {
+          author_id: string | null
+          comment: string
+          comment_id: string
+          created_at: string
+          student_id: string
+        }
+        Insert: {
+          author_id?: string | null
+          comment: string
+          comment_id?: string
+          created_at?: string
+          student_id: string
+        }
+        Update: {
+          author_id?: string | null
+          comment?: string
+          comment_id?: string
+          created_at?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_comments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["student_id"]
+          },
+        ]
+      }
       students: {
         Row: {
           age: number | null

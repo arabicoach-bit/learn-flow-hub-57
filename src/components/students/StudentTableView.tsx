@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  Pencil, Trash2, MessageCircle, ChevronRight,
+  Pencil, Trash2, MessageCircle, ChevronRight, MessageSquareText,
 } from 'lucide-react';
 import { getStatusBadgeClass, getStatusDisplayLabel, getPaymentStatus, getPaymentStatusBadgeClass } from '@/lib/wallet-utils';
 import { WalletBadge } from '@/components/shared/WalletBadge';
@@ -14,6 +14,9 @@ import { LessonsBadge } from '@/components/shared/LessonsBadge';
 import { useUpdateStudent, type Student } from '@/hooks/use-students';
 import { useToast } from '@/hooks/use-toast';
 import type { StudentBatchStats } from '@/hooks/use-students-batch-stats';
+import { useStudentCommentsCounts } from '@/hooks/use-student-comments';
+import { StudentCommentsDialog } from './StudentCommentsDialog';
+import { useState } from 'react';
 
 interface StudentTableViewProps {
   students: Student[];
@@ -42,6 +45,9 @@ export function StudentTableView({
   const updateStudent = useUpdateStudent();
   const { toast } = useToast();
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const studentIds = students.map(s => s.student_id);
+  const { data: commentCounts } = useStudentCommentsCounts(studentIds);
+  const [commentsStudent, setCommentsStudent] = useState<{ id: string; name: string } | null>(null);
 
   return (
     <>
@@ -72,16 +78,19 @@ export function StudentTableView({
               <th className="border-r border-border/50">
                 <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Payment</span>
               </th>
+              <th>
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Notes</span>
+              </th>
               <th className="text-right w-[90px]">Actions</th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
-                <tr key={i}><td colSpan={10}><Skeleton className="h-8 w-full" /></td></tr>
+                <tr key={i}><td colSpan={11}><Skeleton className="h-8 w-full" /></td></tr>
               ))
             ) : students.length === 0 ? (
-              <tr><td colSpan={10} className="text-center py-8 text-muted-foreground">No students found</td></tr>
+              <tr><td colSpan={11} className="text-center py-8 text-muted-foreground">No students found</td></tr>
             ) : (
               students.map((student) => {
                 const wallet = student.wallet_balance || 0;
@@ -166,6 +175,22 @@ export function StudentTableView({
                       )}
                     </td>
 
+                    <td className="py-2" onClick={e => e.stopPropagation()}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 relative"
+                        onClick={() => setCommentsStudent({ id: student.student_id, name: student.name })}
+                      >
+                        <MessageSquareText className="h-3.5 w-3.5 text-muted-foreground" />
+                        {(commentCounts?.[student.student_id] ?? 0) > 0 && (
+                          <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center px-0.5">
+                            {commentCounts![student.student_id]}
+                          </span>
+                        )}
+                      </Button>
+                    </td>
+
                     <td className="text-right py-2" onClick={e => e.stopPropagation()}>
                       <div className="flex gap-0.5 justify-end">
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
@@ -211,6 +236,14 @@ export function StudentTableView({
             <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => onPageChange(page + 1)}>Next</Button>
           </div>
         </div>
+      )}
+      {commentsStudent && (
+        <StudentCommentsDialog
+          open={!!commentsStudent}
+          onOpenChange={(open) => { if (!open) setCommentsStudent(null); }}
+          studentId={commentsStudent.id}
+          studentName={commentsStudent.name}
+        />
       )}
     </>
   );
