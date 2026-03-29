@@ -175,6 +175,22 @@ export function StudentTableView({
                       )}
                     </td>
 
+                    <td className="py-2" onClick={e => e.stopPropagation()}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 relative"
+                        onClick={() => setCommentsStudent({ id: student.student_id, name: student.name })}
+                      >
+                        <MessageSquareText className="h-3.5 w-3.5 text-muted-foreground" />
+                        {(commentCounts?.[student.student_id] ?? 0) > 0 && (
+                          <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center px-0.5">
+                            {commentCounts![student.student_id]}
+                          </span>
+                        )}
+                      </Button>
+                    </td>
+
                     <td className="text-right py-2" onClick={e => e.stopPropagation()}>
                       <div className="flex gap-0.5 justify-end">
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
