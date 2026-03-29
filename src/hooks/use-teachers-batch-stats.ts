@@ -24,11 +24,17 @@ export function useTeachersBatchStats(teacherIds: string[]) {
       const endDate = format(endOfMonth(now), 'yyyy-MM-dd');
 
       // Batch all queries in parallel
-      const [studentsRes, lessonsRes, trialsRes, profilesRes, teachersRes] = await Promise.all([
-        // 1. Students per teacher
+      const [studentsRes, scheduledStudentsRes, lessonsRes, trialsRes, profilesRes, teachersRes] = await Promise.all([
+        // 1. Students assigned via teacher_id
         supabase
           .from('students')
           .select('student_id, teacher_id, status')
+          .in('teacher_id', teacherIds),
+
+        // 1b. Students from scheduled_lessons (multi-teacher packages)
+        supabase
+          .from('scheduled_lessons')
+          .select('student_id, teacher_id')
           .in('teacher_id', teacherIds),
 
         // 2. Completed lessons this month
@@ -83,13 +89,51 @@ export function useTeachersBatchStats(teacherIds: string[]) {
         };
       });
 
-      // Aggregate students
+      // Build student status map from studentsRes
+      const studentStatusMap = new Map<string, string>();
       studentsRes.data?.forEach((s: any) => {
-        if (s.teacher_id && stats[s.teacher_id]) {
-          if (s.status === 'Active') stats[s.teacher_id].activeStudents += 1;
-          else if (s.status === 'Temporary Stop') stats[s.teacher_id].tempStopStudents += 1;
-          else if (s.status === 'Left') stats[s.teacher_id].leftStudents += 1;
+        studentStatusMap.set(s.student_id, s.status);
+      });
+
+      // Build teacher -> unique student_ids (from teacher_id + scheduled_lessons)
+      const teacherStudentSets: Record<string, Set<string>> = {};
+      teacherIds.forEach(id => teacherStudentSets[id] = new Set());
+
+      // From direct teacher_id assignment
+      studentsRes.data?.forEach((s: any) => {
+        if (s.teacher_id && teacherStudentSets[s.teacher_id]) {
+          teacherStudentSets[s.teacher_id].add(s.student_id);
         }
+      });
+
+      // From scheduled_lessons (multi-teacher packages)
+      scheduledStudentsRes.data?.forEach((sl: any) => {
+        if (sl.teacher_id && sl.student_id && teacherStudentSets[sl.teacher_id]) {
+          teacherStudentSets[sl.teacher_id].add(sl.student_id);
+        }
+      });
+
+      // Fetch statuses for any students not in studentsRes (assigned to different primary teacher)
+      const missingIds = new Set<string>();
+      Object.values(teacherStudentSets).forEach(set => {
+        set.forEach(sid => { if (!studentStatusMap.has(sid)) missingIds.add(sid); });
+      });
+      if (missingIds.size > 0) {
+        const { data: extraStudents } = await supabase
+          .from('students')
+          .select('student_id, status')
+          .in('student_id', Array.from(missingIds));
+        extraStudents?.forEach((s: any) => studentStatusMap.set(s.student_id, s.status));
+      }
+
+      // Aggregate students per teacher
+      teacherIds.forEach(tid => {
+        teacherStudentSets[tid].forEach(sid => {
+          const status = studentStatusMap.get(sid);
+          if (status === 'Active') stats[tid].activeStudents += 1;
+          else if (status === 'Temporary Stop') stats[tid].tempStopStudents += 1;
+          else if (status === 'Left') stats[tid].leftStudents += 1;
+        });
       });
 
       // Aggregate lessons
