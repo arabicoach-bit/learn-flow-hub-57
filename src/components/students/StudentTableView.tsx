@@ -78,6 +78,9 @@ export function StudentTableView({
               <th className="border-r border-border/50">
                 <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Payment</span>
               </th>
+              <th>
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Notes</span>
+              </th>
               <th className="text-right w-[90px]">Actions</th>
             </tr>
           </thead>
