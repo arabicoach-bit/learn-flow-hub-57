@@ -14,7 +14,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatSalary } from '@/lib/wallet-utils';
 import { TeacherCalendar } from '@/components/calendar/TeacherCalendar';
@@ -29,7 +30,28 @@ export default function TeacherDetail() {
   const { data: teacher, isLoading: teacherLoading, refetch: refetchTeacher } = useTeacher(id || '');
   const { data: allStudents } = useStudents();
 
-  const teacherStudents = allStudents?.filter((s) => s.teacher_id === id) || [];
+  // Get student_ids from scheduled_lessons for this teacher (covers multi-teacher packages)
+  const { data: scheduledStudentIds } = useQuery({
+    queryKey: ['teacher-scheduled-student-ids', id],
+    queryFn: async () => {
+      if (!id) return [];
+      const { data } = await supabase
+        .from('scheduled_lessons')
+        .select('student_id')
+        .eq('teacher_id', id);
+      return [...new Set((data || []).map(d => d.student_id).filter(Boolean))] as string[];
+    },
+    enabled: !!id,
+  });
+
+  // Combine: students assigned via teacher_id + students with scheduled_lessons
+  const teacherStudents = useMemo(() => {
+    if (!allStudents || !id) return [];
+    const assignedIds = new Set(allStudents.filter(s => s.teacher_id === id).map(s => s.student_id));
+    const allIds = new Set([...assignedIds, ...(scheduledStudentIds || [])]);
+    return allStudents.filter(s => allIds.has(s.student_id));
+  }, [allStudents, id, scheduledStudentIds]);
+
   const totalStudents = teacherStudents.length;
 
   // Edit teacher state

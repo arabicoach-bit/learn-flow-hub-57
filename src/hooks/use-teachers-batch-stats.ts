@@ -24,11 +24,17 @@ export function useTeachersBatchStats(teacherIds: string[]) {
       const endDate = format(endOfMonth(now), 'yyyy-MM-dd');
 
       // Batch all queries in parallel
-      const [studentsRes, lessonsRes, trialsRes, profilesRes, teachersRes] = await Promise.all([
-        // 1. Students per teacher
+      const [studentsRes, scheduledStudentsRes, lessonsRes, trialsRes, profilesRes, teachersRes] = await Promise.all([
+        // 1. Students assigned via teacher_id
         supabase
           .from('students')
           .select('student_id, teacher_id, status')
+          .in('teacher_id', teacherIds),
+
+        // 1b. Students from scheduled_lessons (multi-teacher packages)
+        supabase
+          .from('scheduled_lessons')
+          .select('student_id, teacher_id')
           .in('teacher_id', teacherIds),
 
         // 2. Completed lessons this month

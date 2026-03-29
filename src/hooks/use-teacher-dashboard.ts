@@ -292,10 +292,11 @@ export function useTeacherStudents() {
     queryFn: async () => {
       if (!teacherId) return [];
       
+      // RLS now handles visibility: returns students assigned via teacher_id
+      // OR students with scheduled_lessons for this teacher (multi-teacher packages)
       const { data, error } = await supabase
         .from('students')
         .select('*, programs(name)')
-        .eq('teacher_id', teacherId)
         .order('name');
 
       if (error) throw error;
