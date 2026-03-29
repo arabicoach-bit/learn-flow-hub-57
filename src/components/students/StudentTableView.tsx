@@ -45,6 +45,9 @@ export function StudentTableView({
   const updateStudent = useUpdateStudent();
   const { toast } = useToast();
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const studentIds = students.map(s => s.student_id);
+  const { data: commentCounts } = useStudentCommentsCounts(studentIds);
+  const [commentsStudent, setCommentsStudent] = useState<{ id: string; name: string } | null>(null);
 
   return (
     <>
