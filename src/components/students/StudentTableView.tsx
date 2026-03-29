@@ -237,6 +237,14 @@ export function StudentTableView({
           </div>
         </div>
       )}
+      {commentsStudent && (
+        <StudentCommentsDialog
+          open={!!commentsStudent}
+          onOpenChange={(open) => { if (!open) setCommentsStudent(null); }}
+          studentId={commentsStudent.id}
+          studentName={commentsStudent.name}
+        />
+      )}
     </>
   );
 }
