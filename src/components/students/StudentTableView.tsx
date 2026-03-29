@@ -87,10 +87,10 @@ export function StudentTableView({
           <tbody>
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
-                <tr key={i}><td colSpan={10}><Skeleton className="h-8 w-full" /></td></tr>
+                <tr key={i}><td colSpan={11}><Skeleton className="h-8 w-full" /></td></tr>
               ))
             ) : students.length === 0 ? (
-              <tr><td colSpan={10} className="text-center py-8 text-muted-foreground">No students found</td></tr>
+              <tr><td colSpan={11} className="text-center py-8 text-muted-foreground">No students found</td></tr>
             ) : (
               students.map((student) => {
                 const wallet = student.wallet_balance || 0;
