@@ -78,6 +78,7 @@ export interface TeacherQuarterDetail {
     hours: number;
     salary: number;
     activeStudents: number;
+    stoppedStudents: number;
     leftStudents: number;
     retentionRate: number;
     trialsConducted: number;
@@ -358,7 +359,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         }
       });
 
-      // Students per teacher (live data)
+      // Students per teacher (live data) — current snapshot
       const activeByTeacher: Record<string, number> = {};
       const leftByTeacher: Record<string, number> = {};
       const stopByTeacher: Record<string, number> = {};
@@ -367,6 +368,24 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
           if (s.status === 'Active') activeByTeacher[s.teacher_id] = (activeByTeacher[s.teacher_id] || 0) + 1;
           if (s.status === 'Left') leftByTeacher[s.teacher_id] = (leftByTeacher[s.teacher_id] || 0) + 1;
           if (s.status === 'Temporary Stop') stopByTeacher[s.teacher_id] = (stopByTeacher[s.teacher_id] || 0) + 1;
+        }
+      });
+
+      // Build per-teacher per-month student sets (lesson-based scoping)
+      const studentStatusMap: Record<string, string> = {};
+      students.forEach(s => { studentStatusMap[s.student_id] = s.status || 'Active'; });
+
+      const teacherMonthStudents: Record<string, Record<string, Set<string>>> = {};
+      teacherIds.forEach(id => {
+        teacherMonthStudents[id] = {};
+        monthRanges.forEach(mr => { teacherMonthStudents[id][mr.label] = new Set(); });
+      });
+      lessons.forEach(l => {
+        if (!l.teacher_id || !l.student_id) return;
+        const d = new Date(l.scheduled_date);
+        const mLabel = format(d, 'MMM yyyy');
+        if (teacherMonthStudents[l.teacher_id]?.[mLabel]) {
+          teacherMonthStudents[l.teacher_id][mLabel].add(l.student_id);
         }
       });
 
@@ -413,10 +432,6 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
       // Build teacher details, merging historical months
       const teacherDetails: TeacherQuarterDetail[] = teachers.map(t => {
         const rate = rates[t.teacher_id] || 0;
-        const tr = trialsByTeacher[t.teacher_id] || { conducted: 0, converted: 0 };
-        const tActive = activeByTeacher[t.teacher_id] || 0;
-        const tLeft = leftByTeacher[t.teacher_id] || 0;
-        const tStop = stopByTeacher[t.teacher_id] || 0;
 
         // Build monthly data, substituting historical months
         const monthlyData = monthRanges.map(mr => {
@@ -429,6 +444,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
                 hours: hMatch.totalHours,
                 salary: hMatch.salary,
                 activeStudents: hMatch.activeStudents,
+                stoppedStudents: hMatch.stoppedStudents,
                 leftStudents: hMatch.leftStudents,
                 retentionRate: hMatch.retentionRate,
                 trialsConducted: hMatch.trialsConducted,
@@ -438,23 +454,35 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
               };
             }
             // Teacher not in historical data for this month
-            return { monthLabel: mr.label, hours: 0, salary: 0, activeStudents: 0, leftStudents: 0, retentionRate: 0, trialsConducted: 0, trialConversions: 0, trialConversionRate: 0, bonus: 0 };
+            return { monthLabel: mr.label, hours: 0, salary: 0, activeStudents: 0, stoppedStudents: 0, leftStudents: 0, retentionRate: 0, trialsConducted: 0, trialConversions: 0, trialConversionRate: 0, bonus: 0 };
           }
 
-          // Live month
+          // Live month — lesson-based student scoping
           const mAgg = teacherMonthStats[t.teacher_id]?.[mr.label] || { regularMinutes: 0, regularCount: 0, trialCount: 0 };
           const mCalc = calcHoursAndSalary(mAgg, rate);
           const mt = monthlyTrialsByTeacher[t.teacher_id]?.[mr.label] || { conducted: 0, converted: 0 };
           const mb = bonusByTeacherMonth[t.teacher_id]?.[mr.label] || 0;
-          const tTotal = tActive + tStop + tLeft;
-          const tRetention = tTotal > 0 ? (tActive / tTotal) * 100 : 100;
+
+          // Get students who had a lesson with this teacher this month
+          const monthStudentIds = teacherMonthStudents[t.teacher_id]?.[mr.label] || new Set<string>();
+          let mActive = 0, mStopped = 0, mLeft = 0;
+          monthStudentIds.forEach(sid => {
+            const status = studentStatusMap[sid];
+            if (status === 'Active') mActive++;
+            else if (status === 'Temporary Stop') mStopped++;
+            else if (status === 'Left') mLeft++;
+          });
+          const mTotal = mActive + mStopped + mLeft;
+          const mRetention = mTotal > 0 ? (mActive / mTotal) * 100 : 100;
+
           return {
             monthLabel: mr.label,
             hours: mCalc.totalHours,
             salary: mCalc.salary,
-            activeStudents: tActive,
-            leftStudents: tLeft,
-            retentionRate: Math.round(tRetention * 10) / 10,
+            activeStudents: mActive,
+            stoppedStudents: mStopped,
+            leftStudents: mLeft,
+            retentionRate: Math.round(mRetention * 10) / 10,
             trialsConducted: mt.conducted,
             trialConversions: mt.converted,
             trialConversionRate: mt.conducted > 0 ? Math.round((mt.converted / mt.conducted) * 100) : 0,
@@ -470,10 +498,11 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         const qConversions = monthlyData.reduce((s, m) => s + m.trialConversions, 0);
 
         // Use latest month's student data for the quarter view
-        const latestMonth = monthlyData.filter(m => m.activeStudents > 0 || m.leftStudents > 0).pop() || monthlyData[monthlyData.length - 1];
+        const latestMonth = monthlyData.filter(m => m.activeStudents > 0 || m.leftStudents > 0 || m.stoppedStudents > 0).pop() || monthlyData[monthlyData.length - 1];
         const qActive = latestMonth.activeStudents;
-        const qLeft = monthlyData.reduce((s, m) => s + m.leftStudents, 0);
-        const qTotal = qActive + tStop + qLeft;
+        const qStopped = latestMonth.stoppedStudents;
+        const qLeft = latestMonth.leftStudents;
+        const qTotal = qActive + qStopped + qLeft;
         const qRetention = qTotal > 0 ? (qActive / qTotal) * 100 : 100;
 
         totalTeachingHours += qHours;
@@ -482,7 +511,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         return {
           teacherId: t.teacher_id, name: t.name, ratePerHour: rate,
           totalHours: qHours, salary: qSalary, bonus: qBonus,
-          activeStudents: qActive, stoppedStudents: tStop, leftStudents: qLeft,
+          activeStudents: qActive, stoppedStudents: qStopped, leftStudents: qLeft,
           retentionRate: Math.round(qRetention * 10) / 10,
           trialsConducted: qTrials, trialConversions: qConversions,
           trialConversionRate: qTrials > 0 ? Math.round((qConversions / qTrials) * 100 * 10) / 10 : 0,
@@ -501,9 +530,9 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
           const monthlyData = monthRanges.map(mr => {
             if (mr.isHistorical) {
               const hMatch = (historicalByMonth[mr.label] || []).find(h => h.teacherName === name);
-              if (hMatch) return { monthLabel: mr.label, hours: hMatch.totalHours, salary: hMatch.salary, activeStudents: hMatch.activeStudents, leftStudents: hMatch.leftStudents, retentionRate: hMatch.retentionRate, trialsConducted: hMatch.trialsConducted, trialConversions: hMatch.trialConversions, trialConversionRate: hMatch.trialConversionRate, bonus: hMatch.bonus };
+              if (hMatch) return { monthLabel: mr.label, hours: hMatch.totalHours, salary: hMatch.salary, activeStudents: hMatch.activeStudents, stoppedStudents: hMatch.stoppedStudents, leftStudents: hMatch.leftStudents, retentionRate: hMatch.retentionRate, trialsConducted: hMatch.trialsConducted, trialConversions: hMatch.trialConversions, trialConversionRate: hMatch.trialConversionRate, bonus: hMatch.bonus };
             }
-            return { monthLabel: mr.label, hours: 0, salary: 0, activeStudents: 0, leftStudents: 0, retentionRate: 0, trialsConducted: 0, trialConversions: 0, trialConversionRate: 0, bonus: 0 };
+            return { monthLabel: mr.label, hours: 0, salary: 0, activeStudents: 0, stoppedStudents: 0, leftStudents: 0, retentionRate: 0, trialsConducted: 0, trialConversions: 0, trialConversionRate: 0, bonus: 0 };
           });
 
           const qHours = monthlyData.reduce((s, m) => s + m.hours, 0);
@@ -624,8 +653,8 @@ function buildFullyHistoricalResult(
   const teacherDetails: TeacherQuarterDetail[] = teacherNames.map(name => {
     const monthlyData = monthRanges.map(mr => {
       const hMatch = (historicalByMonth[mr.label] || []).find(h => h.teacherName === name);
-      if (hMatch) return { monthLabel: mr.label, hours: hMatch.totalHours, salary: hMatch.salary, activeStudents: hMatch.activeStudents, leftStudents: hMatch.leftStudents, retentionRate: hMatch.retentionRate, trialsConducted: hMatch.trialsConducted, trialConversions: hMatch.trialConversions, trialConversionRate: hMatch.trialConversionRate, bonus: hMatch.bonus };
-      return { monthLabel: mr.label, hours: 0, salary: 0, activeStudents: 0, leftStudents: 0, retentionRate: 0, trialsConducted: 0, trialConversions: 0, trialConversionRate: 0, bonus: 0 };
+      if (hMatch) return { monthLabel: mr.label, hours: hMatch.totalHours, salary: hMatch.salary, activeStudents: hMatch.activeStudents, stoppedStudents: hMatch.stoppedStudents, leftStudents: hMatch.leftStudents, retentionRate: hMatch.retentionRate, trialsConducted: hMatch.trialsConducted, trialConversions: hMatch.trialConversions, trialConversionRate: hMatch.trialConversionRate, bonus: hMatch.bonus };
+      return { monthLabel: mr.label, hours: 0, salary: 0, activeStudents: 0, stoppedStudents: 0, leftStudents: 0, retentionRate: 0, trialsConducted: 0, trialConversions: 0, trialConversionRate: 0, bonus: 0 };
     });
 
     const qHours = monthlyData.reduce((s, m) => s + m.hours, 0);

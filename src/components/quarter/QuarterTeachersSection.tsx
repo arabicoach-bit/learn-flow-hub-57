@@ -100,6 +100,10 @@ export function QuarterTeachersSection({ data }: Props) {
                   <TableHead className="font-semibold">Month</TableHead>
                   <TableHead className="text-right">Hours</TableHead>
                   <TableHead className="text-right">Salary</TableHead>
+                  <TableHead className="text-right">Active</TableHead>
+                  <TableHead className="text-right">Stopped</TableHead>
+                  <TableHead className="text-right">Left</TableHead>
+                  <TableHead className="text-center">Retention %</TableHead>
                   <TableHead className="text-right">Trials</TableHead>
                   <TableHead className="text-right">Conversions</TableHead>
                   <TableHead className="text-center">Conv. %</TableHead>
@@ -119,6 +123,12 @@ export function QuarterTeachersSection({ data }: Props) {
                         <TableCell>{m.monthLabel}</TableCell>
                         <TableCell className="text-right">{m.hours.toFixed(1)}</TableCell>
                         <TableCell className="text-right">{m.salary.toLocaleString()}</TableCell>
+                        <TableCell className="text-right">{m.activeStudents}</TableCell>
+                        <TableCell className="text-right">{m.stoppedStudents}</TableCell>
+                        <TableCell className="text-right">{m.leftStudents}</TableCell>
+                        <TableCell className="text-center">
+                          {(m.activeStudents + m.stoppedStudents + m.leftStudents) > 0 ? <RateBadge value={m.retentionRate} good={80} /> : <span className="text-muted-foreground">-</span>}
+                        </TableCell>
                         <TableCell className="text-right">{m.trialsConducted}</TableCell>
                         <TableCell className="text-right">{m.trialConversions}</TableCell>
                         <TableCell className="text-center">
@@ -131,6 +141,10 @@ export function QuarterTeachersSection({ data }: Props) {
                       <TableCell>Quarter Total</TableCell>
                       <TableCell className="text-right">{t.totalHours.toFixed(1)}</TableCell>
                       <TableCell className="text-right">{t.salary.toLocaleString()}</TableCell>
+                      <TableCell className="text-right">{t.activeStudents}</TableCell>
+                      <TableCell className="text-right">{t.stoppedStudents}</TableCell>
+                      <TableCell className="text-right">{t.leftStudents}</TableCell>
+                      <TableCell className="text-center"><RateBadge value={t.retentionRate} good={80} /></TableCell>
                       <TableCell className="text-right">{t.trialsConducted}</TableCell>
                       <TableCell className="text-right">{t.trialConversions}</TableCell>
                       <TableCell className="text-center">
