@@ -464,6 +464,16 @@ export default function StudentDetail() {
           </AlertDialogContent>
         </AlertDialog>
 
+        {/* Transfer Student Dialog */}
+        <TransferStudentDialog
+          studentId={id!}
+          studentName={student.name}
+          currentTeacherId={student.teacher_id}
+          currentTeacherName={student.teachers?.name || 'No teacher'}
+          open={isTransferOpen}
+          onOpenChange={setIsTransferOpen}
+        />
+
         {/* Tabs - 3 tabs only: Packages (admin), Lessons, Student Info */}
         <Tabs defaultValue={defaultTab} className="space-y-4">
           <TabsList className="flex-wrap">
