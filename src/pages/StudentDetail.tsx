@@ -235,6 +235,7 @@ function StudentPackagesTab({
                           <TableCell>{isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}</TableCell>
                           <TableCell>{pkg.start_date ? format(new Date(pkg.start_date), 'dd MMM yy') : '-'}</TableCell>
                           <TableCell>{endDates[pkg.package_id] || '—'}</TableCell>
+                          <TableCell className="text-sm">{pkgTeachers[pkg.package_id] || '—'}</TableCell>
                           <TableCell className="font-medium">{pkg.package_types?.name || 'Custom'}</TableCell>
                           <TableCell className="text-muted-foreground text-sm">{(pkg as any).description || '—'}</TableCell>
                           <TableCell><Badge variant="outline" className={pkg.status === 'Active' ? 'status-active' : 'status-grace'}>{pkg.status === 'Active' ? 'In Progress' : 'Finished'}</Badge></TableCell>
