@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Mail, Phone, DollarSign, Key, Trash2, Pencil, UserX, UserCheck, CalendarDays, Save } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, DollarSign, Key, Trash2, Pencil, UserX, UserCheck, CalendarDays, Save, BarChart3 } from 'lucide-react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useTeacher, useUpdateTeacher } from '@/hooks/use-teachers';
 import { useStudents } from '@/hooks/use-students';
@@ -22,6 +22,7 @@ import { TeacherCalendar } from '@/components/calendar/TeacherCalendar';
 import { TrialLessonCalendar } from '@/components/calendar/TrialLessonCalendar';
 import { TeacherStudentsTab } from '@/components/teachers/TeacherStudentsTab';
 import { TeacherPayrollTab } from '@/components/teachers/TeacherPayrollTab';
+import { TeacherQuarterTab } from '@/components/teachers/TeacherQuarterTab';
 
 export default function TeacherDetail() {
   const { id } = useParams<{ id: string }>();
@@ -296,6 +297,9 @@ export default function TeacherDetail() {
               <CalendarDays className="w-4 h-4 mr-1" /> Lessons Calendar
             </TabsTrigger>
             <TabsTrigger value="trials">Trial Lessons</TabsTrigger>
+            <TabsTrigger value="quarter">
+              <BarChart3 className="w-4 h-4 mr-1" /> Quarter Performance
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="students">
@@ -312,6 +316,10 @@ export default function TeacherDetail() {
 
           <TabsContent value="trials">
             {id && <TrialLessonCalendar teacherId={id} isAdmin />}
+          </TabsContent>
+
+          <TabsContent value="quarter">
+            {id && <TeacherQuarterTab teacherId={id} />}
           </TabsContent>
         </Tabs>
       </div>
