@@ -35,7 +35,7 @@ import TeacherStudents from "./pages/teacher/TeacherStudents";
 import TeacherPayroll from "./pages/teacher/TeacherPayroll";
 import TeacherTrialLessons from "./pages/teacher/TeacherTrialLessons";
 import TeacherNotifications from "./pages/teacher/TeacherNotifications";
-
+import TeacherQuarterPerformance from "./pages/teacher/TeacherQuarterPerformance";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
