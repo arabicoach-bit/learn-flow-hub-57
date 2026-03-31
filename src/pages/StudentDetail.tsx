@@ -223,7 +223,6 @@ function StudentPackagesTab({
                     
                     <TableHead>Actions</TableHead>
                   </TableRow>
-                  </TableRow>
                 </TableHeader>
                 <TableBody>
                   {fp.map((pkg) => {
