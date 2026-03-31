@@ -502,10 +502,11 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         const qConversions = monthlyData.reduce((s, m) => s + m.trialConversions, 0);
 
         // Use latest month's student data for the quarter view
-        const latestMonth = monthlyData.filter(m => m.activeStudents > 0 || m.leftStudents > 0).pop() || monthlyData[monthlyData.length - 1];
+        const latestMonth = monthlyData.filter(m => m.activeStudents > 0 || m.leftStudents > 0 || m.stoppedStudents > 0).pop() || monthlyData[monthlyData.length - 1];
         const qActive = latestMonth.activeStudents;
-        const qLeft = monthlyData.reduce((s, m) => s + m.leftStudents, 0);
-        const qTotal = qActive + tStop + qLeft;
+        const qStopped = latestMonth.stoppedStudents;
+        const qLeft = latestMonth.leftStudents;
+        const qTotal = qActive + qStopped + qLeft;
         const qRetention = qTotal > 0 ? (qActive / qTotal) * 100 : 100;
 
         totalTeachingHours += qHours;
