@@ -432,10 +432,6 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
       // Build teacher details, merging historical months
       const teacherDetails: TeacherQuarterDetail[] = teachers.map(t => {
         const rate = rates[t.teacher_id] || 0;
-        const tr = trialsByTeacher[t.teacher_id] || { conducted: 0, converted: 0 };
-        const tActive = activeByTeacher[t.teacher_id] || 0;
-        const tLeft = leftByTeacher[t.teacher_id] || 0;
-        const tStop = stopByTeacher[t.teacher_id] || 0;
 
         // Build monthly data, substituting historical months
         const monthlyData = monthRanges.map(mr => {
