@@ -22,6 +22,7 @@ import { TeacherCalendar } from '@/components/calendar/TeacherCalendar';
 import { TrialLessonCalendar } from '@/components/calendar/TrialLessonCalendar';
 import { TeacherStudentsTab } from '@/components/teachers/TeacherStudentsTab';
 import { TeacherPayrollTab } from '@/components/teachers/TeacherPayrollTab';
+import { TeacherQuarterTab } from '@/components/teachers/TeacherQuarterTab';
 
 export default function TeacherDetail() {
   const { id } = useParams<{ id: string }>();
