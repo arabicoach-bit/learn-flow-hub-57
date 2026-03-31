@@ -63,6 +63,7 @@ function StudentPackagesTab({
   const [nextLessons, setNextLessons] = React.useState<Record<string, string | null>>({});
   const [lessonCounts, setLessonCounts] = React.useState<Record<string, number>>({});
   const [endDates, setEndDates] = React.useState<Record<string, string | null>>({});
+  const [pkgTeachers, setPkgTeachers] = React.useState<Record<string, string | null>>({});
 
   React.useEffect(() => {
     if (!packages?.length) return;
@@ -103,6 +104,17 @@ function StudentPackagesTab({
           [pkg.package_id]: last?.scheduled_date
             ? format(new Date(last.scheduled_date), 'dd MMM yy')
             : null
+        }));
+        // Fetch teacher for this package from its lessons
+        const { data: lessonTeacher } = await supabase
+          .from('scheduled_lessons')
+          .select('teachers(name)')
+          .eq('package_id', pkg.package_id)
+          .limit(1)
+          .single();
+        setPkgTeachers(prev => ({
+          ...prev,
+          [pkg.package_id]: (lessonTeacher as any)?.teachers?.name || null
         }));
       });
   }, [packages]);
@@ -200,6 +212,7 @@ function StudentPackagesTab({
                     <TableHead className="w-10"></TableHead>
                     <TableHead>Start</TableHead>
                     <TableHead>End</TableHead>
+                    <TableHead>Teacher</TableHead>
                     <TableHead>Plan</TableHead>
                     <TableHead>Description</TableHead>
                     <TableHead>Status</TableHead>
@@ -222,6 +235,7 @@ function StudentPackagesTab({
                           <TableCell>{isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}</TableCell>
                           <TableCell>{pkg.start_date ? format(new Date(pkg.start_date), 'dd MMM yy') : '-'}</TableCell>
                           <TableCell>{endDates[pkg.package_id] || '—'}</TableCell>
+                          <TableCell className="text-sm">{pkgTeachers[pkg.package_id] || '—'}</TableCell>
                           <TableCell className="font-medium">{pkg.package_types?.name || 'Custom'}</TableCell>
                           <TableCell className="text-muted-foreground text-sm">{(pkg as any).description || '—'}</TableCell>
                           <TableCell><Badge variant="outline" className={pkg.status === 'Active' ? 'status-active' : 'status-grace'}>{pkg.status === 'Active' ? 'In Progress' : 'Finished'}</Badge></TableCell>
@@ -254,7 +268,7 @@ function StudentPackagesTab({
                         </TableRow>
                         {isExpanded && (
                           <TableRow>
-                            <TableCell colSpan={11} className="bg-muted/30 p-4">
+                            <TableCell colSpan={12} className="bg-muted/30 p-4">
                               <div className="text-sm font-medium mb-2 text-muted-foreground">Scheduled Lessons</div>
                               <PackageLessonsTable packageId={pkg.package_id} studentId={studentId} teacherId={teacherId} lessonDuration={pkg.lesson_duration || 45} />
                             </TableCell>
