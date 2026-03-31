@@ -450,6 +450,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
                 hours: hMatch.totalHours,
                 salary: hMatch.salary,
                 activeStudents: hMatch.activeStudents,
+                stoppedStudents: hMatch.stoppedStudents,
                 leftStudents: hMatch.leftStudents,
                 retentionRate: hMatch.retentionRate,
                 trialsConducted: hMatch.trialsConducted,
@@ -459,23 +460,35 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
               };
             }
             // Teacher not in historical data for this month
-            return { monthLabel: mr.label, hours: 0, salary: 0, activeStudents: 0, leftStudents: 0, retentionRate: 0, trialsConducted: 0, trialConversions: 0, trialConversionRate: 0, bonus: 0 };
+            return { monthLabel: mr.label, hours: 0, salary: 0, activeStudents: 0, stoppedStudents: 0, leftStudents: 0, retentionRate: 0, trialsConducted: 0, trialConversions: 0, trialConversionRate: 0, bonus: 0 };
           }
 
-          // Live month
+          // Live month — lesson-based student scoping
           const mAgg = teacherMonthStats[t.teacher_id]?.[mr.label] || { regularMinutes: 0, regularCount: 0, trialCount: 0 };
           const mCalc = calcHoursAndSalary(mAgg, rate);
           const mt = monthlyTrialsByTeacher[t.teacher_id]?.[mr.label] || { conducted: 0, converted: 0 };
           const mb = bonusByTeacherMonth[t.teacher_id]?.[mr.label] || 0;
-          const tTotal = tActive + tStop + tLeft;
-          const tRetention = tTotal > 0 ? (tActive / tTotal) * 100 : 100;
+
+          // Get students who had a lesson with this teacher this month
+          const monthStudentIds = teacherMonthStudents[t.teacher_id]?.[mr.label] || new Set<string>();
+          let mActive = 0, mStopped = 0, mLeft = 0;
+          monthStudentIds.forEach(sid => {
+            const status = studentStatusMap[sid];
+            if (status === 'Active') mActive++;
+            else if (status === 'Temporary Stop') mStopped++;
+            else if (status === 'Left') mLeft++;
+          });
+          const mTotal = mActive + mStopped + mLeft;
+          const mRetention = mTotal > 0 ? (mActive / mTotal) * 100 : 100;
+
           return {
             monthLabel: mr.label,
             hours: mCalc.totalHours,
             salary: mCalc.salary,
-            activeStudents: tActive,
-            leftStudents: tLeft,
-            retentionRate: Math.round(tRetention * 10) / 10,
+            activeStudents: mActive,
+            stoppedStudents: mStopped,
+            leftStudents: mLeft,
+            retentionRate: Math.round(mRetention * 10) / 10,
             trialsConducted: mt.conducted,
             trialConversions: mt.converted,
             trialConversionRate: mt.conducted > 0 ? Math.round((mt.converted / mt.conducted) * 100) : 0,
