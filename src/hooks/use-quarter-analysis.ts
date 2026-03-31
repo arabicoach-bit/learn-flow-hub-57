@@ -533,9 +533,9 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
           const monthlyData = monthRanges.map(mr => {
             if (mr.isHistorical) {
               const hMatch = (historicalByMonth[mr.label] || []).find(h => h.teacherName === name);
-              if (hMatch) return { monthLabel: mr.label, hours: hMatch.totalHours, salary: hMatch.salary, activeStudents: hMatch.activeStudents, leftStudents: hMatch.leftStudents, retentionRate: hMatch.retentionRate, trialsConducted: hMatch.trialsConducted, trialConversions: hMatch.trialConversions, trialConversionRate: hMatch.trialConversionRate, bonus: hMatch.bonus };
+              if (hMatch) return { monthLabel: mr.label, hours: hMatch.totalHours, salary: hMatch.salary, activeStudents: hMatch.activeStudents, stoppedStudents: hMatch.stoppedStudents, leftStudents: hMatch.leftStudents, retentionRate: hMatch.retentionRate, trialsConducted: hMatch.trialsConducted, trialConversions: hMatch.trialConversions, trialConversionRate: hMatch.trialConversionRate, bonus: hMatch.bonus };
             }
-            return { monthLabel: mr.label, hours: 0, salary: 0, activeStudents: 0, leftStudents: 0, retentionRate: 0, trialsConducted: 0, trialConversions: 0, trialConversionRate: 0, bonus: 0 };
+            return { monthLabel: mr.label, hours: 0, salary: 0, activeStudents: 0, stoppedStudents: 0, leftStudents: 0, retentionRate: 0, trialsConducted: 0, trialConversions: 0, trialConversionRate: 0, bonus: 0 };
           });
 
           const qHours = monthlyData.reduce((s, m) => s + m.hours, 0);
