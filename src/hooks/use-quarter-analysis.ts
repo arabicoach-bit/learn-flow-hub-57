@@ -78,6 +78,7 @@ export interface TeacherQuarterDetail {
     hours: number;
     salary: number;
     activeStudents: number;
+    stoppedStudents: number;
     leftStudents: number;
     retentionRate: number;
     trialsConducted: number;
