@@ -105,6 +105,17 @@ function StudentPackagesTab({
             ? format(new Date(last.scheduled_date), 'dd MMM yy')
             : null
         }));
+        // Fetch teacher for this package from its lessons
+        const { data: lessonTeacher } = await supabase
+          .from('scheduled_lessons')
+          .select('teachers(name)')
+          .eq('package_id', pkg.package_id)
+          .limit(1)
+          .single();
+        setPkgTeachers(prev => ({
+          ...prev,
+          [pkg.package_id]: (lessonTeacher as any)?.teachers?.name || null
+        }));
       });
   }, [packages]);
 
