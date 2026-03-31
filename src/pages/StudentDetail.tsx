@@ -212,6 +212,7 @@ function StudentPackagesTab({
                     <TableHead className="w-10"></TableHead>
                     <TableHead>Start</TableHead>
                     <TableHead>End</TableHead>
+                    <TableHead>Teacher</TableHead>
                     <TableHead>Plan</TableHead>
                     <TableHead>Description</TableHead>
                     <TableHead>Status</TableHead>
@@ -221,6 +222,7 @@ function StudentPackagesTab({
                     <TableHead>Amount</TableHead>
                     
                     <TableHead>Actions</TableHead>
+                  </TableRow>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
