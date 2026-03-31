@@ -359,7 +359,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         }
       });
 
-      // Students per teacher (live data)
+      // Students per teacher (live data) — current snapshot
       const activeByTeacher: Record<string, number> = {};
       const leftByTeacher: Record<string, number> = {};
       const stopByTeacher: Record<string, number> = {};
@@ -368,6 +368,26 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
           if (s.status === 'Active') activeByTeacher[s.teacher_id] = (activeByTeacher[s.teacher_id] || 0) + 1;
           if (s.status === 'Left') leftByTeacher[s.teacher_id] = (leftByTeacher[s.teacher_id] || 0) + 1;
           if (s.status === 'Temporary Stop') stopByTeacher[s.teacher_id] = (stopByTeacher[s.teacher_id] || 0) + 1;
+
+      // Build per-teacher per-month student sets (lesson-based scoping)
+      // For each month, find unique students who had a lesson with that teacher
+      const studentStatusMap: Record<string, string> = {};
+      students.forEach(s => { studentStatusMap[s.student_id] = s.status || 'Active'; });
+
+      // teacherMonthStudents[teacherId][monthLabel] = Set of student_ids
+      const teacherMonthStudents: Record<string, Record<string, Set<string>>> = {};
+      teacherIds.forEach(id => {
+        teacherMonthStudents[id] = {};
+        monthRanges.forEach(mr => { teacherMonthStudents[id][mr.label] = new Set(); });
+      });
+      lessons.forEach(l => {
+        if (!l.teacher_id || !l.student_id) return;
+        const d = new Date(l.scheduled_date);
+        const mLabel = format(d, 'MMM yyyy');
+        if (teacherMonthStudents[l.teacher_id]?.[mLabel]) {
+          teacherMonthStudents[l.teacher_id][mLabel].add(l.student_id);
+        }
+      });
         }
       });
 
