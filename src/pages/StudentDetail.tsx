@@ -31,6 +31,7 @@ import { EditPackageDialog } from '@/components/packages/EditPackageDialog';
 
 import { PackageHistoryTimeline } from '@/components/packages/PackageHistoryTimeline';
 import { PackageLessonsTable } from '@/components/packages/PackageLessonsTable';
+import { TransferStudentDialog } from '@/components/student/TransferStudentDialog';
 
 interface StudentPackagesTabProps {
   packages: Package[];
