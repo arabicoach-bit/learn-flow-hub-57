@@ -285,6 +285,7 @@ export default function StudentDetail() {
   const [editPackage, setEditPackage] = useState<Package | null>(null);
   const [expandedPackageId, setExpandedPackageId] = useState<string | null>(null);
   const [deletePackageId, setDeletePackageId] = useState<string | null>(null);
+  const [isTransferOpen, setIsTransferOpen] = useState(false);
 
   const { data: student, isLoading: studentLoading } = useStudent(id || '');
   const packagesQuery = usePackages(id);
