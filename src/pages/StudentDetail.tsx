@@ -21,7 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { ArrowLeft, User, Wallet, CreditCard, BookOpen, Loader2, Plus, RefreshCw, Pencil, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
+import { ArrowLeft, User, Wallet, CreditCard, BookOpen, Loader2, Plus, RefreshCw, Pencil, ChevronDown, ChevronRight, Trash2, ArrowRightLeft } from 'lucide-react';
 import { getWalletColor, getStatusBadgeClass, formatCurrency, formatDate, formatDateTime, getStatusDisplayLabel } from '@/lib/wallet-utils';
 import { StudentLessonsView } from '@/components/student/StudentLessonsView';
 import { StudentInfoView } from '@/components/student/StudentInfoView';
@@ -31,6 +31,7 @@ import { EditPackageDialog } from '@/components/packages/EditPackageDialog';
 
 import { PackageHistoryTimeline } from '@/components/packages/PackageHistoryTimeline';
 import { PackageLessonsTable } from '@/components/packages/PackageLessonsTable';
+import { TransferStudentDialog } from '@/components/student/TransferStudentDialog';
 
 interface StudentPackagesTabProps {
   packages: Package[];
@@ -284,6 +285,7 @@ export default function StudentDetail() {
   const [editPackage, setEditPackage] = useState<Package | null>(null);
   const [expandedPackageId, setExpandedPackageId] = useState<string | null>(null);
   const [deletePackageId, setDeletePackageId] = useState<string | null>(null);
+  const [isTransferOpen, setIsTransferOpen] = useState(false);
 
   const { data: student, isLoading: studentLoading } = useStudent(id || '');
   const packagesQuery = usePackages(id);
@@ -326,14 +328,22 @@ export default function StudentDetail() {
     <AdminLayout>
       <div className="space-y-6 animate-fade-in">
         {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div>
-            <h1 className="text-3xl font-display font-bold">{student.name}</h1>
-            <p className="text-muted-foreground">{student.phone}</p>
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <div>
+              <h1 className="text-3xl font-display font-bold">{student.name}</h1>
+              <p className="text-muted-foreground">{student.phone}</p>
+            </div>
           </div>
+          {student.teacher_id && (
+            <Button variant="outline" onClick={() => setIsTransferOpen(true)} className="gap-2">
+              <ArrowRightLeft className="w-4 h-4" />
+              Transfer
+            </Button>
+          )}
         </div>
 
         {/* Student Info Card */}
@@ -453,6 +463,16 @@ export default function StudentDetail() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Transfer Student Dialog */}
+        <TransferStudentDialog
+          studentId={id!}
+          studentName={student.name}
+          currentTeacherId={student.teacher_id}
+          currentTeacherName={student.teachers?.name || 'No teacher'}
+          open={isTransferOpen}
+          onOpenChange={setIsTransferOpen}
+        />
 
         {/* Tabs - 3 tabs only: Packages (admin), Lessons, Student Info */}
         <Tabs defaultValue={defaultTab} className="space-y-4">

@@ -1240,6 +1240,14 @@ export type Database = {
         Args: { p_student_id: string }
         Returns: Json
       }
+      transfer_student: {
+        Args: {
+          p_new_teacher_id: string
+          p_notes?: string
+          p_student_id: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "teacher"
