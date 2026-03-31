@@ -90,6 +90,7 @@ const AppRoutes = () => (
     <Route path="/teacher/payroll" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherPayroll /></ProtectedRoute>} />
     <Route path="/teacher/trial-lessons" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherTrialLessons /></ProtectedRoute>} />
     <Route path="/teacher/notifications" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherNotifications /></ProtectedRoute>} />
+    <Route path="/teacher/quarter-performance" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherQuarterPerformance /></ProtectedRoute>} />
     
     {/* Fallback */}
     <Route path="*" element={<NotFound />} />
