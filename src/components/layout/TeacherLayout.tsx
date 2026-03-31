@@ -22,6 +22,7 @@ import {
   CalendarDays,
   Users,
   Bell,
+  BarChart3,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TeacherStatsBar } from '@/components/teacher/TeacherStatsBar';
