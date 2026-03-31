@@ -297,6 +297,9 @@ export default function TeacherDetail() {
               <CalendarDays className="w-4 h-4 mr-1" /> Lessons Calendar
             </TabsTrigger>
             <TabsTrigger value="trials">Trial Lessons</TabsTrigger>
+            <TabsTrigger value="quarter">
+              <BarChart3 className="w-4 h-4 mr-1" /> Quarter Performance
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="students">
