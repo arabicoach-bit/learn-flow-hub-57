@@ -328,14 +328,22 @@ export default function StudentDetail() {
     <AdminLayout>
       <div className="space-y-6 animate-fade-in">
         {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div>
-            <h1 className="text-3xl font-display font-bold">{student.name}</h1>
-            <p className="text-muted-foreground">{student.phone}</p>
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <div>
+              <h1 className="text-3xl font-display font-bold">{student.name}</h1>
+              <p className="text-muted-foreground">{student.phone}</p>
+            </div>
           </div>
+          {student.teacher_id && (
+            <Button variant="outline" onClick={() => setIsTransferOpen(true)} className="gap-2">
+              <ArrowRightLeft className="w-4 h-4" />
+              Transfer
+            </Button>
+          )}
         </div>
 
         {/* Student Info Card */}
