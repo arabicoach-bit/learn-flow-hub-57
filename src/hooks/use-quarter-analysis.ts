@@ -515,7 +515,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         return {
           teacherId: t.teacher_id, name: t.name, ratePerHour: rate,
           totalHours: qHours, salary: qSalary, bonus: qBonus,
-          activeStudents: qActive, stoppedStudents: tStop, leftStudents: qLeft,
+          activeStudents: qActive, stoppedStudents: qStopped, leftStudents: qLeft,
           retentionRate: Math.round(qRetention * 10) / 10,
           trialsConducted: qTrials, trialConversions: qConversions,
           trialConversionRate: qTrials > 0 ? Math.round((qConversions / qTrials) * 100 * 10) / 10 : 0,
