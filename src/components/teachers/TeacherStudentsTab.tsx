@@ -81,7 +81,7 @@ export function TeacherStudentsTab({ students, teacherId }: TeacherStudentsTabPr
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
 
-  const studentRange = getFilterDateRange(studentFilter);
+  const quarterRange = useMemo(() => getQuarterDateRange(quarterFilter), [quarterFilter]);
 
   const DAY_ABBR = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
