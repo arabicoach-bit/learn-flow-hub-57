@@ -58,6 +58,68 @@ function isOnOrBefore(dateStr: string | null | undefined, compareDateStr: string
   return parseSourceDate(dateStr).getTime() <= parseSourceDate(compareDateStr).getTime();
 }
 
+function isWithinRange(dateStr: string | null | undefined, startDateStr: string, endDateStr: string) {
+  if (!dateStr) return false;
+  const value = parseSourceDate(dateStr).getTime();
+  return value >= parseSourceDate(startDateStr).getTime() && value <= parseSourceDate(endDateStr).getTime();
+}
+
+function countCurrentStudentsByStatus(
+  assignedStudents: Array<{ status: string | null }>,
+) {
+  let active = 0;
+  let stopped = 0;
+  let left = 0;
+
+  assignedStudents.forEach(student => {
+    if (student.status === 'Temporary Stop') stopped++;
+    else if (student.status === 'Left') left++;
+    else active++;
+  });
+
+  return { active, stopped, left, total: active + stopped + left };
+}
+
+function countMonthlyStudentsByStatus(
+  assignedStudents: Array<{
+    created_at: string | null;
+    status: string | null;
+    status_changed_at?: string | null;
+  }>,
+  monthStart: string,
+  monthEnd: string,
+) {
+  let active = 0;
+  let stopped = 0;
+  let left = 0;
+
+  const monthEndTs = `${monthEnd}T23:59:59`;
+  const monthStartTs = `${monthStart}T00:00:00`;
+
+  assignedStudents.forEach(student => {
+    if (!isOnOrBefore(student.created_at, monthEndTs)) return;
+
+    const status = student.status || 'Active';
+    const statusChangedAt = student.status_changed_at || null;
+
+    if (status === 'Temporary Stop') {
+      if (isWithinRange(statusChangedAt, monthStartTs, monthEndTs)) stopped++;
+      else if (!statusChangedAt || parseSourceDate(statusChangedAt).getTime() > parseSourceDate(monthEndTs).getTime()) active++;
+      return;
+    }
+
+    if (status === 'Left') {
+      if (isWithinRange(statusChangedAt, monthStartTs, monthEndTs)) left++;
+      else if (!statusChangedAt || parseSourceDate(statusChangedAt).getTime() > parseSourceDate(monthEndTs).getTime()) active++;
+      return;
+    }
+
+    active++;
+  });
+
+  return { active, stopped, left, total: active + stopped + left };
+}
+
 function countScopedStudentsByStatus(
   scopedStudentIds: Set<string>,
   assignedStudentIds: Set<string> | undefined,
@@ -233,7 +295,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         studentsRes, newStudentsRes, packagesRes, lessonsRes,
         trialsRes, teachersRes, bonusesRes, trialLessonsLogRes,
       ] = await Promise.all([
-        supabase.from('students').select('student_id, status, teacher_id, created_at')
+        supabase.from('students').select('student_id, status, teacher_id, created_at, status_changed_at')
           .lte('created_at', endDate + 'T23:59:59'),
         supabase.from('students').select('student_id, created_at')
           .gte('created_at', startDate).lte('created_at', endDate + 'T23:59:59'),
@@ -397,33 +459,9 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         }
       });
 
-      // Build per-teacher student snapshots using the same source as Teacher Students:
-      // the student's current teacher assignment on the students table.
-      const studentStatusMap: Record<string, string> = {};
-      allStudentsInQuarter.forEach(s => { studentStatusMap[s.student_id] = s.status || 'Active'; });
-
       const assignedStudentsByTeacher: Record<string, typeof allStudentsInQuarter> = {};
       teacherIds.forEach(id => {
         assignedStudentsByTeacher[id] = allStudentsInQuarter.filter(student => student.teacher_id === id);
-      });
-
-      const teacherMonthStudents: Record<string, Record<string, Set<string>>> = {};
-      teacherIds.forEach(id => {
-        teacherMonthStudents[id] = {};
-        const assignedStudents = assignedStudentsByTeacher[id] || [];
-        monthRanges.forEach(mr => {
-          if (mr.isHistorical || mr.isFuture) {
-            teacherMonthStudents[id][mr.label] = new Set();
-            return;
-          }
-
-          const monthEnd = `${mr.end}T23:59:59`;
-          teacherMonthStudents[id][mr.label] = new Set(
-            assignedStudents
-              .filter(student => isOnOrBefore(student.created_at, monthEnd))
-              .map(student => student.student_id),
-          );
-        });
       });
 
       // Trials per teacher (live data)
@@ -495,7 +533,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
             return { monthLabel: mr.label, hours: 0, salary: 0, totalStudents: 0, activeStudents: 0, stoppedStudents: 0, leftStudents: 0, retentionRate: 0, trialsConducted: 0, trialConversions: 0, trialConversionRate: 0, bonus: 0 };
           }
 
-          // Live month — assigned student snapshot by month end
+          // Live month — assigned student roster, with stop/left counted only in the month they changed
           const mAgg = teacherMonthStats[t.teacher_id]?.[mr.label] || { regularMinutes: 0, regularCount: 0, trialCount: 0 };
           const mCalc = calcHoursAndSalary(mAgg, rate);
           const mt = monthlyTrialsByTeacher[t.teacher_id]?.[mr.label] || { conducted: 0, converted: 0 };
@@ -504,11 +542,10 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
           // For future months, don't show student counts (month hasn't started)
           let mActive = 0, mStopped = 0, mLeft = 0, mTotal = 0, mRetention = 0;
           if (!mr.isFuture) {
-            const monthStudentIds = teacherMonthStudents[t.teacher_id]?.[mr.label] || new Set<string>();
-            const monthlyCounts = countScopedStudentsByStatus(
-              monthStudentIds,
-              undefined,
-              studentStatusMap,
+            const monthlyCounts = countMonthlyStudentsByStatus(
+              assignedStudentsByTeacher[t.teacher_id] || [],
+              mr.start,
+              mr.end,
             );
             mActive = monthlyCounts.active;
             mStopped = monthlyCounts.stopped;
@@ -540,15 +577,8 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         const qTrials = monthlyData.reduce((s, m) => s + m.trialsConducted, 0);
         const qConversions = monthlyData.reduce((s, m) => s + m.trialConversions, 0);
 
-        // Quarter totals: same assigned-student source as My Students, one current status per student
-        const allQuarterStudentIds = new Set(
-          (assignedStudentsByTeacher[t.teacher_id] || []).map(student => student.student_id),
-        );
-        const quarterCounts = countScopedStudentsByStatus(
-          allQuarterStudentIds,
-          undefined,
-          studentStatusMap,
-        );
+        // Quarter totals: same current roster/status source as My Students
+        const quarterCounts = countCurrentStudentsByStatus(assignedStudentsByTeacher[t.teacher_id] || []);
         let qActive = quarterCounts.active, qStopped = quarterCounts.stopped, qLeft = quarterCounts.left;
         // For mixed quarters with historical months, add historical student counts from the latest historical month
         if (hasHistorical) {
@@ -556,7 +586,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
           const lastHistMonth = histMonths[histMonths.length - 1];
           if (lastHistMonth) {
             const hMatch = (historicalByMonth[lastHistMonth.label] || []).find(h => h.teacherName === t.name);
-            if (hMatch && allQuarterStudentIds.size === 0) {
+            if (hMatch && (assignedStudentsByTeacher[t.teacher_id] || []).length === 0) {
               qActive += hMatch.activeStudents;
               qStopped += hMatch.stoppedStudents;
               qLeft += hMatch.leftStudents;

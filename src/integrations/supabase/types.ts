@@ -579,6 +579,7 @@ export type Database = {
           program_id: string | null
           school: string | null
           status: Database["public"]["Enums"]["student_status"] | null
+          status_changed_at: string | null
           student_id: string
           student_level: string | null
           teacher_id: string | null
@@ -603,6 +604,7 @@ export type Database = {
           program_id?: string | null
           school?: string | null
           status?: Database["public"]["Enums"]["student_status"] | null
+          status_changed_at?: string | null
           student_id?: string
           student_level?: string | null
           teacher_id?: string | null
@@ -627,6 +629,7 @@ export type Database = {
           program_id?: string | null
           school?: string | null
           status?: Database["public"]["Enums"]["student_status"] | null
+          status_changed_at?: string | null
           student_id?: string
           student_level?: string | null
           teacher_id?: string | null
