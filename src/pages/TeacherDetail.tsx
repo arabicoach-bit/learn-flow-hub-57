@@ -19,10 +19,10 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatSalary } from '@/lib/wallet-utils';
 import { TeacherCalendar } from '@/components/calendar/TeacherCalendar';
-import { TrialLessonCalendar } from '@/components/calendar/TrialLessonCalendar';
 import { TeacherStudentsTab } from '@/components/teachers/TeacherStudentsTab';
 import { TeacherPayrollTab } from '@/components/teachers/TeacherPayrollTab';
 import { TeacherQuarterTab } from '@/components/teachers/TeacherQuarterTab';
+import { TeacherTrialTab } from '@/components/teachers/TeacherTrialTab';
 
 export default function TeacherDetail() {
   const { id } = useParams<{ id: string }>();
@@ -311,7 +311,7 @@ export default function TeacherDetail() {
           </TabsContent>
 
           <TabsContent value="trials">
-            {id && <TrialLessonCalendar teacherId={id} isAdmin />}
+            {id && <TeacherTrialTab teacherId={id} />}
           </TabsContent>
 
           <TabsContent value="quarter">
