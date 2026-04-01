@@ -19,11 +19,11 @@ import { PackageSummaryDialog } from '@/components/packages/PackageSummaryDialog
 import { useTeachers } from '@/hooks/use-teachers';
 import { formatCurrency } from '@/lib/wallet-utils';
 import { exportPackages } from '@/lib/excel-export';
-import { getFilterDateRange, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
+import { getCurrentQuarter, getQuarterDateRange, type QuarterFilterValue } from '@/components/shared/QuarterFilter';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { useSearchParamState, useSearchParamYearMonth } from '@/hooks/use-search-param-state';
+import { useSearchParamState } from '@/hooks/use-search-param-state';
 
 type StatusFilter = 'all' | 'Active' | 'Completed';
 type TabValue = 'all' | 'in_progress' | 'finished' | 'paid' | 'pending' | 'new';
@@ -33,7 +33,7 @@ export default function Packages() {
   const { data: packages, isLoading } = usePackages();
   const { data: teachers } = useTeachers();
   const [searchQuery, setSearchQuery] = useSearchParamState('q', '');
-  const [filter, setFilter] = useSearchParamYearMonth('df');
+  const [quarterFilter, setQuarterFilter] = useState<QuarterFilterValue>(getCurrentQuarter);
   const [statusFilter, setStatusFilter] = useSearchParamState('status', 'all') as [string, (v: string) => void];
   const [teacherFilter, setTeacherFilter] = useSearchParamState('teacher', 'all');
   const [paymentFilter, setPaymentFilter] = useSearchParamState('payment', 'all');
@@ -50,7 +50,7 @@ export default function Packages() {
   const [editPaymentDate, setEditPaymentDate] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
-  const { startDate, endDate } = getFilterDateRange(filter);
+  const { startDate, endDate } = getQuarterDateRange(quarterFilter);
   const { data: summary, isLoading: summaryLoading } = usePackageSummary(summaryPkg);
 
   const baseFiltered = useMemo(() => {
@@ -211,7 +211,7 @@ export default function Packages() {
         {/* Filters */}
         <PackageFiltersBar
           searchQuery={searchQuery} onSearchChange={setSearchQuery}
-          filter={filter} onFilterChange={setFilter}
+          quarterFilter={quarterFilter} onQuarterChange={setQuarterFilter}
           statusFilter={statusFilter} onStatusFilterChange={(v) => setStatusFilter(v as StatusFilter)}
           teacherFilter={teacherFilter} onTeacherFilterChange={setTeacherFilter}
           paymentFilter={paymentFilter} onPaymentFilterChange={setPaymentFilter}

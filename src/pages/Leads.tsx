@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Download, Users, Plus, Loader2 } from 'lucide-react';
-import { getFilterDateRange, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
+import { getCurrentQuarter, getQuarterDateRange, type QuarterFilterValue } from '@/components/shared/QuarterFilter';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useLeads, useUpdateLead, useDeleteLead, type Lead } from '@/hooks/use-leads';
 import { Button } from '@/components/ui/button';
@@ -21,20 +21,20 @@ export default function Leads() {
   const [trialStatusFilter, setTrialStatusFilter] = useState('all');
   const [leadStatusFilter, setLeadStatusFilter] = useState('all');
   const [followUpFilter, setFollowUpFilter] = useState('all');
-  const [dateFilter, setDateFilter] = useState<YearMonthFilterValue>({ year: null, month: null });
+  const [quarterFilter, setQuarterFilter] = useState<QuarterFilterValue>(getCurrentQuarter);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [convertingLead, setConvertingLead] = useState<Lead | null>(null);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const [sortBy, setSortBy] = useState<LeadSortOption>('newest');
   const { toast } = useToast();
 
-  const { startDate: filterStart, endDate: filterEnd } = getFilterDateRange(dateFilter);
+  const { startDate: filterStart, endDate: filterEnd } = getQuarterDateRange(quarterFilter);
 
   const { data: leads, isLoading } = useLeads({
     search,
     trial_status: trialStatusFilter === 'all' ? undefined : trialStatusFilter,
-    date_start: filterStart || undefined,
-    date_end: filterEnd || undefined,
+    date_start: filterStart,
+    date_end: filterEnd,
   });
 
   const updateLead = useUpdateLead();
@@ -124,7 +124,7 @@ export default function Leads() {
     conversionRate: totalLeads > 0 ? (convertedCount / totalLeads) * 100 : 0,
   };
 
-  const hasFilters = search || trialStatusFilter !== 'all' || leadStatusFilter !== 'all' || followUpFilter !== 'all' || dateFilter.year !== null;
+  const hasFilters = search || trialStatusFilter !== 'all' || leadStatusFilter !== 'all' || followUpFilter !== 'all';
 
   return (
     <AdminLayout>
@@ -169,7 +169,7 @@ export default function Leads() {
           trialStatusFilter={trialStatusFilter} onTrialStatusChange={setTrialStatusFilter}
           leadStatusFilter={leadStatusFilter} onLeadStatusChange={setLeadStatusFilter}
           followUpFilter={followUpFilter} onFollowUpChange={setFollowUpFilter}
-          dateFilter={dateFilter} onDateChange={setDateFilter}
+          quarterFilter={quarterFilter} onQuarterChange={setQuarterFilter}
           sortBy={sortBy} onSortChange={setSortBy}
           viewMode={viewMode} onViewModeChange={setViewMode}
         />

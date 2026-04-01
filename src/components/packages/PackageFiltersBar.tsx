@@ -1,7 +1,7 @@
 import { Search, ArrowUpDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { YearMonthFilter, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
+import { QuarterFilter, type QuarterFilterValue } from '@/components/shared/QuarterFilter';
 
 export type PackageSortOption = 'newest' | 'oldest' | 'alpha_asc' | 'alpha_desc' | 'due_date' | 'payment_date' | 'amount_high' | 'amount_low';
 
@@ -13,8 +13,8 @@ interface Teacher {
 interface PackageFiltersBarProps {
   searchQuery: string;
   onSearchChange: (v: string) => void;
-  filter: YearMonthFilterValue;
-  onFilterChange: (v: YearMonthFilterValue) => void;
+  quarterFilter: QuarterFilterValue;
+  onQuarterChange: (v: QuarterFilterValue) => void;
   statusFilter: string;
   onStatusFilterChange: (v: string) => void;
   teacherFilter: string;
@@ -28,7 +28,7 @@ interface PackageFiltersBarProps {
 
 export function PackageFiltersBar({
   searchQuery, onSearchChange,
-  filter, onFilterChange,
+  quarterFilter, onQuarterChange,
   statusFilter, onStatusFilterChange,
   teacherFilter, onTeacherFilterChange,
   paymentFilter, onPaymentFilterChange,
@@ -46,7 +46,7 @@ export function PackageFiltersBar({
           className="pl-9"
         />
       </div>
-      <YearMonthFilter value={filter} onChange={onFilterChange} />
+      <QuarterFilter value={quarterFilter} onChange={onQuarterChange} />
       <Select value={sortBy} onValueChange={(v) => onSortChange(v as PackageSortOption)}>
         <SelectTrigger className="w-[160px]">
           <ArrowUpDown className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
