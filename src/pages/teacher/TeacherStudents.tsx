@@ -69,6 +69,95 @@ export default function TeacherStudents() {
 
   const DAY_ABBR = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+  // Fetch active packages for these students (not relying on stale current_package_id)
+  const myStudentIds = useMemo(() => myStudents.map(s => s.student_id), [myStudents]);
+  const { data: activePackagesData } = useQuery({
+    queryKey: ['teacher-active-packages', teacherId, myStudentIds.sort().join(',')],
+    queryFn: async () => {
+      if (myStudentIds.length === 0) return [];
+      const { data } = await supabase
+        .from('packages')
+        .select('package_id, student_id, lessons_purchased')
+        .in('student_id', myStudentIds)
+        .eq('status', 'Active')
+        .order('created_at', { ascending: false });
+      return data || [];
+    },
+    enabled: myStudentIds.length > 0,
+    staleTime: 60_000,
+  });
+
+  const studentActivePackageMap = useMemo(() => {
+    const map = new Map<string, { packageId: string; lessonsPurchased: number }>();
+    (activePackagesData || []).forEach(p => {
+      if (!map.has(p.student_id)) map.set(p.student_id, { packageId: p.package_id, lessonsPurchased: p.lessons_purchased });
+    });
+    return map;
+  }, [activePackagesData]);
+
+  const activePackageIds = useMemo(() => {
+    return Array.from(studentActivePackageMap.values()).map(v => v.packageId);
+  }, [studentActivePackageMap]);
+
+  const { data: scheduleMap } = useQuery({
+    queryKey: ['teacher-student-schedules', activePackageIds.sort().join(',')],
+    queryFn: async () => {
+      if (activePackageIds.length === 0) return new Map<string, { day: number; time: string }[]>();
+      const { data } = await supabase
+        .from('lesson_schedules')
+        .select('package_id, day_of_week, time_slot')
+        .in('package_id', activePackageIds)
+        .order('day_of_week');
+
+      const pkgToStudent = new Map<string, string>();
+      studentActivePackageMap.forEach((val, studentId) => {
+        pkgToStudent.set(val.packageId, studentId);
+      });
+
+      const result = new Map<string, { day: number; time: string }[]>();
+      (data || []).forEach(row => {
+        const studentId = pkgToStudent.get(row.package_id!);
+        if (!studentId) return;
+        if (!result.has(studentId)) result.set(studentId, []);
+        result.get(studentId)!.push({ day: row.day_of_week, time: row.time_slot });
+      });
+      return result;
+    },
+    enabled: activePackageIds.length > 0,
+    staleTime: 60_000,
+  });
+
+  const lessonStatsMap = useMemo(() => {
+    const map = new Map<string, { used: number; total: number }>();
+    studentActivePackageMap.forEach((val, studentId) => {
+      map.set(studentId, { used: 0, total: val.lessonsPurchased });
+    });
+    if (!allLessons) return map;
+    const activePkgIds = new Set(activePackageIds);
+    allLessons.forEach(l => {
+      if (!l.student_id || !l.package_id || !activePkgIds.has(l.package_id)) return;
+      if (!map.has(l.student_id)) map.set(l.student_id, { used: 0, total: 0 });
+      const entry = map.get(l.student_id)!;
+      if (l.status === 'completed' || l.status === 'absent') entry.used++;
+    });
+    return map;
+  }, [allLessons, activePackageIds, studentActivePackageMap]);
+
+  const nextLessonMap = useMemo(() => {
+    const map = new Map<string, { date: string; time: string }>();
+    if (!allLessons) return map;
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const upcoming = allLessons
+      .filter(l => l.status === 'scheduled' && l.scheduled_date >= today)
+      .sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date) || a.scheduled_time.localeCompare(b.scheduled_time));
+    upcoming.forEach(l => {
+      if (l.student_id && !map.has(l.student_id)) {
+        map.set(l.student_id, { date: l.scheduled_date, time: l.scheduled_time });
+      }
+    });
+    return map;
+  }, [allLessons]);
+
   const quarterScopedStudents = useMemo(() => {
     const { startDate, endDate } = quarterRange;
 
