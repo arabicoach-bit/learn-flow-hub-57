@@ -179,7 +179,8 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         const label = format(mDate, 'MMM yyyy');
         const today = new Date();
         const isFuture = mDate.getFullYear() > today.getFullYear() || (mDate.getFullYear() === today.getFullYear() && mDate.getMonth() > today.getMonth());
-        return { month: m, year: yr, label, start: mStart, end: mEnd, monthYear: `${yr}-${String(m).padStart(2, '0')}`, isHistorical: isHistoricalMonth(label), isFuture };
+        const isCurrent = mDate.getFullYear() === today.getFullYear() && mDate.getMonth() === today.getMonth();
+        return { month: m, year: yr, label, start: mStart, end: mEnd, monthYear: `${yr}-${String(m).padStart(2, '0')}`, isHistorical: isHistoricalMonth(label), isFuture, isCurrent };
       });
 
       const allHistorical = monthRanges.every(m => m.isHistorical);
@@ -381,7 +382,10 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         }
       });
 
-      // Build per-teacher per-month student sets (lesson-based scoping, only completed/absent lessons count)
+      // Build per-teacher per-month student sets (lesson-based scoping)
+      // Past months: only completed/absent lessons count (actual activity)
+      // Current month: all lessons count (including scheduled, since month is in progress)
+      // Future months: excluded entirely (isFuture flag)
       const studentStatusMap: Record<string, string> = {};
       students.forEach(s => { studentStatusMap[s.student_id] = s.status || 'Active'; });
 
@@ -390,10 +394,13 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         teacherMonthStudents[id] = {};
         monthRanges.forEach(mr => { teacherMonthStudents[id][mr.label] = new Set(); });
       });
-      // Only count students from lessons that actually happened (completed/absent), not scheduled
-      lessons.filter(l => l.status === 'completed' || l.status === 'absent').forEach(l => {
+      // Build a set of current-month labels for quick lookup
+      const currentMonthLabels = new Set(monthRanges.filter(mr => mr.isCurrent).map(mr => mr.label));
+      lessons.forEach(l => {
         if (!l.teacher_id || !l.student_id) return;
         const mLabel = getSourceMonthLabel(l.scheduled_date);
+        // For past months, only count completed/absent; for current month, count all
+        if (!currentMonthLabels.has(mLabel) && l.status !== 'completed' && l.status !== 'absent') return;
         if (teacherMonthStudents[l.teacher_id]?.[mLabel]) {
           teacherMonthStudents[l.teacher_id][mLabel].add(l.student_id);
         }
