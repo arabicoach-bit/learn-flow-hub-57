@@ -291,7 +291,7 @@ export default function TeacherTrialLessons() {
             <h1 className="text-3xl font-display font-bold mb-1">Trial Lessons</h1>
             <p className="text-muted-foreground">Manage and track your trial students</p>
           </div>
-          <YearMonthFilter value={filter} onChange={setFilter} />
+          <QuarterFilter value={filter} onChange={setFilter} />
         </div>
 
         {/* ═══════ STATS DASHBOARD ═══════ */}
