@@ -18,8 +18,8 @@ interface StudentFiltersBarProps {
   onStatusFilterChange: (v: string) => void;
   paymentFilter: string;
   onPaymentFilterChange: (v: string) => void;
-  dateFilter: YearMonthFilterValue;
-  onDateFilterChange: (v: YearMonthFilterValue) => void;
+  dateFilter: QuarterFilterValue;
+  onDateFilterChange: (v: QuarterFilterValue) => void;
   teachers: Teacher[] | undefined;
   viewMode: 'table' | 'cards';
   onViewModeChange: (v: 'table' | 'cards') => void;
