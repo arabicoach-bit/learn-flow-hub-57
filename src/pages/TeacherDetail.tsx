@@ -289,29 +289,25 @@ export default function TeacherDetail() {
         )}
 
         {/* Tabs */}
-        <Tabs defaultValue="students" className="space-y-4">
+        <Tabs defaultValue="schedule" className="space-y-4">
           <TabsList>
-            <TabsTrigger value="students">Students ({totalStudents})</TabsTrigger>
-            <TabsTrigger value="payroll">Payroll</TabsTrigger>
-            <TabsTrigger value="calendar">
-              <CalendarDays className="w-4 h-4 mr-1" /> Lessons Calendar
+            <TabsTrigger value="schedule">
+              <CalendarDays className="w-4 h-4 mr-1" /> Schedule
             </TabsTrigger>
+            <TabsTrigger value="students">Students ({totalStudents})</TabsTrigger>
             <TabsTrigger value="trials">Trial Lessons</TabsTrigger>
             <TabsTrigger value="quarter">
               <BarChart3 className="w-4 h-4 mr-1" /> Quarter Performance
             </TabsTrigger>
+            <TabsTrigger value="payroll">Payroll</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="schedule">
+            {id && <TeacherCalendar teacherId={id} />}
+          </TabsContent>
 
           <TabsContent value="students">
             <TeacherStudentsTab students={teacherStudents} teacherId={id} />
-          </TabsContent>
-
-          <TabsContent value="payroll">
-            {id && <TeacherPayrollTab teacherId={id} ratePerLesson={teacher.rate_per_lesson} />}
-          </TabsContent>
-
-          <TabsContent value="calendar">
-            {id && <TeacherCalendar teacherId={id} />}
           </TabsContent>
 
           <TabsContent value="trials">
@@ -320,6 +316,10 @@ export default function TeacherDetail() {
 
           <TabsContent value="quarter">
             {id && <TeacherQuarterTab teacherId={id} />}
+          </TabsContent>
+
+          <TabsContent value="payroll">
+            {id && <TeacherPayrollTab teacherId={id} ratePerLesson={teacher.rate_per_lesson} />}
           </TabsContent>
         </Tabs>
       </div>
