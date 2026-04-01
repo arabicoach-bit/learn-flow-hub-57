@@ -79,6 +79,7 @@ export interface TeacherQuarterDetail {
   totalHours: number;
   salary: number;
   bonus: number;
+  totalStudents: number;
   activeStudents: number;
   stoppedStudents: number;
   leftStudents: number;
@@ -90,6 +91,7 @@ export interface TeacherQuarterDetail {
     monthLabel: string;
     hours: number;
     salary: number;
+    totalStudents: number;
     activeStudents: number;
     stoppedStudents: number;
     leftStudents: number;
@@ -460,6 +462,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
                 monthLabel: mr.label,
                 hours: hMatch.totalHours,
                 salary: hMatch.salary,
+                totalStudents: hMatch.activeStudents + hMatch.stoppedStudents + hMatch.leftStudents,
                 activeStudents: hMatch.activeStudents,
                 stoppedStudents: hMatch.stoppedStudents,
                 leftStudents: hMatch.leftStudents,
@@ -471,7 +474,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
               };
             }
             // Teacher not in historical data for this month
-            return { monthLabel: mr.label, hours: 0, salary: 0, activeStudents: 0, stoppedStudents: 0, leftStudents: 0, retentionRate: 0, trialsConducted: 0, trialConversions: 0, trialConversionRate: 0, bonus: 0 };
+            return { monthLabel: mr.label, hours: 0, salary: 0, totalStudents: 0, activeStudents: 0, stoppedStudents: 0, leftStudents: 0, retentionRate: 0, trialsConducted: 0, trialConversions: 0, trialConversionRate: 0, bonus: 0 };
           }
 
           // Live month — lesson-based student scoping
@@ -498,6 +501,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
             monthLabel: mr.label,
             hours: mCalc.totalHours,
             salary: mCalc.salary,
+            totalStudents: mActive + mStopped + mLeft,
             activeStudents: mActive,
             stoppedStudents: mStopped,
             leftStudents: mLeft,
@@ -554,7 +558,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         return {
           teacherId: t.teacher_id, name: t.name, ratePerHour: rate,
           totalHours: qHours, salary: qSalary, bonus: qBonus,
-          activeStudents: qActive, stoppedStudents: qStopped, leftStudents: qLeft,
+          totalStudents: qTotal, activeStudents: qActive, stoppedStudents: qStopped, leftStudents: qLeft,
           retentionRate: Math.round(qRetention * 10) / 10,
           trialsConducted: qTrials, trialConversions: qConversions,
           trialConversionRate: qTrials > 0 ? Math.round((qConversions / qTrials) * 100 * 10) / 10 : 0,
@@ -573,9 +577,9 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
           const monthlyData = monthRanges.map(mr => {
             if (mr.isHistorical) {
               const hMatch = (historicalByMonth[mr.label] || []).find(h => h.teacherName === name);
-              if (hMatch) return { monthLabel: mr.label, hours: hMatch.totalHours, salary: hMatch.salary, activeStudents: hMatch.activeStudents, stoppedStudents: hMatch.stoppedStudents, leftStudents: hMatch.leftStudents, retentionRate: hMatch.retentionRate, trialsConducted: hMatch.trialsConducted, trialConversions: hMatch.trialConversions, trialConversionRate: hMatch.trialConversionRate, bonus: hMatch.bonus };
+              if (hMatch) return { monthLabel: mr.label, hours: hMatch.totalHours, salary: hMatch.salary, totalStudents: hMatch.activeStudents + hMatch.stoppedStudents + hMatch.leftStudents, activeStudents: hMatch.activeStudents, stoppedStudents: hMatch.stoppedStudents, leftStudents: hMatch.leftStudents, retentionRate: hMatch.retentionRate, trialsConducted: hMatch.trialsConducted, trialConversions: hMatch.trialConversions, trialConversionRate: hMatch.trialConversionRate, bonus: hMatch.bonus };
             }
-            return { monthLabel: mr.label, hours: 0, salary: 0, activeStudents: 0, stoppedStudents: 0, leftStudents: 0, retentionRate: 0, trialsConducted: 0, trialConversions: 0, trialConversionRate: 0, bonus: 0 };
+            return { monthLabel: mr.label, hours: 0, salary: 0, totalStudents: 0, activeStudents: 0, stoppedStudents: 0, leftStudents: 0, retentionRate: 0, trialsConducted: 0, trialConversions: 0, trialConversionRate: 0, bonus: 0 };
           });
 
           const qHours = monthlyData.reduce((s, m) => s + m.hours, 0);
@@ -594,7 +598,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
           teacherDetails.push({
             teacherId: `hist-${name}`, name, ratePerHour: (historicalByMonth[Object.keys(historicalByMonth)[0]] || []).find(h => h.teacherName === name)?.hourRate || 0,
             totalHours: qHours, salary: qSalary, bonus: qBonus,
-            activeStudents: qActive, stoppedStudents: 0, leftStudents: qLeft,
+            totalStudents: qTotal, activeStudents: qActive, stoppedStudents: 0, leftStudents: qLeft,
             retentionRate: qTotal > 0 ? Math.round((qActive / qTotal) * 100 * 10) / 10 : 0,
             trialsConducted: qTrials, trialConversions: qConversions,
             trialConversionRate: qTrials > 0 ? Math.round((qConversions / qTrials) * 100 * 10) / 10 : 0,
@@ -696,8 +700,8 @@ function buildFullyHistoricalResult(
   const teacherDetails: TeacherQuarterDetail[] = teacherNames.map(name => {
     const monthlyData = monthRanges.map(mr => {
       const hMatch = (historicalByMonth[mr.label] || []).find(h => h.teacherName === name);
-      if (hMatch) return { monthLabel: mr.label, hours: hMatch.totalHours, salary: hMatch.salary, activeStudents: hMatch.activeStudents, stoppedStudents: hMatch.stoppedStudents, leftStudents: hMatch.leftStudents, retentionRate: hMatch.retentionRate, trialsConducted: hMatch.trialsConducted, trialConversions: hMatch.trialConversions, trialConversionRate: hMatch.trialConversionRate, bonus: hMatch.bonus };
-      return { monthLabel: mr.label, hours: 0, salary: 0, activeStudents: 0, stoppedStudents: 0, leftStudents: 0, retentionRate: 0, trialsConducted: 0, trialConversions: 0, trialConversionRate: 0, bonus: 0 };
+      if (hMatch) return { monthLabel: mr.label, hours: hMatch.totalHours, salary: hMatch.salary, totalStudents: hMatch.activeStudents + hMatch.stoppedStudents + hMatch.leftStudents, activeStudents: hMatch.activeStudents, stoppedStudents: hMatch.stoppedStudents, leftStudents: hMatch.leftStudents, retentionRate: hMatch.retentionRate, trialsConducted: hMatch.trialsConducted, trialConversions: hMatch.trialConversions, trialConversionRate: hMatch.trialConversionRate, bonus: hMatch.bonus };
+      return { monthLabel: mr.label, hours: 0, salary: 0, totalStudents: 0, activeStudents: 0, stoppedStudents: 0, leftStudents: 0, retentionRate: 0, trialsConducted: 0, trialConversions: 0, trialConversionRate: 0, bonus: 0 };
     });
 
     const qHours = monthlyData.reduce((s, m) => s + m.hours, 0);
@@ -719,7 +723,7 @@ function buildFullyHistoricalResult(
     return {
       teacherId: `hist-${name}`, name, ratePerHour: rate,
       totalHours: qHours, salary: qSalary, bonus: qBonus,
-      activeStudents: qActive, stoppedStudents: qStopped, leftStudents: qLeft,
+      totalStudents: qTotal, activeStudents: qActive, stoppedStudents: qStopped, leftStudents: qLeft,
       retentionRate: qTotal > 0 ? Math.round((qActive / qTotal) * 100 * 10) / 10 : 0,
       trialsConducted: qTrials, trialConversions: qConversions,
       trialConversionRate: qTrials > 0 ? Math.round((qConversions / qTrials) * 100 * 10) / 10 : 0,
