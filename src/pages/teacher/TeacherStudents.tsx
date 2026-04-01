@@ -164,12 +164,7 @@ export default function TeacherStudents() {
       const matchesSearch = student.name.toLowerCase().includes(search.toLowerCase()) ||
         student.phone.includes(search);
       const matchesStatus = !statusFilter || student.status === statusFilter;
-      const createdAt = student.created_at ? new Date(student.created_at) : null;
-      const matchesDate = !createdAt || (
-        (!studentRange.startDate || createdAt >= new Date(studentRange.startDate)) &&
-        (!studentRange.endDate || createdAt <= new Date(studentRange.endDate + 'T23:59:59'))
-      );
-      return matchesSearch && matchesStatus && matchesDate;
+      return matchesSearch && matchesStatus;
     });
 
     // Default sort: Active (low credit first) → Stop → Left, then by name
