@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { startOfMonth, endOfMonth, format } from 'date-fns';
+import { startOfMonth, endOfMonth, format, parseISO } from 'date-fns';
 import { isHistoricalMonth, getHistoricalDataForMonth, type HistoricalTeacherMonth } from '@/lib/historical-quarter-data';
 
 // Custom academic quarters
@@ -38,6 +38,19 @@ export function getAvailableAcademicYears(): { value: number; label: string }[] 
 function getMonthYear(month: number, academicStartYear: number): number {
   if (month >= 9) return academicStartYear;
   return academicStartYear + 1;
+}
+
+function parseSourceDate(dateStr: string) {
+  return parseISO(dateStr);
+}
+
+function getSourceMonthLabel(dateStr: string) {
+  return format(parseSourceDate(dateStr), 'MMM yyyy');
+}
+
+function isSameSourceMonth(dateStr: string, month: number, year: number) {
+  const date = parseSourceDate(dateStr);
+  return date.getMonth() + 1 === month && date.getFullYear() === year;
 }
 
 export interface MonthlyStats {
@@ -243,10 +256,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
           };
         }
 
-        const matchMonth = (dateStr: string) => {
-          const d = new Date(dateStr);
-          return d.getMonth() + 1 === mr.month && d.getFullYear() === mr.year;
-        };
+        const matchMonth = (dateStr: string) => isSameSourceMonth(dateStr, mr.month, mr.year);
         const mNewStudents = newStudentsAll.filter(s => matchMonth(s.created_at!));
         const mPackages = packages.filter(p => matchMonth(p.created_at!));
         const mLessons = lessons.filter(l => matchMonth(l.scheduled_date));
@@ -339,8 +349,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         const mins = l.duration_minutes || 0;
         teacherQuarterStats[tid].regularMinutes += mins;
         teacherQuarterStats[tid].regularCount += 1;
-        const d = new Date(l.scheduled_date);
-        const mLabel = format(d, 'MMM yyyy');
+        const mLabel = getSourceMonthLabel(l.scheduled_date);
         if (teacherMonthStats[tid]?.[mLabel]) {
           teacherMonthStats[tid][mLabel].regularMinutes += mins;
           teacherMonthStats[tid][mLabel].regularCount += 1;
@@ -352,8 +361,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         const tid = t.teacher_id;
         if (!tid || !teacherQuarterStats[tid]) return;
         teacherQuarterStats[tid].trialCount += 1;
-        const d = new Date(t.lesson_date);
-        const mLabel = format(d, 'MMM yyyy');
+        const mLabel = getSourceMonthLabel(t.lesson_date);
         if (teacherMonthStats[tid]?.[mLabel]) {
           teacherMonthStats[tid][mLabel].trialCount += 1;
         }
@@ -382,8 +390,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
       });
       lessons.forEach(l => {
         if (!l.teacher_id || !l.student_id) return;
-        const d = new Date(l.scheduled_date);
-        const mLabel = format(d, 'MMM yyyy');
+        const mLabel = getSourceMonthLabel(l.scheduled_date);
         if (teacherMonthStudents[l.teacher_id]?.[mLabel]) {
           teacherMonthStudents[l.teacher_id][mLabel].add(l.student_id);
         }
@@ -398,7 +405,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
           trialsByTeacher[t.teacher_id].conducted++;
           if (t.conversion_status === 'Converted') trialsByTeacher[t.teacher_id].converted++;
           if (t.created_at) {
-            const mLabel = format(new Date(t.created_at), 'MMM yyyy');
+              const mLabel = getSourceMonthLabel(t.created_at);
             if (!monthlyTrialsByTeacher[t.teacher_id]) monthlyTrialsByTeacher[t.teacher_id] = {};
             if (!monthlyTrialsByTeacher[t.teacher_id][mLabel]) monthlyTrialsByTeacher[t.teacher_id][mLabel] = { conducted: 0, converted: 0 };
             monthlyTrialsByTeacher[t.teacher_id][mLabel].conducted++;
