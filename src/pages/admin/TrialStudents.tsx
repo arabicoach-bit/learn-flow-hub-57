@@ -32,7 +32,7 @@ export default function TrialStudents() {
   const [conversionFilter, setConversionFilter] = useState<TrialConversionStatus | 'all'>('all');
   const [resultFilter, setResultFilter] = useState<TrialResult | 'all'>('all');
   const [teacherFilter, setTeacherFilter] = useState('all');
-  const [dateFilter, setDateFilter] = useState<YearMonthFilterValue>({ year: null, month: null });
+  const [dateFilter, setDateFilter] = useState<QuarterFilterValue>(getCurrentQuarter());
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('table');
   const [sortBy, setSortBy] = useState<TrialSortOption>('newest');
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
