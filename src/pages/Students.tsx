@@ -51,27 +51,32 @@ export default function Students() {
   const deleteStudentMutation = useDeleteStudent();
 
   // Date filter
+  const quarterRange = useMemo(() => getQuarterDateRange(dateFilter), [dateFilter]);
+
+  // Apply rollover logic: students who stopped/left AFTER this quarter
+  // are treated as Active for this quarter's view
   const dateFiltered = useMemo(() => {
     if (!students) return [];
-    const { startDate, endDate } = getQuarterDateRange(dateFilter);
-    // Include students who are relevant to this quarter:
-    // 1. Created before or during the quarter (they exist)
-    // 2. AND either still Active, OR their status changed DURING or AFTER this quarter
-    //    (exclude students who stopped/left BEFORE the quarter started)
-    return students.filter((s) => {
+    const { startDate, endDate } = quarterRange;
+    return students.flatMap((s) => {
       const created = s.created_at?.slice(0, 10);
-      if (!created || created > endDate) return false; // not yet created
+      if (!created || created > endDate) return []; // not yet created
 
-      // If student is Active, always include
-      if (s.status === 'Active') return true;
+      if (s.status === 'Active') return [s];
 
-      // Student is Stop or Left — only include if the status change happened
-      // during or after this quarter (so they were still relevant)
+      // Student is Stop or Left
       const changedAt = (s.status_changed_at || s.updated_at)?.slice(0, 10);
-      if (!changedAt) return true; // no date info, include by default
-      return changedAt >= startDate; // status changed during or after this quarter
+
+      // If status changed after this quarter, treat as Active in this period (rollover)
+      if (!changedAt || changedAt > endDate) return [{ ...s, status: 'Active' as const }];
+
+      // If status changed before this quarter started, exclude
+      if (changedAt < startDate) return [];
+
+      // Status changed during this quarter — keep original status
+      return [s];
     });
-  }, [students, dateFilter]);
+  }, [students, quarterRange]);
 
   // Payment stats
   const allFilteredIds = useMemo(() => dateFiltered.map(s => s.student_id), [dateFiltered]);
@@ -145,18 +150,9 @@ export default function Students() {
 
   const totalStudents = dateFiltered.length;
   // For quarter-scoped stats: stop/left only count if status changed WITHIN this quarter
-  const { startDate: qStart, endDate: qEnd } = useMemo(() => getQuarterDateRange(dateFilter), [dateFilter]);
   const activeCount = dateFiltered.filter(s => s.status === 'Active').length;
-  const tempStopCount = dateFiltered.filter(s => {
-    if (s.status !== 'Temporary Stop') return false;
-    const changedAt = (s.status_changed_at || s.updated_at)?.slice(0, 10);
-    return changedAt && changedAt >= qStart && changedAt <= qEnd;
-  }).length;
-  const leftCount = dateFiltered.filter(s => {
-    if (s.status !== 'Left') return false;
-    const changedAt = (s.status_changed_at || s.updated_at)?.slice(0, 10);
-    return changedAt && changedAt >= qStart && changedAt <= qEnd;
-  }).length;
+  const tempStopCount = dateFiltered.filter(s => s.status === 'Temporary Stop').length;
+  const leftCount = dateFiltered.filter(s => s.status === 'Left').length;
 
   // New this month
   const newThisMonthCount = useMemo(() => {
