@@ -28,8 +28,8 @@ interface TrialFiltersBarProps {
   onResultChange: (value: TrialResult | 'all') => void;
   teacherFilter: string;
   onTeacherChange: (value: string) => void;
-  dateFilter: YearMonthFilterValue;
-  onDateChange: (value: YearMonthFilterValue) => void;
+  dateFilter: QuarterFilterValue;
+  onDateChange: (value: QuarterFilterValue) => void;
   sortBy: TrialSortOption;
   onSortChange: (value: TrialSortOption) => void;
   viewMode: 'cards' | 'table';
