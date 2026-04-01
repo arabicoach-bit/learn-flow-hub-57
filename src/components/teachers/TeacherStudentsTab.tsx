@@ -74,7 +74,7 @@ export function TeacherStudentsTab({ students, teacherId }: TeacherStudentsTabPr
 
   const [studentSearch, setStudentSearch] = useState('');
   const [studentStatusFilter, setStudentStatusFilter] = useState<string>('all');
-  const [studentFilter, setStudentFilter] = useState<YearMonthFilterValue>({ year: null, month: null });
+  const [quarterFilter, setQuarterFilter] = useState<QuarterFilterValue>(getCurrentQuarter());
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
   const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set());
