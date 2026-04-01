@@ -49,7 +49,7 @@ export default function TrialStudents() {
   const updateTrialStudent = useUpdateTrialStudent();
   const deleteTrialStudent = useDeleteTrialStudent();
 
-  const { startDate: filterStart, endDate: filterEnd } = getFilterDateRange(dateFilter);
+  const { startDate: filterStart, endDate: filterEnd } = getQuarterDateRange(dateFilter);
 
   const baseFiltered = useMemo(() => {
     if (!trialStudents) return [];
