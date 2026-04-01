@@ -21,7 +21,7 @@ import { StudentStatsBar } from '@/components/students/StudentStatsBar';
 import { StudentFiltersBar } from '@/components/students/StudentFiltersBar';
 import { StudentTableView } from '@/components/students/StudentTableView';
 import { StudentCardView } from '@/components/students/StudentCardView';
-import { useSearchParamState, useSearchParamYearMonth } from '@/hooks/use-search-param-state';
+import { useSearchParamState } from '@/hooks/use-search-param-state';
 import type { Student } from '@/hooks/use-students';
 
 const STUDENT_LEVELS = ['Beginner', 'Elementary', 'Intermediate', 'Upper Intermediate', 'Advanced'];
