@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Calendar, Clock, Users, BookOpen, TrendingUp } from 'lucide-react';
+import { Clock, Users, BookOpen, TrendingUp } from 'lucide-react';
 import { RateBadge } from '@/components/quarter/QuarterShared';
 import {
   getAcademicYear, getAvailableAcademicYears, useQuarterAnalysis,
