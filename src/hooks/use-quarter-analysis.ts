@@ -260,10 +260,8 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
       const allBonuses = bonusesRes.data || [];
       const trialLessonsLog = trialLessonsLogRes.data || [];
 
-      const studentIdsWithLessons = new Set(lessons.map(l => l.student_id).filter(Boolean));
       const students = allStudentsInQuarter.filter(s =>
-        studentIdsWithLessons.has(s.student_id) ||
-        (s.created_at && s.created_at >= startDate && s.created_at <= endDate + 'T23:59:59')
+        s.created_at && s.created_at <= endDate + 'T23:59:59'
       );
 
       const quarterMonthYears = monthRanges.map(m => m.monthYear);
