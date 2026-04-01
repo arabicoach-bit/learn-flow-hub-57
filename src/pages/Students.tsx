@@ -33,7 +33,7 @@ export default function Students() {
   const [search, setSearch] = useSearchParamState('q', '');
   const [statusFilter, setStatusFilter] = useSearchParamState('status', '');
   const [teacherFilter, setTeacherFilter] = useSearchParamState('teacher', '');
-  const [dateFilter, setDateFilter] = useSearchParamYearMonth('df');
+  const [dateFilter, setDateFilter] = useState<QuarterFilterValue>(getCurrentQuarter());
   const [sortField, setSortField] = useSearchParamState('sort', 'newest');
   const [viewMode, setViewMode] = useSearchParamState('view', 'table') as [string, (v: string) => void];
   const [page, setPage] = useState(1);
