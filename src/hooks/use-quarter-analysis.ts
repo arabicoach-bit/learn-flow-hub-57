@@ -177,7 +177,9 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         const mStart = format(startOfMonth(mDate), 'yyyy-MM-dd');
         const mEnd = format(endOfMonth(mDate), 'yyyy-MM-dd');
         const label = format(mDate, 'MMM yyyy');
-        return { month: m, year: yr, label, start: mStart, end: mEnd, monthYear: `${yr}-${String(m).padStart(2, '0')}`, isHistorical: isHistoricalMonth(label) };
+        const today = new Date();
+        const isFuture = mDate.getFullYear() > today.getFullYear() || (mDate.getFullYear() === today.getFullYear() && mDate.getMonth() > today.getMonth());
+        return { month: m, year: yr, label, start: mStart, end: mEnd, monthYear: `${yr}-${String(m).padStart(2, '0')}`, isHistorical: isHistoricalMonth(label), isFuture };
       });
 
       const allHistorical = monthRanges.every(m => m.isHistorical);
@@ -379,7 +381,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         }
       });
 
-      // Build per-teacher per-month student sets (lesson-based scoping)
+      // Build per-teacher per-month student sets (lesson-based scoping, only completed/absent lessons count)
       const studentStatusMap: Record<string, string> = {};
       students.forEach(s => { studentStatusMap[s.student_id] = s.status || 'Active'; });
 
@@ -388,7 +390,8 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         teacherMonthStudents[id] = {};
         monthRanges.forEach(mr => { teacherMonthStudents[id][mr.label] = new Set(); });
       });
-      lessons.forEach(l => {
+      // Only count students from lessons that actually happened (completed/absent), not scheduled
+      lessons.filter(l => l.status === 'completed' || l.status === 'absent').forEach(l => {
         if (!l.teacher_id || !l.student_id) return;
         const mLabel = getSourceMonthLabel(l.scheduled_date);
         if (teacherMonthStudents[l.teacher_id]?.[mLabel]) {
@@ -470,17 +473,19 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
           const mt = monthlyTrialsByTeacher[t.teacher_id]?.[mr.label] || { conducted: 0, converted: 0 };
           const mb = bonusByTeacherMonth[t.teacher_id]?.[mr.label] || 0;
 
-          // Get students who had a lesson with this teacher this month
-          const monthStudentIds = teacherMonthStudents[t.teacher_id]?.[mr.label] || new Set<string>();
-          let mActive = 0, mStopped = 0, mLeft = 0;
-          monthStudentIds.forEach(sid => {
-            const status = studentStatusMap[sid];
-            if (status === 'Active') mActive++;
-            else if (status === 'Temporary Stop') mStopped++;
-            else if (status === 'Left') mLeft++;
-          });
-          const mTotal = mActive + mStopped + mLeft;
-          const mRetention = mTotal > 0 ? (mActive / mTotal) * 100 : 100;
+          // For future months, don't show student counts (month hasn't started)
+          let mActive = 0, mStopped = 0, mLeft = 0, mRetention = 0;
+          if (!mr.isFuture) {
+            const monthStudentIds = teacherMonthStudents[t.teacher_id]?.[mr.label] || new Set<string>();
+            monthStudentIds.forEach(sid => {
+              const status = studentStatusMap[sid];
+              if (status === 'Active') mActive++;
+              else if (status === 'Temporary Stop') mStopped++;
+              else if (status === 'Left') mLeft++;
+            });
+            const mTotal = mActive + mStopped + mLeft;
+            mRetention = mTotal > 0 ? (mActive / mTotal) * 100 : 100;
+          }
 
           return {
             monthLabel: mr.label,
