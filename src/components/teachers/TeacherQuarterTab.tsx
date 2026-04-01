@@ -44,7 +44,10 @@ export function TeacherQuarterTab({ teacherId }: TeacherQuarterTabProps) {
   const yearlyTotals = useMemo(() => {
     const all = [td1, td2, td3].filter(Boolean) as NonNullable<typeof td1>[];
     if (all.length === 0) return null;
-    const latestStudentSnapshot = [td3, td2, td1].find(Boolean) ?? null;
+    const latestStudentSnapshot =
+      [td3, td2, td1].find((entry) => entry && entry.totalStudents > 0) ??
+      [td3, td2, td1].find(Boolean) ??
+      null;
     return {
       totalHours: all.reduce((s, t) => s + t.totalHours, 0),
       totalStudents: latestStudentSnapshot?.totalStudents ?? 0,
