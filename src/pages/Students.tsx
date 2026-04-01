@@ -54,9 +54,22 @@ export default function Students() {
   const dateFiltered = useMemo(() => {
     if (!students) return [];
     const { startDate, endDate } = getQuarterDateRange(dateFilter);
+    // Include students who are relevant to this quarter:
+    // 1. Created before or during the quarter (they exist)
+    // 2. AND either still Active, OR their status changed DURING or AFTER this quarter
+    //    (exclude students who stopped/left BEFORE the quarter started)
     return students.filter((s) => {
       const created = s.created_at?.slice(0, 10);
-      return created && created >= startDate && created <= endDate;
+      if (!created || created > endDate) return false; // not yet created
+
+      // If student is Active, always include
+      if (s.status === 'Active') return true;
+
+      // Student is Stop or Left — only include if the status change happened
+      // during or after this quarter (so they were still relevant)
+      const changedAt = (s.status_changed_at || s.updated_at)?.slice(0, 10);
+      if (!changedAt) return true; // no date info, include by default
+      return changedAt >= startDate; // status changed during or after this quarter
     });
   }, [students, dateFilter]);
 
@@ -130,11 +143,20 @@ export default function Students() {
   const visibleIds = useMemo(() => paginatedStudents.map(s => s.student_id), [paginatedStudents]);
   const { data: batchStats } = useStudentsBatchStats(visibleIds);
 
-  // Stats from dateFiltered (base, not tab-filtered)
   const totalStudents = dateFiltered.length;
+  // For quarter-scoped stats: stop/left only count if status changed WITHIN this quarter
+  const { startDate: qStart, endDate: qEnd } = useMemo(() => getQuarterDateRange(dateFilter), [dateFilter]);
   const activeCount = dateFiltered.filter(s => s.status === 'Active').length;
-  const tempStopCount = dateFiltered.filter(s => s.status === 'Temporary Stop').length;
-  const leftCount = dateFiltered.filter(s => s.status === 'Left').length;
+  const tempStopCount = dateFiltered.filter(s => {
+    if (s.status !== 'Temporary Stop') return false;
+    const changedAt = (s.status_changed_at || s.updated_at)?.slice(0, 10);
+    return changedAt && changedAt >= qStart && changedAt <= qEnd;
+  }).length;
+  const leftCount = dateFiltered.filter(s => {
+    if (s.status !== 'Left') return false;
+    const changedAt = (s.status_changed_at || s.updated_at)?.slice(0, 10);
+    return changedAt && changedAt >= qStart && changedAt <= qEnd;
+  }).length;
 
   // New this month
   const newThisMonthCount = useMemo(() => {
