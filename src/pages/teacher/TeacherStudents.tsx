@@ -209,29 +209,39 @@ export default function TeacherStudents() {
     return results;
   }, [myStudents, search, statusFilter, sortField, sortDir, nextLessonMap]);
 
-  // Quarter-scoped retention stats: count students who had lessons in this quarter
+  // Quarter-scoped stats: snapshot-based counting
   const quarterStats = useMemo(() => {
-    if (!allLessons || !teacherId) return { active: 0, stopped: 0, left: 0, total: 0, retention: 0 };
+    if (!teacherId) return { active: 0, stopped: 0, left: 0, total: 0, retention: 0 };
     const { startDate, endDate } = quarterRange;
-    // Find unique students who had lessons with this teacher during the quarter
-    const studentIdsInQuarter = new Set<string>();
-    allLessons.forEach(l => {
-      if (l.teacher_id === teacherId && l.scheduled_date >= startDate && l.scheduled_date <= endDate && l.student_id) {
-        studentIdsInQuarter.add(l.student_id);
-      }
+
+    // Include students who are relevant to this quarter:
+    // - Created before or during the quarter (they exist)
+    // - AND either still Active, OR their status changed during/after this quarter
+    const quarterStudents = myStudents.filter(s => {
+      const created = s.created_at?.slice(0, 10);
+      if (!created || created > endDate) return false;
+      if (s.status === 'Active') return true;
+      // Stop/Left: only include if status changed during or after this quarter
+      const changedAt = (s.status_changed_at || s.updated_at)?.slice(0, 10);
+      if (!changedAt) return true;
+      return changedAt >= startDate;
     });
-    // Now categorize these students by their current status
+
+    // Count stop/left only if the status change happened WITHIN this quarter
     let active = 0, stopped = 0, left = 0;
-    myStudents.forEach(s => {
-      if (!studentIdsInQuarter.has(s.student_id)) return;
-      if (s.status === 'Active') active++;
-      else if (s.status === 'Temporary Stop') stopped++;
-      else if (s.status === 'Left') left++;
+    quarterStudents.forEach(s => {
+      if (s.status === 'Active') { active++; return; }
+      const changedAt = (s.status_changed_at || s.updated_at)?.slice(0, 10);
+      const changedInQuarter = changedAt && changedAt >= startDate && changedAt <= endDate;
+      if (s.status === 'Temporary Stop' && changedInQuarter) stopped++;
+      else if (s.status === 'Left' && changedInQuarter) left++;
+      else active++; // status change is after quarter end or unknown → treat as active for this quarter
     });
+
     const total = active + stopped + left;
-    const retention = total > 0 ? Math.round((active / total) * 100) : 100; // 100% when no data yet
+    const retention = total > 0 ? Math.round((active / total) * 100) : 100;
     return { active, stopped, left, total, retention };
-  }, [allLessons, teacherId, quarterRange, myStudents]);
+  }, [teacherId, quarterRange, myStudents]);
 
   // Stats for the full student list (non-quarter-scoped for counts)
   const totalStudents = filteredStudents.length;
