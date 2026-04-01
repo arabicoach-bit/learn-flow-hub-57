@@ -155,7 +155,7 @@ export default function TeacherTrialLessons() {
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  const { startDate, endDate } = getFilterDateRange(filter);
+  const { startDate, endDate } = getQuarterDateRange(filter);
   const { data: allLessons = [], isLoading, refetch } = useTeacherTrialData(teacherId || '', startDate, endDate);
 
   const todayStr = format(new Date(), 'yyyy-MM-dd');
