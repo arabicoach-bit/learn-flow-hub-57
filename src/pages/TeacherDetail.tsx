@@ -311,7 +311,7 @@ export default function TeacherDetail() {
           </TabsContent>
 
           <TabsContent value="trials">
-            {id && <TrialLessonCalendar teacherId={id} isAdmin />}
+            {id && <TeacherTrialTab teacherId={id} />}
           </TabsContent>
 
           <TabsContent value="quarter">
