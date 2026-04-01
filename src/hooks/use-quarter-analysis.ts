@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { startOfMonth, endOfMonth, format, parseISO } from 'date-fns';
 import { isHistoricalMonth, getHistoricalDataForMonth, type HistoricalTeacherMonth } from '@/lib/historical-quarter-data';
-import { countStudentsAtSnapshot } from '@/lib/quarter-student-counting';
+import { countStudentsForPeriod } from '@/lib/quarter-student-counting';
 
 // Custom academic quarters
 // Q1: Sep, Oct, Nov | Q2: Dec, Jan, Feb, Mar | Q3: Apr, May, Jun
@@ -287,25 +287,31 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         };
       });
 
-      // ===== QUARTER TOTALS (students section — from live data only) =====
-      const liveStudentSnapshot = liveSnapshotDateTime
-        ? countStudentsAtSnapshot(students, liveSnapshotDateTime)
+      // ===== QUARTER TOTALS (students section — active rolls forward, stop/left stay inside this quarter) =====
+      const liveStudentPeriod = liveSnapshotDateTime
+        ? countStudentsForPeriod(students, `${startDate}T00:00:00`, liveSnapshotDateTime)
         : { active: 0, stopped: 0, left: 0, total: 0 };
-      const activeStudents = liveStudentSnapshot.active;
-      const temporaryStop = liveStudentSnapshot.stopped;
-      const leftStudents = liveStudentSnapshot.left;
-      const totalStudents = liveStudentSnapshot.total;
+      const activeStudents = liveStudentPeriod.active;
+      const temporaryStop = liveStudentPeriod.stopped;
+      const leftStudents = liveStudentPeriod.left;
+      const totalStudents = liveStudentPeriod.total;
 
-      // If mixed quarter, augment student totals from historical data
       let hActiveTotal = 0, hStopTotal = 0, hLeftTotal = 0;
       if (hasHistorical) {
-        // Use the latest historical month's student snapshot
-        const lastHistMonth = monthRanges.filter(m => m.isHistorical).pop();
+        const historicalMonths = monthRanges.filter((monthRange) => monthRange.isHistorical);
+        const lastHistMonth = historicalMonths[historicalMonths.length - 1];
+
         if (lastHistMonth) {
-          const hData = historicalByMonth[lastHistMonth.label] || [];
-          hActiveTotal = hData.reduce((s, d) => s + d.activeStudents, 0);
-          hStopTotal = hData.reduce((s, d) => s + d.stoppedStudents, 0);
-          hLeftTotal = hData.reduce((s, d) => s + d.leftStudents, 0);
+          const lastHistData = historicalByMonth[lastHistMonth.label] || [];
+          hActiveTotal = lastHistData.reduce((sum, entry) => sum + entry.activeStudents, 0);
+          hStopTotal = historicalMonths.reduce(
+            (sum, monthRange) => sum + (historicalByMonth[monthRange.label] || []).reduce((inner, entry) => inner + entry.stoppedStudents, 0),
+            0,
+          );
+          hLeftTotal = historicalMonths.reduce(
+            (sum, monthRange) => sum + (historicalByMonth[monthRange.label] || []).reduce((inner, entry) => inner + entry.leftStudents, 0),
+            0,
+          );
         }
       }
 
@@ -450,19 +456,19 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
             return { monthLabel: mr.label, hours: 0, salary: 0, totalStudents: 0, activeStudents: 0, stoppedStudents: 0, leftStudents: 0, retentionRate: 0, trialsConducted: 0, trialConversions: 0, trialConversionRate: 0, bonus: 0 };
           }
 
-          // Live month — assigned student roster, with stop/left counted only in the month they changed
+          // Live month — active rolls forward, stop/left count only in this month
           const mAgg = teacherMonthStats[t.teacher_id]?.[mr.label] || { regularMinutes: 0, regularCount: 0, trialCount: 0 };
           const mCalc = calcHoursAndSalary(mAgg, rate);
           const mt = monthlyTrialsByTeacher[t.teacher_id]?.[mr.label] || { conducted: 0, converted: 0 };
           const mb = bonusByTeacherMonth[t.teacher_id]?.[mr.label] || 0;
 
-          // For future months, don't show student counts (month hasn't started)
-           let mActive = 0, mStopped = 0, mLeft = 0, mTotal = 0, mRetention = 0;
+          let mActive = 0, mStopped = 0, mLeft = 0, mTotal = 0, mRetention = 0;
           if (!mr.isFuture) {
-             const monthlyCounts = countStudentsAtSnapshot(
-               assignedStudentsByTeacher[t.teacher_id] || [],
-               `${mr.end}T23:59:59`,
-             );
+            const monthlyCounts = countStudentsForPeriod(
+              assignedStudentsByTeacher[t.teacher_id] || [],
+              `${mr.start}T00:00:00`,
+              `${mr.end}T23:59:59`,
+            );
             mActive = monthlyCounts.active;
             mStopped = monthlyCounts.stopped;
             mLeft = monthlyCounts.left;
@@ -493,21 +499,28 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         const qTrials = monthlyData.reduce((s, m) => s + m.trialsConducted, 0);
         const qConversions = monthlyData.reduce((s, m) => s + m.trialConversions, 0);
 
-        // Quarter totals: same current roster/status source as My Students
-         const quarterCounts = liveSnapshotDateTime
-           ? countStudentsAtSnapshot(assignedStudentsByTeacher[t.teacher_id] || [], liveSnapshotDateTime)
-           : { active: 0, stopped: 0, left: 0, total: 0 };
+        // Quarter totals: active carries into the latest month, stop/left count only inside this quarter
+        const quarterCounts = liveSnapshotDateTime
+          ? countStudentsForPeriod(
+              assignedStudentsByTeacher[t.teacher_id] || [],
+              `${startDate}T00:00:00`,
+              liveSnapshotDateTime,
+            )
+          : { active: 0, stopped: 0, left: 0, total: 0 };
         let qActive = quarterCounts.active, qStopped = quarterCounts.stopped, qLeft = quarterCounts.left;
-        // For mixed quarters with historical months, add historical student counts from the latest historical month
         if (hasHistorical) {
-          const histMonths = monthRanges.filter(mr => mr.isHistorical);
+          const histMonths = monthRanges.filter((monthRange) => monthRange.isHistorical);
           const lastHistMonth = histMonths[histMonths.length - 1];
+          const histTeacherMonths = histMonths
+            .map((monthRange) => (historicalByMonth[monthRange.label] || []).find((entry) => entry.teacherName === t.name))
+            .filter(Boolean) as HistoricalTeacherMonth[];
+
           if (lastHistMonth) {
-            const hMatch = (historicalByMonth[lastHistMonth.label] || []).find(h => h.teacherName === t.name);
-            if (hMatch && (assignedStudentsByTeacher[t.teacher_id] || []).length === 0) {
-              qActive += hMatch.activeStudents;
-              qStopped += hMatch.stoppedStudents;
-              qLeft += hMatch.leftStudents;
+            const lastHistMatch = (historicalByMonth[lastHistMonth.label] || []).find((entry) => entry.teacherName === t.name);
+            if (lastHistMatch && (assignedStudentsByTeacher[t.teacher_id] || []).length === 0) {
+              qActive += lastHistMatch.activeStudents;
+              qStopped += histTeacherMonths.reduce((sum, entry) => sum + entry.stoppedStudents, 0);
+              qLeft += histTeacherMonths.reduce((sum, entry) => sum + entry.leftStudents, 0);
             }
           }
         }
@@ -551,9 +564,10 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
           const qTrials = monthlyData.reduce((s, m) => s + m.trialsConducted, 0);
           const qConversions = monthlyData.reduce((s, m) => s + m.trialConversions, 0);
           const latestMonth = monthlyData.filter(m => m.activeStudents > 0).pop() || monthlyData[monthlyData.length - 1];
-          const qLeft = monthlyData.reduce((s, m) => s + m.leftStudents, 0);
+          const qStopped = monthlyData.reduce((sum, month) => sum + month.stoppedStudents, 0);
+          const qLeft = monthlyData.reduce((sum, month) => sum + month.leftStudents, 0);
           const qActive = latestMonth.activeStudents;
-          const qTotal = qActive + qLeft;
+          const qTotal = qActive + qStopped + qLeft;
 
           totalTeachingHours += qHours;
           totalSalary += qSalary + qBonus;
@@ -561,7 +575,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
           teacherDetails.push({
             teacherId: `hist-${name}`, name, ratePerHour: (historicalByMonth[Object.keys(historicalByMonth)[0]] || []).find(h => h.teacherName === name)?.hourRate || 0,
             totalHours: qHours, salary: qSalary, bonus: qBonus,
-            totalStudents: qTotal, activeStudents: qActive, stoppedStudents: 0, leftStudents: qLeft,
+            totalStudents: qTotal, activeStudents: qActive, stoppedStudents: qStopped, leftStudents: qLeft,
             retentionRate: qTotal > 0 ? Math.round((qActive / qTotal) * 100 * 10) / 10 : 0,
             trialsConducted: qTrials, trialConversions: qConversions,
             trialConversionRate: qTrials > 0 ? Math.round((qConversions / qTrials) * 100 * 10) / 10 : 0,
@@ -674,9 +688,8 @@ function buildFullyHistoricalResult(
     const qConversions = monthlyData.reduce((s, m) => s + m.trialConversions, 0);
     const latestMonth = monthlyData.filter(m => m.activeStudents > 0).pop() || monthlyData[monthlyData.length - 1];
     const qActive = latestMonth.activeStudents;
-    const qLeft = monthlyData.reduce((s, m) => s + m.leftStudents, 0);
-    const latestHistMatch = (historicalByMonth[monthRanges[monthRanges.length - 1].label] || []).find(h => h.teacherName === name);
-    const qStopped = latestHistMatch?.stoppedStudents || 0;
+    const qStopped = monthlyData.reduce((sum, month) => sum + month.stoppedStudents, 0);
+    const qLeft = monthlyData.reduce((sum, month) => sum + month.leftStudents, 0);
     const qTotal = qActive + qStopped + qLeft;
     const rate = (Object.values(historicalByMonth).flat().find(h => h.teacherName === name))?.hourRate || 0;
 
@@ -694,12 +707,12 @@ function buildFullyHistoricalResult(
     };
   });
 
-  // Student totals from latest month
+  // Student totals from the quarter: active at the end + stop/left events inside the quarter
   const lastMonth = monthRanges[monthRanges.length - 1];
   const lastData = historicalByMonth[lastMonth.label] || [];
   const totalActive = lastData.reduce((s, d) => s + d.activeStudents, 0);
-  const totalStopped = lastData.reduce((s, d) => s + d.stoppedStudents, 0);
-  const totalLeft = teacherDetails.reduce((s, t) => s + t.leftStudents, 0);
+  const totalStopped = teacherDetails.reduce((sum, teacher) => sum + teacher.stoppedStudents, 0);
+  const totalLeft = teacherDetails.reduce((sum, teacher) => sum + teacher.leftStudents, 0);
   const totalStudents = totalActive + totalStopped + totalLeft;
   const totalTrialsQ = teacherDetails.reduce((s, t) => s + t.trialsConducted, 0);
   const totalConvQ = teacherDetails.reduce((s, t) => s + t.trialConversions, 0);

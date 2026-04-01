@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { countStudentsAtSnapshot } from '@/lib/quarter-student-counting';
+import {
+  countActiveStudentsAtSnapshot,
+  countStudentsForPeriod,
+} from '@/lib/quarter-student-counting';
 
-describe('countStudentsAtSnapshot', () => {
+describe('quarter student counting', () => {
   const students = [
     {
       created_at: '2026-03-10T10:00:00Z',
@@ -24,37 +27,50 @@ describe('countStudentsAtSnapshot', () => {
     },
   ];
 
-  it('rolls active students forward month to month until a status change happens', () => {
-    // March: student 1 active, student 2 created but stop not effective yet → active
-    expect(countStudentsAtSnapshot(students, '2026-03-31T23:59:59Z')).toEqual({
+  it('rolls only active students forward month to month', () => {
+    expect(countStudentsForPeriod(students, '2026-03-01T00:00:00Z', '2026-03-31T23:59:59Z')).toEqual({
       active: 2,
       stopped: 0,
       left: 0,
       total: 2,
     });
 
-    // April: student 2 stopped on Apr 15, student 3 joined but left not effective yet → active
-    expect(countStudentsAtSnapshot(students, '2026-04-30T23:59:59Z')).toEqual({
+    expect(countStudentsForPeriod(students, '2026-04-01T00:00:00Z', '2026-04-30T23:59:59Z')).toEqual({
       active: 2,
       stopped: 1,
       left: 0,
       total: 3,
     });
+
+    expect(countStudentsForPeriod(students, '2026-05-01T00:00:00Z', '2026-05-31T23:59:59Z')).toEqual({
+      active: 1,
+      stopped: 0,
+      left: 1,
+      total: 2,
+    });
+
+    expect(countStudentsForPeriod(students, '2026-06-01T00:00:00Z', '2026-06-30T23:59:59Z')).toEqual({
+      active: 1,
+      stopped: 0,
+      left: 0,
+      total: 1,
+    });
   });
 
-  it('keeps stopped and left students inside the total after their status becomes effective', () => {
-    // May: student 3 left on May 20
-    expect(countStudentsAtSnapshot(students, '2026-05-31T23:59:59Z')).toEqual({
+  it('counts stop and left only once inside the quarter where they happened', () => {
+    expect(countStudentsForPeriod(students, '2026-04-01T00:00:00Z', '2026-06-30T23:59:59Z')).toEqual({
       active: 1,
       stopped: 1,
       left: 1,
       total: 3,
     });
-  });
 
-  it('always keeps total equal to active plus stopped plus left', () => {
-    const result = countStudentsAtSnapshot(students, '2026-06-30T23:59:59Z');
-    expect(result.total).toBe(result.active + result.stopped + result.left);
+    expect(countStudentsForPeriod(students, '2026-07-01T00:00:00Z', '2026-09-30T23:59:59Z')).toEqual({
+      active: 1,
+      stopped: 0,
+      left: 0,
+      total: 1,
+    });
   });
 
   it('uses updated_at as fallback when status_changed_at is null', () => {
@@ -66,17 +82,23 @@ describe('countStudentsAtSnapshot', () => {
         updated_at: '2026-04-10T10:00:00Z',
       },
     ];
-    // March snapshot: stop happened in April via updated_at → still Active
-    expect(countStudentsAtSnapshot(legacy, '2026-03-31T23:59:59Z')).toEqual({
-      active: 1, stopped: 0, left: 0, total: 1,
+
+    expect(countStudentsForPeriod(legacy, '2026-03-01T00:00:00Z', '2026-03-31T23:59:59Z')).toEqual({
+      active: 1,
+      stopped: 0,
+      left: 0,
+      total: 1,
     });
-    // April snapshot: stop is now effective
-    expect(countStudentsAtSnapshot(legacy, '2026-04-30T23:59:59Z')).toEqual({
-      active: 0, stopped: 1, left: 0, total: 1,
+
+    expect(countStudentsForPeriod(legacy, '2026-04-01T00:00:00Z', '2026-04-30T23:59:59Z')).toEqual({
+      active: 0,
+      stopped: 1,
+      left: 0,
+      total: 1,
     });
   });
 
-  it('treats student with no dates as active (cannot determine when status changed)', () => {
+  it('treats legacy inactive rows with no change date as active until we know the event month', () => {
     const noDate = [
       {
         created_at: '2026-01-01T10:00:00Z',
@@ -85,9 +107,13 @@ describe('countStudentsAtSnapshot', () => {
         updated_at: null,
       },
     ];
-    // No status_changed_at or updated_at → we can't pin when they left, count as active
-    expect(countStudentsAtSnapshot(noDate, '2026-03-31T23:59:59Z')).toEqual({
-      active: 1, stopped: 0, left: 0, total: 1,
+
+    expect(countActiveStudentsAtSnapshot(noDate, '2026-03-31T23:59:59Z')).toBe(1);
+    expect(countStudentsForPeriod(noDate, '2026-03-01T00:00:00Z', '2026-03-31T23:59:59Z')).toEqual({
+      active: 1,
+      stopped: 0,
+      left: 0,
+      total: 1,
     });
   });
 });
