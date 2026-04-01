@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { startOfMonth, endOfMonth, format, parseISO } from 'date-fns';
 import { isHistoricalMonth, getHistoricalDataForMonth, type HistoricalTeacherMonth } from '@/lib/historical-quarter-data';
+import { countStudentsAtSnapshot } from '@/lib/quarter-student-counting';
 
 // Custom academic quarters
 // Q1: Sep, Oct, Nov | Q2: Dec, Jan, Feb, Mar | Q3: Apr, May, Jun
@@ -51,95 +52,6 @@ function getSourceMonthLabel(dateStr: string) {
 function isSameSourceMonth(dateStr: string, month: number, year: number) {
   const date = parseSourceDate(dateStr);
   return date.getMonth() + 1 === month && date.getFullYear() === year;
-}
-
-function isOnOrBefore(dateStr: string | null | undefined, compareDateStr: string) {
-  if (!dateStr) return false;
-  return parseSourceDate(dateStr).getTime() <= parseSourceDate(compareDateStr).getTime();
-}
-
-function isWithinRange(dateStr: string | null | undefined, startDateStr: string, endDateStr: string) {
-  if (!dateStr) return false;
-  const value = parseSourceDate(dateStr).getTime();
-  return value >= parseSourceDate(startDateStr).getTime() && value <= parseSourceDate(endDateStr).getTime();
-}
-
-function countCurrentStudentsByStatus(
-  assignedStudents: Array<{ status: string | null }>,
-) {
-  let active = 0;
-  let stopped = 0;
-  let left = 0;
-
-  assignedStudents.forEach(student => {
-    if (student.status === 'Temporary Stop') stopped++;
-    else if (student.status === 'Left') left++;
-    else active++;
-  });
-
-  return { active, stopped, left, total: active + stopped + left };
-}
-
-function countMonthlyStudentsByStatus(
-  assignedStudents: Array<{
-    created_at: string | null;
-    status: string | null;
-    status_changed_at?: string | null;
-  }>,
-  monthStart: string,
-  monthEnd: string,
-) {
-  let active = 0;
-  let stopped = 0;
-  let left = 0;
-
-  const monthEndTs = `${monthEnd}T23:59:59`;
-  const monthStartTs = `${monthStart}T00:00:00`;
-
-  assignedStudents.forEach(student => {
-    if (!isOnOrBefore(student.created_at, monthEndTs)) return;
-
-    const status = student.status || 'Active';
-    const statusChangedAt = student.status_changed_at || null;
-
-    if (status === 'Temporary Stop') {
-      if (isWithinRange(statusChangedAt, monthStartTs, monthEndTs)) stopped++;
-      else if (!statusChangedAt || parseSourceDate(statusChangedAt).getTime() > parseSourceDate(monthEndTs).getTime()) active++;
-      return;
-    }
-
-    if (status === 'Left') {
-      if (isWithinRange(statusChangedAt, monthStartTs, monthEndTs)) left++;
-      else if (!statusChangedAt || parseSourceDate(statusChangedAt).getTime() > parseSourceDate(monthEndTs).getTime()) active++;
-      return;
-    }
-
-    active++;
-  });
-
-  return { active, stopped, left, total: active + stopped + left };
-}
-
-function countScopedStudentsByStatus(
-  scopedStudentIds: Set<string>,
-  assignedStudentIds: Set<string> | undefined,
-  studentStatusMap: Record<string, string>,
-) {
-  let active = 0;
-  let stopped = 0;
-  let left = 0;
-
-  scopedStudentIds.forEach(studentId => {
-    if (assignedStudentIds && !assignedStudentIds.has(studentId)) return;
-
-    const status = studentStatusMap[studentId];
-    if (status === 'Active') active++;
-    else if (status === 'Temporary Stop') stopped++;
-    else if (status === 'Left') left++;
-  });
-
-  const total = active + stopped + left;
-  return { active, stopped, left, total };
 }
 
 export interface MonthlyStats {
@@ -276,6 +188,8 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
 
       const allHistorical = monthRanges.every(m => m.isHistorical);
       const hasHistorical = monthRanges.some(m => m.isHistorical);
+      const latestStartedMonth = [...monthRanges].filter(m => !m.isFuture).pop() ?? null;
+      const liveSnapshotDateTime = latestStartedMonth ? `${latestStartedMonth.end}T23:59:59` : null;
 
       // ===== Build historical teacher data for historical months =====
       const historicalByMonth: Record<string, HistoricalTeacherMonth[]> = {};
@@ -374,10 +288,13 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
       });
 
       // ===== QUARTER TOTALS (students section — from live data only) =====
-      const activeStudents = students.filter(s => s.status === 'Active').length;
-      const temporaryStop = students.filter(s => s.status === 'Temporary Stop').length;
-      const leftStudents = students.filter(s => s.status === 'Left').length;
-      const totalStudents = students.length;
+      const liveStudentSnapshot = liveSnapshotDateTime
+        ? countStudentsAtSnapshot(students, liveSnapshotDateTime)
+        : { active: 0, stopped: 0, left: 0, total: 0 };
+      const activeStudents = liveStudentSnapshot.active;
+      const temporaryStop = liveStudentSnapshot.stopped;
+      const leftStudents = liveStudentSnapshot.left;
+      const totalStudents = liveStudentSnapshot.total;
 
       // If mixed quarter, augment student totals from historical data
       let hActiveTotal = 0, hStopTotal = 0, hLeftTotal = 0;
@@ -540,13 +457,12 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
           const mb = bonusByTeacherMonth[t.teacher_id]?.[mr.label] || 0;
 
           // For future months, don't show student counts (month hasn't started)
-          let mActive = 0, mStopped = 0, mLeft = 0, mTotal = 0, mRetention = 0;
+           let mActive = 0, mStopped = 0, mLeft = 0, mTotal = 0, mRetention = 0;
           if (!mr.isFuture) {
-            const monthlyCounts = countMonthlyStudentsByStatus(
-              assignedStudentsByTeacher[t.teacher_id] || [],
-              mr.start,
-              mr.end,
-            );
+             const monthlyCounts = countStudentsAtSnapshot(
+               assignedStudentsByTeacher[t.teacher_id] || [],
+               `${mr.end}T23:59:59`,
+             );
             mActive = monthlyCounts.active;
             mStopped = monthlyCounts.stopped;
             mLeft = monthlyCounts.left;
@@ -578,7 +494,9 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         const qConversions = monthlyData.reduce((s, m) => s + m.trialConversions, 0);
 
         // Quarter totals: same current roster/status source as My Students
-        const quarterCounts = countCurrentStudentsByStatus(assignedStudentsByTeacher[t.teacher_id] || []);
+         const quarterCounts = liveSnapshotDateTime
+           ? countStudentsAtSnapshot(assignedStudentsByTeacher[t.teacher_id] || [], liveSnapshotDateTime)
+           : { active: 0, stopped: 0, left: 0, total: 0 };
         let qActive = quarterCounts.active, qStopped = quarterCounts.stopped, qLeft = quarterCounts.left;
         // For mixed quarters with historical months, add historical student counts from the latest historical month
         if (hasHistorical) {
