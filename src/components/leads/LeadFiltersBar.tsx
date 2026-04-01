@@ -2,7 +2,7 @@ import { Search, LayoutGrid, List, ArrowUpDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { YearMonthFilter, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
+import { QuarterFilter, type QuarterFilterValue } from '@/components/shared/QuarterFilter';
 
 export type LeadSortOption = 'newest' | 'oldest' | 'alpha_asc' | 'alpha_desc' | 'last_contact' | 'next_followup';
 
@@ -27,8 +27,8 @@ interface LeadFiltersBarProps {
   onLeadStatusChange: (value: string) => void;
   followUpFilter: string;
   onFollowUpChange: (value: string) => void;
-  dateFilter: YearMonthFilterValue;
-  onDateChange: (value: YearMonthFilterValue) => void;
+  quarterFilter: QuarterFilterValue;
+  onQuarterChange: (value: QuarterFilterValue) => void;
   sortBy: LeadSortOption;
   onSortChange: (value: LeadSortOption) => void;
   viewMode: 'cards' | 'table';
@@ -40,7 +40,7 @@ export function LeadFiltersBar({
   trialStatusFilter, onTrialStatusChange,
   leadStatusFilter, onLeadStatusChange,
   followUpFilter, onFollowUpChange,
-  dateFilter, onDateChange,
+  quarterFilter, onQuarterChange,
   sortBy, onSortChange,
   viewMode, onViewModeChange,
 }: LeadFiltersBarProps) {
@@ -93,7 +93,7 @@ export function LeadFiltersBar({
           </SelectContent>
         </Select>
 
-        <YearMonthFilter value={dateFilter} onChange={onDateChange} />
+        <QuarterFilter value={quarterFilter} onChange={onQuarterChange} />
 
         <Select value={sortBy} onValueChange={(v) => onSortChange(v as LeadSortOption)}>
           <SelectTrigger className="w-[160px]">
