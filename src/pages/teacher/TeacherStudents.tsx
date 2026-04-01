@@ -243,11 +243,11 @@ export default function TeacherStudents() {
     return { active, stopped, left, total, retention };
   }, [teacherId, quarterRange, myStudents]);
 
-  // Stats for the full student list (non-quarter-scoped for counts)
-  const totalStudents = filteredStudents.length;
-  const activeStudents = filteredStudents.filter(s => s.status === 'Active').length;
-  const tempStopStudents = filteredStudents.filter(s => s.status === 'Temporary Stop').length;
-  const leftStudents = filteredStudents.filter(s => s.status === 'Left').length;
+  // Use quarter-scoped stats for the overview dashboard
+  const totalStudents = quarterStats.total;
+  const activeStudents = quarterStats.active;
+  const tempStopStudents = quarterStats.stopped;
+  const leftStudents = quarterStats.left;
   const lowCreditStudents = filteredStudents.filter(s => s.status === 'Active' && (s.wallet_balance || 0) <= 2).length;
   const retentionRate = quarterStats.retention;
 
