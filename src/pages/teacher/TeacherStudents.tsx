@@ -323,7 +323,7 @@ export default function TeacherStudents() {
                   <SelectItem value="Left">Left</SelectItem>
                 </SelectContent>
               </Select>
-              <YearMonthFilter value={studentFilter} onChange={setStudentFilter} />
+              <QuarterFilter value={quarterFilter} onChange={setQuarterFilter} />
               <Badge variant="outline" className="text-xs py-1.5 px-3">
                 {filteredStudents.length} student{filteredStudents.length !== 1 ? 's' : ''}
               </Badge>
