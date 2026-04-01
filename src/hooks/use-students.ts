@@ -16,6 +16,7 @@ export interface Student {
   student_level: string | null;
   teacher_id: string | null;
   status: 'Active' | 'Temporary Stop' | 'Left';
+  status_changed_at: string | null;
   wallet_balance: number;
   current_package_id: string | null;
   total_paid: number | null;
