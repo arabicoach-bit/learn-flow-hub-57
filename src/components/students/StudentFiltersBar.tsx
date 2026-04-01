@@ -84,7 +84,7 @@ export function StudentFiltersBar({
           <SelectItem value="oldest">Oldest First</SelectItem>
         </SelectContent>
       </Select>
-      <YearMonthFilter value={dateFilter} onChange={onDateFilterChange} />
+      <QuarterFilter value={dateFilter} onChange={onDateFilterChange} />
       <div className="flex border rounded-md overflow-hidden">
         <Button
           variant={viewMode === 'table' ? 'default' : 'ghost'}

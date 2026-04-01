@@ -105,7 +105,7 @@ export function TrialFiltersBar({
             ))}
           </SelectContent>
         </Select>
-        <YearMonthFilter value={dateFilter} onChange={onDateChange} />
+        <QuarterFilter value={dateFilter} onChange={onDateChange} />
         <Select value={sortBy} onValueChange={(v) => onSortChange(v as TrialSortOption)}>
           <SelectTrigger className="w-[160px]">
             <ArrowUpDown className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
