@@ -39,6 +39,7 @@ export function QuarterTeachersSection({ data }: Props) {
                   <TableHead className="text-right">Rate/hr</TableHead>
                   <TableHead className="text-right">Hours</TableHead>
                   <TableHead className="text-right">Salary</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
                   <TableHead className="text-right">Active</TableHead>
                   <TableHead className="text-right">Stopped</TableHead>
                   <TableHead className="text-right">Left</TableHead>
@@ -56,6 +57,7 @@ export function QuarterTeachersSection({ data }: Props) {
                     <TableCell className="text-right text-muted-foreground">{t.ratePerHour}</TableCell>
                     <TableCell className="text-right font-medium">{t.totalHours.toFixed(1)}</TableCell>
                     <TableCell className="text-right">{t.salary.toLocaleString()}</TableCell>
+                    <TableCell className="text-right font-medium">{t.totalStudents}</TableCell>
                     <TableCell className="text-right">{t.activeStudents}</TableCell>
                     <TableCell className="text-right">{t.stoppedStudents}</TableCell>
                     <TableCell className="text-right">{t.leftStudents}</TableCell>
@@ -71,6 +73,7 @@ export function QuarterTeachersSection({ data }: Props) {
                   <TableCell />
                   <TableCell className="text-right">{data.totalTeachingHours.toFixed(1)}</TableCell>
                   <TableCell className="text-right">{data.totalSalary.toLocaleString()}</TableCell>
+                  <TableCell className="text-right font-medium">{data.teacherDetails.reduce((s, t) => s + t.totalStudents, 0)}</TableCell>
                   <TableCell className="text-right">{data.teacherDetails.reduce((s, t) => s + t.activeStudents, 0)}</TableCell>
                   <TableCell className="text-right">{data.teacherDetails.reduce((s, t) => s + t.stoppedStudents, 0)}</TableCell>
                   <TableCell className="text-right">{data.teacherDetails.reduce((s, t) => s + t.leftStudents, 0)}</TableCell>
@@ -100,6 +103,7 @@ export function QuarterTeachersSection({ data }: Props) {
                   <TableHead className="font-semibold">Month</TableHead>
                   <TableHead className="text-right">Hours</TableHead>
                   <TableHead className="text-right">Salary</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
                   <TableHead className="text-right">Active</TableHead>
                   <TableHead className="text-right">Stopped</TableHead>
                   <TableHead className="text-right">Left</TableHead>
@@ -123,6 +127,7 @@ export function QuarterTeachersSection({ data }: Props) {
                         <TableCell>{m.monthLabel}</TableCell>
                         <TableCell className="text-right">{m.hours.toFixed(1)}</TableCell>
                         <TableCell className="text-right">{m.salary.toLocaleString()}</TableCell>
+                        <TableCell className="text-right font-medium">{m.totalStudents}</TableCell>
                         <TableCell className="text-right">{m.activeStudents}</TableCell>
                         <TableCell className="text-right">{m.stoppedStudents}</TableCell>
                         <TableCell className="text-right">{m.leftStudents}</TableCell>
@@ -141,6 +146,7 @@ export function QuarterTeachersSection({ data }: Props) {
                       <TableCell>Quarter Total</TableCell>
                       <TableCell className="text-right">{t.totalHours.toFixed(1)}</TableCell>
                       <TableCell className="text-right">{t.salary.toLocaleString()}</TableCell>
+                      <TableCell className="text-right font-medium">{t.totalStudents}</TableCell>
                       <TableCell className="text-right">{t.activeStudents}</TableCell>
                       <TableCell className="text-right">{t.stoppedStudents}</TableCell>
                       <TableCell className="text-right">{t.leftStudents}</TableCell>
