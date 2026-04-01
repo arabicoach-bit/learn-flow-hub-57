@@ -46,6 +46,7 @@ export function TeacherQuarterTab({ teacherId }: TeacherQuarterTabProps) {
     if (all.length === 0) return null;
     return {
       totalHours: all.reduce((s, t) => s + t.totalHours, 0),
+      totalStudents: all.reduce((s, t) => s + t.totalStudents, 0),
       activeStudents: all.reduce((s, t) => s + t.activeStudents, 0),
       stoppedStudents: all.reduce((s, t) => s + t.stoppedStudents, 0),
       leftStudents: all.reduce((s, t) => s + t.leftStudents, 0),
@@ -93,9 +94,9 @@ export function TeacherQuarterTab({ teacherId }: TeacherQuarterTabProps) {
               <Card className="border-l-4 border-l-blue-500/40">
                 <CardContent className="p-4">
                   <Users className="w-4 h-4 text-blue-500 mb-1" />
-                  <p className="text-2xl font-bold">{yearlyTotals.activeStudents}</p>
-                  <p className="text-xs text-muted-foreground">Active Students</p>
-                  <p className="text-[10px] text-muted-foreground/60">{yearlyTotals.stoppedStudents} stopped · {yearlyTotals.leftStudents} left</p>
+                  <p className="text-2xl font-bold">{yearlyTotals.totalStudents}</p>
+                  <p className="text-xs text-muted-foreground">Total Students</p>
+                  <p className="text-[10px] text-muted-foreground/60">{yearlyTotals.activeStudents} active · {yearlyTotals.stoppedStudents} stopped · {yearlyTotals.leftStudents} left</p>
                 </CardContent>
               </Card>
               <Card className="border-l-4 border-l-amber-500/40">
@@ -138,6 +139,7 @@ export function TeacherQuarterTab({ teacherId }: TeacherQuarterTabProps) {
                     <TableRow className="bg-blue-500/10">
                       <TableHead className="font-semibold">Month</TableHead>
                       <TableHead className="text-right">Hours</TableHead>
+                      <TableHead className="text-right">Total</TableHead>
                       <TableHead className="text-right">Active</TableHead>
                       <TableHead className="text-right">Stopped</TableHead>
                       <TableHead className="text-right">Left</TableHead>
@@ -152,7 +154,7 @@ export function TeacherQuarterTab({ teacherId }: TeacherQuarterTabProps) {
                       if (!td) {
                         return (
                           <TableRow key={quarter.label} className="bg-muted/20">
-                            <TableCell colSpan={9} className="text-center text-muted-foreground py-3 font-medium">
+                            <TableCell colSpan={10} className="text-center text-muted-foreground py-3 font-medium">
                               {quarter.label} — No data
                             </TableCell>
                           </TableRow>
@@ -164,6 +166,7 @@ export function TeacherQuarterTab({ teacherId }: TeacherQuarterTabProps) {
                             <TableRow key={`${quarter.label}-${i}`} className="hover:bg-muted/30">
                               <TableCell className="font-medium">{m.monthLabel}</TableCell>
                               <TableCell className="text-right">{m.hours.toFixed(1)}</TableCell>
+                              <TableCell className="text-right font-medium">{m.totalStudents}</TableCell>
                               <TableCell className="text-right">{m.activeStudents}</TableCell>
                               <TableCell className="text-right">{m.stoppedStudents}</TableCell>
                               <TableCell className="text-right">{m.leftStudents}</TableCell>
@@ -184,6 +187,7 @@ export function TeacherQuarterTab({ teacherId }: TeacherQuarterTabProps) {
                           <TableRow key={`${quarter.label}-total`} className="font-bold bg-blue-500/5 border-b-2 border-border">
                             <TableCell>{quarter.label} Total</TableCell>
                             <TableCell className="text-right">{td.totalHours.toFixed(1)}</TableCell>
+                            <TableCell className="text-right font-medium">{td.totalStudents}</TableCell>
                             <TableCell className="text-right">{td.activeStudents}</TableCell>
                             <TableCell className="text-right">{td.stoppedStudents}</TableCell>
                             <TableCell className="text-right">{td.leftStudents}</TableCell>
