@@ -17,7 +17,7 @@ import { EditTrialStudentDialog } from '@/components/trial/EditTrialStudentDialo
 import { ConvertToStudentDialog } from '@/components/trial/ConvertToStudentDialog';
 import { useToast } from '@/hooks/use-toast';
 import { exportTrialStudents, type TrialStudentExport } from '@/lib/excel-export';
-import { getFilterDateRange, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
+import { getCurrentQuarter, getQuarterDateRange, type QuarterFilterValue } from '@/components/shared/QuarterFilter';
 import type { Database } from '@/integrations/supabase/types';
 
 type TrialStatus = Database['public']['Enums']['trial_status'];
