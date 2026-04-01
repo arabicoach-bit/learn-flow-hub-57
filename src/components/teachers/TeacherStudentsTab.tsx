@@ -20,7 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
-import { YearMonthFilter, getFilterDateRange, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
+import { QuarterFilter, getCurrentQuarter, getQuarterDateRange, type QuarterFilterValue } from '@/components/shared/QuarterFilter';
 import { EditStudentDialog } from '@/components/teacher/EditStudentDialog';
 import { StudentLessonsView } from '@/components/student/StudentLessonsView';
 import { StudentInfoView } from '@/components/student/StudentInfoView';
