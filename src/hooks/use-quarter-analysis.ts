@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { startOfMonth, endOfMonth, format, parseISO } from 'date-fns';
 import { isHistoricalMonth, getHistoricalDataForMonth, type HistoricalTeacherMonth } from '@/lib/historical-quarter-data';
-import { countStudentsAtSnapshot } from '@/lib/quarter-student-counting';
+import { countStudentsForPeriod } from '@/lib/quarter-student-counting';
 
 // Custom academic quarters
 // Q1: Sep, Oct, Nov | Q2: Dec, Jan, Feb, Mar | Q3: Apr, May, Jun
