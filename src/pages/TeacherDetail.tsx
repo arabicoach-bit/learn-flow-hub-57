@@ -23,9 +23,6 @@ import { TeacherStudentsTab } from '@/components/teachers/TeacherStudentsTab';
 import { TeacherPayrollTab } from '@/components/teachers/TeacherPayrollTab';
 import { TeacherQuarterTab } from '@/components/teachers/TeacherQuarterTab';
 import { TeacherTrialTab } from '@/components/teachers/TeacherTrialTab';
-import { TeacherStudentsTab } from '@/components/teachers/TeacherStudentsTab';
-import { TeacherPayrollTab } from '@/components/teachers/TeacherPayrollTab';
-import { TeacherQuarterTab } from '@/components/teachers/TeacherQuarterTab';
 
 export default function TeacherDetail() {
   const { id } = useParams<{ id: string }>();
