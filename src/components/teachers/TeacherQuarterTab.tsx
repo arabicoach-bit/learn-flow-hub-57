@@ -44,16 +44,19 @@ export function TeacherQuarterTab({ teacherId }: TeacherQuarterTabProps) {
   const yearlyTotals = useMemo(() => {
     const all = [td1, td2, td3].filter(Boolean) as NonNullable<typeof td1>[];
     if (all.length === 0) return null;
-    const latestStudentSnapshot =
-      [td3, td2, td1].find((entry) => entry && entry.totalStudents > 0) ??
-      [td3, td2, td1].find(Boolean) ??
-      null;
+    // Active = latest quarter's active (rollover)
+    const latestWithData = [td3, td2, td1].find((entry) => entry && entry.totalStudents > 0) ?? null;
+    const activeStudents = latestWithData?.activeStudents ?? 0;
+    // Stopped & Left = sum across ALL quarters (each event counted once in its quarter)
+    const stoppedStudents = all.reduce((s, t) => s + t.stoppedStudents, 0);
+    const leftStudents = all.reduce((s, t) => s + t.leftStudents, 0);
+    const totalStudents = activeStudents + stoppedStudents + leftStudents;
     return {
       totalHours: all.reduce((s, t) => s + t.totalHours, 0),
-      totalStudents: latestStudentSnapshot?.totalStudents ?? 0,
-      activeStudents: latestStudentSnapshot?.activeStudents ?? 0,
-      stoppedStudents: latestStudentSnapshot?.stoppedStudents ?? 0,
-      leftStudents: latestStudentSnapshot?.leftStudents ?? 0,
+      totalStudents,
+      activeStudents,
+      stoppedStudents,
+      leftStudents,
       trialsConducted: all.reduce((s, t) => s + t.trialsConducted, 0),
       trialConversions: all.reduce((s, t) => s + t.trialConversions, 0),
     };
