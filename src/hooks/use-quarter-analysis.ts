@@ -516,11 +516,34 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         const qTrials = monthlyData.reduce((s, m) => s + m.trialsConducted, 0);
         const qConversions = monthlyData.reduce((s, m) => s + m.trialConversions, 0);
 
-        // Use latest month's student data for the quarter view
-        const latestMonth = monthlyData.filter(m => m.activeStudents > 0 || m.leftStudents > 0 || m.stoppedStudents > 0).pop() || monthlyData[monthlyData.length - 1];
-        const qActive = latestMonth.activeStudents;
-        const qStopped = latestMonth.stoppedStudents;
-        const qLeft = latestMonth.leftStudents;
+        // Quarter totals: unique students across all months, each counted ONCE with current status
+        const allQuarterStudentIds = new Set<string>();
+        monthRanges.forEach(mr => {
+          if (!mr.isFuture && !mr.isHistorical) {
+            const monthStudents = teacherMonthStudents[t.teacher_id]?.[mr.label] || new Set<string>();
+            monthStudents.forEach(sid => allQuarterStudentIds.add(sid));
+          }
+        });
+        let qActive = 0, qStopped = 0, qLeft = 0;
+        allQuarterStudentIds.forEach(sid => {
+          const status = studentStatusMap[sid];
+          if (status === 'Active') qActive++;
+          else if (status === 'Temporary Stop') qStopped++;
+          else if (status === 'Left') qLeft++;
+        });
+        // For mixed quarters with historical months, add historical student counts from the latest historical month
+        if (hasHistorical) {
+          const histMonths = monthRanges.filter(mr => mr.isHistorical);
+          const lastHistMonth = histMonths[histMonths.length - 1];
+          if (lastHistMonth) {
+            const hMatch = (historicalByMonth[lastHistMonth.label] || []).find(h => h.teacherName === t.name);
+            if (hMatch && allQuarterStudentIds.size === 0) {
+              qActive += hMatch.activeStudents;
+              qStopped += hMatch.stoppedStudents;
+              qLeft += hMatch.leftStudents;
+            }
+          }
+        }
         const qTotal = qActive + qStopped + qLeft;
         const qRetention = qTotal > 0 ? (qActive / qTotal) * 100 : 100;
 
