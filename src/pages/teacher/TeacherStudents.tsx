@@ -62,7 +62,7 @@ export default function TeacherStudents() {
   const { data: allLessons } = useScheduledLessons({ teacher_id: teacherId });
 
   const myStudents = students?.filter(s => s.teacher_id === teacherId) || [];
-  const studentRange = getFilterDateRange(studentFilter);
+  const quarterRange = getQuarterDateRange(quarterFilter);
 
   const DAY_ABBR = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
