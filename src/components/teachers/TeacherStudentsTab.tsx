@@ -179,16 +179,25 @@ export function TeacherStudentsTab({ students, teacherId }: TeacherStudentsTabPr
     return map;
   }, [allLessons]);
 
+  // Quarter-scoped students: active rolls forward, stop/left stay in their quarter
+  const quarterScopedStudents = useMemo(() => {
+    const { startDate, endDate } = quarterRange;
+    return students.flatMap((s) => {
+      const created = s.created_at?.slice(0, 10);
+      if (!created || created > endDate) return [];
+      if (s.status === 'Active') return [s];
+      const changedAt = (s.status_changed_at || s.updated_at)?.slice(0, 10);
+      if (!changedAt || changedAt > endDate) return [{ ...s, status: 'Active' as const }];
+      if (changedAt < startDate) return [];
+      return [s];
+    });
+  }, [students, quarterRange]);
+
   const filteredStudents = useMemo(() => {
-    let results = students.filter((s) => {
+    let results = quarterScopedStudents.filter((s) => {
       const matchesSearch = s.name.toLowerCase().includes(studentSearch.toLowerCase()) || s.phone.includes(studentSearch);
       const matchesStatus = studentStatusFilter === 'all' || s.status === studentStatusFilter;
-      const createdAt = s.created_at ? new Date(s.created_at) : null;
-      const matchesDate = !createdAt || (
-        (!studentRange.startDate || createdAt >= new Date(studentRange.startDate)) &&
-        (!studentRange.endDate || createdAt <= new Date(studentRange.endDate + 'T23:59:59'))
-      );
-      return matchesSearch && matchesStatus && matchesDate;
+      return matchesSearch && matchesStatus;
     });
 
     const statusOrder = (s: string | null) => s === 'Active' ? 0 : s === 'Temporary Stop' ? 1 : 2;
@@ -217,14 +226,14 @@ export function TeacherStudentsTab({ students, teacherId }: TeacherStudentsTabPr
     });
 
     return results;
-  }, [students, studentSearch, studentStatusFilter, studentRange, sortField, sortDir, nextLessonMap]);
+  }, [quarterScopedStudents, studentSearch, studentStatusFilter, sortField, sortDir, nextLessonMap]);
 
-  const totalStudents = students.length;
-  const activeStudents = students.filter((s) => s.status === 'Active').length;
-  const tempStopStudents = students.filter((s) => s.status === 'Temporary Stop').length;
-  const leftStudents = students.filter((s) => s.status === 'Left').length;
-  const lowCreditStudents = students.filter(s => s.status === 'Active' && (s.wallet_balance || 0) <= 2).length;
-  const retentionRate = totalStudents > 0 ? Math.round((activeStudents / totalStudents) * 100) : 0;
+  const totalStudents = quarterScopedStudents.length;
+  const activeStudents = quarterScopedStudents.filter((s) => s.status === 'Active').length;
+  const tempStopStudents = quarterScopedStudents.filter((s) => s.status === 'Temporary Stop').length;
+  const leftStudents = quarterScopedStudents.filter((s) => s.status === 'Left').length;
+  const lowCreditStudents = quarterScopedStudents.filter(s => s.status === 'Active' && (s.wallet_balance || 0) <= 2).length;
+  const retentionRate = totalStudents > 0 ? Math.round((activeStudents / totalStudents) * 100) : 100;
 
   const handleStudentStatusChange = async (student: Student, newStatus: 'Active' | 'Temporary Stop' | 'Left') => {
     try {
