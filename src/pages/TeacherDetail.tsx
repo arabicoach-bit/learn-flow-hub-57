@@ -289,7 +289,7 @@ export default function TeacherDetail() {
         )}
 
         {/* Tabs */}
-        <Tabs defaultValue="schedule" className="space-y-4">
+        <Tabs defaultValue="students" className="space-y-4">
           <TabsList>
             <TabsTrigger value="schedule">
               <CalendarDays className="w-4 h-4 mr-1" /> Schedule
