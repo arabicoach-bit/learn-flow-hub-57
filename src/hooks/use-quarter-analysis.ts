@@ -287,25 +287,31 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         };
       });
 
-      // ===== QUARTER TOTALS (students section — from live data only) =====
-      const liveStudentSnapshot = liveSnapshotDateTime
-        ? countStudentsAtSnapshot(students, liveSnapshotDateTime)
+      // ===== QUARTER TOTALS (students section — active rolls forward, stop/left stay inside this quarter) =====
+      const liveStudentPeriod = liveSnapshotDateTime
+        ? countStudentsForPeriod(students, `${startDate}T00:00:00`, liveSnapshotDateTime)
         : { active: 0, stopped: 0, left: 0, total: 0 };
-      const activeStudents = liveStudentSnapshot.active;
-      const temporaryStop = liveStudentSnapshot.stopped;
-      const leftStudents = liveStudentSnapshot.left;
-      const totalStudents = liveStudentSnapshot.total;
+      const activeStudents = liveStudentPeriod.active;
+      const temporaryStop = liveStudentPeriod.stopped;
+      const leftStudents = liveStudentPeriod.left;
+      const totalStudents = liveStudentPeriod.total;
 
-      // If mixed quarter, augment student totals from historical data
       let hActiveTotal = 0, hStopTotal = 0, hLeftTotal = 0;
       if (hasHistorical) {
-        // Use the latest historical month's student snapshot
-        const lastHistMonth = monthRanges.filter(m => m.isHistorical).pop();
+        const historicalMonths = monthRanges.filter((monthRange) => monthRange.isHistorical);
+        const lastHistMonth = historicalMonths[historicalMonths.length - 1];
+
         if (lastHistMonth) {
-          const hData = historicalByMonth[lastHistMonth.label] || [];
-          hActiveTotal = hData.reduce((s, d) => s + d.activeStudents, 0);
-          hStopTotal = hData.reduce((s, d) => s + d.stoppedStudents, 0);
-          hLeftTotal = hData.reduce((s, d) => s + d.leftStudents, 0);
+          const lastHistData = historicalByMonth[lastHistMonth.label] || [];
+          hActiveTotal = lastHistData.reduce((sum, entry) => sum + entry.activeStudents, 0);
+          hStopTotal = historicalMonths.reduce(
+            (sum, monthRange) => sum + (historicalByMonth[monthRange.label] || []).reduce((inner, entry) => inner + entry.stoppedStudents, 0),
+            0,
+          );
+          hLeftTotal = historicalMonths.reduce(
+            (sum, monthRange) => sum + (historicalByMonth[monthRange.label] || []).reduce((inner, entry) => inner + entry.leftStudents, 0),
+            0,
+          );
         }
       }
 
