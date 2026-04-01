@@ -16,12 +16,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { exportStudents, type StudentExport } from '@/lib/excel-export';
 import { EditStudentDialog } from '@/components/teacher/EditStudentDialog';
-import { getFilterDateRange, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
+import { getCurrentQuarter, getQuarterDateRange, type QuarterFilterValue } from '@/components/shared/QuarterFilter';
 import { StudentStatsBar } from '@/components/students/StudentStatsBar';
 import { StudentFiltersBar } from '@/components/students/StudentFiltersBar';
 import { StudentTableView } from '@/components/students/StudentTableView';
 import { StudentCardView } from '@/components/students/StudentCardView';
-import { useSearchParamState, useSearchParamYearMonth } from '@/hooks/use-search-param-state';
+import { useSearchParamState } from '@/hooks/use-search-param-state';
 import type { Student } from '@/hooks/use-students';
 
 const STUDENT_LEVELS = ['Beginner', 'Elementary', 'Intermediate', 'Upper Intermediate', 'Advanced'];
@@ -33,7 +33,7 @@ export default function Students() {
   const [search, setSearch] = useSearchParamState('q', '');
   const [statusFilter, setStatusFilter] = useSearchParamState('status', '');
   const [teacherFilter, setTeacherFilter] = useSearchParamState('teacher', '');
-  const [dateFilter, setDateFilter] = useSearchParamYearMonth('df');
+  const [dateFilter, setDateFilter] = useState<QuarterFilterValue>(getCurrentQuarter());
   const [sortField, setSortField] = useSearchParamState('sort', 'newest');
   const [viewMode, setViewMode] = useSearchParamState('view', 'table') as [string, (v: string) => void];
   const [page, setPage] = useState(1);
@@ -53,8 +53,7 @@ export default function Students() {
   // Date filter
   const dateFiltered = useMemo(() => {
     if (!students) return [];
-    const { startDate, endDate } = getFilterDateRange(dateFilter);
-    if (!startDate || !endDate) return students;
+    const { startDate, endDate } = getQuarterDateRange(dateFilter);
     return students.filter((s) => {
       const created = s.created_at?.slice(0, 10);
       return created && created >= startDate && created <= endDate;

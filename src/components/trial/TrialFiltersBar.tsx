@@ -2,7 +2,7 @@ import { Search, LayoutGrid, List, ArrowUpDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { YearMonthFilter, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
+import { QuarterFilter, type QuarterFilterValue } from '@/components/shared/QuarterFilter';
 import type { Database } from '@/integrations/supabase/types';
 
 export type TrialSortOption = 'newest' | 'oldest' | 'alpha_asc' | 'alpha_desc' | 'trial_date' | 'last_contact';
@@ -28,8 +28,8 @@ interface TrialFiltersBarProps {
   onResultChange: (value: TrialResult | 'all') => void;
   teacherFilter: string;
   onTeacherChange: (value: string) => void;
-  dateFilter: YearMonthFilterValue;
-  onDateChange: (value: YearMonthFilterValue) => void;
+  dateFilter: QuarterFilterValue;
+  onDateChange: (value: QuarterFilterValue) => void;
   sortBy: TrialSortOption;
   onSortChange: (value: TrialSortOption) => void;
   viewMode: 'cards' | 'table';
@@ -105,7 +105,7 @@ export function TrialFiltersBar({
             ))}
           </SelectContent>
         </Select>
-        <YearMonthFilter value={dateFilter} onChange={onDateChange} />
+        <QuarterFilter value={dateFilter} onChange={onDateChange} />
         <Select value={sortBy} onValueChange={(v) => onSortChange(v as TrialSortOption)}>
           <SelectTrigger className="w-[160px]">
             <ArrowUpDown className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />

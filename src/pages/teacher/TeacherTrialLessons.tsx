@@ -13,7 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Calendar } from '@/components/ui/calendar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { YearMonthFilter, getFilterDateRange, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
+import { QuarterFilter, getCurrentQuarter, getQuarterDateRange, type QuarterFilterValue } from '@/components/shared/QuarterFilter';
 import { TrialLessonCalendarCard, type TrialLessonCalendarData } from '@/components/schedule/TrialLessonCalendarCard';
 import { toast } from 'sonner';
 import { invalidateAllTrialCaches } from '@/lib/trial-cache-utils';
@@ -145,7 +145,7 @@ export default function TeacherTrialLessons() {
   const teacherId = profile?.teacher_id;
   const queryClient = useQueryClient();
   const [tab, setTab] = useState('today');
-  const [filter, setFilter] = useState<YearMonthFilterValue>({ year: null, month: null });
+  const [filter, setFilter] = useState<QuarterFilterValue>(getCurrentQuarter());
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [conversionFilter, setConversionFilter] = useState<string>('all');
@@ -155,7 +155,7 @@ export default function TeacherTrialLessons() {
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  const { startDate, endDate } = getFilterDateRange(filter);
+  const { startDate, endDate } = getQuarterDateRange(filter);
   const { data: allLessons = [], isLoading, refetch } = useTeacherTrialData(teacherId || '', startDate, endDate);
 
   const todayStr = format(new Date(), 'yyyy-MM-dd');
@@ -291,7 +291,7 @@ export default function TeacherTrialLessons() {
             <h1 className="text-3xl font-display font-bold mb-1">Trial Lessons</h1>
             <p className="text-muted-foreground">Manage and track your trial students</p>
           </div>
-          <YearMonthFilter value={filter} onChange={setFilter} />
+          <QuarterFilter value={filter} onChange={setFilter} />
         </div>
 
         {/* ═══════ STATS DASHBOARD ═══════ */}

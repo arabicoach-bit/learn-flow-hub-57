@@ -17,7 +17,7 @@ import { EditTrialStudentDialog } from '@/components/trial/EditTrialStudentDialo
 import { ConvertToStudentDialog } from '@/components/trial/ConvertToStudentDialog';
 import { useToast } from '@/hooks/use-toast';
 import { exportTrialStudents, type TrialStudentExport } from '@/lib/excel-export';
-import { getFilterDateRange, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
+import { getCurrentQuarter, getQuarterDateRange, type QuarterFilterValue } from '@/components/shared/QuarterFilter';
 import type { Database } from '@/integrations/supabase/types';
 
 type TrialStatus = Database['public']['Enums']['trial_status'];
@@ -32,7 +32,7 @@ export default function TrialStudents() {
   const [conversionFilter, setConversionFilter] = useState<TrialConversionStatus | 'all'>('all');
   const [resultFilter, setResultFilter] = useState<TrialResult | 'all'>('all');
   const [teacherFilter, setTeacherFilter] = useState('all');
-  const [dateFilter, setDateFilter] = useState<YearMonthFilterValue>({ year: null, month: null });
+  const [dateFilter, setDateFilter] = useState<QuarterFilterValue>(getCurrentQuarter());
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('table');
   const [sortBy, setSortBy] = useState<TrialSortOption>('newest');
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
@@ -49,7 +49,7 @@ export default function TrialStudents() {
   const updateTrialStudent = useUpdateTrialStudent();
   const deleteTrialStudent = useDeleteTrialStudent();
 
-  const { startDate: filterStart, endDate: filterEnd } = getFilterDateRange(dateFilter);
+  const { startDate: filterStart, endDate: filterEnd } = getQuarterDateRange(dateFilter);
 
   const baseFiltered = useMemo(() => {
     if (!trialStudents) return [];

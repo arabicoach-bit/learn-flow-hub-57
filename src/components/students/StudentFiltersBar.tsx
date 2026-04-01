@@ -2,7 +2,7 @@ import { Search, LayoutGrid, TableIcon, ArrowUpDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { YearMonthFilter, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
+import { QuarterFilter, type QuarterFilterValue } from '@/components/shared/QuarterFilter';
 
 interface Teacher {
   teacher_id: string;
@@ -18,8 +18,8 @@ interface StudentFiltersBarProps {
   onStatusFilterChange: (v: string) => void;
   paymentFilter: string;
   onPaymentFilterChange: (v: string) => void;
-  dateFilter: YearMonthFilterValue;
-  onDateFilterChange: (v: YearMonthFilterValue) => void;
+  dateFilter: QuarterFilterValue;
+  onDateFilterChange: (v: QuarterFilterValue) => void;
   teachers: Teacher[] | undefined;
   viewMode: 'table' | 'cards';
   onViewModeChange: (v: 'table' | 'cards') => void;
@@ -84,7 +84,7 @@ export function StudentFiltersBar({
           <SelectItem value="oldest">Oldest First</SelectItem>
         </SelectContent>
       </Select>
-      <YearMonthFilter value={dateFilter} onChange={onDateFilterChange} />
+      <QuarterFilter value={dateFilter} onChange={onDateFilterChange} />
       <div className="flex border rounded-md overflow-hidden">
         <Button
           variant={viewMode === 'table' ? 'default' : 'ghost'}

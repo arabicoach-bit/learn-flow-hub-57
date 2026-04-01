@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
-import { YearMonthFilter, getFilterDateRange, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
+import { QuarterFilter, getCurrentQuarter, getQuarterDateRange, type QuarterFilterValue } from '@/components/shared/QuarterFilter';
 
 /* ─── Progress Ring ─── */
 function ProgressRing({ value, size = 64, stroke = 5, color }: { value: number; size?: number; stroke?: number; color: string }) {
@@ -53,7 +53,7 @@ export default function TeacherStudents() {
   const [statusFilter, setStatusFilter] = useState('');
   const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
-  const [studentFilter, setStudentFilter] = useState<YearMonthFilterValue>({ year: null, month: null });
+  const [quarterFilter, setQuarterFilter] = useState<QuarterFilterValue>(getCurrentQuarter());
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
 
@@ -62,7 +62,7 @@ export default function TeacherStudents() {
   const { data: allLessons } = useScheduledLessons({ teacher_id: teacherId });
 
   const myStudents = students?.filter(s => s.teacher_id === teacherId) || [];
-  const studentRange = getFilterDateRange(studentFilter);
+  const quarterRange = getQuarterDateRange(quarterFilter);
 
   const DAY_ABBR = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -164,12 +164,7 @@ export default function TeacherStudents() {
       const matchesSearch = student.name.toLowerCase().includes(search.toLowerCase()) ||
         student.phone.includes(search);
       const matchesStatus = !statusFilter || student.status === statusFilter;
-      const createdAt = student.created_at ? new Date(student.created_at) : null;
-      const matchesDate = !createdAt || (
-        (!studentRange.startDate || createdAt >= new Date(studentRange.startDate)) &&
-        (!studentRange.endDate || createdAt <= new Date(studentRange.endDate + 'T23:59:59'))
-      );
-      return matchesSearch && matchesStatus && matchesDate;
+      return matchesSearch && matchesStatus;
     });
 
     // Default sort: Active (low credit first) → Stop → Left, then by name
@@ -212,15 +207,39 @@ export default function TeacherStudents() {
     });
 
     return results;
-  }, [myStudents, search, statusFilter, studentRange, sortField, sortDir, nextLessonMap]);
+  }, [myStudents, search, statusFilter, sortField, sortDir, nextLessonMap]);
 
-  // Stats
+  // Quarter-scoped retention stats: count students who had lessons in this quarter
+  const quarterStats = useMemo(() => {
+    if (!allLessons || !teacherId) return { active: 0, stopped: 0, left: 0, total: 0, retention: 0 };
+    const { startDate, endDate } = quarterRange;
+    // Find unique students who had lessons with this teacher during the quarter
+    const studentIdsInQuarter = new Set<string>();
+    allLessons.forEach(l => {
+      if (l.teacher_id === teacherId && l.scheduled_date >= startDate && l.scheduled_date <= endDate && l.student_id) {
+        studentIdsInQuarter.add(l.student_id);
+      }
+    });
+    // Now categorize these students by their current status
+    let active = 0, stopped = 0, left = 0;
+    myStudents.forEach(s => {
+      if (!studentIdsInQuarter.has(s.student_id)) return;
+      if (s.status === 'Active') active++;
+      else if (s.status === 'Temporary Stop') stopped++;
+      else if (s.status === 'Left') left++;
+    });
+    const total = active + stopped + left;
+    const retention = total > 0 ? Math.round((active / total) * 100) : 100; // 100% when no data yet
+    return { active, stopped, left, total, retention };
+  }, [allLessons, teacherId, quarterRange, myStudents]);
+
+  // Stats for the full student list (non-quarter-scoped for counts)
   const totalStudents = filteredStudents.length;
   const activeStudents = filteredStudents.filter(s => s.status === 'Active').length;
   const tempStopStudents = filteredStudents.filter(s => s.status === 'Temporary Stop').length;
   const leftStudents = filteredStudents.filter(s => s.status === 'Left').length;
   const lowCreditStudents = filteredStudents.filter(s => s.status === 'Active' && (s.wallet_balance || 0) <= 2).length;
-  const retentionRate = totalStudents > 0 ? Math.round((activeStudents / totalStudents) * 100) : 0;
+  const retentionRate = quarterStats.retention;
 
   const toggleStudent = (studentId: string) => {
     setExpandedStudents(prev => {
@@ -328,7 +347,7 @@ export default function TeacherStudents() {
                   <SelectItem value="Left">Left</SelectItem>
                 </SelectContent>
               </Select>
-              <YearMonthFilter value={studentFilter} onChange={setStudentFilter} />
+              <QuarterFilter value={quarterFilter} onChange={setQuarterFilter} />
               <Badge variant="outline" className="text-xs py-1.5 px-3">
                 {filteredStudents.length} student{filteredStudents.length !== 1 ? 's' : ''}
               </Badge>
