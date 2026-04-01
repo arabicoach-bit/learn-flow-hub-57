@@ -692,7 +692,21 @@ function buildFullyHistoricalResult(
     const qLeft = monthlyData.reduce((sum, month) => sum + month.leftStudents, 0);
     const qTotal = qActive + qStopped + qLeft;
     const rate = (Object.values(historicalByMonth).flat().find(h => h.teacherName === name))?.hourRate || 0;
-...
+
+    totalTeachingHours += qHours;
+    totalSalary += qSalary + qBonus;
+
+    return {
+      teacherId: `hist-${name}`, name, ratePerHour: rate,
+      totalHours: qHours, salary: qSalary, bonus: qBonus,
+      totalStudents: qTotal, activeStudents: qActive, stoppedStudents: qStopped, leftStudents: qLeft,
+      retentionRate: qTotal > 0 ? Math.round((qActive / qTotal) * 100 * 10) / 10 : 0,
+      trialsConducted: qTrials, trialConversions: qConversions,
+      trialConversionRate: qTrials > 0 ? Math.round((qConversions / qTrials) * 100 * 10) / 10 : 0,
+      monthlyData,
+    };
+  });
+
   // Student totals from the quarter: active at the end + stop/left events inside the quarter
   const lastMonth = monthRanges[monthRanges.length - 1];
   const lastData = historicalByMonth[lastMonth.label] || [];

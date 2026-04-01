@@ -93,15 +93,49 @@ export default function TeacherStudents() {
       return [student];
     });
   }, [myStudents, quarterRange]);
-...
+
   const filteredStudents = useMemo(() => {
-    let results = quarterScopedStudents.filter((student) => {
+    const results = quarterScopedStudents.filter((student) => {
       const matchesSearch = student.name.toLowerCase().includes(search.toLowerCase()) ||
         student.phone.includes(search);
       const matchesStatus = !statusFilter || student.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
-...
+
+    const statusOrder = (status: string | null) => {
+      if (status === 'Active') return 0;
+      if (status === 'Temporary Stop') return 1;
+      if (status === 'Left') return 2;
+      return 3;
+    };
+
+    results.sort((a, b) => {
+      const statusCmp = statusOrder(a.status) - statusOrder(b.status);
+      if (statusCmp !== 0) return statusCmp;
+
+      if (a.status === 'Active') {
+        const aLow = (a.wallet_balance || 0) <= 2 ? 0 : 1;
+        const bLow = (b.wallet_balance || 0) <= 2 ? 0 : 1;
+        if (aLow !== bLow) return aLow - bLow;
+      }
+
+      let cmp = 0;
+      if (sortField === 'name') cmp = a.name.localeCompare(b.name);
+      else if (sortField === 'status') cmp = 0;
+      else if (sortField === 'wallet') cmp = (a.wallet_balance || 0) - (b.wallet_balance || 0);
+      else if (sortField === 'nextLesson') {
+        const na = nextLessonMap.get(a.student_id);
+        const nb = nextLessonMap.get(b.student_id);
+        if (!na && !nb) cmp = 0;
+        else if (!na) cmp = 1;
+        else if (!nb) cmp = -1;
+        else cmp = na.date.localeCompare(nb.date) || na.time.localeCompare(nb.time);
+      }
+
+      if (cmp !== 0) return sortDir === 'desc' ? -cmp : cmp;
+      return a.name.localeCompare(b.name);
+    });
+
     return results;
   }, [quarterScopedStudents, search, statusFilter, sortField, sortDir, nextLessonMap]);
 
@@ -119,7 +153,7 @@ export default function TeacherStudents() {
   const activeStudents = quarterStats.active;
   const tempStopStudents = quarterStats.stopped;
   const leftStudents = quarterStats.left;
-  const lowCreditStudents = filteredStudents.filter(s => s.status === 'Active' && (s.wallet_balance || 0) <= 2).length;
+  const lowCreditStudents = filteredStudents.filter((student) => student.status === 'Active' && (student.wallet_balance || 0) <= 2).length;
   const retentionRate = quarterStats.retention;
 
   const toggleStudent = (studentId: string) => {
