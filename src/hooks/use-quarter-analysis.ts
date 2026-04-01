@@ -456,19 +456,19 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
             return { monthLabel: mr.label, hours: 0, salary: 0, totalStudents: 0, activeStudents: 0, stoppedStudents: 0, leftStudents: 0, retentionRate: 0, trialsConducted: 0, trialConversions: 0, trialConversionRate: 0, bonus: 0 };
           }
 
-          // Live month — assigned student roster, with stop/left counted only in the month they changed
+          // Live month — active rolls forward, stop/left count only in this month
           const mAgg = teacherMonthStats[t.teacher_id]?.[mr.label] || { regularMinutes: 0, regularCount: 0, trialCount: 0 };
           const mCalc = calcHoursAndSalary(mAgg, rate);
           const mt = monthlyTrialsByTeacher[t.teacher_id]?.[mr.label] || { conducted: 0, converted: 0 };
           const mb = bonusByTeacherMonth[t.teacher_id]?.[mr.label] || 0;
 
-          // For future months, don't show student counts (month hasn't started)
-           let mActive = 0, mStopped = 0, mLeft = 0, mTotal = 0, mRetention = 0;
+          let mActive = 0, mStopped = 0, mLeft = 0, mTotal = 0, mRetention = 0;
           if (!mr.isFuture) {
-             const monthlyCounts = countStudentsAtSnapshot(
-               assignedStudentsByTeacher[t.teacher_id] || [],
-               `${mr.end}T23:59:59`,
-             );
+            const monthlyCounts = countStudentsForPeriod(
+              assignedStudentsByTeacher[t.teacher_id] || [],
+              `${mr.start}T00:00:00`,
+              `${mr.end}T23:59:59`,
+            );
             mActive = monthlyCounts.active;
             mStopped = monthlyCounts.stopped;
             mLeft = monthlyCounts.left;
