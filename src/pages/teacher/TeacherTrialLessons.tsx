@@ -145,7 +145,7 @@ export default function TeacherTrialLessons() {
   const teacherId = profile?.teacher_id;
   const queryClient = useQueryClient();
   const [tab, setTab] = useState('today');
-  const [filter, setFilter] = useState<YearMonthFilterValue>({ year: null, month: null });
+  const [filter, setFilter] = useState<QuarterFilterValue>(getCurrentQuarter());
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [conversionFilter, setConversionFilter] = useState<string>('all');
