@@ -38,8 +38,11 @@ export function countStudentsAtSnapshot(
     if (createdAtTs === null || createdAtTs > snapshotTs) return;
 
     const currentStatus = student.status ?? 'Active';
-    const statusChangedAtTs = toTimestamp(student.status_changed_at);
-    const statusIsEffective = statusChangedAtTs === null || statusChangedAtTs <= snapshotTs;
+    // Use status_changed_at first; fall back to updated_at for legacy rows
+    const statusChangedAtTs = toTimestamp(student.status_changed_at) ?? toTimestamp(student.updated_at);
+    // If we still have no date AND status is not Active, skip counting as stop/left
+    // (we can't determine when it happened, so treat as Active for historical snapshots)
+    const statusIsEffective = statusChangedAtTs !== null && statusChangedAtTs <= snapshotTs;
 
     if (currentStatus === 'Temporary Stop' && statusIsEffective) {
       stopped += 1;

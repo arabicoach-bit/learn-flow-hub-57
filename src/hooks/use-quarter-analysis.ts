@@ -209,7 +209,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         studentsRes, newStudentsRes, packagesRes, lessonsRes,
         trialsRes, teachersRes, bonusesRes, trialLessonsLogRes,
       ] = await Promise.all([
-        supabase.from('students').select('student_id, status, teacher_id, created_at, status_changed_at')
+        supabase.from('students').select('student_id, status, teacher_id, created_at, status_changed_at, updated_at')
           .lte('created_at', endDate + 'T23:59:59'),
         supabase.from('students').select('student_id, created_at')
           .gte('created_at', startDate).lte('created_at', endDate + 'T23:59:59'),
