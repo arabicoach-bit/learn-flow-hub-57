@@ -499,21 +499,28 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         const qTrials = monthlyData.reduce((s, m) => s + m.trialsConducted, 0);
         const qConversions = monthlyData.reduce((s, m) => s + m.trialConversions, 0);
 
-        // Quarter totals: same current roster/status source as My Students
-         const quarterCounts = liveSnapshotDateTime
-           ? countStudentsAtSnapshot(assignedStudentsByTeacher[t.teacher_id] || [], liveSnapshotDateTime)
-           : { active: 0, stopped: 0, left: 0, total: 0 };
+        // Quarter totals: active carries into the latest month, stop/left count only inside this quarter
+        const quarterCounts = liveSnapshotDateTime
+          ? countStudentsForPeriod(
+              assignedStudentsByTeacher[t.teacher_id] || [],
+              `${startDate}T00:00:00`,
+              liveSnapshotDateTime,
+            )
+          : { active: 0, stopped: 0, left: 0, total: 0 };
         let qActive = quarterCounts.active, qStopped = quarterCounts.stopped, qLeft = quarterCounts.left;
-        // For mixed quarters with historical months, add historical student counts from the latest historical month
         if (hasHistorical) {
-          const histMonths = monthRanges.filter(mr => mr.isHistorical);
+          const histMonths = monthRanges.filter((monthRange) => monthRange.isHistorical);
           const lastHistMonth = histMonths[histMonths.length - 1];
+          const histTeacherMonths = histMonths
+            .map((monthRange) => (historicalByMonth[monthRange.label] || []).find((entry) => entry.teacherName === t.name))
+            .filter(Boolean) as HistoricalTeacherMonth[];
+
           if (lastHistMonth) {
-            const hMatch = (historicalByMonth[lastHistMonth.label] || []).find(h => h.teacherName === t.name);
-            if (hMatch && (assignedStudentsByTeacher[t.teacher_id] || []).length === 0) {
-              qActive += hMatch.activeStudents;
-              qStopped += hMatch.stoppedStudents;
-              qLeft += hMatch.leftStudents;
+            const lastHistMatch = (historicalByMonth[lastHistMonth.label] || []).find((entry) => entry.teacherName === t.name);
+            if (lastHistMatch && (assignedStudentsByTeacher[t.teacher_id] || []).length === 0) {
+              qActive += lastHistMatch.activeStudents;
+              qStopped += histTeacherMonths.reduce((sum, entry) => sum + entry.stoppedStudents, 0);
+              qLeft += histTeacherMonths.reduce((sum, entry) => sum + entry.leftStudents, 0);
             }
           }
         }
