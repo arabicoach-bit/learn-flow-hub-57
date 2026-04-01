@@ -150,18 +150,9 @@ export default function Students() {
 
   const totalStudents = dateFiltered.length;
   // For quarter-scoped stats: stop/left only count if status changed WITHIN this quarter
-  const { startDate: qStart, endDate: qEnd } = useMemo(() => getQuarterDateRange(dateFilter), [dateFilter]);
   const activeCount = dateFiltered.filter(s => s.status === 'Active').length;
-  const tempStopCount = dateFiltered.filter(s => {
-    if (s.status !== 'Temporary Stop') return false;
-    const changedAt = (s.status_changed_at || s.updated_at)?.slice(0, 10);
-    return changedAt && changedAt >= qStart && changedAt <= qEnd;
-  }).length;
-  const leftCount = dateFiltered.filter(s => {
-    if (s.status !== 'Left') return false;
-    const changedAt = (s.status_changed_at || s.updated_at)?.slice(0, 10);
-    return changedAt && changedAt >= qStart && changedAt <= qEnd;
-  }).length;
+  const tempStopCount = dateFiltered.filter(s => s.status === 'Temporary Stop').length;
+  const leftCount = dateFiltered.filter(s => s.status === 'Left').length;
 
   // New this month
   const newThisMonthCount = useMemo(() => {
