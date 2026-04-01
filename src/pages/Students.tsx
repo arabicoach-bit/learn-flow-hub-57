@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { exportStudents, type StudentExport } from '@/lib/excel-export';
 import { EditStudentDialog } from '@/components/teacher/EditStudentDialog';
-import { getFilterDateRange, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
+import { getCurrentQuarter, getQuarterDateRange, type QuarterFilterValue } from '@/components/shared/QuarterFilter';
 import { StudentStatsBar } from '@/components/students/StudentStatsBar';
 import { StudentFiltersBar } from '@/components/students/StudentFiltersBar';
 import { StudentTableView } from '@/components/students/StudentTableView';
