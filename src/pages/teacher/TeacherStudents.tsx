@@ -209,13 +209,37 @@ export default function TeacherStudents() {
     return results;
   }, [myStudents, search, statusFilter, sortField, sortDir, nextLessonMap]);
 
-  // Stats
+  // Quarter-scoped retention stats: count students who had lessons in this quarter
+  const quarterStats = useMemo(() => {
+    if (!allLessons || !teacherId) return { active: 0, stopped: 0, left: 0, total: 0, retention: 0 };
+    const { startDate, endDate } = quarterRange;
+    // Find unique students who had lessons with this teacher during the quarter
+    const studentIdsInQuarter = new Set<string>();
+    allLessons.forEach(l => {
+      if (l.teacher_id === teacherId && l.scheduled_date >= startDate && l.scheduled_date <= endDate && l.student_id) {
+        studentIdsInQuarter.add(l.student_id);
+      }
+    });
+    // Now categorize these students by their current status
+    let active = 0, stopped = 0, left = 0;
+    myStudents.forEach(s => {
+      if (!studentIdsInQuarter.has(s.student_id)) return;
+      if (s.status === 'Active') active++;
+      else if (s.status === 'Temporary Stop') stopped++;
+      else if (s.status === 'Left') left++;
+    });
+    const total = active + stopped + left;
+    const retention = total > 0 ? Math.round((active / total) * 100) : 100; // 100% when no data yet
+    return { active, stopped, left, total, retention };
+  }, [allLessons, teacherId, quarterRange, myStudents]);
+
+  // Stats for the full student list (non-quarter-scoped for counts)
   const totalStudents = filteredStudents.length;
   const activeStudents = filteredStudents.filter(s => s.status === 'Active').length;
   const tempStopStudents = filteredStudents.filter(s => s.status === 'Temporary Stop').length;
   const leftStudents = filteredStudents.filter(s => s.status === 'Left').length;
   const lowCreditStudents = filteredStudents.filter(s => s.status === 'Active' && (s.wallet_balance || 0) <= 2).length;
-  const retentionRate = totalStudents > 0 ? Math.round((activeStudents / totalStudents) * 100) : 0;
+  const retentionRate = quarterStats.retention;
 
   const toggleStudent = (studentId: string) => {
     setExpandedStudents(prev => {
