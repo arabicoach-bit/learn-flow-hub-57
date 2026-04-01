@@ -53,6 +53,28 @@ function isSameSourceMonth(dateStr: string, month: number, year: number) {
   return date.getMonth() + 1 === month && date.getFullYear() === year;
 }
 
+function countScopedStudentsByStatus(
+  scopedStudentIds: Set<string>,
+  assignedStudentIds: Set<string> | undefined,
+  studentStatusMap: Record<string, string>,
+) {
+  let active = 0;
+  let stopped = 0;
+  let left = 0;
+
+  scopedStudentIds.forEach(studentId => {
+    if (assignedStudentIds && !assignedStudentIds.has(studentId)) return;
+
+    const status = studentStatusMap[studentId];
+    if (status === 'Active') active++;
+    else if (status === 'Temporary Stop') stopped++;
+    else if (status === 'Left') left++;
+  });
+
+  const total = active + stopped + left;
+  return { active, stopped, left, total };
+}
+
 export interface MonthlyStats {
   monthLabel: string;
   month: number;
@@ -384,25 +406,28 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
         }
       });
 
-      // Build per-teacher per-month student sets (lesson-based scoping)
-      // Past months: only completed/absent lessons count (actual activity)
-      // Current month: all lessons count (including scheduled, since month is in progress)
-      // Future months: excluded entirely (isFuture flag)
+      // Build per-teacher per-month student sets using the same source as Teacher Students:
+      // current assigned students + any scheduled lesson in the scoped month/quarter.
       const studentStatusMap: Record<string, string> = {};
       students.forEach(s => { studentStatusMap[s.student_id] = s.status || 'Active'; });
+
+      const assignedStudentsByTeacher: Record<string, Set<string>> = {};
+      teacherIds.forEach(id => {
+        assignedStudentsByTeacher[id] = new Set(
+          allStudentsInQuarter
+            .filter(student => student.teacher_id === id)
+            .map(student => student.student_id),
+        );
+      });
 
       const teacherMonthStudents: Record<string, Record<string, Set<string>>> = {};
       teacherIds.forEach(id => {
         teacherMonthStudents[id] = {};
         monthRanges.forEach(mr => { teacherMonthStudents[id][mr.label] = new Set(); });
       });
-      // Build a set of current-month labels for quick lookup
-      const currentMonthLabels = new Set(monthRanges.filter(mr => mr.isCurrent).map(mr => mr.label));
       lessons.forEach(l => {
         if (!l.teacher_id || !l.student_id) return;
         const mLabel = getSourceMonthLabel(l.scheduled_date);
-        // For past months, only count completed/absent; for current month, count all
-        if (!currentMonthLabels.has(mLabel) && l.status !== 'completed' && l.status !== 'absent') return;
         if (teacherMonthStudents[l.teacher_id]?.[mLabel]) {
           teacherMonthStudents[l.teacher_id][mLabel].add(l.student_id);
         }
@@ -484,16 +509,18 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
           const mb = bonusByTeacherMonth[t.teacher_id]?.[mr.label] || 0;
 
           // For future months, don't show student counts (month hasn't started)
-          let mActive = 0, mStopped = 0, mLeft = 0, mRetention = 0;
+          let mActive = 0, mStopped = 0, mLeft = 0, mTotal = 0, mRetention = 0;
           if (!mr.isFuture) {
             const monthStudentIds = teacherMonthStudents[t.teacher_id]?.[mr.label] || new Set<string>();
-            monthStudentIds.forEach(sid => {
-              const status = studentStatusMap[sid];
-              if (status === 'Active') mActive++;
-              else if (status === 'Temporary Stop') mStopped++;
-              else if (status === 'Left') mLeft++;
-            });
-            const mTotal = mActive + mStopped + mLeft;
+            const monthlyCounts = countScopedStudentsByStatus(
+              monthStudentIds,
+              assignedStudentsByTeacher[t.teacher_id],
+              studentStatusMap,
+            );
+            mActive = monthlyCounts.active;
+            mStopped = monthlyCounts.stopped;
+            mLeft = monthlyCounts.left;
+            mTotal = monthlyCounts.total;
             mRetention = mTotal > 0 ? (mActive / mTotal) * 100 : 100;
           }
 
@@ -501,7 +528,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
             monthLabel: mr.label,
             hours: mCalc.totalHours,
             salary: mCalc.salary,
-            totalStudents: mActive + mStopped + mLeft,
+            totalStudents: mTotal,
             activeStudents: mActive,
             stoppedStudents: mStopped,
             leftStudents: mLeft,
@@ -528,13 +555,12 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
             monthStudents.forEach(sid => allQuarterStudentIds.add(sid));
           }
         });
-        let qActive = 0, qStopped = 0, qLeft = 0;
-        allQuarterStudentIds.forEach(sid => {
-          const status = studentStatusMap[sid];
-          if (status === 'Active') qActive++;
-          else if (status === 'Temporary Stop') qStopped++;
-          else if (status === 'Left') qLeft++;
-        });
+        const quarterCounts = countScopedStudentsByStatus(
+          allQuarterStudentIds,
+          assignedStudentsByTeacher[t.teacher_id],
+          studentStatusMap,
+        );
+        let qActive = quarterCounts.active, qStopped = quarterCounts.stopped, qLeft = quarterCounts.left;
         // For mixed quarters with historical months, add historical student counts from the latest historical month
         if (hasHistorical) {
           const histMonths = monthRanges.filter(mr => mr.isHistorical);
