@@ -61,10 +61,22 @@ export default function Packages() {
         studentName.includes(searchQuery.toLowerCase()) ||
         packageType.includes(searchQuery.toLowerCase());
 
+      // Rollover logic: In-Progress (Active) packages roll over across quarters,
+      // Finished (Completed) packages only show in the quarter they were created
       let matchesPeriod = true;
       if (startDate && endDate && pkg.created_at) {
         const createdDate = pkg.created_at.slice(0, 10);
-        matchesPeriod = createdDate >= startDate && createdDate <= endDate;
+        if (pkg.status === 'Completed') {
+          // Finished packages: must have been created within or before the quarter,
+          // and completed within the quarter
+          const completedDate = pkg.completed_date?.slice(0, 10);
+          matchesPeriod = completedDate
+            ? completedDate >= startDate && completedDate <= endDate
+            : createdDate >= startDate && createdDate <= endDate;
+        } else {
+          // In-Progress (Active) packages: include if created before or during the quarter end
+          matchesPeriod = createdDate <= endDate;
+        }
       }
 
       const matchesStatus = statusFilter === 'all' || pkg.status === statusFilter;
