@@ -2,7 +2,7 @@ import { Search, LayoutGrid, List, ArrowUpDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { YearMonthFilter, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
+import { QuarterFilter, type QuarterFilterValue } from '@/components/shared/QuarterFilter';
 import type { Database } from '@/integrations/supabase/types';
 
 export type TrialSortOption = 'newest' | 'oldest' | 'alpha_asc' | 'alpha_desc' | 'trial_date' | 'last_contact';
