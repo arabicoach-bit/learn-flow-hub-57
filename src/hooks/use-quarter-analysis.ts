@@ -564,9 +564,10 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
           const qTrials = monthlyData.reduce((s, m) => s + m.trialsConducted, 0);
           const qConversions = monthlyData.reduce((s, m) => s + m.trialConversions, 0);
           const latestMonth = monthlyData.filter(m => m.activeStudents > 0).pop() || monthlyData[monthlyData.length - 1];
-          const qLeft = monthlyData.reduce((s, m) => s + m.leftStudents, 0);
+          const qStopped = monthlyData.reduce((sum, month) => sum + month.stoppedStudents, 0);
+          const qLeft = monthlyData.reduce((sum, month) => sum + month.leftStudents, 0);
           const qActive = latestMonth.activeStudents;
-          const qTotal = qActive + qLeft;
+          const qTotal = qActive + qStopped + qLeft;
 
           totalTeachingHours += qHours;
           totalSalary += qSalary + qBonus;
@@ -574,7 +575,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
           teacherDetails.push({
             teacherId: `hist-${name}`, name, ratePerHour: (historicalByMonth[Object.keys(historicalByMonth)[0]] || []).find(h => h.teacherName === name)?.hourRate || 0,
             totalHours: qHours, salary: qSalary, bonus: qBonus,
-            totalStudents: qTotal, activeStudents: qActive, stoppedStudents: 0, leftStudents: qLeft,
+            totalStudents: qTotal, activeStudents: qActive, stoppedStudents: qStopped, leftStudents: qLeft,
             retentionRate: qTotal > 0 ? Math.round((qActive / qTotal) * 100 * 10) / 10 : 0,
             trialsConducted: qTrials, trialConversions: qConversions,
             trialConversionRate: qTrials > 0 ? Math.round((qConversions / qTrials) * 100 * 10) / 10 : 0,
