@@ -61,189 +61,60 @@ export default function TeacherStudents() {
   const { data: programs } = usePrograms();
   const { data: allLessons } = useScheduledLessons({ teacher_id: teacherId });
 
-  const myStudents = students?.filter(s => s.teacher_id === teacherId) || [];
-  const quarterRange = getQuarterDateRange(quarterFilter);
+  const myStudents = useMemo(
+    () => students?.filter((student) => student.teacher_id === teacherId) || [],
+    [students, teacherId],
+  );
+  const quarterRange = useMemo(() => getQuarterDateRange(quarterFilter), [quarterFilter]);
 
   const DAY_ABBR = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  // Fetch active packages for these students (not relying on stale current_package_id)
-  const myStudentIds = useMemo(() => myStudents.map(s => s.student_id), [myStudents]);
-  const { data: activePackagesData } = useQuery({
-    queryKey: ['teacher-active-packages', teacherId, myStudentIds.sort().join(',')],
-    queryFn: async () => {
-      if (myStudentIds.length === 0) return [];
-      const { data } = await supabase
-        .from('packages')
-        .select('package_id, student_id, lessons_purchased')
-        .in('student_id', myStudentIds)
-        .eq('status', 'Active')
-        .order('created_at', { ascending: false });
-      return data || [];
-    },
-    enabled: myStudentIds.length > 0,
-    staleTime: 60_000,
-  });
+  const quarterScopedStudents = useMemo(() => {
+    const { startDate, endDate } = quarterRange;
 
-  const studentActivePackageMap = useMemo(() => {
-    const map = new Map<string, { packageId: string; lessonsPurchased: number }>();
-    (activePackagesData || []).forEach(p => {
-      if (!map.has(p.student_id)) map.set(p.student_id, { packageId: p.package_id, lessonsPurchased: p.lessons_purchased });
-    });
-    return map;
-  }, [activePackagesData]);
+    return myStudents.flatMap((student) => {
+      const created = student.created_at?.slice(0, 10);
+      if (!created || created > endDate) return [];
 
-  const activePackageIds = useMemo(() => {
-    return Array.from(studentActivePackageMap.values()).map(v => v.packageId);
-  }, [studentActivePackageMap]);
-
-  const { data: scheduleMap } = useQuery({
-    queryKey: ['teacher-student-schedules', activePackageIds.sort().join(',')],
-    queryFn: async () => {
-      if (activePackageIds.length === 0) return new Map<string, { day: number; time: string }[]>();
-      const { data } = await supabase
-        .from('lesson_schedules')
-        .select('package_id, day_of_week, time_slot')
-        .in('package_id', activePackageIds)
-        .order('day_of_week');
-      
-      // Build reverse map using active packages
-      const pkgToStudent = new Map<string, string>();
-      studentActivePackageMap.forEach((val, studentId) => {
-        pkgToStudent.set(val.packageId, studentId);
-      });
-      
-      const result = new Map<string, { day: number; time: string }[]>();
-      (data || []).forEach(row => {
-        const studentId = pkgToStudent.get(row.package_id!);
-        if (!studentId) return;
-        if (!result.has(studentId)) result.set(studentId, []);
-        result.get(studentId)!.push({ day: row.day_of_week, time: row.time_slot });
-      });
-      return result;
-    },
-    enabled: activePackageIds.length > 0,
-    staleTime: 60_000,
-  });
-
-  // Lesson stats per student — uses lessons_purchased for total (accurate), counts used from lesson rows
-  const lessonStatsMap = useMemo(() => {
-    const map = new Map<string, { used: number; total: number }>();
-    // Initialize with lessons_purchased from packages
-    studentActivePackageMap.forEach((val, studentId) => {
-      map.set(studentId, { used: 0, total: val.lessonsPurchased });
-    });
-    if (!allLessons) return map;
-    const activePkgIds = new Set(activePackageIds);
-    allLessons.forEach(l => {
-      if (!l.student_id || !l.package_id || !activePkgIds.has(l.package_id)) return;
-      if (!map.has(l.student_id)) map.set(l.student_id, { used: 0, total: 0 });
-      const entry = map.get(l.student_id)!;
-      if (l.status === 'completed' || l.status === 'absent') entry.used++;
-    });
-    return map;
-  }, [allLessons, activePackageIds, studentActivePackageMap]);
-
-  // Next lesson per student
-  const nextLessonMap = useMemo(() => {
-    const map = new Map<string, { date: string; time: string }>();
-    if (!allLessons) return map;
-    const today = format(new Date(), 'yyyy-MM-dd');
-    const upcoming = allLessons
-      .filter(l => l.status === 'scheduled' && l.scheduled_date >= today)
-      .sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date) || a.scheduled_time.localeCompare(b.scheduled_time));
-    upcoming.forEach(l => {
-      if (l.student_id && !map.has(l.student_id)) {
-        map.set(l.student_id, { date: l.scheduled_date, time: l.scheduled_time });
+      if (student.status === 'Active') {
+        return [student];
       }
-    });
-    return map;
-  }, [allLessons]);
 
+      const changedAt = (student.status_changed_at || student.updated_at)?.slice(0, 10);
+
+      if (!changedAt || changedAt > endDate) {
+        return [{ ...student, status: 'Active' as const }];
+      }
+
+      if (changedAt < startDate) {
+        return [];
+      }
+
+      return [student];
+    });
+  }, [myStudents, quarterRange]);
+...
   const filteredStudents = useMemo(() => {
-    let results = myStudents.filter((student) => {
+    let results = quarterScopedStudents.filter((student) => {
       const matchesSearch = student.name.toLowerCase().includes(search.toLowerCase()) ||
         student.phone.includes(search);
       const matchesStatus = !statusFilter || student.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
-
-    // Default sort: Active (low credit first) → Stop → Left, then by name
-    const statusOrder = (s: string | null) => {
-      if (s === 'Active') return 0;
-      if (s === 'Temporary Stop') return 1;
-      if (s === 'Left') return 2;
-      return 3;
-    };
-
-    results.sort((a, b) => {
-      // Primary: status group
-      const statusCmp = statusOrder(a.status) - statusOrder(b.status);
-      if (statusCmp !== 0) return statusCmp;
-
-      // Within Active: low credit (wallet ≤ 2) first
-      if (a.status === 'Active') {
-        const aLow = (a.wallet_balance || 0) <= 2 ? 0 : 1;
-        const bLow = (b.wallet_balance || 0) <= 2 ? 0 : 1;
-        if (aLow !== bLow) return aLow - bLow;
-      }
-
-      // Secondary: user-chosen sort
-      let cmp = 0;
-      if (sortField === 'name') cmp = a.name.localeCompare(b.name);
-      else if (sortField === 'status') cmp = 0; // already sorted by status
-      else if (sortField === 'wallet') cmp = (a.wallet_balance || 0) - (b.wallet_balance || 0);
-      else if (sortField === 'nextLesson') {
-        const na = nextLessonMap.get(a.student_id);
-        const nb = nextLessonMap.get(b.student_id);
-        if (!na && !nb) cmp = 0;
-        else if (!na) cmp = 1;
-        else if (!nb) cmp = -1;
-        else cmp = na.date.localeCompare(nb.date) || na.time.localeCompare(nb.time);
-      }
-      if (cmp !== 0) return sortDir === 'desc' ? -cmp : cmp;
-
-      // Fallback: alphabetical
-      return a.name.localeCompare(b.name);
-    });
-
+...
     return results;
-  }, [myStudents, search, statusFilter, sortField, sortDir, nextLessonMap]);
+  }, [quarterScopedStudents, search, statusFilter, sortField, sortDir, nextLessonMap]);
 
-  // Quarter-scoped stats: snapshot-based counting
   const quarterStats = useMemo(() => {
-    if (!teacherId) return { active: 0, stopped: 0, left: 0, total: 0, retention: 0 };
-    const { startDate, endDate } = quarterRange;
-
-    // Include students who are relevant to this quarter:
-    // - Created before or during the quarter (they exist)
-    // - AND either still Active, OR their status changed during/after this quarter
-    const quarterStudents = myStudents.filter(s => {
-      const created = s.created_at?.slice(0, 10);
-      if (!created || created > endDate) return false;
-      if (s.status === 'Active') return true;
-      // Stop/Left: only include if status changed during or after this quarter
-      const changedAt = (s.status_changed_at || s.updated_at)?.slice(0, 10);
-      if (!changedAt) return true;
-      return changedAt >= startDate;
-    });
-
-    // Count stop/left only if the status change happened WITHIN this quarter
-    let active = 0, stopped = 0, left = 0;
-    quarterStudents.forEach(s => {
-      if (s.status === 'Active') { active++; return; }
-      const changedAt = (s.status_changed_at || s.updated_at)?.slice(0, 10);
-      const changedInQuarter = changedAt && changedAt >= startDate && changedAt <= endDate;
-      if (s.status === 'Temporary Stop' && changedInQuarter) stopped++;
-      else if (s.status === 'Left' && changedInQuarter) left++;
-      else active++; // status change is after quarter end or unknown → treat as active for this quarter
-    });
-
+    const active = quarterScopedStudents.filter((student) => student.status === 'Active').length;
+    const stopped = quarterScopedStudents.filter((student) => student.status === 'Temporary Stop').length;
+    const left = quarterScopedStudents.filter((student) => student.status === 'Left').length;
     const total = active + stopped + left;
     const retention = total > 0 ? Math.round((active / total) * 100) : 100;
-    return { active, stopped, left, total, retention };
-  }, [teacherId, quarterRange, myStudents]);
 
-  // Use quarter-scoped stats for the overview dashboard
+    return { active, stopped, left, total, retention };
+  }, [quarterScopedStudents]);
+
   const totalStudents = quarterStats.total;
   const activeStudents = quarterStats.active;
   const tempStopStudents = quarterStats.stopped;

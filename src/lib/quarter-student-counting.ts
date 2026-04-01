@@ -19,43 +19,95 @@ function toTimestamp(value: string | null | undefined) {
   return Number.isNaN(timestamp) ? null : timestamp;
 }
 
-export function countStudentsAtSnapshot(
+function getStatusChangedTimestamp(student: QuarterStudentSnapshotInput) {
+  return toTimestamp(student.status_changed_at) ?? toTimestamp(student.updated_at);
+}
+
+function wasCreatedBySnapshot(student: QuarterStudentSnapshotInput, snapshotTs: number) {
+  const createdAtTs = toTimestamp(student.created_at);
+  return createdAtTs !== null && createdAtTs <= snapshotTs;
+}
+
+export function countActiveStudentsAtSnapshot(
   students: QuarterStudentSnapshotInput[],
   snapshotDateTime: string,
-): StudentStatusCounts {
+) {
   const snapshotTs = toTimestamp(snapshotDateTime);
 
   if (snapshotTs === null) {
-    return { active: 0, stopped: 0, left: 0, total: 0 };
+    return 0;
   }
 
   let active = 0;
-  let stopped = 0;
-  let left = 0;
 
   students.forEach((student) => {
-    const createdAtTs = toTimestamp(student.created_at);
-    if (createdAtTs === null || createdAtTs > snapshotTs) return;
+    if (!wasCreatedBySnapshot(student, snapshotTs)) return;
 
     const currentStatus = student.status ?? 'Active';
-    // Use status_changed_at first; fall back to updated_at for legacy rows
-    const statusChangedAtTs = toTimestamp(student.status_changed_at) ?? toTimestamp(student.updated_at);
-    // If we still have no date AND status is not Active, skip counting as stop/left
-    // (we can't determine when it happened, so treat as Active for historical snapshots)
-    const statusIsEffective = statusChangedAtTs !== null && statusChangedAtTs <= snapshotTs;
 
-    if (currentStatus === 'Temporary Stop' && statusIsEffective) {
-      stopped += 1;
-      return;
-    }
+    if (currentStatus === 'Temporary Stop' || currentStatus === 'Left') {
+      const statusChangedAtTs = getStatusChangedTimestamp(student);
 
-    if (currentStatus === 'Left' && statusIsEffective) {
-      left += 1;
-      return;
+      if (statusChangedAtTs !== null && statusChangedAtTs <= snapshotTs) {
+        return;
+      }
     }
 
     active += 1;
   });
+
+  return active;
+}
+
+export function countStudentStatusEventsInRange(
+  students: QuarterStudentSnapshotInput[],
+  rangeStartDateTime: string,
+  rangeEndDateTime: string,
+) {
+  const startTs = toTimestamp(rangeStartDateTime);
+  const endTs = toTimestamp(rangeEndDateTime);
+
+  if (startTs === null || endTs === null) {
+    return { stopped: 0, left: 0 };
+  }
+
+  let stopped = 0;
+  let left = 0;
+
+  students.forEach((student) => {
+    if (!wasCreatedBySnapshot(student, endTs)) return;
+
+    const statusChangedAtTs = getStatusChangedTimestamp(student);
+    if (statusChangedAtTs === null || statusChangedAtTs < startTs || statusChangedAtTs > endTs) {
+      return;
+    }
+
+    const currentStatus = student.status ?? 'Active';
+
+    if (currentStatus === 'Temporary Stop') {
+      stopped += 1;
+      return;
+    }
+
+    if (currentStatus === 'Left') {
+      left += 1;
+    }
+  });
+
+  return { stopped, left };
+}
+
+export function countStudentsForPeriod(
+  students: QuarterStudentSnapshotInput[],
+  rangeStartDateTime: string,
+  rangeEndDateTime: string,
+): StudentStatusCounts {
+  const active = countActiveStudentsAtSnapshot(students, rangeEndDateTime);
+  const { stopped, left } = countStudentStatusEventsInRange(
+    students,
+    rangeStartDateTime,
+    rangeEndDateTime,
+  );
 
   return {
     active,
