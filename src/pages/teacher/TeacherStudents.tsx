@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
-import { YearMonthFilter, getFilterDateRange, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
+import { QuarterFilter, getCurrentQuarter, getQuarterDateRange, type QuarterFilterValue } from '@/components/shared/QuarterFilter';
 
 /* ─── Progress Ring ─── */
 function ProgressRing({ value, size = 64, stroke = 5, color }: { value: number; size?: number; stroke?: number; color: string }) {
