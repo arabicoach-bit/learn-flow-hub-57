@@ -53,8 +53,7 @@ export default function Students() {
   // Date filter
   const dateFiltered = useMemo(() => {
     if (!students) return [];
-    const { startDate, endDate } = getFilterDateRange(dateFilter);
-    if (!startDate || !endDate) return students;
+    const { startDate, endDate } = getQuarterDateRange(dateFilter);
     return students.filter((s) => {
       const created = s.created_at?.slice(0, 10);
       return created && created >= startDate && created <= endDate;
