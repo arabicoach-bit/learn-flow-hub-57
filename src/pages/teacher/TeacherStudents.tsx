@@ -207,7 +207,7 @@ export default function TeacherStudents() {
     });
 
     return results;
-  }, [myStudents, search, statusFilter, studentRange, sortField, sortDir, nextLessonMap]);
+  }, [myStudents, search, statusFilter, sortField, sortDir, nextLessonMap]);
 
   // Stats
   const totalStudents = filteredStudents.length;
