@@ -507,6 +507,7 @@ export function useQuarterAnalysis(quarter: AcademicQuarter | null, academicStar
 
         totalTeachingHours += qHours;
         totalSalary += qSalary + qBonus;
+        totalLessonsTaught += monthlyData.reduce((s, m) => s + Math.round(m.hours * 2), 0); // approximate lesson count from hours
 
         return {
           teacherId: t.teacher_id, name: t.name, ratePerHour: rate,
