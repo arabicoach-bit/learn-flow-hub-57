@@ -64,6 +64,7 @@ export default function AdminPayroll() {
           temp_stop_students: teacherStudents.filter((s) => s.status === 'Temporary Stop').length,
           left_students: teacherStudents.filter((s) => s.status === 'Left').length,
           trial_lessons: 0,
+          last_login: null,
         };
       });
 

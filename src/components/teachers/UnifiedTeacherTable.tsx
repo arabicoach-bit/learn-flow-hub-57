@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Edit, Key, UserX, UserCheck, Trash2, MoreVertical, MessageCircle, Gift, Users, ArrowUpDown } from 'lucide-react';
+import { Edit, Key, UserX, UserCheck, Trash2, MoreVertical, MessageCircle, Gift, Users, ArrowUpDown, LogIn } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,7 @@ import { Teacher } from '@/hooks/use-teachers';
 import { PayrollTeacher } from '@/components/payroll/PayrollTableView';
 import { formatSalary } from '@/lib/wallet-utils';
 import { useState, useMemo } from 'react';
+import { formatDistanceToNow } from 'date-fns';
 
 type SortKey = 'name' | 'students' | 'lessons' | 'hours' | 'salary' | 'totalPay';
 type SortDir = 'asc' | 'desc';
@@ -151,6 +152,7 @@ export function UnifiedTeacherTable({
               <SortableHead label="Salary" sortId="salary" className="text-center" />
               <TableHead className="text-center hidden md:table-cell">Bonus</TableHead>
               <SortableHead label="Total Pay" sortId="totalPay" className="text-center" />
+              <TableHead className="text-center hidden lg:table-cell">Last Login</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -269,6 +271,22 @@ export function UnifiedTeacherTable({
                     {pr ? formatSalary(pr.total_pay) : '-'}
                   </TableCell>
 
+                  <TableCell className="text-center hidden lg:table-cell text-xs text-muted-foreground">
+                    {pr?.last_login ? (
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <span className="inline-flex items-center gap-1">
+                            <LogIn className="w-3 h-3" />
+                            {formatDistanceToNow(new Date(pr.last_login), { addSuffix: true })}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>{new Date(pr.last_login).toLocaleString()}</TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <span className="text-muted-foreground/50">Never</span>
+                    )}
+                  </TableCell>
+
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -314,6 +332,7 @@ export function UnifiedTeacherTable({
               <TableCell className="text-center text-emerald-600 dark:text-emerald-400">{formatSalary(totals.salary)}</TableCell>
               <TableCell className="text-center hidden md:table-cell text-amber-600 dark:text-amber-400">{formatSalary(totals.bonus)}</TableCell>
               <TableCell className="text-center text-primary">{formatSalary(totals.totalPay)}</TableCell>
+              <TableCell className="hidden lg:table-cell" />
               <TableCell />
             </TableRow>
           </TableFooter>

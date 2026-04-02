@@ -24,6 +24,7 @@ export interface PayrollTeacher {
   temp_stop_students: number;
   left_students: number;
   trial_lessons: number;
+  last_login: string | null;
 }
 
 interface PayrollTableViewProps {

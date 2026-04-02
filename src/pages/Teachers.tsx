@@ -81,14 +81,17 @@ export default function Teachers() {
       const ids = (teachers || []).map((t) => t.teacher_id);
       if (ids.length === 0) return [] as PayrollTeacher[];
 
-      const [hoursByTeacher, studentsRes, bonusesRes] = await Promise.all([
+      const [hoursByTeacher, studentsRes, bonusesRes, profilesRes] = await Promise.all([
         fetchAllTeachersTotalHours(ids, startDate, endDate),
         supabase.from('students').select('student_id, teacher_id, status'),
         supabase.from('teacher_bonuses').select('*').eq('month_year', monthYear),
+        supabase.from('profiles').select('teacher_id, last_login').in('teacher_id', ids),
       ]);
 
       const students = studentsRes.data || [];
       const bonuses = bonusesRes.data || [];
+      const profilesMap: Record<string, string | null> = {};
+      profilesRes.data?.forEach((p: any) => { if (p.teacher_id) profilesMap[p.teacher_id] = p.last_login; });
 
       return (teachers || []).map((teacher): PayrollTeacher => {
         const hrs = hoursByTeacher[teacher.teacher_id] || ({} as TeacherTotalHoursResult);
@@ -112,6 +115,7 @@ export default function Teachers() {
           temp_stop_students: teacherStudents.filter((s) => s.status === 'Temporary Stop').length,
           left_students: teacherStudents.filter((s) => s.status === 'Left').length,
           trial_lessons: 0,
+          last_login: profilesMap[teacher.teacher_id] || null,
         };
       });
     },
