@@ -290,12 +290,14 @@ function StudentPackagesTab({
           )}
         </CardContent>
       </Card>
-      <StudentCommentsDialog
-        open={commentsOpen}
-        onOpenChange={setCommentsOpen}
-        studentId={studentId}
-        studentName={studentName}
-      />
+      {commentsPackage && (
+        <PackageCommentsDialog
+          open={!!commentsPackage}
+          onOpenChange={(open) => { if (!open) setCommentsPackage(null); }}
+          packageId={commentsPackage.id}
+          packageLabel={commentsPackage.label}
+        />
+      )}
     </div>
   );
 }
