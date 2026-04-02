@@ -21,7 +21,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { ArrowLeft, User, Wallet, CreditCard, BookOpen, Loader2, Plus, RefreshCw, Pencil, ChevronDown, ChevronRight, Trash2, ArrowRightLeft } from 'lucide-react';
+import { ArrowLeft, User, Wallet, CreditCard, BookOpen, Loader2, Plus, RefreshCw, Pencil, ChevronDown, ChevronRight, Trash2, ArrowRightLeft, MessageSquareText } from 'lucide-react';
+import { StudentCommentsDialog } from '@/components/students/StudentCommentsDialog';
 import { getWalletColor, getStatusBadgeClass, formatCurrency, formatDate, formatDateTime, getStatusDisplayLabel } from '@/lib/wallet-utils';
 import { StudentLessonsView } from '@/components/student/StudentLessonsView';
 import { StudentInfoView } from '@/components/student/StudentInfoView';
@@ -47,6 +48,7 @@ interface StudentPackagesTabProps {
   setRenewPackageId: (id: string | undefined) => void;
   setDeletePackageId: (id: string | null) => void;
   studentId: string;
+  studentName: string;
   teacherId: string;
 }
 
@@ -54,8 +56,9 @@ function StudentPackagesTab({
   packages, packagesLoading, packagesError, packagesFetching, refetchPackages,
   expandedPackageId, setExpandedPackageId,
   setIsAddPackageOpen, setIsRenewPackageOpen, setEditPackage, setRenewPackageId, setDeletePackageId,
-  studentId, teacherId,
+  studentId, studentName, teacherId,
 }: StudentPackagesTabProps) {
+  const [commentsOpen, setCommentsOpen] = React.useState(false);
   const [pkgSearch, setPkgSearch] = React.useState('');
   const [pkgStatusFilter, setPkgStatusFilter] = React.useState('all');
   const [pkgPaymentFilter, setPkgPaymentFilter] = React.useState('all');
@@ -220,7 +223,7 @@ function StudentPackagesTab({
                     <TableHead>Next Lesson</TableHead>
                     <TableHead>Payment</TableHead>
                     <TableHead>Amount</TableHead>
-                    
+                    <TableHead>Notes</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -257,7 +260,11 @@ function StudentPackagesTab({
                             </div>
                           </TableCell>
                           <TableCell className="font-medium">{formatCurrency(pkg.amount)}</TableCell>
-                          
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 relative" onClick={() => setCommentsOpen(true)}>
+                              <MessageSquareText className="h-3.5 w-3.5 text-muted-foreground" />
+                            </Button>
+                          </TableCell>
                           <TableCell onClick={(e) => e.stopPropagation()}>
                             <div className="flex gap-1">
                               <Button variant="ghost" size="sm" onClick={() => setEditPackage(pkg)} className="gap-1 text-xs"><Pencil className="w-3 h-3" />Edit</Button>
@@ -283,6 +290,12 @@ function StudentPackagesTab({
           )}
         </CardContent>
       </Card>
+      <StudentCommentsDialog
+        open={commentsOpen}
+        onOpenChange={setCommentsOpen}
+        studentId={studentId}
+        studentName={studentName}
+      />
     </div>
   );
 }
@@ -520,6 +533,7 @@ export default function StudentDetail() {
               setRenewPackageId={setRenewPackageId}
               setDeletePackageId={setDeletePackageId}
               studentId={id!}
+              studentName={student.name}
               teacherId={student.teacher_id || ''}
             />
           </TabsContent>
