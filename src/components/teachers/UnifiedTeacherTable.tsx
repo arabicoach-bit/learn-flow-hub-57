@@ -15,6 +15,7 @@ import { Teacher } from '@/hooks/use-teachers';
 import { PayrollTeacher } from '@/components/payroll/PayrollTableView';
 import { formatSalary } from '@/lib/wallet-utils';
 import { useState, useMemo } from 'react';
+import { formatDistanceToNow } from 'date-fns';
 
 type SortKey = 'name' | 'students' | 'lessons' | 'hours' | 'salary' | 'totalPay';
 type SortDir = 'asc' | 'desc';
