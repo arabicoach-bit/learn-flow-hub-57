@@ -271,6 +271,22 @@ export function UnifiedTeacherTable({
                     {pr ? formatSalary(pr.total_pay) : '-'}
                   </TableCell>
 
+                  <TableCell className="text-center hidden lg:table-cell text-xs text-muted-foreground">
+                    {pr?.last_login ? (
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <span className="inline-flex items-center gap-1">
+                            <LogIn className="w-3 h-3" />
+                            {formatDistanceToNow(new Date(pr.last_login), { addSuffix: true })}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>{new Date(pr.last_login).toLocaleString()}</TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <span className="text-muted-foreground/50">Never</span>
+                    )}
+                  </TableCell>
+
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
