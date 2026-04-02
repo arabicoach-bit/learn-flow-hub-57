@@ -289,6 +289,12 @@ function StudentPackagesTab({
           )}
         </CardContent>
       </Card>
+      <StudentCommentsDialog
+        open={commentsOpen}
+        onOpenChange={setCommentsOpen}
+        studentId={studentId}
+        studentName={studentName}
+      />
     </div>
   );
 }
