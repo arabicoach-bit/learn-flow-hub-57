@@ -295,7 +295,7 @@ export function TrialTableView({ students, onUpdateStatus, onUpdateConversion, o
 
                       {isExpanded && (
                         <tr className="bg-muted/20 border-b">
-                          <td colSpan={11} className="p-0">
+                          <td colSpan={12} className="p-0">
                             <CollapsibleContent forceMount className="px-6 py-4">
                               <div className="grid grid-cols-4 gap-6 text-sm">
                                 {/* Contact */}
