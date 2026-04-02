@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
@@ -5,10 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Card, CardContent } from '@/components/ui/card';
-import { CheckCircle, Pencil, FileText, Info } from 'lucide-react';
+import { CheckCircle, Pencil, FileText, Info, MessageSquareText } from 'lucide-react';
 import { formatCurrency } from '@/lib/wallet-utils';
 import { WalletBadge } from '@/components/shared/WalletBadge';
 import { LessonsBadge } from '@/components/shared/LessonsBadge';
+import { useStudentCommentsCounts } from '@/hooks/use-student-comments';
+import { StudentCommentsDialog } from '@/components/students/StudentCommentsDialog';
 import type { Package } from '@/hooks/use-packages';
 import type { PackageBatchStats } from '@/hooks/use-packages-batch-stats';
 
