@@ -71,9 +71,7 @@ export function EditTrialStudentDialog({ student, open, onOpenChange }: EditTria
         status: student.status || '',
         conversion_status: student.conversion_status || '',
         trial_result: student.trial_result || '',
-        notes: student.notes || '',
         handled_by: student.handled_by || '',
-        follow_up_notes: student.follow_up_notes || '',
       });
     }
   }, [student]);
