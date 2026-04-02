@@ -10,8 +10,8 @@ import { CheckCircle, Pencil, FileText, Info, MessageSquareText } from 'lucide-r
 import { formatCurrency } from '@/lib/wallet-utils';
 import { WalletBadge } from '@/components/shared/WalletBadge';
 import { LessonsBadge } from '@/components/shared/LessonsBadge';
-import { useStudentCommentsCounts } from '@/hooks/use-student-comments';
-import { StudentCommentsDialog } from '@/components/students/StudentCommentsDialog';
+import { usePackageCommentsCounts } from '@/hooks/use-package-comments';
+import { PackageCommentsDialog } from '@/components/packages/PackageCommentsDialog';
 import type { Package } from '@/hooks/use-packages';
 import type { PackageBatchStats } from '@/hooks/use-packages-batch-stats';
 
