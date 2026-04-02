@@ -154,12 +154,12 @@ export function PackageTableView({
                           variant="ghost"
                           size="icon"
                           className="h-7 w-7 relative"
-                          onClick={() => setCommentsStudent({ id: pkg.student_id, name: pkg.students?.name || 'Unknown' })}
+                          onClick={() => setCommentsPackage({ id: pkg.package_id, label: pkg.students?.name || 'Package' })}
                         >
                           <MessageSquareText className="h-3.5 w-3.5 text-muted-foreground" />
-                          {(commentCounts?.[pkg.student_id] ?? 0) > 0 && (
+                          {(commentCounts?.[pkg.package_id] ?? 0) > 0 && (
                             <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center px-0.5">
-                              {commentCounts![pkg.student_id]}
+                              {commentCounts![pkg.package_id]}
                             </span>
                           )}
                         </Button>
