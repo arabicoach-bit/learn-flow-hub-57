@@ -259,6 +259,23 @@ export function TrialTableView({ students, onUpdateStatus, onUpdateConversion, o
                           </Select>
                         </TableCell>
 
+                        <TableCell className="text-center py-2" onClick={e => e.stopPropagation()}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 relative"
+                            onClick={() => { setCommentsTrialId(student.trial_id); setCommentsStudentName(student.name); }}
+                            title="Notes"
+                          >
+                            <MessageSquareText className="h-3.5 w-3.5 text-muted-foreground" />
+                            {(commentCounts?.[student.trial_id] ?? 0) > 0 && (
+                              <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[9px] rounded-full min-w-[14px] h-[14px] flex items-center justify-center font-medium">
+                                {commentCounts![student.trial_id]}
+                              </span>
+                            )}
+                          </Button>
+                        </TableCell>
+
                         <TableCell className="py-2" onClick={e => e.stopPropagation()}>
                           <div className="flex items-center gap-0.5">
                             {canConvert && (
