@@ -73,7 +73,6 @@ export function PackageTableView({
                   <TableHead className="text-center">
                     <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Notes</span>
                   </TableHead>
-                  </TableHead>
                   <TableHead className="w-[90px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
