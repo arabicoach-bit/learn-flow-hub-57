@@ -188,5 +188,12 @@ export function PackageTableView({
         )}
       </CardContent>
     </Card>
-  );
-}
+    {commentsStudent && (
+      <StudentCommentsDialog
+        open={!!commentsStudent}
+        onOpenChange={(open) => { if (!open) setCommentsStudent(null); }}
+        studentId={commentsStudent.id}
+        studentName={commentsStudent.name}
+      />
+    )}
+    </>
