@@ -259,7 +259,11 @@ function StudentPackagesTab({
                             </div>
                           </TableCell>
                           <TableCell className="font-medium">{formatCurrency(pkg.amount)}</TableCell>
-                          
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 relative" onClick={() => setCommentsOpen(true)}>
+                              <MessageSquareText className="h-3.5 w-3.5 text-muted-foreground" />
+                            </Button>
+                          </TableCell>
                           <TableCell onClick={(e) => e.stopPropagation()}>
                             <div className="flex gap-1">
                               <Button variant="ghost" size="sm" onClick={() => setEditPackage(pkg)} className="gap-1 text-xs"><Pencil className="w-3 h-3" />Edit</Button>
