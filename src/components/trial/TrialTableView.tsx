@@ -115,6 +115,9 @@ export function TrialTableView({ students, onUpdateStatus, onUpdateConversion, o
                 <TableHead className="text-center border-r border-border/50">
                   <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Handled By</span>
                 </TableHead>
+                <TableHead className="text-center">
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Notes</span>
+                </TableHead>
                 <TableHead className="w-[90px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
