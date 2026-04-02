@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
@@ -5,10 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Card, CardContent } from '@/components/ui/card';
-import { CheckCircle, Pencil, FileText, Info } from 'lucide-react';
+import { CheckCircle, Pencil, FileText, Info, MessageSquareText } from 'lucide-react';
 import { formatCurrency } from '@/lib/wallet-utils';
 import { WalletBadge } from '@/components/shared/WalletBadge';
 import { LessonsBadge } from '@/components/shared/LessonsBadge';
+import { useStudentCommentsCounts } from '@/hooks/use-student-comments';
+import { StudentCommentsDialog } from '@/components/students/StudentCommentsDialog';
 import type { Package } from '@/hooks/use-packages';
 import type { PackageBatchStats } from '@/hooks/use-packages-batch-stats';
 
@@ -31,8 +34,11 @@ export function PackageTableView({
   packages, batchStats, isLoading, onMarkPaid, onEdit, onViewSummary,
 }: PackageTableViewProps) {
   const navigate = useNavigate();
-
+  const studentIds = [...new Set(packages.map(p => p.student_id))];
+  const { data: commentCounts } = useStudentCommentsCounts(studentIds);
+  const [commentsStudent, setCommentsStudent] = useState<{ id: string; name: string } | null>(null);
   return (
+    <>
     <Card>
       <CardContent className="p-0">
         {isLoading ? (
@@ -64,6 +70,9 @@ export function PackageTableView({
                   </TableHead>
                   <TableHead className="text-center border-r border-border/50">
                     <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Kind</span>
+                  </TableHead>
+                  <TableHead className="text-center">
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Notes</span>
                   </TableHead>
                   <TableHead className="w-[90px]">Actions</TableHead>
                 </TableRow>
@@ -140,6 +149,21 @@ export function PackageTableView({
                           {pkg.is_renewal ? 'Renewal' : 'New'}
                         </Badge>
                       </TableCell>
+                      <TableCell className="text-center py-2" onClick={e => e.stopPropagation()}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 relative"
+                          onClick={() => setCommentsStudent({ id: pkg.student_id, name: pkg.students?.name || 'Unknown' })}
+                        >
+                          <MessageSquareText className="h-3.5 w-3.5 text-muted-foreground" />
+                          {(commentCounts?.[pkg.student_id] ?? 0) > 0 && (
+                            <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center px-0.5">
+                              {commentCounts![pkg.student_id]}
+                            </span>
+                          )}
+                        </Button>
+                      </TableCell>
 
                       <TableCell className="py-2" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center gap-0.5">
@@ -165,5 +189,14 @@ export function PackageTableView({
         )}
       </CardContent>
     </Card>
+    {commentsStudent && (
+      <StudentCommentsDialog
+        open={!!commentsStudent}
+        onOpenChange={(open) => { if (!open) setCommentsStudent(null); }}
+        studentId={commentsStudent.id}
+        studentName={commentsStudent.name}
+      />
+    )}
+    </>
   );
 }
