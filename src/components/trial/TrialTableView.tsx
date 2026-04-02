@@ -73,7 +73,11 @@ function getRowHighlight(student: TrialStudent) {
 
 export function TrialTableView({ students, onUpdateStatus, onUpdateConversion, onUpdateResult, onUpdateFollowUp, onUpdateHandledBy, onEdit, onConvert, onDelete }: TrialTableViewProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [commentsTrialId, setCommentsTrialId] = useState<string | null>(null);
+  const [commentsStudentName, setCommentsStudentName] = useState('');
 
+  const trialIds = students.map(s => s.trial_id);
+  const { data: commentCounts } = useTrialCommentsCounts(trialIds);
   const toggleExpand = (id: string) => {
     setExpandedIds(prev => {
       const next = new Set(prev);
