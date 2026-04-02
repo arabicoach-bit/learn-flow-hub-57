@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+
 import {
   Select,
   SelectContent,
@@ -50,9 +50,7 @@ export function EditTrialStudentDialog({ student, open, onOpenChange }: EditTria
     status: '' as TrialStatus | '',
     conversion_status: '' as TrialConversionStatus | '',
     trial_result: '' as TrialResult | '',
-    notes: '',
     handled_by: '',
-    follow_up_notes: '',
   });
 
   useEffect(() => {
@@ -73,9 +71,7 @@ export function EditTrialStudentDialog({ student, open, onOpenChange }: EditTria
         status: student.status || '',
         conversion_status: student.conversion_status || '',
         trial_result: student.trial_result || '',
-        notes: student.notes || '',
         handled_by: student.handled_by || '',
-        follow_up_notes: student.follow_up_notes || '',
       });
     }
   }, [student]);
@@ -101,9 +97,7 @@ export function EditTrialStudentDialog({ student, open, onOpenChange }: EditTria
         status: formData.status as TrialStatus || undefined,
         conversion_status: formData.conversion_status as TrialConversionStatus || undefined,
         trial_result: formData.trial_result as TrialResult || undefined,
-        notes: formData.notes || undefined,
         handled_by: formData.handled_by || undefined,
-        follow_up_notes: formData.follow_up_notes || undefined,
       });
 
       toast({
@@ -353,34 +347,6 @@ export function EditTrialStudentDialog({ student, open, onOpenChange }: EditTria
             </div>
           </div>
 
-          {/* Notes */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
-              Notes
-            </h3>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="notes">General Notes</Label>
-                <Textarea
-                  id="notes"
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  placeholder="Enter any notes about this trial student"
-                  rows={3}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="follow_up_notes">Follow-up Notes</Label>
-                <Textarea
-                  id="follow_up_notes"
-                  value={formData.follow_up_notes}
-                  onChange={(e) => setFormData({ ...formData, follow_up_notes: e.target.value })}
-                  placeholder="Notes for follow-up actions"
-                  rows={3}
-                />
-              </div>
-            </div>
-          </div>
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t">
