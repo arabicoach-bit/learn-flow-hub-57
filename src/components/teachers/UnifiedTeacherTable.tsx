@@ -332,6 +332,7 @@ export function UnifiedTeacherTable({
               <TableCell className="text-center text-emerald-600 dark:text-emerald-400">{formatSalary(totals.salary)}</TableCell>
               <TableCell className="text-center hidden md:table-cell text-amber-600 dark:text-amber-400">{formatSalary(totals.bonus)}</TableCell>
               <TableCell className="text-center text-primary">{formatSalary(totals.totalPay)}</TableCell>
+              <TableCell className="hidden lg:table-cell" />
               <TableCell />
             </TableRow>
           </TableFooter>
