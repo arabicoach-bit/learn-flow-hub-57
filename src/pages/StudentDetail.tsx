@@ -47,6 +47,7 @@ interface StudentPackagesTabProps {
   setRenewPackageId: (id: string | undefined) => void;
   setDeletePackageId: (id: string | null) => void;
   studentId: string;
+  studentName: string;
   teacherId: string;
 }
 
