@@ -534,7 +534,6 @@ export default function StudentDetail() {
               setRenewPackageId={setRenewPackageId}
               setDeletePackageId={setDeletePackageId}
               studentId={id!}
-              studentName={student.name}
               teacherId={student.teacher_id || ''}
             />
           </TabsContent>
