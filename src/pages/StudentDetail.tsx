@@ -49,7 +49,6 @@ interface StudentPackagesTabProps {
   setDeletePackageId: (id: string | null) => void;
   studentId: string;
   teacherId: string;
-  teacherId: string;
 }
 
 function StudentPackagesTab({
