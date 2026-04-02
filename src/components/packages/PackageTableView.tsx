@@ -163,9 +163,6 @@ export function PackageTableView({
                           )}
                         </Button>
                       </TableCell>
-                          {pkg.is_renewal ? 'Renewal' : 'New'}
-                        </Badge>
-                      </TableCell>
 
                       <TableCell className="py-2" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center gap-0.5">
