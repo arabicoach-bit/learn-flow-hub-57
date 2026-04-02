@@ -55,8 +55,9 @@ function StudentPackagesTab({
   packages, packagesLoading, packagesError, packagesFetching, refetchPackages,
   expandedPackageId, setExpandedPackageId,
   setIsAddPackageOpen, setIsRenewPackageOpen, setEditPackage, setRenewPackageId, setDeletePackageId,
-  studentId, teacherId,
+  studentId, studentName, teacherId,
 }: StudentPackagesTabProps) {
+  const [commentsOpen, setCommentsOpen] = React.useState(false);
   const [pkgSearch, setPkgSearch] = React.useState('');
   const [pkgStatusFilter, setPkgStatusFilter] = React.useState('all');
   const [pkgPaymentFilter, setPkgPaymentFilter] = React.useState('all');
