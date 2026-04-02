@@ -50,9 +50,7 @@ export function EditTrialStudentDialog({ student, open, onOpenChange }: EditTria
     status: '' as TrialStatus | '',
     conversion_status: '' as TrialConversionStatus | '',
     trial_result: '' as TrialResult | '',
-    notes: '',
     handled_by: '',
-    follow_up_notes: '',
   });
 
   useEffect(() => {
