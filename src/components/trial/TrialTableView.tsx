@@ -410,6 +410,15 @@ export function TrialTableView({ students, onUpdateStatus, onUpdateConversion, o
           </Table>
         </div>
       </CardContent>
+
+      {commentsTrialId && (
+        <TrialCommentsDialog
+          open={!!commentsTrialId}
+          onOpenChange={(open) => { if (!open) setCommentsTrialId(null); }}
+          trialId={commentsTrialId}
+          studentName={commentsStudentName}
+        />
+      )}
     </Card>
   );
 }
