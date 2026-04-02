@@ -347,34 +347,6 @@ export function EditTrialStudentDialog({ student, open, onOpenChange }: EditTria
             </div>
           </div>
 
-          {/* Notes */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
-              Notes
-            </h3>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="notes">General Notes</Label>
-                <Textarea
-                  id="notes"
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  placeholder="Enter any notes about this trial student"
-                  rows={3}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="follow_up_notes">Follow-up Notes</Label>
-                <Textarea
-                  id="follow_up_notes"
-                  value={formData.follow_up_notes}
-                  onChange={(e) => setFormData({ ...formData, follow_up_notes: e.target.value })}
-                  placeholder="Notes for follow-up actions"
-                  rows={3}
-                />
-              </div>
-            </div>
-          </div>
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t">
