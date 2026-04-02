@@ -5,7 +5,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
-import { ChevronRight, Pencil, Trash2, UserPlus, Phone, Calendar, GraduationCap, User, School, FileText, Clock } from 'lucide-react';
+import { ChevronRight, Pencil, Trash2, UserPlus, Phone, Calendar, GraduationCap, User, School, FileText, Clock, MessageSquareText } from 'lucide-react';
+import { useTrialCommentsCounts } from '@/hooks/use-trial-comments';
+import { TrialCommentsDialog } from '@/components/trial/TrialCommentsDialog';
 import { Card, CardContent } from '@/components/ui/card';
 import type { TrialStudent } from '@/hooks/use-trial-students';
 import type { Database } from '@/integrations/supabase/types';
@@ -71,7 +73,11 @@ function getRowHighlight(student: TrialStudent) {
 
 export function TrialTableView({ students, onUpdateStatus, onUpdateConversion, onUpdateResult, onUpdateFollowUp, onUpdateHandledBy, onEdit, onConvert, onDelete }: TrialTableViewProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [commentsTrialId, setCommentsTrialId] = useState<string | null>(null);
+  const [commentsStudentName, setCommentsStudentName] = useState('');
 
+  const trialIds = students.map(s => s.trial_id);
+  const { data: commentCounts } = useTrialCommentsCounts(trialIds);
   const toggleExpand = (id: string) => {
     setExpandedIds(prev => {
       const next = new Set(prev);
@@ -108,6 +114,9 @@ export function TrialTableView({ students, onUpdateStatus, onUpdateConversion, o
                 </TableHead>
                 <TableHead className="text-center border-r border-border/50">
                   <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Handled By</span>
+                </TableHead>
+                <TableHead className="text-center">
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Notes</span>
                 </TableHead>
                 <TableHead className="w-[90px]">Actions</TableHead>
               </TableRow>
@@ -250,6 +259,23 @@ export function TrialTableView({ students, onUpdateStatus, onUpdateConversion, o
                           </Select>
                         </TableCell>
 
+                        <TableCell className="text-center py-2" onClick={e => e.stopPropagation()}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 relative"
+                            onClick={() => { setCommentsTrialId(student.trial_id); setCommentsStudentName(student.name); }}
+                            title="Notes"
+                          >
+                            <MessageSquareText className="h-3.5 w-3.5 text-muted-foreground" />
+                            {(commentCounts?.[student.trial_id] ?? 0) > 0 && (
+                              <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[9px] rounded-full min-w-[14px] h-[14px] flex items-center justify-center font-medium">
+                                {commentCounts![student.trial_id]}
+                              </span>
+                            )}
+                          </Button>
+                        </TableCell>
+
                         <TableCell className="py-2" onClick={e => e.stopPropagation()}>
                           <div className="flex items-center gap-0.5">
                             {canConvert && (
@@ -269,7 +295,7 @@ export function TrialTableView({ students, onUpdateStatus, onUpdateConversion, o
 
                       {isExpanded && (
                         <tr className="bg-muted/20 border-b">
-                          <td colSpan={11} className="p-0">
+                          <td colSpan={12} className="p-0">
                             <CollapsibleContent forceMount className="px-6 py-4">
                               <div className="grid grid-cols-4 gap-6 text-sm">
                                 {/* Contact */}
@@ -384,6 +410,15 @@ export function TrialTableView({ students, onUpdateStatus, onUpdateConversion, o
           </Table>
         </div>
       </CardContent>
+
+      {commentsTrialId && (
+        <TrialCommentsDialog
+          open={!!commentsTrialId}
+          onOpenChange={(open) => { if (!open) setCommentsTrialId(null); }}
+          trialId={commentsTrialId}
+          studentName={commentsStudentName}
+        />
+      )}
     </Card>
   );
 }

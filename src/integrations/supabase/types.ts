@@ -865,6 +865,45 @@ export type Database = {
           },
         ]
       }
+      trial_comments: {
+        Row: {
+          author_id: string | null
+          comment: string
+          comment_id: string
+          created_at: string
+          trial_id: string
+        }
+        Insert: {
+          author_id?: string | null
+          comment: string
+          comment_id?: string
+          created_at?: string
+          trial_id: string
+        }
+        Update: {
+          author_id?: string | null
+          comment?: string
+          comment_id?: string
+          created_at?: string
+          trial_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trial_comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trial_comments_trial_id_fkey"
+            columns: ["trial_id"]
+            isOneToOne: false
+            referencedRelation: "trial_students"
+            referencedColumns: ["trial_id"]
+          },
+        ]
+      }
       trial_lessons_log: {
         Row: {
           admin_payment_amount: number | null
