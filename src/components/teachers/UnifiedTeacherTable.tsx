@@ -152,6 +152,7 @@ export function UnifiedTeacherTable({
               <SortableHead label="Salary" sortId="salary" className="text-center" />
               <TableHead className="text-center hidden md:table-cell">Bonus</TableHead>
               <SortableHead label="Total Pay" sortId="totalPay" className="text-center" />
+              <TableHead className="text-center hidden lg:table-cell">Last Login</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
