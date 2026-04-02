@@ -97,9 +97,7 @@ export function EditTrialStudentDialog({ student, open, onOpenChange }: EditTria
         status: formData.status as TrialStatus || undefined,
         conversion_status: formData.conversion_status as TrialConversionStatus || undefined,
         trial_result: formData.trial_result as TrialResult || undefined,
-        notes: formData.notes || undefined,
         handled_by: formData.handled_by || undefined,
-        follow_up_notes: formData.follow_up_notes || undefined,
       });
 
       toast({
