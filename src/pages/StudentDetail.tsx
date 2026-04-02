@@ -261,7 +261,7 @@ function StudentPackagesTab({
                           </TableCell>
                           <TableCell className="font-medium">{formatCurrency(pkg.amount)}</TableCell>
                           <TableCell onClick={(e) => e.stopPropagation()}>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 relative" onClick={() => setCommentsOpen(true)}>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 relative" onClick={() => setCommentsPackage({ id: pkg.package_id, label: pkg.package_types?.name || 'Package' })}>
                               <MessageSquareText className="h-3.5 w-3.5 text-muted-foreground" />
                             </Button>
                           </TableCell>
