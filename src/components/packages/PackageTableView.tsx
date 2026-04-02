@@ -34,7 +34,9 @@ export function PackageTableView({
   packages, batchStats, isLoading, onMarkPaid, onEdit, onViewSummary,
 }: PackageTableViewProps) {
   const navigate = useNavigate();
-
+  const studentIds = [...new Set(packages.map(p => p.student_id))];
+  const { data: commentCounts } = useStudentCommentsCounts(studentIds);
+  const [commentsStudent, setCommentsStudent] = useState<{ id: string; name: string } | null>(null);
   return (
     <Card>
       <CardContent className="p-0">
