@@ -189,12 +189,12 @@ export function PackageTableView({
         )}
       </CardContent>
     </Card>
-    {commentsStudent && (
-      <StudentCommentsDialog
-        open={!!commentsStudent}
-        onOpenChange={(open) => { if (!open) setCommentsStudent(null); }}
-        studentId={commentsStudent.id}
-        studentName={commentsStudent.name}
+    {commentsPackage && (
+      <PackageCommentsDialog
+        open={!!commentsPackage}
+        onOpenChange={(open) => { if (!open) setCommentsPackage(null); }}
+        packageId={commentsPackage.id}
+        packageLabel={commentsPackage.label}
       />
     )}
     </>
