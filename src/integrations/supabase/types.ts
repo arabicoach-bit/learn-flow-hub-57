@@ -220,6 +220,45 @@ export type Database = {
         }
         Relationships: []
       }
+      package_comments: {
+        Row: {
+          author_id: string | null
+          comment: string
+          comment_id: string
+          created_at: string
+          package_id: string
+        }
+        Insert: {
+          author_id?: string | null
+          comment: string
+          comment_id?: string
+          created_at?: string
+          package_id: string
+        }
+        Update: {
+          author_id?: string | null
+          comment?: string
+          comment_id?: string
+          created_at?: string
+          package_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "package_comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "package_comments_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "packages"
+            referencedColumns: ["package_id"]
+          },
+        ]
+      }
       package_types: {
         Row: {
           created_at: string | null
