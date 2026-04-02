@@ -10,8 +10,8 @@ import { CheckCircle, Pencil, FileText, Info, MessageSquareText } from 'lucide-r
 import { formatCurrency } from '@/lib/wallet-utils';
 import { WalletBadge } from '@/components/shared/WalletBadge';
 import { LessonsBadge } from '@/components/shared/LessonsBadge';
-import { useStudentCommentsCounts } from '@/hooks/use-student-comments';
-import { StudentCommentsDialog } from '@/components/students/StudentCommentsDialog';
+import { usePackageCommentsCounts } from '@/hooks/use-package-comments';
+import { PackageCommentsDialog } from '@/components/packages/PackageCommentsDialog';
 import type { Package } from '@/hooks/use-packages';
 import type { PackageBatchStats } from '@/hooks/use-packages-batch-stats';
 
@@ -34,9 +34,9 @@ export function PackageTableView({
   packages, batchStats, isLoading, onMarkPaid, onEdit, onViewSummary,
 }: PackageTableViewProps) {
   const navigate = useNavigate();
-  const studentIds = [...new Set(packages.map(p => p.student_id))];
-  const { data: commentCounts } = useStudentCommentsCounts(studentIds);
-  const [commentsStudent, setCommentsStudent] = useState<{ id: string; name: string } | null>(null);
+  const packageIds = packages.map(p => p.package_id);
+  const { data: commentCounts } = usePackageCommentsCounts(packageIds);
+  const [commentsPackage, setCommentsPackage] = useState<{ id: string; label: string } | null>(null);
   return (
     <>
     <Card>
@@ -154,12 +154,12 @@ export function PackageTableView({
                           variant="ghost"
                           size="icon"
                           className="h-7 w-7 relative"
-                          onClick={() => setCommentsStudent({ id: pkg.student_id, name: pkg.students?.name || 'Unknown' })}
+                          onClick={() => setCommentsPackage({ id: pkg.package_id, label: pkg.students?.name || 'Package' })}
                         >
                           <MessageSquareText className="h-3.5 w-3.5 text-muted-foreground" />
-                          {(commentCounts?.[pkg.student_id] ?? 0) > 0 && (
+                          {(commentCounts?.[pkg.package_id] ?? 0) > 0 && (
                             <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center px-0.5">
-                              {commentCounts![pkg.student_id]}
+                              {commentCounts![pkg.package_id]}
                             </span>
                           )}
                         </Button>
@@ -189,12 +189,12 @@ export function PackageTableView({
         )}
       </CardContent>
     </Card>
-    {commentsStudent && (
-      <StudentCommentsDialog
-        open={!!commentsStudent}
-        onOpenChange={(open) => { if (!open) setCommentsStudent(null); }}
-        studentId={commentsStudent.id}
-        studentName={commentsStudent.name}
+    {commentsPackage && (
+      <PackageCommentsDialog
+        open={!!commentsPackage}
+        onOpenChange={(open) => { if (!open) setCommentsPackage(null); }}
+        packageId={commentsPackage.id}
+        packageLabel={commentsPackage.label}
       />
     )}
     </>

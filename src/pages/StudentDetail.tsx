@@ -22,7 +22,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { ArrowLeft, User, Wallet, CreditCard, BookOpen, Loader2, Plus, RefreshCw, Pencil, ChevronDown, ChevronRight, Trash2, ArrowRightLeft, MessageSquareText } from 'lucide-react';
-import { StudentCommentsDialog } from '@/components/students/StudentCommentsDialog';
+import { PackageCommentsDialog } from '@/components/packages/PackageCommentsDialog';
 import { getWalletColor, getStatusBadgeClass, formatCurrency, formatDate, formatDateTime, getStatusDisplayLabel } from '@/lib/wallet-utils';
 import { StudentLessonsView } from '@/components/student/StudentLessonsView';
 import { StudentInfoView } from '@/components/student/StudentInfoView';
@@ -48,7 +48,6 @@ interface StudentPackagesTabProps {
   setRenewPackageId: (id: string | undefined) => void;
   setDeletePackageId: (id: string | null) => void;
   studentId: string;
-  studentName: string;
   teacherId: string;
 }
 
@@ -56,9 +55,9 @@ function StudentPackagesTab({
   packages, packagesLoading, packagesError, packagesFetching, refetchPackages,
   expandedPackageId, setExpandedPackageId,
   setIsAddPackageOpen, setIsRenewPackageOpen, setEditPackage, setRenewPackageId, setDeletePackageId,
-  studentId, studentName, teacherId,
+  studentId, teacherId,
 }: StudentPackagesTabProps) {
-  const [commentsOpen, setCommentsOpen] = React.useState(false);
+  const [commentsPackage, setCommentsPackage] = React.useState<{ id: string; label: string } | null>(null);
   const [pkgSearch, setPkgSearch] = React.useState('');
   const [pkgStatusFilter, setPkgStatusFilter] = React.useState('all');
   const [pkgPaymentFilter, setPkgPaymentFilter] = React.useState('all');
@@ -261,7 +260,7 @@ function StudentPackagesTab({
                           </TableCell>
                           <TableCell className="font-medium">{formatCurrency(pkg.amount)}</TableCell>
                           <TableCell onClick={(e) => e.stopPropagation()}>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 relative" onClick={() => setCommentsOpen(true)}>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 relative" onClick={() => setCommentsPackage({ id: pkg.package_id, label: pkg.package_types?.name || 'Package' })}>
                               <MessageSquareText className="h-3.5 w-3.5 text-muted-foreground" />
                             </Button>
                           </TableCell>
@@ -290,12 +289,14 @@ function StudentPackagesTab({
           )}
         </CardContent>
       </Card>
-      <StudentCommentsDialog
-        open={commentsOpen}
-        onOpenChange={setCommentsOpen}
-        studentId={studentId}
-        studentName={studentName}
-      />
+      {commentsPackage && (
+        <PackageCommentsDialog
+          open={!!commentsPackage}
+          onOpenChange={(open) => { if (!open) setCommentsPackage(null); }}
+          packageId={commentsPackage.id}
+          packageLabel={commentsPackage.label}
+        />
+      )}
     </div>
   );
 }
@@ -533,7 +534,6 @@ export default function StudentDetail() {
               setRenewPackageId={setRenewPackageId}
               setDeletePackageId={setDeletePackageId}
               studentId={id!}
-              studentName={student.name}
               teacherId={student.teacher_id || ''}
             />
           </TabsContent>
