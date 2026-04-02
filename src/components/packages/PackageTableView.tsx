@@ -38,6 +38,7 @@ export function PackageTableView({
   const { data: commentCounts } = useStudentCommentsCounts(studentIds);
   const [commentsStudent, setCommentsStudent] = useState<{ id: string; name: string } | null>(null);
   return (
+    <>
     <Card>
       <CardContent className="p-0">
         {isLoading ? (
