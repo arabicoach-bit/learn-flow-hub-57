@@ -47,7 +47,7 @@ export default function Teachers() {
 
   // Form states
   const [formData, setFormData] = useState({ name: '', phone: '', email: '', rate_per_lesson: '' });
-  const [editFormData, setEditFormData] = useState({ name: '', phone: '', rate_per_lesson: '' });
+  const [editFormData, setEditFormData] = useState({ name: '', phone: '', email: '', rate_per_lesson: '' });
   const [tempPasswordInfo, setTempPasswordInfo] = useState<{ email: string; password: string } | null>(null);
 
   // Teacher IDs for payroll
