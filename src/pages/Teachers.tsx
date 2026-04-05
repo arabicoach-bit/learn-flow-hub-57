@@ -47,7 +47,7 @@ export default function Teachers() {
 
   // Form states
   const [formData, setFormData] = useState({ name: '', phone: '', email: '', rate_per_lesson: '' });
-  const [editFormData, setEditFormData] = useState({ name: '', phone: '', rate_per_lesson: '' });
+  const [editFormData, setEditFormData] = useState({ name: '', phone: '', email: '', rate_per_lesson: '' });
   const [tempPasswordInfo, setTempPasswordInfo] = useState<{ email: string; password: string } | null>(null);
 
   // Teacher IDs for payroll
@@ -254,6 +254,7 @@ export default function Teachers() {
         teacherId: selectedTeacher.teacher_id,
         name: editFormData.name,
         phone: editFormData.phone || undefined,
+        email: editFormData.email || undefined,
         rate_per_lesson: parseFloat(editFormData.rate_per_lesson),
       });
       toast({ title: 'Teacher updated successfully!' });
@@ -329,7 +330,7 @@ export default function Teachers() {
 
   const openEditDialog = (teacher: Teacher) => {
     setSelectedTeacher(teacher);
-    setEditFormData({ name: teacher.name, phone: teacher.phone || '', rate_per_lesson: teacher.rate_per_lesson.toString() });
+    setEditFormData({ name: teacher.name, phone: teacher.phone || '', email: teacher.email || '', rate_per_lesson: teacher.rate_per_lesson.toString() });
     setIsEditDialogOpen(true);
   };
 
@@ -466,6 +467,10 @@ export default function Teachers() {
             <div className="space-y-2">
               <Label htmlFor="edit-name">Full Name *</Label>
               <Input id="edit-name" value={editFormData.name} onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })} required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-email">Email</Label>
+              <Input id="edit-email" type="email" value={editFormData.email} onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-phone">Phone</Label>

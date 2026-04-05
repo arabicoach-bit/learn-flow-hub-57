@@ -87,6 +87,14 @@ export function useUpdateTeacher() {
         .eq('teacher_id', teacherId);
 
       if (error) throw error;
+
+      // Sync email to profiles table if email was updated
+      if (data.email !== undefined) {
+        await supabase
+          .from('profiles')
+          .update({ email: data.email })
+          .eq('teacher_id', teacherId);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teachers'] });
