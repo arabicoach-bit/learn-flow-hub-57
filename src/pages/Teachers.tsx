@@ -330,7 +330,7 @@ export default function Teachers() {
 
   const openEditDialog = (teacher: Teacher) => {
     setSelectedTeacher(teacher);
-    setEditFormData({ name: teacher.name, phone: teacher.phone || '', rate_per_lesson: teacher.rate_per_lesson.toString() });
+    setEditFormData({ name: teacher.name, phone: teacher.phone || '', email: teacher.email || '', rate_per_lesson: teacher.rate_per_lesson.toString() });
     setIsEditDialogOpen(true);
   };
 
