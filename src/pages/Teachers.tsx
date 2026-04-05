@@ -254,6 +254,7 @@ export default function Teachers() {
         teacherId: selectedTeacher.teacher_id,
         name: editFormData.name,
         phone: editFormData.phone || undefined,
+        email: editFormData.email || undefined,
         rate_per_lesson: parseFloat(editFormData.rate_per_lesson),
       });
       toast({ title: 'Teacher updated successfully!' });
