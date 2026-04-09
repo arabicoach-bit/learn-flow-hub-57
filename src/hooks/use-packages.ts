@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { logAdminAction } from '@/hooks/use-audit-log';
 
 export interface AddPackageResult {
   success: boolean;
@@ -91,7 +92,14 @@ export function useAddPackage() {
       });
 
       if (error) throw error;
-      return data as unknown as AddPackageResult;
+      const result = data as unknown as AddPackageResult;
+      logAdminAction({
+        action: 'package_created',
+        entityType: 'package',
+        entityId: result.package_id,
+        details: { student_id: input.student_id, amount: input.amount, lessons: input.lessons_purchased },
+      });
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['packages'] });
@@ -164,6 +172,13 @@ export function useDeletePackage() {
 
       // Recalculate wallet from DB (single source of truth)
       await supabase.rpc('recalculate_student_wallet', { p_student_id: studentId });
+
+      logAdminAction({
+        action: 'package_deleted',
+        entityType: 'package',
+        entityId: packageId,
+        details: { student_id: studentId, lessons_remaining: lessonsRemaining },
+      });
 
       return { packageId, lessonsRemaining };
     },
