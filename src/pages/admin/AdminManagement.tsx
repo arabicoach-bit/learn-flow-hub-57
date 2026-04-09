@@ -46,7 +46,15 @@ export default function AdminManagement() {
         body: { name: name.trim(), email: email.trim() },
       });
 
-      if (error) throw error;
+      if (error) {
+        // Parse the error context for a user-friendly message
+        const ctx = (error as any)?.context;
+        if (ctx && typeof ctx.json === 'function') {
+          const body = await ctx.json();
+          throw new Error(body?.error || 'Failed to create admin');
+        }
+        throw new Error(typeof error === 'string' ? error : (error as any)?.message || 'Failed to create admin');
+      }
       if (data?.error) throw new Error(data.error);
 
       setTempPassword(data.temp_password);
