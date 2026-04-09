@@ -27,6 +27,8 @@ import Leads from "./pages/Leads";
 import Packages from "./pages/admin/Packages";
 // AdminPayroll merged into Teachers page
 import QuarterAnalysis from "./pages/admin/QuarterAnalysis";
+import ActivityLog from "./pages/admin/ActivityLog";
+import AdminManagement from "./pages/admin/AdminManagement";
 
 // Teacher pages
 import TeacherSchedule from "./pages/teacher/TeacherSchedule";
@@ -81,6 +83,8 @@ const AppRoutes = () => (
     <Route path="/admin/packages" element={<ProtectedRoute allowedRoles={['admin']}><Packages /></ProtectedRoute>} />
     <Route path="/admin/payroll" element={<Navigate to="/admin/teachers" replace />} />
     <Route path="/admin/quarter-analysis" element={<ProtectedRoute allowedRoles={['admin']}><QuarterAnalysis /></ProtectedRoute>} />
+    <Route path="/admin/activity-log" element={<ProtectedRoute allowedRoles={['admin']}><ActivityLog /></ProtectedRoute>} />
+    <Route path="/admin/admin-management" element={<ProtectedRoute allowedRoles={['admin']}><AdminManagement /></ProtectedRoute>} />
     
     {/* Teacher routes */}
     <Route path="/teacher" element={<Navigate to="/teacher/schedule" replace />} />
