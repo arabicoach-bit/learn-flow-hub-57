@@ -68,8 +68,8 @@ serve(async (req: Request) => {
 
       if (!name || !normalizedEmail) {
         return new Response(
-          JSON.stringify({ error: 'Name and email are required' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          JSON.stringify({ success: false, error: 'Name and email are required' }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
@@ -82,8 +82,8 @@ serve(async (req: Request) => {
 
       if (existing && existing.length > 0) {
         return new Response(
-          JSON.stringify({ error: 'An account with this email already exists' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          JSON.stringify({ success: false, error: 'An account with this email already exists' }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
@@ -99,8 +99,8 @@ serve(async (req: Request) => {
 
       if (authUserError) {
         return new Response(
-          JSON.stringify({ error: 'Failed to create admin user: ' + authUserError.message }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          JSON.stringify({ success: false, error: 'Failed to create admin user: ' + authUserError.message }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
@@ -169,8 +169,8 @@ serve(async (req: Request) => {
 
       if (user_id === currentUser.id) {
         return new Response(
-          JSON.stringify({ error: 'Cannot delete your own account' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          JSON.stringify({ success: false, error: 'Cannot delete your own account' }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
@@ -205,8 +205,8 @@ serve(async (req: Request) => {
 
       if (updateError) {
         return new Response(
-          JSON.stringify({ error: 'Failed to reset password: ' + updateError.message }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          JSON.stringify({ success: false, error: 'Failed to reset password: ' + updateError.message }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
