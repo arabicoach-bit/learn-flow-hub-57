@@ -17,24 +17,33 @@ export type Database = {
       audit_logs: {
         Row: {
           action: string
+          admin_name: string | null
           created_at: string | null
           details: Json | null
+          entity_id: string | null
+          entity_type: string | null
           log_id: string
           performed_by: string | null
           target_user: string | null
         }
         Insert: {
           action: string
+          admin_name?: string | null
           created_at?: string | null
           details?: Json | null
+          entity_id?: string | null
+          entity_type?: string | null
           log_id?: string
           performed_by?: string | null
           target_user?: string | null
         }
         Update: {
           action?: string
+          admin_name?: string | null
           created_at?: string | null
           details?: Json | null
+          entity_id?: string | null
+          entity_type?: string | null
           log_id?: string
           performed_by?: string | null
           target_user?: string | null
