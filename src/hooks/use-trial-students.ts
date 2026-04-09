@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { invalidateAllTrialCaches } from '@/lib/trial-cache-utils';
+import { logAdminAction } from '@/hooks/use-audit-log';
 import type { Database } from '@/integrations/supabase/types';
 
 type TrialStatus = Database['public']['Enums']['trial_status'];
@@ -203,6 +204,13 @@ export function useCreateTrialStudent() {
         }
       }
 
+      logAdminAction({
+        action: 'trial_created',
+        entityType: 'trial',
+        entityId: data.trial_id,
+        details: { name: input.name, phone: input.phone, teacher_id: input.teacher_id },
+      });
+
       return data;
     },
     onSuccess: () => {
@@ -222,6 +230,13 @@ export function useUpdateTrialStudent() {
         .eq('trial_id', trial_id);
 
       if (error) throw error;
+
+      logAdminAction({
+        action: data.status ? 'trial_status_changed' : 'trial_updated',
+        entityType: 'trial',
+        entityId: trial_id,
+        details: data,
+      });
 
       // DB triggers now handle syncing status, teacher_id, date/time to trial_lessons_log
       // We only need to handle the case where a trial_lessons_log entry doesn't exist yet
@@ -295,6 +310,12 @@ export function useDeleteTrialStudent() {
         .eq('trial_id', trialId);
 
       if (error) throw error;
+
+      logAdminAction({
+        action: 'trial_deleted',
+        entityType: 'trial',
+        entityId: trialId,
+      });
     },
     onSuccess: () => {
       invalidateAllTrialCaches(queryClient);

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { logAdminAction } from '@/hooks/use-audit-log';
 
 export interface Lead {
   lead_id: string;
@@ -123,6 +124,12 @@ export function useCreateLead() {
         .single();
 
       if (error) throw error;
+      logAdminAction({
+        action: 'lead_created',
+        entityType: 'lead',
+        entityId: data.lead_id,
+        details: { name: input.name, phone: input.phone, source: input.source },
+      });
       return data;
     },
     onSuccess: () => {
@@ -158,6 +165,13 @@ export function useUpdateLead() {
         .eq('lead_id', leadId);
 
       if (error) throw error;
+
+      logAdminAction({
+        action: data.status ? 'lead_status_changed' : 'lead_updated',
+        entityType: 'lead',
+        entityId: leadId,
+        details: data,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
@@ -177,6 +191,12 @@ export function useDeleteLead() {
         .eq('lead_id', leadId);
 
       if (error) throw error;
+
+      logAdminAction({
+        action: 'lead_deleted',
+        entityType: 'lead',
+        entityId: leadId,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });

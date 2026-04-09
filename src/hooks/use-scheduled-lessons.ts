@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { logAdminAction } from '@/hooks/use-audit-log';
 
 export interface ScheduledLesson {
   scheduled_lesson_id: string;
@@ -144,6 +145,13 @@ export function useMarkScheduledLesson() {
       });
 
       if (rpcError) throw rpcError;
+
+      logAdminAction({
+        action: 'lesson_status_changed',
+        entityType: 'lesson',
+        entityId: scheduledLessonId,
+        details: { status, student_id: lesson.student_id, teacher_id: lesson.teacher_id, notes },
+      });
 
       return result;
     },

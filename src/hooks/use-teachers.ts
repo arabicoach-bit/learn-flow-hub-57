@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { logAdminAction } from '@/hooks/use-audit-log';
 
 export interface Teacher {
   teacher_id: string;
@@ -95,6 +96,13 @@ export function useUpdateTeacher() {
           .update({ email: data.email })
           .eq('teacher_id', teacherId);
       }
+
+      logAdminAction({
+        action: 'teacher_updated',
+        entityType: 'teacher',
+        entityId: teacherId,
+        details: data,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teachers'] });
