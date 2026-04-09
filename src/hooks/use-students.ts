@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { logAdminAction } from '@/hooks/use-audit-log';
 
 export interface Student {
   student_id: string;
@@ -117,6 +118,14 @@ export function useCreateStudent() {
 
       if (studentError) throw studentError;
 
+      // Audit log
+      logAdminAction({
+        action: 'student_created',
+        entityType: 'student',
+        entityId: student.student_id,
+        details: { name: input.name, phone: input.phone, teacher_id: input.teacher_id },
+      });
+
       if (input.initial_lessons && input.initial_lessons > 0 && input.initial_amount) {
         const { data: packageData, error: packageError } = await supabase
           .from('packages')
@@ -138,6 +147,13 @@ export function useCreateStudent() {
             total_paid: input.initial_amount 
           })
           .eq('student_id', student.student_id);
+
+        logAdminAction({
+          action: 'package_created',
+          entityType: 'package',
+          entityId: packageData.package_id,
+          details: { student_name: input.name, amount: input.initial_amount, lessons: input.initial_lessons },
+        });
       }
 
       return student;
@@ -175,6 +191,13 @@ export function useUpdateStudent() {
         .eq('student_id', studentId);
 
       if (error) throw error;
+
+      logAdminAction({
+        action: data.status ? 'student_status_changed' : 'student_updated',
+        entityType: 'student',
+        entityId: studentId,
+        details: data,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['students'] });
@@ -199,6 +222,12 @@ export function useDeleteStudent() {
         .eq('student_id', studentId);
 
       if (error) throw error;
+
+      logAdminAction({
+        action: 'student_deleted',
+        entityType: 'student',
+        entityId: studentId,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['students'] });
