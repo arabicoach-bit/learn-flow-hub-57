@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Download, Users, Plus, Loader2 } from 'lucide-react';
 import { getCurrentQuarter, getQuarterDateRange, type QuarterFilterValue } from '@/components/shared/QuarterFilter';
 import { AdminLayout } from '@/components/layout/AdminLayout';
@@ -15,6 +15,7 @@ import { type LeadSortOption } from '@/components/leads/LeadFiltersBar';
 import { AddLeadForm } from '@/components/leads/AddLeadForm';
 import { ConvertLeadToTrialDialog } from '@/components/leads/ConvertLeadToTrialDialog';
 import { exportLeads, type LeadExport } from '@/lib/excel-export';
+import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog';
 
 export default function Leads() {
   const [search, setSearch] = useState('');
@@ -26,6 +27,7 @@ export default function Leads() {
   const [convertingLead, setConvertingLead] = useState<Lead | null>(null);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const [sortBy, setSortBy] = useState<LeadSortOption>('newest');
+  const [deleteLeadId, setDeleteLeadId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const { startDate: filterStart, endDate: filterEnd } = getQuarterDateRange(quarterFilter);
@@ -62,15 +64,18 @@ export default function Leads() {
     });
   }, [leads, leadStatusFilter, followUpFilter, sortBy]);
 
-  const handleDeleteLead = async (leadId: string) => {
-    if (!window.confirm('Are you sure you want to delete this lead?')) return;
+  const handleDeleteLead = async () => {
+    if (!deleteLeadId) return;
     try {
-      await deleteLead.mutateAsync(leadId);
+      await deleteLead.mutateAsync(deleteLeadId);
       toast({ title: 'Deleted', description: 'Lead deleted successfully.' });
+      setDeleteLeadId(null);
     } catch {
       toast({ title: 'Error', description: 'Failed to delete lead.', variant: 'destructive' });
     }
   };
+
+  const deleteLeadName = leads?.find(l => l.lead_id === deleteLeadId)?.name;
 
   const handleUpdateLeadStatus = async (leadId: string, status: string) => {
     try {
