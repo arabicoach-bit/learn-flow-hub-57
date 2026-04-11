@@ -2,11 +2,17 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
 
-const ACTIVE_TYPES = ['lesson_completed', 'trial_completed', 'new_package'] as const;
+const ACTIVE_TYPES = [
+  'lesson_completed', 'trial_completed', 'new_package',
+  'low_balance', 'grace_mode', 'blocked', 'renewal_due',
+  'followup_due', 'unmarked_lesson_reminder', 'daily_summary',
+] as const;
+
+export type NotificationType = typeof ACTIVE_TYPES[number];
 
 export interface Notification {
   notification_id: string;
-  type: 'lesson_completed' | 'trial_completed' | 'new_package';
+  type: NotificationType;
   related_id: string | null;
   message: string;
   is_read: boolean;
