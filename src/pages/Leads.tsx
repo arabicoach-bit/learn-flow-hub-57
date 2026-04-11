@@ -193,7 +193,7 @@ export default function Leads() {
                   onUpdateTrialStatus={handleUpdateTrialStatus}
                   onUpdateFollowUp={handleUpdateFollowUp}
                   onEdit={setEditingLead}
-                  onDelete={handleDeleteLead}
+                  onDelete={(leadId) => setDeleteLeadId(leadId)}
                   onConvertToTrial={setConvertingLead}
                 />
               ))}
@@ -206,7 +206,7 @@ export default function Leads() {
               onUpdateFollowUp={handleUpdateFollowUp}
               onUpdateHandledBy={handleUpdateHandledBy}
               onEdit={setEditingLead}
-              onDelete={handleDeleteLead}
+              onDelete={(leadId) => setDeleteLeadId(leadId)}
               onConvertToTrial={setConvertingLead}
             />
           )
@@ -229,6 +229,14 @@ export default function Leads() {
         <ConvertLeadToTrialDialog
           lead={convertingLead} open={!!convertingLead}
           onOpenChange={(open) => !open && setConvertingLead(null)}
+        />
+        <DeleteConfirmDialog
+          open={!!deleteLeadId}
+          onOpenChange={(open) => !open && setDeleteLeadId(null)}
+          onConfirm={handleDeleteLead}
+          title="Delete Lead"
+          entityName={deleteLeadName}
+          description="This will permanently remove this lead and all associated data."
         />
       </div>
     </AdminLayout>

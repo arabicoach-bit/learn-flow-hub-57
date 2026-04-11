@@ -16,6 +16,7 @@ import { type TrialSortOption } from '@/components/trial/TrialFiltersBar';
 import { EditTrialStudentDialog } from '@/components/trial/EditTrialStudentDialog';
 import { ConvertToStudentDialog } from '@/components/trial/ConvertToStudentDialog';
 import { useToast } from '@/hooks/use-toast';
+import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog';
 import { exportTrialStudents, type TrialStudentExport } from '@/lib/excel-export';
 import { getCurrentQuarter, getQuarterDateRange, type QuarterFilterValue } from '@/components/shared/QuarterFilter';
 import type { Database } from '@/integrations/supabase/types';
@@ -157,15 +158,18 @@ export default function TrialStudents() {
     }
   };
 
-  const handleDelete = async (trialId: string) => {
-    if (!window.confirm('Are you sure you want to delete this trial student and all associated lesson records?')) return;
+  const [deleteTrialId, setDeleteTrialId] = useState<string | null>(null);
+  const handleDelete = async () => {
+    if (!deleteTrialId) return;
     try {
-      await deleteTrialStudent.mutateAsync(trialId);
+      await deleteTrialStudent.mutateAsync(deleteTrialId);
       toast({ title: 'Deleted', description: 'Trial student deleted.' });
+      setDeleteTrialId(null);
     } catch {
       toast({ title: 'Error', description: 'Failed to delete.', variant: 'destructive' });
     }
   };
+  const deleteTrialName = trialStudents?.find(s => s.trial_id === deleteTrialId)?.name;
 
   const handleExport = () => {
     if (!filteredStudents.length) {
