@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { logPackageActivity } from '@/lib/activity-logger';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -72,6 +73,9 @@ export function EditPackageDialog({ package_, open, onOpenChange, onSuccess }: E
         .eq('package_id', package_.package_id);
       
       if (error) throw error;
+
+      logPackageActivity(package_.package_id, 'Package edited',
+        `Amount: AED ${data.amount}\nPayment: ${data.payment_status}\nDuration: ${data.lesson_duration || '-'} min`);
 
       // Recalculate wallet + package status after any package edit
       await supabase.rpc('recalculate_student_wallet', { p_student_id: package_.student_id });

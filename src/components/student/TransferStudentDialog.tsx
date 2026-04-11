@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useTeachers } from '@/hooks/use-teachers';
 import { supabase } from '@/integrations/supabase/client';
+import { logStudentActivity } from '@/lib/activity-logger';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { ArrowRight, AlertTriangle, Loader2 } from 'lucide-react';
@@ -61,6 +62,9 @@ export function TransferStudentDialog({
       if (!result.success) {
         throw new Error(result.error || 'Transfer failed');
       }
+
+      logStudentActivity(studentId, 'Student transferred',
+        `From: ${result.from_teacher}\nTo: ${result.to_teacher}\nLessons moved: ${result.lessons_moved}${notes ? '\nNotes: ' + notes : ''}`);
 
       toast.success(
         `${studentName} transferred to ${result.to_teacher}. ${result.lessons_moved} future lessons reassigned.`

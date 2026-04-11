@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useUpdateTrialStudent, type TrialStudent } from '@/hooks/use-trial-students';
+import { logTrialActivity } from '@/lib/activity-logger';
 import { useTeachers } from '@/hooks/use-teachers';
 import { usePrograms } from '@/hooks/use-programs';
 import { useToast } from '@/hooks/use-toast';
@@ -99,6 +100,9 @@ export function EditTrialStudentDialog({ student, open, onOpenChange }: EditTria
         trial_result: formData.trial_result as TrialResult || undefined,
         handled_by: formData.handled_by || undefined,
       });
+
+      logTrialActivity(student.trial_id, 'Trial student details edited',
+        `Name: ${formData.name}\nTeacher: ${formData.teacher_id ? 'Changed' : 'N/A'}\nDate: ${formData.trial_date || '-'}`);
 
       toast({
         title: 'Trial student updated',

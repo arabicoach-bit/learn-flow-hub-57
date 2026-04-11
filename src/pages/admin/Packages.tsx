@@ -24,6 +24,7 @@ import { getCurrentQuarter, getQuarterDateRange, type QuarterFilterValue } from 
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { logPackageActivity } from '@/lib/activity-logger';
 import { useSearchParamState } from '@/hooks/use-search-param-state';
 
 type StatusFilter = 'all' | 'Active' | 'Completed';
@@ -168,6 +169,8 @@ export default function Packages() {
         .eq('package_id', markPaidPkg.package_id);
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ['packages'] });
+      logPackageActivity(markPaidPkg.package_id, 'Payment marked as Paid',
+        `Student: ${markPaidPkg.students?.name}\nAmount: AED ${markPaidPkg.amount}`);
       toast.success(`Marked as Paid for ${markPaidPkg.students?.name}`);
       setMarkPaidPkg(null);
     } catch (error: any) {
@@ -190,6 +193,8 @@ export default function Packages() {
         .eq('package_id', editingPkg.package_id);
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ['packages'] });
+      logPackageActivity(editingPkg.package_id, 'Payment details updated',
+        `Status: ${editPaymentStatus}\nAmount: AED ${editAmount}`);
       toast.success('Payment updated!');
       setIsEditPaymentOpen(false);
     } catch (error: any) {

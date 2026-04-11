@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { logAdminAction } from '@/hooks/use-audit-log';
+import { logPackageActivity, logStudentActivity } from '@/lib/activity-logger';
 
 export interface AddPackageResult {
   success: boolean;
@@ -99,6 +100,10 @@ export function useAddPackage() {
         entityId: result.package_id,
         details: { student_id: input.student_id, amount: input.amount, lessons: input.lessons_purchased },
       });
+      logPackageActivity(result.package_id, 'Package created',
+        `Lessons: ${input.lessons_purchased}\nAmount: AED ${input.amount}\nWallet: ${result.old_wallet} → ${result.new_wallet}`);
+      logStudentActivity(input.student_id, 'New package added',
+        `${input.lessons_purchased} lessons – AED ${input.amount}`);
       return result;
     },
     onSuccess: () => {
