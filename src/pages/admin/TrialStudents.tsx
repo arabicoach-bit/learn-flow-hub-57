@@ -224,7 +224,7 @@ export default function TrialStudents() {
           onUpdateHandledBy={handleUpdateHandledBy}
           onEdit={setEditingStudent}
           onConvert={setConvertingStudent}
-          onDelete={handleDelete}
+           onDelete={(trialId) => setDeleteTrialId(trialId)}
         />
       );
     }
@@ -240,7 +240,7 @@ export default function TrialStudents() {
             onUpdateResult={handleUpdateResult}
             onEdit={setEditingStudent}
             onConvert={setConvertingStudent}
-            onDelete={handleDelete}
+            onDelete={(trialId) => setDeleteTrialId(trialId)}
           />
         ))}
       </div>
@@ -309,6 +309,14 @@ export default function TrialStudents() {
         <AddTrialStudentForm open={isAddFormOpen} onOpenChange={setIsAddFormOpen} />
         <EditTrialStudentDialog student={editingStudent} open={!!editingStudent} onOpenChange={(open) => !open && setEditingStudent(null)} />
         <ConvertToStudentDialog trialStudent={convertingStudent} open={!!convertingStudent} onOpenChange={(open) => !open && setConvertingStudent(null)} onSuccess={() => refetch()} />
+        <DeleteConfirmDialog
+          open={!!deleteTrialId}
+          onOpenChange={(open) => !open && setDeleteTrialId(null)}
+          onConfirm={handleDelete}
+          title="Delete Trial Student"
+          entityName={deleteTrialName}
+          description="This will permanently remove this trial student and all associated lesson records."
+        />
       </div>
     </AdminLayout>
   );
