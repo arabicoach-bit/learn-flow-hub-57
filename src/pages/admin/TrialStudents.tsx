@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Users, Loader2, Download } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useTrialStudents, useUpdateTrialStudent, useDeleteTrialStudent, type TrialStudent } from '@/hooks/use-trial-students';
+import { logTrialActivity } from '@/lib/activity-logger';
 import { useTeachers } from '@/hooks/use-teachers';
 import { AddTrialStudentForm } from '@/components/trial/AddTrialStudentForm';
 import { TrialStudentCard } from '@/components/trial/TrialStudentCard';
@@ -111,6 +112,7 @@ export default function TrialStudents() {
   const handleUpdateStatus = async (trialId: string, status: TrialStatus) => {
     try {
       await updateTrialStudent.mutateAsync({ trial_id: trialId, status });
+      logTrialActivity(trialId, `Attendance status changed to ${status}`);
       toast({ title: 'Status updated', description: `Marked as ${status}.` });
     } catch {
       toast({ title: 'Error', description: 'Failed to update status.', variant: 'destructive' });
@@ -120,6 +122,7 @@ export default function TrialStudents() {
   const handleUpdateResult = async (trialId: string, result: TrialResult) => {
     try {
       await updateTrialStudent.mutateAsync({ trial_id: trialId, trial_result: result });
+      logTrialActivity(trialId, `Trial result set to ${result}`);
       toast({ title: 'Result updated', description: `Set to ${result}.` });
     } catch {
       toast({ title: 'Error', description: 'Failed to update result.', variant: 'destructive' });
@@ -129,6 +132,7 @@ export default function TrialStudents() {
   const handleUpdateConversion = async (trialId: string, conversion: TrialConversionStatus) => {
     try {
       await updateTrialStudent.mutateAsync({ trial_id: trialId, conversion_status: conversion } as any);
+      logTrialActivity(trialId, `Conversion status changed to ${conversion}`);
       toast({ title: 'Conversion updated', description: `Set to ${conversion}.` });
     } catch {
       toast({ title: 'Error', description: 'Failed to update conversion.', variant: 'destructive' });
@@ -143,6 +147,7 @@ export default function TrialStudents() {
         follow_up: followUp || undefined,
         last_contact_date: followUp ? today : undefined,
       } as any);
+      logTrialActivity(trialId, followUp ? `Follow-up set to "${followUp}"` : 'Follow-up cleared');
       toast({ title: 'Follow-up updated', description: followUp ? `Follow-up set to ${followUp}.` : 'Follow-up cleared.' });
     } catch {
       toast({ title: 'Error', description: 'Failed to update follow-up.', variant: 'destructive' });
@@ -152,6 +157,7 @@ export default function TrialStudents() {
   const handleUpdateHandledBy = async (trialId: string, handledBy: string) => {
     try {
       await updateTrialStudent.mutateAsync({ trial_id: trialId, handled_by: handledBy || undefined });
+      logTrialActivity(trialId, handledBy ? `Handled by set to "${handledBy}"` : 'Handled by cleared');
       toast({ title: 'Updated', description: handledBy ? `Handled by set to ${handledBy}.` : 'Handled by cleared.' });
     } catch {
       toast({ title: 'Error', description: 'Failed to update.', variant: 'destructive' });
