@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Package as PackageIcon, FileSpreadsheet } from 'lucide-react';
+import { Package as PackageIcon, FileSpreadsheet, CheckCircle } from 'lucide-react';
 import { usePackages, type Package } from '@/hooks/use-packages';
 import { usePackageSummary } from '@/hooks/use-package-summary';
 import { usePackagesBatchStats } from '@/hooks/use-packages-batch-stats';
@@ -155,16 +156,20 @@ export default function Packages() {
     if (filteredPackages.length > 0) exportPackages(filteredPackages);
   };
 
-  const handleMarkPaid = async (pkg: Package) => {
+  const [markPaidPkg, setMarkPaidPkg] = useState<Package | null>(null);
+
+  const handleMarkPaid = async () => {
+    if (!markPaidPkg) return;
     try {
       const now = new Date().toISOString();
       const { error } = await supabase
         .from('packages')
         .update({ payment_status: 'Paid', payment_received: true, paid_date: now, payment_date: now })
-        .eq('package_id', pkg.package_id);
+        .eq('package_id', markPaidPkg.package_id);
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ['packages'] });
-      toast.success(`Marked as Paid for ${pkg.students?.name}`);
+      toast.success(`Marked as Paid for ${markPaidPkg.students?.name}`);
+      setMarkPaidPkg(null);
     } catch (error: any) {
       toast.error('Failed to update payment', { description: error.message });
     }
@@ -259,7 +264,7 @@ export default function Packages() {
               packages={filteredPackages}
               batchStats={batchStats || {}}
               isLoading={isLoading}
-              onMarkPaid={handleMarkPaid}
+              onMarkPaid={(pkg) => setMarkPaidPkg(pkg)}
               onEdit={setEditPackage}
               onViewSummary={setSummaryPkg}
             />
