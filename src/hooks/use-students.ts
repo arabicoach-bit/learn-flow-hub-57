@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { logAdminAction } from '@/hooks/use-audit-log';
+import { logStudentActivity } from '@/lib/activity-logger';
 
 export interface Student {
   student_id: string;
@@ -126,6 +127,9 @@ export function useCreateStudent() {
         details: { name: input.name, phone: input.phone, teacher_id: input.teacher_id },
       });
 
+      logStudentActivity(student.student_id, 'Student created', 
+        `Name: ${input.name}\nPhone: ${input.phone}`);
+
       if (input.initial_lessons && input.initial_lessons > 0 && input.initial_amount) {
         const { data: packageData, error: packageError } = await supabase
           .from('packages')
@@ -198,6 +202,17 @@ export function useUpdateStudent() {
         entityId: studentId,
         details: data,
       });
+
+      // Activity log in student notes
+      if (data.status) {
+        logStudentActivity(studentId, `Status changed to ${data.status}`);
+      } else {
+        const changes = Object.entries(data)
+          .filter(([_, v]) => v !== undefined)
+          .map(([k, v]) => `${k}: ${v}`)
+          .join('\n');
+        if (changes) logStudentActivity(studentId, 'Student details updated', changes);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['students'] });
