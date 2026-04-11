@@ -271,6 +271,14 @@ export default function AdminManagement() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        <DeleteConfirmDialog
+          open={!!deleteAdmin}
+          onOpenChange={(open) => !open && setDeleteAdmin(null)}
+          onConfirm={handleDelete}
+          title="Delete Admin"
+          entityName={deleteAdmin?.name}
+          description="This will permanently remove this admin account and revoke all access."
+        />
       </div>
     </AdminLayout>
   );

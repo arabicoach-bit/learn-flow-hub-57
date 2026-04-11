@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import { Download, Users, Plus, Loader2 } from 'lucide-react';
 import { getCurrentQuarter, getQuarterDateRange, type QuarterFilterValue } from '@/components/shared/QuarterFilter';
 import { AdminLayout } from '@/components/layout/AdminLayout';
