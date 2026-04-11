@@ -104,6 +104,7 @@ export function useTeacherNotifications(teacherId: string | null | undefined) {
       const { data: trialStudents } = await supabase
         .from('trial_students').select('trial_id').eq('teacher_id', teacherId);
       const allIds = [
+        teacherId, // include teacher's own ID for unmarked_lesson_reminder
         ...(students?.map(s => s.student_id) || []),
         ...(trialStudents?.map(t => t.trial_id) || []),
       ];
