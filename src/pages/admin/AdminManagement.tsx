@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { Shield, UserPlus, Key, Trash2, Copy } from 'lucide-react';
+import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog';
 
 interface AdminProfile {
   id: string;
@@ -28,6 +29,7 @@ export default function AdminManagement() {
   const { data: admins = [], isLoading, refetch } = useAdminUsers() as { data: AdminProfile[]; isLoading: boolean; refetch: () => void };
   const [addOpen, setAddOpen] = useState(false);
   const [name, setName] = useState('');
+  const [deleteAdmin, setDeleteAdmin] = useState<{ id: string; name: string } | null>(null);
   const [email, setEmail] = useState('');
   const [creating, setCreating] = useState(false);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
@@ -77,13 +79,12 @@ export default function AdminManagement() {
     }
   };
 
-  const handleDelete = async (userId: string, adminName: string) => {
-    if (!confirm(`Are you sure you want to delete admin "${adminName}"? This cannot be undone.`)) return;
-
+  const handleDelete = async () => {
+    if (!deleteAdmin) return;
     try {
       const { data, error } = await supabase.functions.invoke('manage-admin-account', {
         headers: { 'x-action': 'delete' },
-        body: { user_id: userId },
+        body: { user_id: deleteAdmin.id },
       });
 
       if (error) throw error;
@@ -92,6 +93,7 @@ export default function AdminManagement() {
       toast.success('Admin account deleted');
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       refetch();
+      setDeleteAdmin(null);
     } catch (err: any) {
       toast.error(err.message || 'Failed to delete admin');
     }
@@ -235,7 +237,7 @@ export default function AdminManagement() {
                           variant="ghost"
                           size="sm"
                           className="text-destructive"
-                          onClick={() => handleDelete(admin.id, admin.full_name)}
+                          onClick={() => setDeleteAdmin({ id: admin.id, name: admin.full_name })}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -269,6 +271,14 @@ export default function AdminManagement() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        <DeleteConfirmDialog
+          open={!!deleteAdmin}
+          onOpenChange={(open) => !open && setDeleteAdmin(null)}
+          onConfirm={handleDelete}
+          title="Delete Admin"
+          entityName={deleteAdmin?.name}
+          description="This will permanently remove this admin account and revoke all access."
+        />
       </div>
     </AdminLayout>
   );

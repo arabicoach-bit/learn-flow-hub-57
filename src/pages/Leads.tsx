@@ -15,6 +15,7 @@ import { type LeadSortOption } from '@/components/leads/LeadFiltersBar';
 import { AddLeadForm } from '@/components/leads/AddLeadForm';
 import { ConvertLeadToTrialDialog } from '@/components/leads/ConvertLeadToTrialDialog';
 import { exportLeads, type LeadExport } from '@/lib/excel-export';
+import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog';
 
 export default function Leads() {
   const [search, setSearch] = useState('');
@@ -26,6 +27,7 @@ export default function Leads() {
   const [convertingLead, setConvertingLead] = useState<Lead | null>(null);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const [sortBy, setSortBy] = useState<LeadSortOption>('newest');
+  const [deleteLeadId, setDeleteLeadId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const { startDate: filterStart, endDate: filterEnd } = getQuarterDateRange(quarterFilter);
@@ -62,15 +64,18 @@ export default function Leads() {
     });
   }, [leads, leadStatusFilter, followUpFilter, sortBy]);
 
-  const handleDeleteLead = async (leadId: string) => {
-    if (!window.confirm('Are you sure you want to delete this lead?')) return;
+  const handleDeleteLead = async () => {
+    if (!deleteLeadId) return;
     try {
-      await deleteLead.mutateAsync(leadId);
+      await deleteLead.mutateAsync(deleteLeadId);
       toast({ title: 'Deleted', description: 'Lead deleted successfully.' });
+      setDeleteLeadId(null);
     } catch {
       toast({ title: 'Error', description: 'Failed to delete lead.', variant: 'destructive' });
     }
   };
+
+  const deleteLeadName = leads?.find(l => l.lead_id === deleteLeadId)?.name;
 
   const handleUpdateLeadStatus = async (leadId: string, status: string) => {
     try {
@@ -188,7 +193,7 @@ export default function Leads() {
                   onUpdateTrialStatus={handleUpdateTrialStatus}
                   onUpdateFollowUp={handleUpdateFollowUp}
                   onEdit={setEditingLead}
-                  onDelete={handleDeleteLead}
+                  onDelete={(leadId) => setDeleteLeadId(leadId)}
                   onConvertToTrial={setConvertingLead}
                 />
               ))}
@@ -201,7 +206,7 @@ export default function Leads() {
               onUpdateFollowUp={handleUpdateFollowUp}
               onUpdateHandledBy={handleUpdateHandledBy}
               onEdit={setEditingLead}
-              onDelete={handleDeleteLead}
+              onDelete={(leadId) => setDeleteLeadId(leadId)}
               onConvertToTrial={setConvertingLead}
             />
           )
@@ -224,6 +229,14 @@ export default function Leads() {
         <ConvertLeadToTrialDialog
           lead={convertingLead} open={!!convertingLead}
           onOpenChange={(open) => !open && setConvertingLead(null)}
+        />
+        <DeleteConfirmDialog
+          open={!!deleteLeadId}
+          onOpenChange={(open) => !open && setDeleteLeadId(null)}
+          onConfirm={handleDeleteLead}
+          title="Delete Lead"
+          entityName={deleteLeadName}
+          description="This will permanently remove this lead and all associated data."
         />
       </div>
     </AdminLayout>
