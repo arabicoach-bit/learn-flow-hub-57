@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Bell, Check, Filter, CheckCircle, GraduationCap, Package, Search, Eye, EyeOff, ChevronLeft, ChevronRight } from 'lucide-react';
+import { DatePresetFilter, type DatePreset, getPresetDateRange } from '@/components/shared/DatePresetFilter';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useNotifications, useMarkAllNotificationsRead } from '@/hooks/use-notifications';
 import { useTeachers } from '@/hooks/use-teachers';
@@ -36,13 +37,19 @@ function groupByDate(notifications: any[]) {
 
 export default function AdminNotifications() {
   const [dateFilter, setDateFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
+  const [datePreset, setDatePreset] = useState<DatePreset>('none');
   const [typeFilter, setTypeFilter] = useState<FilterType>('all');
   const [teacherFilter, setTeacherFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [readFilter, setReadFilter] = useState<ReadFilter>('all');
   const [page, setPage] = useState(1);
 
-  const { startDate, endDate } = getFilterDateRange(dateFilter);
+  // Preset overrides YearMonthFilter when active
+  const presetRange = getPresetDateRange(datePreset);
+  const monthRange = getFilterDateRange(dateFilter);
+  const startDate = datePreset !== 'none' ? presetRange.start : monthRange.startDate;
+  const endDate = datePreset !== 'none' ? presetRange.end : monthRange.endDate;
+
   const { data: teachers } = useTeachers();
 
   const { data: notifications, isLoading } = useNotifications({
@@ -165,7 +172,8 @@ export default function AdminNotifications() {
 
         {/* Filters Row */}
         <div className="flex flex-wrap items-center gap-3">
-          <YearMonthFilter value={dateFilter} onChange={handleFilterChange(setDateFilter)} />
+          <DatePresetFilter value={datePreset} onChange={(v) => { setDatePreset(v); setPage(1); }} />
+          <YearMonthFilter value={dateFilter} onChange={(v) => { setDatePreset('none'); handleFilterChange(setDateFilter)(v); }} />
 
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />

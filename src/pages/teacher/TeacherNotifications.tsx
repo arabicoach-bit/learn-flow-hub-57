@@ -11,6 +11,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { YearMonthFilter, getDefaultFilter, getFilterDateRange, type YearMonthFilterValue } from '@/components/shared/YearMonthFilter';
+import { DatePresetFilter, type DatePreset, getPresetDateRange } from '@/components/shared/DatePresetFilter';
 import { NotificationCard } from '@/components/notifications/NotificationCard';
 import { isToday, isYesterday, isThisWeek, format } from 'date-fns';
 
@@ -40,10 +41,14 @@ export default function TeacherNotifications() {
   const [typeFilter, setTypeFilter] = useState<FilterType>('all');
   const [readFilter, setReadFilter] = useState<ReadFilter>('all');
   const [dateFilter, setDateFilter] = useState<YearMonthFilterValue>(getDefaultFilter());
+  const [datePreset, setDatePreset] = useState<DatePreset>('none');
   const [search, setSearch] = useState('');
   const topRef = useRef<HTMLDivElement>(null);
 
-  const { startDate, endDate } = getFilterDateRange(dateFilter);
+  const presetRange = getPresetDateRange(datePreset);
+  const monthRange = getFilterDateRange(dateFilter);
+  const startDate = datePreset !== 'none' ? presetRange.start : monthRange.startDate;
+  const endDate = datePreset !== 'none' ? presetRange.end : monthRange.endDate;
 
   // Apply all filters
   const filtered = useMemo(() => {
@@ -179,7 +184,8 @@ export default function TeacherNotifications() {
           </Select>
 
           {/* Date Filter */}
-          <YearMonthFilter value={dateFilter} onChange={setDateFilter} />
+          <DatePresetFilter value={datePreset} onChange={setDatePreset} />
+          <YearMonthFilter value={dateFilter} onChange={(v) => { setDatePreset('none'); setDateFilter(v); }} />
 
           {/* Type Filter Tabs */}
           <Tabs value={typeFilter} onValueChange={(v) => setTypeFilter(v as FilterType)}>
