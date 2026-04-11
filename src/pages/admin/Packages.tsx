@@ -326,6 +326,37 @@ export default function Packages() {
         isLoading={summaryLoading}
         fallbackDescription={summaryFallbackDesc}
       />
+
+      {/* Mark Paid Confirmation */}
+      <AlertDialog open={!!markPaidPkg} onOpenChange={(open) => !open && setMarkPaidPkg(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
+                <CheckCircle className="w-5 h-5 text-emerald-600" />
+              </div>
+              <div>
+                <AlertDialogTitle>Confirm Payment</AlertDialogTitle>
+                <p className="text-sm text-muted-foreground mt-0.5">This will update the payment status</p>
+              </div>
+            </div>
+          </AlertDialogHeader>
+          <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-lg p-3">
+            <AlertDialogDescription>
+              Mark package for <strong>{markPaidPkg?.students?.name}</strong> ({markPaidPkg?.lessons_purchased} lessons – AED {markPaidPkg?.amount}) as <strong>Paid</strong>? The paid date will be set to today.
+            </AlertDialogDescription>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleMarkPaid}
+              className="bg-emerald-600 text-white hover:bg-emerald-700"
+            >
+              Confirm Payment
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 }
