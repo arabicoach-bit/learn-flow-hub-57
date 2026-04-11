@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Package as PackageIcon, FileSpreadsheet } from 'lucide-react';
+import { Package as PackageIcon, FileSpreadsheet, CheckCircle } from 'lucide-react';
 import { usePackages, type Package } from '@/hooks/use-packages';
 import { usePackageSummary } from '@/hooks/use-package-summary';
 import { usePackagesBatchStats } from '@/hooks/use-packages-batch-stats';
@@ -155,16 +156,20 @@ export default function Packages() {
     if (filteredPackages.length > 0) exportPackages(filteredPackages);
   };
 
-  const handleMarkPaid = async (pkg: Package) => {
+  const [markPaidPkg, setMarkPaidPkg] = useState<Package | null>(null);
+
+  const handleMarkPaid = async () => {
+    if (!markPaidPkg) return;
     try {
       const now = new Date().toISOString();
       const { error } = await supabase
         .from('packages')
         .update({ payment_status: 'Paid', payment_received: true, paid_date: now, payment_date: now })
-        .eq('package_id', pkg.package_id);
+        .eq('package_id', markPaidPkg.package_id);
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ['packages'] });
-      toast.success(`Marked as Paid for ${pkg.students?.name}`);
+      toast.success(`Marked as Paid for ${markPaidPkg.students?.name}`);
+      setMarkPaidPkg(null);
     } catch (error: any) {
       toast.error('Failed to update payment', { description: error.message });
     }
@@ -259,7 +264,7 @@ export default function Packages() {
               packages={filteredPackages}
               batchStats={batchStats || {}}
               isLoading={isLoading}
-              onMarkPaid={handleMarkPaid}
+              onMarkPaid={(pkg) => setMarkPaidPkg(pkg)}
               onEdit={setEditPackage}
               onViewSummary={setSummaryPkg}
             />
@@ -321,6 +326,37 @@ export default function Packages() {
         isLoading={summaryLoading}
         fallbackDescription={summaryFallbackDesc}
       />
+
+      {/* Mark Paid Confirmation */}
+      <AlertDialog open={!!markPaidPkg} onOpenChange={(open) => !open && setMarkPaidPkg(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
+                <CheckCircle className="w-5 h-5 text-emerald-600" />
+              </div>
+              <div>
+                <AlertDialogTitle>Confirm Payment</AlertDialogTitle>
+                <p className="text-sm text-muted-foreground mt-0.5">This will update the payment status</p>
+              </div>
+            </div>
+          </AlertDialogHeader>
+          <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-lg p-3">
+            <AlertDialogDescription>
+              Mark package for <strong>{markPaidPkg?.students?.name}</strong> ({markPaidPkg?.lessons_purchased} lessons – AED {markPaidPkg?.amount}) as <strong>Paid</strong>? The paid date will be set to today.
+            </AlertDialogDescription>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleMarkPaid}
+              className="bg-emerald-600 text-white hover:bg-emerald-700"
+            >
+              Confirm Payment
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 }
