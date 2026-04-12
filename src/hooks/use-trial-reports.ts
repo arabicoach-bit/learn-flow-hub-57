@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 export interface CommentBankEntry {
   comment_id: string;
   skill: 'reading' | 'speaking';
-  level: 'beginner' | 'developing' | 'strong';
+  level: string;
   comment_type: 'strength' | 'next_step';
   comment_text: string;
   display_order: number;
@@ -19,6 +19,7 @@ export interface TrialReport {
   template_text: string | null;
   ai_polished_text: string | null;
   final_text: string;
+  teacher_notes: string | null;
   generated_by: string | null;
   created_at: string;
 }
@@ -59,45 +60,36 @@ function buildTemplateParagraph(
   readingStrengths: string[],
   readingNextSteps: string[],
   speakingStrengths: string[],
-  speakingNextSteps: string[]
+  speakingNextSteps: string[],
+  teacherNotes?: string
 ): string {
   const parts: string[] = [];
 
-  // Opening
-  parts.push(`${studentName} showed good engagement during the trial lesson.`);
+  parts.push(`${studentName} participated in a trial lesson and demonstrated the following abilities.`);
 
-  // Reading strengths
   if (readingStrengths.length > 0) {
-    const joined = joinList(readingStrengths);
-    parts.push(`In reading, ${studentName} ${joined}.`);
+    parts.push(`In reading, ${readingStrengths.map(s => s.replace(/^The student /i, '').replace(/\.$/, '')).join('. Additionally, ')}.`);
   }
 
-  // Speaking strengths
+  if (readingNextSteps.length > 0) {
+    parts.push(`To develop reading skills further, ${readingNextSteps.map(s => s.replace(/^The student /i, '').replace(/\.$/, '')).join(', and ')}.`);
+  }
+
   if (speakingStrengths.length > 0) {
-    const joined = joinList(speakingStrengths);
-    parts.push(`In speaking and listening, ${studentName} ${joined}.`);
+    parts.push(`In speaking and listening, ${speakingStrengths.map(s => s.replace(/^The student /i, '').replace(/\.$/, '')).join('. Also, ')}.`);
   }
 
-  // Next steps combined
-  const allNextSteps = [
-    ...readingNextSteps.map(s => `${s} (reading)`),
-    ...speakingNextSteps.map(s => `${s} (speaking)`),
-  ];
-  if (allNextSteps.length > 0) {
-    parts.push(`To continue progressing, ${studentName} should ${joinList(readingNextSteps.concat(speakingNextSteps))}.`);
+  if (speakingNextSteps.length > 0) {
+    parts.push(`To improve speaking and listening, ${speakingNextSteps.map(s => s.replace(/^The student /i, '').replace(/\.$/, '')).join(', and ')}.`);
   }
 
-  // Closing
-  parts.push(`Overall, it was a positive session and we look forward to supporting ${studentName}'s learning journey.`);
+  if (teacherNotes?.trim()) {
+    parts.push(teacherNotes.trim());
+  }
+
+  parts.push(`Overall, it was a productive session and we look forward to supporting ${studentName}'s learning journey.`);
 
   return parts.join(' ');
-}
-
-function joinList(items: string[]): string {
-  if (items.length === 0) return '';
-  if (items.length === 1) return items[0];
-  if (items.length === 2) return `${items[0]} and ${items[1]}`;
-  return items.slice(0, -1).join(', ') + ', and ' + items[items.length - 1];
 }
 
 export function useSaveTrialReport() {
@@ -105,10 +97,9 @@ export function useSaveTrialReport() {
   return useMutation({
     mutationFn: async (input: {
       trialId: string;
-      readingLevel: string;
-      speakingLevel: string;
       selectedComments: { commentId: string; skill: string; type: string; text: string }[];
       studentName: string;
+      teacherNotes?: string;
     }) => {
       const readingStrengths = input.selectedComments
         .filter(c => c.skill === 'reading' && c.type === 'strength')
@@ -128,7 +119,8 @@ export function useSaveTrialReport() {
         readingStrengths,
         readingNextSteps,
         speakingStrengths,
-        speakingNextSteps
+        speakingNextSteps,
+        input.teacherNotes
       );
 
       const { data: userData } = await supabase.auth.getUser();
@@ -137,11 +129,12 @@ export function useSaveTrialReport() {
         .from('trial_reports')
         .insert({
           trial_id: input.trialId,
-          reading_level: input.readingLevel,
-          speaking_level: input.speakingLevel,
+          reading_level: 'general',
+          speaking_level: 'general',
           selected_comments: input.selectedComments,
           template_text: templateText,
           final_text: templateText,
+          teacher_notes: input.teacherNotes || null,
           generated_by: userData.user?.id || null,
         })
         .select()
