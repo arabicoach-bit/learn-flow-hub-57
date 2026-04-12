@@ -116,6 +116,7 @@ export function useSaveTrialReport() {
       selectedComments: { commentId: string; skill: string; type: string; text: string }[];
       studentName: string;
       teacherNotes?: string;
+      gender?: string;
     }) => {
       const readingStrengths = input.selectedComments
         .filter(c => c.skill === 'reading' && c.type === 'strength')
@@ -136,7 +137,8 @@ export function useSaveTrialReport() {
         readingNextSteps,
         speakingStrengths,
         speakingNextSteps,
-        input.teacherNotes
+        input.teacherNotes,
+        input.gender
       );
 
       const { data: userData } = await supabase.auth.getUser();
