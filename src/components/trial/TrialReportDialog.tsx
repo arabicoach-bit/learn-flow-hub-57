@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { BookOpen, Mic, Sparkles, FileText, Copy, Check, Loader2, ChevronRight, Download } from 'lucide-react';
@@ -274,7 +274,7 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
 
         <Separator />
 
-        <ScrollArea className="flex-1 min-h-0 overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-y-auto">
           <div className="px-6 py-4">
             {step === 'select' && (
               <div className="space-y-5">
@@ -477,7 +477,7 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
               </div>
             )}
           </div>
-        </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   );
