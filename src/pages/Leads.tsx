@@ -44,6 +44,8 @@ export default function Leads() {
 
   const updateLead = useUpdateLead();
   const deleteLead = useDeleteLead();
+  const leadIds = useMemo(() => leads?.map(l => l.lead_id) || [], [leads]);
+  const { data: commentCounts } = useLeadCommentsCounts(leadIds);
 
   // Client-side filters for lead status and follow-up
   const filteredLeads = useMemo(() => {
