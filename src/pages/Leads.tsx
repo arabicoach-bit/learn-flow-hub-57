@@ -195,17 +195,20 @@ export default function Leads() {
               {filteredLeads.map(lead => (
                 <LeadCard
                   key={lead.lead_id} lead={lead}
+                  commentCount={commentCounts?.[lead.lead_id]}
                   onUpdateTrialStatus={handleUpdateTrialStatus}
                   onUpdateFollowUp={handleUpdateFollowUp}
                   onEdit={setEditingLead}
                   onDelete={(leadId) => setDeleteLeadId(leadId)}
                   onConvertToTrial={setConvertingLead}
+                  onOpenNotes={setNotesLead}
                 />
               ))}
             </div>
           ) : (
             <LeadTableView
               leads={filteredLeads}
+              commentCounts={commentCounts}
               onUpdateLeadStatus={handleUpdateLeadStatus}
               onUpdateTrialStatus={handleUpdateTrialStatus}
               onUpdateFollowUp={handleUpdateFollowUp}
@@ -213,6 +216,8 @@ export default function Leads() {
               onEdit={setEditingLead}
               onDelete={(leadId) => setDeleteLeadId(leadId)}
               onConvertToTrial={setConvertingLead}
+              onOpenNotes={setNotesLead}
+            />
             />
           )
         ) : (
