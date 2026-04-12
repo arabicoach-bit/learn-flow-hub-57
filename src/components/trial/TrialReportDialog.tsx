@@ -1,4 +1,4 @@
-import { useState, useMemo, forwardRef } from 'react';
+import { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { BookOpen, Mic, Sparkles, FileText, Copy, Check, Loader2, ChevronRight, Download } from 'lucide-react';
 import { useCommentBank, useSaveTrialReport, usePolishReport, useTrialReports, type CommentBankEntry } from '@/hooks/use-trial-reports';
-import { generateTrialReportPdf, type TrialReportPdfData } from '@/lib/trial-report-pdf';
+import { generateTrialReportPdfWithLogo, type TrialReportPdfData } from '@/lib/trial-report-pdf';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -26,6 +26,7 @@ interface TrialReportDialogProps {
     duration?: number;
     age?: number | null;
     yearGroup?: string | null;
+    gender?: string | null;
   };
 }
 
@@ -131,6 +132,7 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
         selectedComments: mapped,
         studentName,
         teacherNotes: teacherNotes.trim() || undefined,
+        gender: trialInfo?.gender || undefined,
       });
       setGeneratedReport({ reportId: result.report_id, text: result.final_text, isPolished: false });
       setStep('preview');
@@ -182,6 +184,7 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
     duration: `${trialInfo?.duration || 30} minutes`,
     age: trialInfo?.age ? String(trialInfo.age) : '',
     yearGroup: trialInfo?.yearGroup || '',
+    gender: trialInfo?.gender || '',
     readingStrengths: selectedComments.filter(c => c.skill === 'reading' && c.comment_type === 'strength').map(c => c.comment_text),
     readingNextSteps: selectedComments.filter(c => c.skill === 'reading' && c.comment_type === 'next_step').map(c => c.comment_text),
     speakingStrengths: selectedComments.filter(c => c.skill === 'speaking' && c.comment_type === 'strength').map(c => c.comment_text),
@@ -190,15 +193,15 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
     finalText: text,
   });
 
-  const handleDownloadPdf = (text?: string) => {
+  const handleDownloadPdf = async (text?: string) => {
     const finalText = text || generatedReport?.text || '';
     const pdfData = buildPdfData(finalText);
-    const doc = generateTrialReportPdf(pdfData);
+    const doc = await generateTrialReportPdfWithLogo(pdfData);
     doc.save(`Trial_Report_${studentName.replace(/\s+/g, '_')}.pdf`);
     toast.success('PDF downloaded!');
   };
 
-  const handleDownloadHistoryPdf = (report: any) => {
+  const handleDownloadHistoryPdf = async (report: any) => {
     const comments = Array.isArray(report.selected_comments) ? report.selected_comments : [];
     const pdfData: TrialReportPdfData = {
       studentName,
@@ -209,6 +212,7 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
       duration: `${trialInfo?.duration || 30} minutes`,
       age: trialInfo?.age ? String(trialInfo.age) : '',
       yearGroup: trialInfo?.yearGroup || '',
+      gender: trialInfo?.gender || '',
       readingStrengths: comments.filter((c: any) => c.skill === 'reading' && c.type === 'strength').map((c: any) => c.text),
       readingNextSteps: comments.filter((c: any) => c.skill === 'reading' && c.type === 'next_step').map((c: any) => c.text),
       speakingStrengths: comments.filter((c: any) => c.skill === 'speaking' && c.type === 'strength').map((c: any) => c.text),
@@ -216,7 +220,7 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
       teacherNotes: report.teacher_notes || '',
       finalText: report.final_text,
     };
-    const doc = generateTrialReportPdf(pdfData);
+    const doc = await generateTrialReportPdfWithLogo(pdfData);
     doc.save(`Trial_Report_${studentName.replace(/\s+/g, '_')}.pdf`);
     toast.success('PDF downloaded!');
   };

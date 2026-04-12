@@ -157,9 +157,14 @@ export function TrialLessonCard({ lesson, onLessonMarked }: TrialLessonCardProps
         trialId={lesson.trial_student_id}
         studentName={lesson.student_name}
         trialInfo={{
+          teacherName: lesson.teacher_name || undefined,
+          program: lesson.interested_program || undefined,
           trialDate: lesson.lesson_date,
           trialTime: lesson.lesson_time || undefined,
           duration: lesson.duration_minutes,
+          age: lesson.age,
+          yearGroup: lesson.year_group,
+          gender: lesson.gender,
         }}
       />
     </Card>

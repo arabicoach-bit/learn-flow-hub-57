@@ -55,32 +55,48 @@ export function useTrialReports(trialId: string) {
   });
 }
 
+function personalizeComment(text: string, name: string, gender?: string): string {
+  let result = text.replace(/\bThe student\b/g, name).replace(/\bthe student\b/g, name);
+  const isMale = gender?.toLowerCase() === 'male';
+  const isFemale = gender?.toLowerCase() === 'female';
+  if (isMale) {
+    result = result.replace(/\b(he|she)\b/g, 'he').replace(/\b(He|She)\b/g, 'He')
+      .replace(/\b(his|her)\b/g, 'his').replace(/\b(His|Her)\b/g, 'His');
+  } else if (isFemale) {
+    result = result.replace(/\b(he|she)\b/g, 'she').replace(/\b(He|She)\b/g, 'She')
+      .replace(/\b(his|her)\b/g, 'her').replace(/\b(His|Her)\b/g, 'Her');
+  }
+  return result;
+}
+
 function buildTemplateParagraph(
   studentName: string,
   readingStrengths: string[],
   readingNextSteps: string[],
   speakingStrengths: string[],
   speakingNextSteps: string[],
-  teacherNotes?: string
+  teacherNotes?: string,
+  gender?: string
 ): string {
+  const p = (t: string) => personalizeComment(t, studentName, gender);
   const parts: string[] = [];
 
   parts.push(`${studentName} participated in a trial lesson and demonstrated the following abilities.`);
 
   if (readingStrengths.length > 0) {
-    parts.push(`In reading, ${readingStrengths.map(s => s.replace(/^The student /i, '').replace(/\.$/, '')).join('. Additionally, ')}.`);
+    parts.push(`In reading, ${readingStrengths.map(s => p(s).replace(/\.$/, '')).join('. Additionally, ')}.`);
   }
 
   if (readingNextSteps.length > 0) {
-    parts.push(`To develop reading skills further, ${readingNextSteps.map(s => s.replace(/^The student /i, '').replace(/\.$/, '')).join(', and ')}.`);
+    parts.push(`To develop reading skills further, ${readingNextSteps.map(s => p(s).replace(/\.$/, '')).join(', and ')}.`);
   }
 
   if (speakingStrengths.length > 0) {
-    parts.push(`In speaking and listening, ${speakingStrengths.map(s => s.replace(/^The student /i, '').replace(/\.$/, '')).join('. Also, ')}.`);
+    parts.push(`In speaking and listening, ${speakingStrengths.map(s => p(s).replace(/\.$/, '')).join('. Also, ')}.`);
   }
 
   if (speakingNextSteps.length > 0) {
-    parts.push(`To improve speaking and listening, ${speakingNextSteps.map(s => s.replace(/^The student /i, '').replace(/\.$/, '')).join(', and ')}.`);
+    parts.push(`To improve speaking and listening, ${speakingNextSteps.map(s => p(s).replace(/\.$/, '')).join(', and ')}.`);
   }
 
   if (teacherNotes?.trim()) {
@@ -100,6 +116,7 @@ export function useSaveTrialReport() {
       selectedComments: { commentId: string; skill: string; type: string; text: string }[];
       studentName: string;
       teacherNotes?: string;
+      gender?: string;
     }) => {
       const readingStrengths = input.selectedComments
         .filter(c => c.skill === 'reading' && c.type === 'strength')
@@ -120,7 +137,8 @@ export function useSaveTrialReport() {
         readingNextSteps,
         speakingStrengths,
         speakingNextSteps,
-        input.teacherNotes
+        input.teacherNotes,
+        input.gender
       );
 
       const { data: userData } = await supabase.auth.getUser();
