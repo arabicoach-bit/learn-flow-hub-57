@@ -218,14 +218,14 @@ export function useAdminDashboardSummary() {
         .from('leads')
         .select('*', { count: 'exact', head: true })
         .lte('next_followup_date', new Date().toISOString())
-        .neq('status', 'Converted')
-        .neq('status', 'Lost');
+        .neq('trial_status', 'Trial Booked')
+        .neq('trial_status', 'Lost');
 
       // Get converted leads this month
       const { count: convertedThisMonth } = await supabase
         .from('leads')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'Converted')
+        .eq('trial_status', 'Trial Booked')
         .gte('updated_at', startDate);
 
       // Calculate conversion rate
