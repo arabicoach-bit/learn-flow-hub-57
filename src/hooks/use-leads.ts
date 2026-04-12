@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { logAdminAction } from '@/hooks/use-audit-log';
+import { logLeadActivity } from '@/lib/activity-logger';
 
 export interface Lead {
   lead_id: string;
@@ -130,6 +131,7 @@ export function useCreateLead() {
         entityId: data.lead_id,
         details: { name: input.name, phone: input.phone, source: input.source },
       });
+      logLeadActivity(data.lead_id, 'Lead created', `Name: ${input.name} | Phone: ${input.phone}${input.source ? ` | Source: ${input.source}` : ''}`);
       return data;
     },
     onSuccess: () => {
@@ -172,6 +174,23 @@ export function useUpdateLead() {
         entityId: leadId,
         details: data,
       });
+
+      // Activity logging in lead notes
+      if (data.status) {
+        logLeadActivity(leadId, 'Lead status changed', `Status → ${data.status}`);
+      }
+      if (data.trial_status !== undefined) {
+        logLeadActivity(leadId, 'Trial status updated', `Trial Status → ${data.trial_status || 'Cleared'}`);
+      }
+      if (data.follow_up !== undefined) {
+        logLeadActivity(leadId, 'Follow-up updated', `Follow-up → ${data.follow_up || 'Cleared'}`);
+      }
+      if (data.handled_by !== undefined) {
+        logLeadActivity(leadId, 'Handled by updated', `Assigned to → ${data.handled_by || 'None'}`);
+      }
+      if (!data.status && !data.trial_status && !data.follow_up && !data.handled_by) {
+        logLeadActivity(leadId, 'Lead details edited');
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });

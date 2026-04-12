@@ -104,6 +104,45 @@ export type Database = {
           },
         ]
       }
+      lead_comments: {
+        Row: {
+          author_id: string | null
+          comment: string
+          comment_id: string
+          created_at: string
+          lead_id: string
+        }
+        Insert: {
+          author_id?: string | null
+          comment: string
+          comment_id?: string
+          created_at?: string
+          lead_id: string
+        }
+        Update: {
+          author_id?: string | null
+          comment?: string
+          comment_id?: string
+          created_at?: string
+          lead_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_comments_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["lead_id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           created_at: string | null

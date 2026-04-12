@@ -3,6 +3,7 @@ import { Download, Users, Plus, Loader2 } from 'lucide-react';
 import { getCurrentQuarter, getQuarterDateRange, type QuarterFilterValue } from '@/components/shared/QuarterFilter';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useLeads, useUpdateLead, useDeleteLead, type Lead } from '@/hooks/use-leads';
+import { useLeadCommentsCounts } from '@/hooks/use-lead-comments';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -14,6 +15,7 @@ import { LeadFiltersBar } from '@/components/leads/LeadFiltersBar';
 import { type LeadSortOption } from '@/components/leads/LeadFiltersBar';
 import { AddLeadForm } from '@/components/leads/AddLeadForm';
 import { ConvertLeadToTrialDialog } from '@/components/leads/ConvertLeadToTrialDialog';
+import { LeadCommentsDialog } from '@/components/leads/LeadCommentsDialog';
 import { exportLeads, type LeadExport } from '@/lib/excel-export';
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog';
 
@@ -28,6 +30,7 @@ export default function Leads() {
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const [sortBy, setSortBy] = useState<LeadSortOption>('newest');
   const [deleteLeadId, setDeleteLeadId] = useState<string | null>(null);
+  const [notesLead, setNotesLead] = useState<Lead | null>(null);
   const { toast } = useToast();
 
   const { startDate: filterStart, endDate: filterEnd } = getQuarterDateRange(quarterFilter);
@@ -41,6 +44,8 @@ export default function Leads() {
 
   const updateLead = useUpdateLead();
   const deleteLead = useDeleteLead();
+  const leadIds = useMemo(() => leads?.map(l => l.lead_id) || [], [leads]);
+  const { data: commentCounts } = useLeadCommentsCounts(leadIds);
 
   // Client-side filters for lead status and follow-up
   const filteredLeads = useMemo(() => {
@@ -190,17 +195,20 @@ export default function Leads() {
               {filteredLeads.map(lead => (
                 <LeadCard
                   key={lead.lead_id} lead={lead}
+                  commentCount={commentCounts?.[lead.lead_id]}
                   onUpdateTrialStatus={handleUpdateTrialStatus}
                   onUpdateFollowUp={handleUpdateFollowUp}
                   onEdit={setEditingLead}
                   onDelete={(leadId) => setDeleteLeadId(leadId)}
                   onConvertToTrial={setConvertingLead}
+                  onOpenNotes={setNotesLead}
                 />
               ))}
             </div>
           ) : (
             <LeadTableView
               leads={filteredLeads}
+              commentCounts={commentCounts}
               onUpdateLeadStatus={handleUpdateLeadStatus}
               onUpdateTrialStatus={handleUpdateTrialStatus}
               onUpdateFollowUp={handleUpdateFollowUp}
@@ -208,6 +216,7 @@ export default function Leads() {
               onEdit={setEditingLead}
               onDelete={(leadId) => setDeleteLeadId(leadId)}
               onConvertToTrial={setConvertingLead}
+              onOpenNotes={setNotesLead}
             />
           )
         ) : (
@@ -238,6 +247,14 @@ export default function Leads() {
           entityName={deleteLeadName}
           description="This will permanently remove this lead and all associated data."
         />
+        {notesLead && (
+          <LeadCommentsDialog
+            open={!!notesLead}
+            onOpenChange={(open) => !open && setNotesLead(null)}
+            leadId={notesLead.lead_id}
+            leadName={notesLead.name}
+          />
+        )}
       </div>
     </AdminLayout>
   );

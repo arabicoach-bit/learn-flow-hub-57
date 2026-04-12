@@ -14,11 +14,13 @@ import type { Lead } from '@/hooks/use-leads';
 
 interface LeadCardProps {
   lead: Lead;
+  commentCount?: number;
   onUpdateTrialStatus: (leadId: string, trialStatus: string) => void;
   onUpdateFollowUp: (leadId: string, followUp: string) => void;
   onEdit: (lead: Lead) => void;
   onDelete?: (leadId: string) => void;
   onConvertToTrial?: (lead: Lead) => void;
+  onOpenNotes?: (lead: Lead) => void;
 }
 
 const trialStatusColors: Record<string, string> = {
@@ -58,7 +60,7 @@ function isOverdue(dateStr: string | null): boolean {
   return isPast(d) && !isToday(d);
 }
 
-export function LeadCard({ lead, onUpdateTrialStatus, onUpdateFollowUp, onEdit, onDelete, onConvertToTrial }: LeadCardProps) {
+export function LeadCard({ lead, commentCount, onUpdateTrialStatus, onUpdateFollowUp, onEdit, onDelete, onConvertToTrial, onOpenNotes }: LeadCardProps) {
   const overdue = isOverdue(lead.next_followup_date);
 
   return (
@@ -158,6 +160,23 @@ export function LeadCard({ lead, onUpdateTrialStatus, onUpdateFollowUp, onEdit, 
             {lead.follow_up}
           </Badge>
         )}
+
+        <div className="flex items-center justify-between border-t pt-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1 text-muted-foreground hover:text-foreground px-2"
+            onClick={() => onOpenNotes?.(lead)}
+          >
+            <MessageSquare className="w-4 h-4" />
+            <span className="text-xs">Notes</span>
+            {(commentCount || 0) > 0 && (
+              <Badge variant="secondary" className="h-5 min-w-[20px] px-1 text-xs ml-1">
+                {commentCount}
+              </Badge>
+            )}
+          </Button>
+        </div>
 
         {lead.notes && (
           <div className="flex items-start gap-2 text-sm text-muted-foreground border-t pt-2">
