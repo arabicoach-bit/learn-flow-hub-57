@@ -12,6 +12,7 @@ import { useUpdateLead, type Lead } from '@/hooks/use-leads';
 import { useTeachers } from '@/hooks/use-teachers';
 import { usePrograms } from '@/hooks/use-programs';
 import { useToast } from '@/hooks/use-toast';
+import { logLeadActivity } from '@/lib/activity-logger';
 
 interface ConvertLeadToTrialDialogProps {
   lead: Lead | null;
@@ -68,6 +69,9 @@ export function ConvertLeadToTrialDialog({ lead, open, onOpenChange }: ConvertLe
         status: 'Converted',
         trial_status: 'Trial Booked',
       });
+
+      logLeadActivity(lead.lead_id, 'Lead converted to trial student',
+        `Converted to trial | Date: ${formData.trial_date || 'TBD'}`);
 
       toast({ title: 'Lead converted!', description: `${lead.name} has been added as a trial student.` });
       onOpenChange(false);
