@@ -3,6 +3,7 @@ import { Download, Users, Plus, Loader2 } from 'lucide-react';
 import { getCurrentQuarter, getQuarterDateRange, type QuarterFilterValue } from '@/components/shared/QuarterFilter';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useLeads, useUpdateLead, useDeleteLead, type Lead } from '@/hooks/use-leads';
+import { useLeadCommentsCounts } from '@/hooks/use-lead-comments';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -14,6 +15,7 @@ import { LeadFiltersBar } from '@/components/leads/LeadFiltersBar';
 import { type LeadSortOption } from '@/components/leads/LeadFiltersBar';
 import { AddLeadForm } from '@/components/leads/AddLeadForm';
 import { ConvertLeadToTrialDialog } from '@/components/leads/ConvertLeadToTrialDialog';
+import { LeadCommentsDialog } from '@/components/leads/LeadCommentsDialog';
 import { exportLeads, type LeadExport } from '@/lib/excel-export';
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog';
 
@@ -28,6 +30,7 @@ export default function Leads() {
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const [sortBy, setSortBy] = useState<LeadSortOption>('newest');
   const [deleteLeadId, setDeleteLeadId] = useState<string | null>(null);
+  const [notesLead, setNotesLead] = useState<Lead | null>(null);
   const { toast } = useToast();
 
   const { startDate: filterStart, endDate: filterEnd } = getQuarterDateRange(quarterFilter);
