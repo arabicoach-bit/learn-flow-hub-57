@@ -29,6 +29,7 @@ import Packages from "./pages/admin/Packages";
 import QuarterAnalysis from "./pages/admin/QuarterAnalysis";
 import ActivityLog from "./pages/admin/ActivityLog";
 import AdminManagement from "./pages/admin/AdminManagement";
+import ReportCommentBank from "./pages/admin/ReportCommentBank";
 
 // Teacher pages
 import TeacherSchedule from "./pages/teacher/TeacherSchedule";
@@ -85,6 +86,7 @@ const AppRoutes = () => (
     <Route path="/admin/quarter-analysis" element={<ProtectedRoute allowedRoles={['admin']}><QuarterAnalysis /></ProtectedRoute>} />
     <Route path="/admin/activity-log" element={<ProtectedRoute allowedRoles={['admin']}><ActivityLog /></ProtectedRoute>} />
     <Route path="/admin/admin-management" element={<ProtectedRoute allowedRoles={['admin']}><AdminManagement /></ProtectedRoute>} />
+    <Route path="/admin/report-comments" element={<ProtectedRoute allowedRoles={['admin']}><ReportCommentBank /></ProtectedRoute>} />
     
     {/* Teacher routes */}
     <Route path="/teacher" element={<Navigate to="/teacher/schedule" replace />} />
