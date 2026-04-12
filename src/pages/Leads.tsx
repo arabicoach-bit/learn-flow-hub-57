@@ -218,7 +218,6 @@ export default function Leads() {
               onConvertToTrial={setConvertingLead}
               onOpenNotes={setNotesLead}
             />
-            />
           )
         ) : (
           <Card className="bg-card">
