@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { BookOpen, Mic, Sparkles, FileText, Copy, Check, Loader2, ChevronRight, Download } from 'lucide-react';
 import { useCommentBank, useSaveTrialReport, usePolishReport, useTrialReports, type CommentBankEntry } from '@/hooks/use-trial-reports';
-import { generateTrialReportPdf, type TrialReportPdfData } from '@/lib/trial-report-pdf';
+import { generateTrialReportPdfWithLogo, type TrialReportPdfData } from '@/lib/trial-report-pdf';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -26,6 +26,7 @@ interface TrialReportDialogProps {
     duration?: number;
     age?: number | null;
     yearGroup?: string | null;
+    gender?: string | null;
   };
 }
 
@@ -182,6 +183,7 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
     duration: `${trialInfo?.duration || 30} minutes`,
     age: trialInfo?.age ? String(trialInfo.age) : '',
     yearGroup: trialInfo?.yearGroup || '',
+    gender: trialInfo?.gender || '',
     readingStrengths: selectedComments.filter(c => c.skill === 'reading' && c.comment_type === 'strength').map(c => c.comment_text),
     readingNextSteps: selectedComments.filter(c => c.skill === 'reading' && c.comment_type === 'next_step').map(c => c.comment_text),
     speakingStrengths: selectedComments.filter(c => c.skill === 'speaking' && c.comment_type === 'strength').map(c => c.comment_text),
