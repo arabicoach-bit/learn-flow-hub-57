@@ -5,9 +5,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
-import { ChevronRight, Pencil, Trash2, UserPlus, Phone, Calendar, GraduationCap, User, School, FileText, Clock, MessageSquareText } from 'lucide-react';
+import { ChevronRight, Pencil, Trash2, UserPlus, Phone, Calendar, GraduationCap, User, School, FileText, Clock, MessageSquareText, ClipboardList } from 'lucide-react';
 import { useTrialCommentsCounts } from '@/hooks/use-trial-comments';
 import { TrialCommentsDialog } from '@/components/trial/TrialCommentsDialog';
+import { TrialReportDialog } from '@/components/trial/TrialReportDialog';
 import { Card, CardContent } from '@/components/ui/card';
 import type { TrialStudent } from '@/hooks/use-trial-students';
 import type { Database } from '@/integrations/supabase/types';
@@ -75,6 +76,8 @@ export function TrialTableView({ students, onUpdateStatus, onUpdateConversion, o
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [commentsTrialId, setCommentsTrialId] = useState<string | null>(null);
   const [commentsStudentName, setCommentsStudentName] = useState('');
+  const [reportTrialId, setReportTrialId] = useState<string | null>(null);
+  const [reportStudentName, setReportStudentName] = useState('');
 
   const trialIds = students.map(s => s.trial_id);
   const { data: commentCounts } = useTrialCommentsCounts(trialIds);
@@ -278,6 +281,9 @@ export function TrialTableView({ students, onUpdateStatus, onUpdateConversion, o
 
                         <TableCell className="py-2" onClick={e => e.stopPropagation()}>
                           <div className="flex items-center gap-0.5">
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setReportTrialId(student.trial_id); setReportStudentName(student.name); }} title="Generate Report">
+                              <ClipboardList className="h-3.5 w-3.5" />
+                            </Button>
                             {canConvert && (
                               <Button variant="ghost" size="icon" className="h-7 w-7 text-primary hover:text-primary" onClick={() => onConvert(student)} title="Convert">
                                 <UserPlus className="h-3.5 w-3.5" />
@@ -417,6 +423,15 @@ export function TrialTableView({ students, onUpdateStatus, onUpdateConversion, o
           onOpenChange={(open) => { if (!open) setCommentsTrialId(null); }}
           trialId={commentsTrialId}
           studentName={commentsStudentName}
+        />
+      )}
+
+      {reportTrialId && (
+        <TrialReportDialog
+          open={!!reportTrialId}
+          onOpenChange={(open) => { if (!open) setReportTrialId(null); }}
+          trialId={reportTrialId}
+          studentName={reportStudentName}
         />
       )}
     </Card>

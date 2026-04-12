@@ -520,6 +520,39 @@ export type Database = {
         }
         Relationships: []
       }
+      report_comment_bank: {
+        Row: {
+          comment_id: string
+          comment_text: string
+          comment_type: string
+          created_at: string
+          display_order: number
+          is_active: boolean
+          level: string
+          skill: string
+        }
+        Insert: {
+          comment_id?: string
+          comment_text: string
+          comment_type: string
+          created_at?: string
+          display_order?: number
+          is_active?: boolean
+          level: string
+          skill: string
+        }
+        Update: {
+          comment_id?: string
+          comment_text?: string
+          comment_type?: string
+          created_at?: string
+          display_order?: number
+          is_active?: boolean
+          level?: string
+          skill?: string
+        }
+        Relationships: []
+      }
       scheduled_lessons: {
         Row: {
           class_id: string | null
@@ -1013,6 +1046,56 @@ export type Database = {
           {
             foreignKeyName: "trial_lessons_log_trial_student_id_fkey"
             columns: ["trial_student_id"]
+            isOneToOne: false
+            referencedRelation: "trial_students"
+            referencedColumns: ["trial_id"]
+          },
+        ]
+      }
+      trial_reports: {
+        Row: {
+          ai_polished_text: string | null
+          created_at: string
+          final_text: string
+          generated_by: string | null
+          reading_level: string
+          report_id: string
+          selected_comments: Json
+          speaking_level: string
+          template_text: string | null
+          trial_id: string
+          updated_at: string
+        }
+        Insert: {
+          ai_polished_text?: string | null
+          created_at?: string
+          final_text: string
+          generated_by?: string | null
+          reading_level: string
+          report_id?: string
+          selected_comments?: Json
+          speaking_level: string
+          template_text?: string | null
+          trial_id: string
+          updated_at?: string
+        }
+        Update: {
+          ai_polished_text?: string | null
+          created_at?: string
+          final_text?: string
+          generated_by?: string | null
+          reading_level?: string
+          report_id?: string
+          selected_comments?: Json
+          speaking_level?: string
+          template_text?: string | null
+          trial_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trial_reports_trial_id_fkey"
+            columns: ["trial_id"]
             isOneToOne: false
             referencedRelation: "trial_students"
             referencedColumns: ["trial_id"]
