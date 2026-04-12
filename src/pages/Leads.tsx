@@ -247,6 +247,14 @@ export default function Leads() {
           entityName={deleteLeadName}
           description="This will permanently remove this lead and all associated data."
         />
+        {notesLead && (
+          <LeadCommentsDialog
+            open={!!notesLead}
+            onOpenChange={(open) => !open && setNotesLead(null)}
+            leadId={notesLead.lead_id}
+            leadName={notesLead.name}
+          />
+        )}
       </div>
     </AdminLayout>
   );
