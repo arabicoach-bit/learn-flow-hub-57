@@ -46,6 +46,13 @@ export async function logActivityComment({ entityType, entityId, action, details
           comment: message,
         });
         break;
+      case 'lead':
+        await supabase.from('lead_comments').insert({
+          lead_id: entityId,
+          author_id: userId,
+          comment: message,
+        });
+        break;
     }
   } catch (err) {
     console.error('Failed to log activity comment:', err);
@@ -65,4 +72,8 @@ export function logStudentActivity(studentId: string, action: string, details?: 
 
 export function logPackageActivity(packageId: string, action: string, details?: string) {
   return logActivityComment({ entityType: 'package', entityId: packageId, action, details });
+}
+
+export function logLeadActivity(leadId: string, action: string, details?: string) {
+  return logActivityComment({ entityType: 'lead', entityId: leadId, action, details });
 }
