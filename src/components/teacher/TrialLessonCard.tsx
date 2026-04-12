@@ -5,11 +5,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Check, X, Clock, Loader2, Users, Save } from 'lucide-react';
+import { Check, X, Clock, Loader2, Users, Save, ClipboardList } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { invalidateAllTrialCaches } from '@/lib/trial-cache-utils';
+import { TrialReportDialog } from '@/components/trial/TrialReportDialog';
 import type { TeacherTrialLesson } from '@/hooks/use-teacher-trial-lessons';
 
 interface TrialLessonCardProps {
@@ -21,6 +22,7 @@ export function TrialLessonCard({ lesson, onLessonMarked }: TrialLessonCardProps
   const [notes, setNotes] = useState(lesson.notes || '');
   const [isSavingNote, setIsSavingNote] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [showReport, setShowReport] = useState(false);
   const queryClient = useQueryClient();
 
   const formatTime = (time: string | null) => {
@@ -120,7 +122,7 @@ export function TrialLessonCard({ lesson, onLessonMarked }: TrialLessonCardProps
             </div>
           </div>
 
-          {/* Status Dropdown */}
+          {/* Status & Report */}
           <div className="flex flex-wrap gap-2 items-center">
             <Select
               value={currentStatus}
@@ -142,9 +144,19 @@ export function TrialLessonCard({ lesson, onLessonMarked }: TrialLessonCardProps
                 </SelectItem>
               </SelectContent>
             </Select>
+            <Button variant="outline" size="sm" onClick={() => setShowReport(true)}>
+              <ClipboardList className="w-3 h-3 mr-1" /> Report
+            </Button>
           </div>
         </div>
       </CardContent>
+
+      <TrialReportDialog
+        open={showReport}
+        onOpenChange={setShowReport}
+        trialId={lesson.trial_student_id}
+        studentName={lesson.student_name}
+      />
     </Card>
   );
 }
