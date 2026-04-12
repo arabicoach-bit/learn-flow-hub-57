@@ -3,12 +3,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { BookOpen, Mic, Sparkles, FileText, Copy, Check, Loader2, ChevronRight } from 'lucide-react';
+import { BookOpen, Mic, Sparkles, FileText, Copy, Check, Loader2, ChevronRight, Download } from 'lucide-react';
 import { useCommentBank, useSaveTrialReport, usePolishReport, useTrialReports, type CommentBankEntry } from '@/hooks/use-trial-reports';
+import { generateTrialReportPdf, type TrialReportPdfData } from '@/lib/trial-report-pdf';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -17,40 +17,41 @@ interface TrialReportDialogProps {
   onOpenChange: (open: boolean) => void;
   trialId: string;
   studentName: string;
+  trialInfo?: {
+    teacherName?: string;
+    program?: string;
+    trialDate?: string;
+    trialTime?: string;
+    duration?: number;
+    age?: number | null;
+    yearGroup?: string | null;
+  };
 }
 
-type Level = 'beginner' | 'developing' | 'strong';
 type Skill = 'reading' | 'speaking';
 
-const levelLabels: Record<Level, { label: string; color: string }> = {
-  beginner: { label: 'Beginner', color: 'bg-orange-500/20 text-orange-500 border-orange-500/30' },
-  developing: { label: 'Developing', color: 'bg-blue-500/20 text-blue-500 border-blue-500/30' },
-  strong: { label: 'Strong', color: 'bg-emerald-500/20 text-emerald-500 border-emerald-500/30' },
-};
-
-export function TrialReportDialog({ open, onOpenChange, trialId, studentName }: TrialReportDialogProps) {
+export function TrialReportDialog({ open, onOpenChange, trialId, studentName, trialInfo }: TrialReportDialogProps) {
   const { data: commentBank = [], isLoading: bankLoading } = useCommentBank();
   const { data: existingReports = [] } = useTrialReports(trialId);
   const saveReport = useSaveTrialReport();
   const polishReport = usePolishReport();
 
   const [step, setStep] = useState<'select' | 'preview' | 'history'>('select');
-  const [readingLevel, setReadingLevel] = useState<Level>('developing');
-  const [speakingLevel, setSpeakingLevel] = useState<Level>('developing');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [teacherNotes, setTeacherNotes] = useState('');
   const [generatedReport, setGeneratedReport] = useState<{ reportId: string; text: string; isPolished: boolean } | null>(null);
   const [copied, setCopied] = useState(false);
 
   const filteredComments = useMemo(() => {
-    const filter = (skill: Skill, level: Level, type: 'strength' | 'next_step') =>
-      commentBank.filter(c => c.skill === skill && c.level === level && c.comment_type === type);
+    const filter = (skill: Skill, type: 'strength' | 'next_step') =>
+      commentBank.filter(c => c.skill === skill && c.comment_type === type);
     return {
-      readingStrengths: filter('reading', readingLevel, 'strength'),
-      readingNextSteps: filter('reading', readingLevel, 'next_step'),
-      speakingStrengths: filter('speaking', speakingLevel, 'strength'),
-      speakingNextSteps: filter('speaking', speakingLevel, 'next_step'),
+      readingStrengths: filter('reading', 'strength'),
+      readingNextSteps: filter('reading', 'next_step'),
+      speakingStrengths: filter('speaking', 'strength'),
+      speakingNextSteps: filter('speaking', 'next_step'),
     };
-  }, [commentBank, readingLevel, speakingLevel]);
+  }, [commentBank]);
 
   const selectedComments = useMemo(() =>
     commentBank.filter(c => selectedIds.has(c.comment_id)),
@@ -84,10 +85,9 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName }: 
       }));
       const result = await saveReport.mutateAsync({
         trialId,
-        readingLevel,
-        speakingLevel,
         selectedComments: mapped,
         studentName,
+        teacherNotes: teacherNotes.trim() || undefined,
       });
       setGeneratedReport({ reportId: result.report_id, text: result.final_text, isPolished: false });
       setStep('preview');
@@ -121,12 +121,68 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName }: 
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const formatTime12h = (time: string | undefined) => {
+    if (!time) return 'N/A';
+    const [hours, minutes] = time.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const hour12 = hour % 12 || 12;
+    return `${hour12}:${minutes} ${ampm}`;
+  };
+
+  const buildPdfData = (text: string): TrialReportPdfData => ({
+    studentName,
+    teacherName: trialInfo?.teacherName || 'N/A',
+    program: trialInfo?.program || 'N/A',
+    trialDate: trialInfo?.trialDate ? format(new Date(trialInfo.trialDate), 'dd MMM yyyy') : 'N/A',
+    trialTime: formatTime12h(trialInfo?.trialTime),
+    duration: `${trialInfo?.duration || 30} minutes`,
+    age: trialInfo?.age ? String(trialInfo.age) : '',
+    yearGroup: trialInfo?.yearGroup || '',
+    readingStrengths: selectedComments.filter(c => c.skill === 'reading' && c.comment_type === 'strength').map(c => c.comment_text),
+    readingNextSteps: selectedComments.filter(c => c.skill === 'reading' && c.comment_type === 'next_step').map(c => c.comment_text),
+    speakingStrengths: selectedComments.filter(c => c.skill === 'speaking' && c.comment_type === 'strength').map(c => c.comment_text),
+    speakingNextSteps: selectedComments.filter(c => c.skill === 'speaking' && c.comment_type === 'next_step').map(c => c.comment_text),
+    teacherNotes: teacherNotes.trim(),
+    finalText: text,
+  });
+
+  const handleDownloadPdf = (text?: string) => {
+    const finalText = text || generatedReport?.text || '';
+    const pdfData = buildPdfData(finalText);
+    const doc = generateTrialReportPdf(pdfData);
+    doc.save(`Trial_Report_${studentName.replace(/\s+/g, '_')}.pdf`);
+    toast.success('PDF downloaded!');
+  };
+
+  const handleDownloadHistoryPdf = (report: any) => {
+    const comments = Array.isArray(report.selected_comments) ? report.selected_comments : [];
+    const pdfData: TrialReportPdfData = {
+      studentName,
+      teacherName: trialInfo?.teacherName || 'N/A',
+      program: trialInfo?.program || 'N/A',
+      trialDate: trialInfo?.trialDate ? format(new Date(trialInfo.trialDate), 'dd MMM yyyy') : 'N/A',
+      trialTime: formatTime12h(trialInfo?.trialTime),
+      duration: `${trialInfo?.duration || 30} minutes`,
+      age: trialInfo?.age ? String(trialInfo.age) : '',
+      yearGroup: trialInfo?.yearGroup || '',
+      readingStrengths: comments.filter((c: any) => c.skill === 'reading' && c.type === 'strength').map((c: any) => c.text),
+      readingNextSteps: comments.filter((c: any) => c.skill === 'reading' && c.type === 'next_step').map((c: any) => c.text),
+      speakingStrengths: comments.filter((c: any) => c.skill === 'speaking' && c.type === 'strength').map((c: any) => c.text),
+      speakingNextSteps: comments.filter((c: any) => c.skill === 'speaking' && c.type === 'next_step').map((c: any) => c.text),
+      teacherNotes: report.teacher_notes || '',
+      finalText: report.final_text,
+    };
+    const doc = generateTrialReportPdf(pdfData);
+    doc.save(`Trial_Report_${studentName.replace(/\s+/g, '_')}.pdf`);
+    toast.success('PDF downloaded!');
+  };
+
   const resetForm = () => {
     setStep('select');
     setSelectedIds(new Set());
+    setTeacherNotes('');
     setGeneratedReport(null);
-    setReadingLevel('developing');
-    setSpeakingLevel('developing');
   };
 
   const CommentChips = ({ comments, maxSelect }: { comments: CommentBankEntry[]; maxSelect: number }) => {
@@ -141,7 +197,7 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName }: 
               key={c.comment_id}
               onClick={() => !isDisabled && toggleComment(c.comment_id)}
               disabled={isDisabled}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all text-left ${
                 isSelected
                   ? 'bg-primary text-primary-foreground border-primary'
                   : isDisabled
@@ -158,31 +214,6 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName }: 
     );
   };
 
-  const LevelSelector = ({ level, onChange }: { level: Level; onChange: (l: Level) => void }) => (
-    <div className="flex gap-1">
-      {(['beginner', 'developing', 'strong'] as Level[]).map(l => (
-        <Badge
-          key={l}
-          variant="outline"
-          className={`cursor-pointer transition-all ${level === l ? levelLabels[l].color : 'opacity-50 hover:opacity-75'}`}
-          onClick={() => {
-            onChange(l);
-            // Clear selections for this skill when level changes
-            setSelectedIds(prev => {
-              const next = new Set(prev);
-              commentBank.forEach(c => {
-                if (c.level !== l) next.delete(c.comment_id);
-              });
-              return next;
-            });
-          }}
-        >
-          {levelLabels[l].label}
-        </Badge>
-      ))}
-    </div>
-  );
-
   return (
     <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) resetForm(); }}>
       <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
@@ -192,8 +223,8 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName }: 
             Trial Lesson Report — {studentName}
           </DialogTitle>
           <DialogDescription>
-            {step === 'select' && 'Select skill levels and comments to generate a report.'}
-            {step === 'preview' && 'Review the generated report. Optionally polish it with AI.'}
+            {step === 'select' && 'Select observations for reading and speaking, then generate a professional report.'}
+            {step === 'preview' && 'Review, polish with AI, and download as PDF.'}
             {step === 'history' && 'Previous reports for this student.'}
           </DialogDescription>
         </DialogHeader>
@@ -201,11 +232,11 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName }: 
         {/* Step navigation */}
         <div className="flex items-center gap-2 text-sm">
           <Button variant={step === 'select' ? 'default' : 'ghost'} size="sm" onClick={() => setStep('select')}>
-            1. Select Comments
+            1. Select Observations
           </Button>
           <ChevronRight className="w-4 h-4 text-muted-foreground" />
           <Button variant={step === 'preview' ? 'default' : 'ghost'} size="sm" disabled={!generatedReport} onClick={() => setStep('preview')}>
-            2. Preview
+            2. Preview & Download
           </Button>
           {existingReports.length > 0 && (
             <>
@@ -221,7 +252,7 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName }: 
 
         <ScrollArea className="flex-1 pr-4">
           {step === 'select' && (
-            <div className="space-y-6 pb-4">
+            <div className="space-y-5 pb-4">
               {bankLoading ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -231,23 +262,20 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName }: 
                   {/* Reading Section */}
                   <Card>
                     <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="flex items-center gap-2 text-base">
-                          <BookOpen className="w-4 h-4 text-blue-500" /> Reading
-                        </CardTitle>
-                        <LevelSelector level={readingLevel} onChange={setReadingLevel} />
-                      </div>
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <BookOpen className="w-4 h-4 text-blue-500" /> Reading
+                      </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div>
                         <p className="text-sm font-medium text-muted-foreground mb-2">
-                          ✅ Strengths <span className="text-xs">(select 1-5)</span>
+                          ✅ Strengths <span className="text-xs">(select 1–5)</span>
                         </p>
                         <CommentChips comments={filteredComments.readingStrengths} maxSelect={5} />
                       </div>
                       <div>
                         <p className="text-sm font-medium text-muted-foreground mb-2">
-                          🎯 Next Steps <span className="text-xs">(select 1-3)</span>
+                          🎯 Next Steps <span className="text-xs">(select 1–3)</span>
                         </p>
                         <CommentChips comments={filteredComments.readingNextSteps} maxSelect={3} />
                       </div>
@@ -257,26 +285,40 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName }: 
                   {/* Speaking Section */}
                   <Card>
                     <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="flex items-center gap-2 text-base">
-                          <Mic className="w-4 h-4 text-purple-500" /> Speaking & Listening
-                        </CardTitle>
-                        <LevelSelector level={speakingLevel} onChange={setSpeakingLevel} />
-                      </div>
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <Mic className="w-4 h-4 text-purple-500" /> Speaking & Listening
+                      </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div>
                         <p className="text-sm font-medium text-muted-foreground mb-2">
-                          ✅ Strengths <span className="text-xs">(select 1-5)</span>
+                          ✅ Strengths <span className="text-xs">(select 1–5)</span>
                         </p>
                         <CommentChips comments={filteredComments.speakingStrengths} maxSelect={5} />
                       </div>
                       <div>
                         <p className="text-sm font-medium text-muted-foreground mb-2">
-                          🎯 Next Steps <span className="text-xs">(select 1-3)</span>
+                          🎯 Next Steps <span className="text-xs">(select 1–3)</span>
                         </p>
                         <CommentChips comments={filteredComments.speakingNextSteps} maxSelect={3} />
                       </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Teacher Notes */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        📝 Teacher Notes <span className="text-xs font-normal text-muted-foreground">(optional)</span>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <Textarea
+                        placeholder="Add any personal observation about the student that you'd like included in the report..."
+                        value={teacherNotes}
+                        onChange={(e) => setTeacherNotes(e.target.value)}
+                        className="min-h-[80px] resize-none"
+                      />
                     </CardContent>
                   </Card>
 
@@ -301,6 +343,26 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName }: 
 
           {step === 'preview' && generatedReport && (
             <div className="space-y-4 pb-4">
+              {/* Trial info summary */}
+              {trialInfo && (
+                <div className="grid grid-cols-3 gap-3 text-sm">
+                  <div className="bg-muted/50 rounded-lg p-3">
+                    <span className="text-muted-foreground text-xs">Teacher</span>
+                    <p className="font-medium">{trialInfo.teacherName || 'N/A'}</p>
+                  </div>
+                  <div className="bg-muted/50 rounded-lg p-3">
+                    <span className="text-muted-foreground text-xs">Date & Time</span>
+                    <p className="font-medium">
+                      {trialInfo.trialDate ? format(new Date(trialInfo.trialDate), 'dd MMM yyyy') : 'N/A'} · {formatTime12h(trialInfo.trialTime)}
+                    </p>
+                  </div>
+                  <div className="bg-muted/50 rounded-lg p-3">
+                    <span className="text-muted-foreground text-xs">Program</span>
+                    <p className="font-medium">{trialInfo.program || 'N/A'}</p>
+                  </div>
+                </div>
+              )}
+
               <Card>
                 <CardContent className="pt-6">
                   <Textarea
@@ -326,9 +388,12 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName }: 
                     <Sparkles className="w-3 h-3 mr-1" /> AI Polished
                   </Badge>
                 )}
+                <Button onClick={() => handleDownloadPdf()} className="bg-primary">
+                  <Download className="w-4 h-4 mr-2" /> Download PDF
+                </Button>
                 <Button onClick={handleCopy} variant="outline">
                   {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-                  {copied ? 'Copied!' : 'Copy to Clipboard'}
+                  {copied ? 'Copied!' : 'Copy Text'}
                 </Button>
                 <Button variant="ghost" onClick={resetForm}>
                   Generate Another
@@ -346,30 +411,32 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName }: 
                       <Badge variant="outline" className="text-xs">
                         {format(new Date(r.created_at), 'dd MMM yyyy, HH:mm')}
                       </Badge>
-                      <Badge variant="outline" className="text-xs">
-                        R: {r.reading_level}
-                      </Badge>
-                      <Badge variant="outline" className="text-xs">
-                        S: {r.speaking_level}
-                      </Badge>
                       {r.ai_polished_text && (
                         <Badge variant="outline" className="bg-purple-500/10 text-purple-500 border-purple-500/30 text-xs">
                           <Sparkles className="w-3 h-3 mr-1" /> AI Polished
                         </Badge>
                       )}
                     </div>
-                    <p className="text-sm leading-relaxed">{r.final_text}</p>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="mt-2"
-                      onClick={() => {
-                        navigator.clipboard.writeText(r.final_text);
-                        toast.success('Copied!');
-                      }}
-                    >
-                      <Copy className="w-3 h-3 mr-1" /> Copy
-                    </Button>
+                    <p className="text-sm leading-relaxed mb-3">{r.final_text}</p>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDownloadHistoryPdf(r)}
+                      >
+                        <Download className="w-3 h-3 mr-1" /> PDF
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          navigator.clipboard.writeText(r.final_text);
+                          toast.success('Copied!');
+                        }}
+                      >
+                        <Copy className="w-3 h-3 mr-1" /> Copy
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               ))}
