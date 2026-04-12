@@ -4,11 +4,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreVertical, Trash2, UserPlus } from 'lucide-react';
+import { MoreVertical, Trash2, UserPlus, MessageSquare } from 'lucide-react';
 import type { Lead } from '@/hooks/use-leads';
 
 interface LeadTableViewProps {
   leads: Lead[];
+  commentCounts?: Record<string, number>;
   onUpdateLeadStatus: (leadId: string, status: string) => void;
   onUpdateTrialStatus: (leadId: string, trialStatus: string) => void;
   onUpdateFollowUp: (leadId: string, followUp: string) => void;
@@ -16,6 +17,7 @@ interface LeadTableViewProps {
   onEdit: (lead: Lead) => void;
   onDelete: (leadId: string) => void;
   onConvertToTrial?: (lead: Lead) => void;
+  onOpenNotes?: (lead: Lead) => void;
 }
 
 const leadStatusColors: Record<string, string> = {
@@ -52,7 +54,7 @@ const followUpOptions = [
 
 const handledByOptions = ['Amira', 'Hind', 'Mona', 'Ahmed', 'Eman'];
 
-export function LeadTableView({ leads, onUpdateLeadStatus, onUpdateTrialStatus, onUpdateFollowUp, onUpdateHandledBy, onEdit, onDelete, onConvertToTrial }: LeadTableViewProps) {
+export function LeadTableView({ leads, commentCounts, onUpdateLeadStatus, onUpdateTrialStatus, onUpdateFollowUp, onUpdateHandledBy, onEdit, onDelete, onConvertToTrial, onOpenNotes }: LeadTableViewProps) {
   return (
     <div className="rounded-md border">
       <Table>
@@ -67,6 +69,7 @@ export function LeadTableView({ leads, onUpdateLeadStatus, onUpdateTrialStatus, 
             <TableHead>Follow-Up</TableHead>
             <TableHead>Follow-Up Date</TableHead>
             <TableHead>Handled By</TableHead>
+            <TableHead>Notes</TableHead>
             <TableHead className="w-[50px]"></TableHead>
           </TableRow>
         </TableHeader>
@@ -174,6 +177,21 @@ export function LeadTableView({ leads, onUpdateLeadStatus, onUpdateTrialStatus, 
                     ))}
                   </SelectContent>
                 </Select>
+              </TableCell>
+              <TableCell>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 gap-1 text-muted-foreground hover:text-foreground"
+                  onClick={() => onOpenNotes?.(lead)}
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  {(commentCounts?.[lead.lead_id] || 0) > 0 && (
+                    <Badge variant="secondary" className="h-5 min-w-[20px] px-1 text-xs">
+                      {commentCounts[lead.lead_id]}
+                    </Badge>
+                  )}
+                </Button>
               </TableCell>
               <TableCell>
                 <DropdownMenu>
