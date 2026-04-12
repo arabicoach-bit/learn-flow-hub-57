@@ -63,10 +63,9 @@ export function ConvertLeadToTrialDialog({ lead, open, onOpenChange }: ConvertLe
         handled_by: lead.handled_by || undefined,
       });
 
-      // Update lead status to Converted and trial_status to Trial Booked
+      // Update lead status to Trial Booked
       await updateLead.mutateAsync({
         leadId: lead.lead_id,
-        status: 'Converted',
         trial_status: 'Trial Booked',
       });
 

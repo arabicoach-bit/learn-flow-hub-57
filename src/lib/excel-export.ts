@@ -136,7 +136,6 @@ export interface LeadExport {
   phone: string;
   source?: string | null;
   interest?: string | null;
-  status?: string | null;
   first_contact_date?: string | null;
   last_contact_date?: string | null;
   next_followup_date?: string | null;
@@ -153,12 +152,11 @@ export function exportLeads(data: LeadExport[]) {
     { header: 'Phone', accessor: 'phone' },
     { header: 'Source', accessor: 'source' },
     { header: 'Interest', accessor: 'interest' },
-    { header: 'Status', accessor: 'status' },
+    { header: 'Lead Status', accessor: 'trial_status' },
     { header: 'First Contact', accessor: 'first_contact_date' },
     { header: 'Last Contact', accessor: 'last_contact_date' },
     { header: 'Next Follow-up', accessor: 'next_followup_date' },
     { header: 'Handled By', accessor: 'handled_by' },
-    { header: 'Trial Status', accessor: 'trial_status' },
     { header: 'Follow-up', accessor: 'follow_up' },
     { header: 'Notes', accessor: 'notes' },
     { header: 'Created', accessor: 'created_at' },

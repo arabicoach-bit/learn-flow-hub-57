@@ -10,12 +10,11 @@ export interface Lead {
   phone: string;
   source: string | null;
   interest: string | null;
-  status: 'New' | 'Contacted' | 'Interested' | 'Converted' | 'Lost';
+  trial_status: string;
   next_followup_date: string | null;
   notes: string | null;
   first_contact_date: string | null;
   last_contact_date: string | null;
-  trial_status: string | null;
   follow_up: string | null;
   handled_by: string | null;
   created_at: string;
@@ -45,8 +44,8 @@ export function useLeads(filters?: { status?: string; search?: string; trial_sta
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (filters?.status && ['New', 'Contacted', 'Interested', 'Converted', 'Lost'].includes(filters.status)) {
-        query = query.eq('status', filters.status as 'New' | 'Contacted' | 'Interested' | 'Converted' | 'Lost');
+      if (filters?.status) {
+        query = query.eq('trial_status', filters.status);
       }
       if (filters?.search) {
         query = query.or(`name.ilike.%${filters.search}%,phone.ilike.%${filters.search}%`);
@@ -145,7 +144,7 @@ export function useUpdateLead() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ leadId, ...data }: { leadId: string } & Partial<CreateLeadInput> & { status?: Lead['status'] }) => {
+    mutationFn: async ({ leadId, ...data }: { leadId: string } & Partial<CreateLeadInput>) => {
       const updateData: Record<string, unknown> = {};
       
       if (data.name !== undefined) updateData.name = data.name;
@@ -156,10 +155,9 @@ export function useUpdateLead() {
       if (data.next_followup_date !== undefined) updateData.next_followup_date = data.next_followup_date || null;
       if (data.first_contact_date !== undefined) updateData.first_contact_date = data.first_contact_date || null;
       if (data.last_contact_date !== undefined) updateData.last_contact_date = data.last_contact_date || null;
-      if (data.trial_status !== undefined) updateData.trial_status = data.trial_status || null;
+      if (data.trial_status !== undefined) updateData.trial_status = data.trial_status || 'Pending';
       if (data.follow_up !== undefined) updateData.follow_up = data.follow_up || null;
       if (data.handled_by !== undefined) updateData.handled_by = data.handled_by || null;
-      if (data.status !== undefined) updateData.status = data.status;
       
       const { error } = await supabase
         .from('leads')
@@ -169,18 +167,15 @@ export function useUpdateLead() {
       if (error) throw error;
 
       logAdminAction({
-        action: data.status ? 'lead_status_changed' : 'lead_updated',
+        action: data.trial_status ? 'lead_status_changed' : 'lead_updated',
         entityType: 'lead',
         entityId: leadId,
         details: data,
       });
 
       // Activity logging in lead notes
-      if (data.status) {
-        logLeadActivity(leadId, 'Lead status changed', `Status → ${data.status}`);
-      }
       if (data.trial_status !== undefined) {
-        logLeadActivity(leadId, 'Trial status updated', `Trial Status → ${data.trial_status || 'Cleared'}`);
+        logLeadActivity(leadId, 'Lead status changed', `Status → ${data.trial_status || 'Pending'}`);
       }
       if (data.follow_up !== undefined) {
         logLeadActivity(leadId, 'Follow-up updated', `Follow-up → ${data.follow_up || 'Cleared'}`);
@@ -188,7 +183,7 @@ export function useUpdateLead() {
       if (data.handled_by !== undefined) {
         logLeadActivity(leadId, 'Handled by updated', `Assigned to → ${data.handled_by || 'None'}`);
       }
-      if (!data.status && !data.trial_status && !data.follow_up && !data.handled_by) {
+      if (data.trial_status === undefined && !data.follow_up && !data.handled_by) {
         logLeadActivity(leadId, 'Lead details edited');
       }
     },

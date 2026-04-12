@@ -14,7 +14,6 @@ import type { Lead } from '@/hooks/use-leads';
 interface LeadTableViewProps {
   leads: Lead[];
   onUpdateLeadStatus: (leadId: string, status: string) => void;
-  onUpdateTrialStatus: (leadId: string, trialStatus: string) => void;
   onUpdateFollowUp: (leadId: string, followUp: string) => void;
   onUpdateHandledBy: (leadId: string, handledBy: string) => void;
   onEdit: (lead: Lead) => void;
@@ -22,16 +21,8 @@ interface LeadTableViewProps {
   onConvertToTrial?: (lead: Lead) => void;
 }
 
-const leadStatusColors: Record<string, string> = {
-  New: 'bg-sky-500/20 text-sky-400 border-sky-500/30',
-  Contacted: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  Interested: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-  Converted: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-  Lost: 'bg-red-500/20 text-red-400 border-red-500/30',
-};
-
-const trialStatusColors: Record<string, string> = {
-  'Trial Booked': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+const statusColors: Record<string, string> = {
+  'Trial Booked': 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
   Pending: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
   'Price Negotiation': 'bg-purple-500/20 text-purple-400 border-purple-500/30',
   Lost: 'bg-red-500/20 text-red-400 border-red-500/30',
@@ -47,8 +38,7 @@ const followUpColors: Record<string, string> = {
   'F.7 – Arabic Challenge': 'bg-violet-500/20 text-violet-400',
 };
 
-const leadStatusOptions = ['New', 'Contacted', 'Interested', 'Converted', 'Lost'];
-const trialStatusOptions = ['Trial Booked', 'Pending', 'Price Negotiation', 'Lost'];
+const statusOptions = ['Pending', 'Trial Booked', 'Price Negotiation', 'Lost'];
 const followUpOptions = [
   'F.1 – Student Motivation', 'F.2 – Free Resources', 'F.3 – Parent Feedback',
   'F.4 – Special Offer', 'F.5 – Help Offer', 'F.6 – Soft Reminder', 'F.7 – Arabic Challenge',
@@ -56,14 +46,13 @@ const followUpOptions = [
 const handledByOptions = ['Amira', 'Hind', 'Mona', 'Ahmed', 'Eman'];
 
 function getRowHighlight(lead: Lead) {
-  if (lead.status === 'Converted' || lead.trial_status === 'Trial Booked') return 'bg-emerald-500/5 hover:bg-emerald-500/10';
-  if (lead.status === 'Lost' || lead.trial_status === 'Lost') return 'bg-red-500/5 hover:bg-red-500/10';
+  if (lead.trial_status === 'Trial Booked') return 'bg-emerald-500/5 hover:bg-emerald-500/10';
+  if (lead.trial_status === 'Lost') return 'bg-red-500/5 hover:bg-red-500/10';
   if (lead.trial_status === 'Price Negotiation') return 'bg-purple-500/5 hover:bg-purple-500/10';
-  if (lead.status === 'Interested') return 'bg-amber-500/5 hover:bg-amber-500/10';
   return 'hover:bg-muted/50';
 }
 
-export function LeadTableView({ leads, onUpdateLeadStatus, onUpdateTrialStatus, onUpdateFollowUp, onUpdateHandledBy, onEdit, onDelete, onConvertToTrial }: LeadTableViewProps) {
+export function LeadTableView({ leads, onUpdateLeadStatus, onUpdateFollowUp, onUpdateHandledBy, onEdit, onDelete, onConvertToTrial }: LeadTableViewProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [commentsLeadId, setCommentsLeadId] = useState<string | null>(null);
   const [commentsLeadName, setCommentsLeadName] = useState('');
@@ -90,14 +79,9 @@ export function LeadTableView({ leads, onUpdateLeadStatus, onUpdateTrialStatus, 
                 <TableHead className="w-[32px] px-1">#</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Phone</TableHead>
-                {/* Status group */}
                 <TableHead className="text-center border-l border-border/50">
                   <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Lead Status</span>
                 </TableHead>
-                <TableHead className="text-center border-r border-border/50">
-                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Trial Status</span>
-                </TableHead>
-                {/* CRM group */}
                 <TableHead className="text-center border-l border-border/50">
                   <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Follow-Up</span>
                 </TableHead>
@@ -113,7 +97,7 @@ export function LeadTableView({ leads, onUpdateLeadStatus, onUpdateTrialStatus, 
             <TableBody>
               {leads.map((lead, index) => {
                 const isExpanded = expandedIds.has(lead.lead_id);
-                const canConvert = lead.trial_status !== 'Trial Booked' && lead.status !== 'Converted';
+                const canConvert = lead.trial_status !== 'Trial Booked';
 
                 return (
                   <Collapsible key={lead.lead_id} open={isExpanded} onOpenChange={() => toggleExpand(lead.lead_id)} asChild>
@@ -138,38 +122,14 @@ export function LeadTableView({ leads, onUpdateLeadStatus, onUpdateTrialStatus, 
 
                         {/* Lead Status */}
                         <TableCell className="py-2 border-l border-border/30" onClick={e => e.stopPropagation()}>
-                          <Select value={lead.status || ''} onValueChange={(v) => onUpdateLeadStatus(lead.lead_id, v)}>
-                            <SelectTrigger className="h-6 w-[105px] text-xs border-0 bg-transparent px-0.5 focus:ring-0">
-                              <Badge className={`text-[11px] px-1.5 py-0 ${leadStatusColors[lead.status || ''] || 'bg-muted text-muted-foreground'}`}>
-                                {lead.status || 'Set'}
+                          <Select value={lead.trial_status} onValueChange={(v) => onUpdateLeadStatus(lead.lead_id, v)}>
+                            <SelectTrigger className="h-6 w-[120px] text-xs border-0 bg-transparent px-0.5 focus:ring-0">
+                              <Badge className={`text-[11px] px-1.5 py-0 ${statusColors[lead.trial_status] || 'bg-muted text-muted-foreground'}`}>
+                                {lead.trial_status}
                               </Badge>
                             </SelectTrigger>
                             <SelectContent>
-                              {leadStatusOptions.map(s => (
-                                <SelectItem key={s} value={s}>{s}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-
-                        {/* Trial Status */}
-                        <TableCell className="py-2 border-r border-border/30" onClick={e => e.stopPropagation()}>
-                          <Select
-                            value={lead.trial_status || '__none__'}
-                            onValueChange={(v) => onUpdateTrialStatus(lead.lead_id, v === '__none__' ? '' : v)}
-                          >
-                            <SelectTrigger className="h-6 w-[120px] text-xs border-0 bg-transparent px-0.5 focus:ring-0">
-                              {lead.trial_status ? (
-                                <Badge className={`text-[11px] px-1.5 py-0 ${trialStatusColors[lead.trial_status] || 'bg-muted text-muted-foreground'}`}>
-                                  {lead.trial_status}
-                                </Badge>
-                              ) : (
-                                <span className="text-muted-foreground text-[11px]">Set Status</span>
-                              )}
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="__none__">— None —</SelectItem>
-                              {trialStatusOptions.map(s => (
+                              {statusOptions.map(s => (
                                 <SelectItem key={s} value={s}>{s}</SelectItem>
                               ))}
                             </SelectContent>
@@ -266,7 +226,7 @@ export function LeadTableView({ leads, onUpdateLeadStatus, onUpdateTrialStatus, 
                       {/* Expanded details */}
                       {isExpanded && (
                         <tr className="bg-muted/20 border-b">
-                          <td colSpan={10} className="p-0">
+                          <td colSpan={9} className="p-0">
                             <CollapsibleContent forceMount className="px-6 py-4">
                               <div className="grid grid-cols-4 gap-6 text-sm">
                                 {/* Contact Info */}

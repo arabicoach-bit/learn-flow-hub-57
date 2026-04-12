@@ -74,8 +74,8 @@ export function useCommandCenter() {
           .from('leads')
           .select('lead_id', { count: 'exact', head: true })
           .lte('next_followup_date', today)
-          .neq('status', 'Converted')
-          .neq('status', 'Lost'),
+          .neq('trial_status', 'Trial Booked')
+          .neq('trial_status', 'Lost'),
         // Today's trials
         supabase
           .from('trial_students')

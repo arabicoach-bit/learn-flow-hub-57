@@ -6,8 +6,7 @@ import { QuarterFilter, type QuarterFilterValue } from '@/components/shared/Quar
 
 export type LeadSortOption = 'newest' | 'oldest' | 'alpha_asc' | 'alpha_desc' | 'last_contact' | 'next_followup';
 
-const trialStatusOptions = ['Trial Booked', 'Pending', 'Price Negotiation', 'Lost'];
-const leadStatusOptions = ['New', 'Contacted', 'Interested', 'Converted', 'Lost'];
+const statusOptions = ['Pending', 'Trial Booked', 'Price Negotiation', 'Lost'];
 const followUpOptions = [
   'F.1 – Student Motivation',
   'F.2 – Free Resources',
@@ -21,10 +20,8 @@ const followUpOptions = [
 interface LeadFiltersBarProps {
   search: string;
   onSearchChange: (value: string) => void;
-  trialStatusFilter: string;
-  onTrialStatusChange: (value: string) => void;
-  leadStatusFilter: string;
-  onLeadStatusChange: (value: string) => void;
+  statusFilter: string;
+  onStatusChange: (value: string) => void;
   followUpFilter: string;
   onFollowUpChange: (value: string) => void;
   quarterFilter: QuarterFilterValue;
@@ -37,8 +34,7 @@ interface LeadFiltersBarProps {
 
 export function LeadFiltersBar({
   search, onSearchChange,
-  trialStatusFilter, onTrialStatusChange,
-  leadStatusFilter, onLeadStatusChange,
+  statusFilter, onStatusChange,
   followUpFilter, onFollowUpChange,
   quarterFilter, onQuarterChange,
   sortBy, onSortChange,
@@ -57,25 +53,13 @@ export function LeadFiltersBar({
           />
         </div>
 
-        <Select value={leadStatusFilter} onValueChange={onLeadStatusChange}>
-          <SelectTrigger className="w-[160px]">
+        <Select value={statusFilter} onValueChange={onStatusChange}>
+          <SelectTrigger className="w-[170px]">
             <SelectValue placeholder="Lead Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Lead Status</SelectItem>
-            {leadStatusOptions.map(s => (
-              <SelectItem key={s} value={s}>{s}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={trialStatusFilter} onValueChange={onTrialStatusChange}>
-          <SelectTrigger className="w-[170px]">
-            <SelectValue placeholder="Trial Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Trial Status</SelectItem>
-            {trialStatusOptions.map(s => (
+            <SelectItem value="all">All Status</SelectItem>
+            {statusOptions.map(s => (
               <SelectItem key={s} value={s}>{s}</SelectItem>
             ))}
           </SelectContent>
