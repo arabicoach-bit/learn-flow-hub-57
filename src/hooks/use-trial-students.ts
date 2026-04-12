@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { invalidateAllTrialCaches } from '@/lib/trial-cache-utils';
 import { logAdminAction } from '@/hooks/use-audit-log';
+import { logTrialActivity } from '@/lib/activity-logger';
 import type { Database } from '@/integrations/supabase/types';
 
 type TrialStatus = Database['public']['Enums']['trial_status'];
@@ -210,6 +211,9 @@ export function useCreateTrialStudent() {
         entityId: data.trial_id,
         details: { name: input.name, phone: input.phone, teacher_id: input.teacher_id },
       });
+
+      logTrialActivity(data.trial_id, 'Trial student created',
+        `Name: ${input.name} | Phone: ${input.phone}${input.teacher_id ? ` | Teacher assigned` : ''}${input.trial_date ? ` | Date: ${input.trial_date}` : ''}`);
 
       return data;
     },
