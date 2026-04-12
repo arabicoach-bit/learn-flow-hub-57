@@ -158,8 +158,7 @@ export type Database = {
           notes: string | null
           phone: string
           source: string | null
-          status: Database["public"]["Enums"]["lead_status"] | null
-          trial_status: string | null
+          trial_status: string
           updated_at: string | null
         }
         Insert: {
@@ -176,8 +175,7 @@ export type Database = {
           notes?: string | null
           phone: string
           source?: string | null
-          status?: Database["public"]["Enums"]["lead_status"] | null
-          trial_status?: string | null
+          trial_status?: string
           updated_at?: string | null
         }
         Update: {
@@ -194,8 +192,7 @@ export type Database = {
           notes?: string | null
           phone?: string
           source?: string | null
-          status?: Database["public"]["Enums"]["lead_status"] | null
-          trial_status?: string | null
+          trial_status?: string
           updated_at?: string | null
         }
         Relationships: []
@@ -1380,7 +1377,6 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "teacher"
-      lead_status: "New" | "Contacted" | "Interested" | "Converted" | "Lost"
       lesson_status: "completed" | "absent" | "scheduled"
       notification_type:
         | "low_balance"
@@ -1527,7 +1523,6 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "teacher"],
-      lead_status: ["New", "Contacted", "Interested", "Converted", "Lost"],
       lesson_status: ["completed", "absent", "scheduled"],
       notification_type: [
         "low_balance",
