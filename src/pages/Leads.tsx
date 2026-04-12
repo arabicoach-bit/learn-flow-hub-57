@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Download, Users, Plus, Loader2 } from 'lucide-react';
+import { Download, Users, Loader2 } from 'lucide-react';
 import { getCurrentQuarter, getQuarterDateRange, type QuarterFilterValue } from '@/components/shared/QuarterFilter';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useLeads, useUpdateLead, useDeleteLead, type Lead } from '@/hooks/use-leads';

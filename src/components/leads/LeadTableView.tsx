@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { Card, CardContent } from '@/components/ui/card';
 import { ChevronRight, Pencil, Trash2, UserPlus, Phone, Calendar, GraduationCap, User, MessageSquareText, Tag, FileText } from 'lucide-react';
