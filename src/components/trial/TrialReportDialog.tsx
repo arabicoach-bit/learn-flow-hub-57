@@ -1,11 +1,12 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, forwardRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
 import { BookOpen, Mic, Sparkles, FileText, Copy, Check, Loader2, ChevronRight, Download } from 'lucide-react';
 import { useCommentBank, useSaveTrialReport, usePolishReport, useTrialReports, type CommentBankEntry } from '@/hooks/use-trial-reports';
 import { generateTrialReportPdf, type TrialReportPdfData } from '@/lib/trial-report-pdf';
@@ -28,7 +29,48 @@ interface TrialReportDialogProps {
   };
 }
 
-type Skill = 'reading' | 'speaking';
+// Extracted as a proper component to avoid re-creation on every render
+function CommentCheckList({
+  comments,
+  selectedIds,
+  onToggle,
+  maxSelect,
+}: {
+  comments: CommentBankEntry[];
+  selectedIds: Set<string>;
+  onToggle: (id: string) => void;
+  maxSelect: number;
+}) {
+  const selectedCount = comments.filter(c => selectedIds.has(c.comment_id)).length;
+  return (
+    <div className="space-y-1.5">
+      {comments.map(c => {
+        const isSelected = selectedIds.has(c.comment_id);
+        const isDisabled = !isSelected && selectedCount >= maxSelect;
+        return (
+          <label
+            key={c.comment_id}
+            className={`flex items-start gap-3 p-2.5 rounded-lg border cursor-pointer transition-all text-sm ${
+              isSelected
+                ? 'bg-primary/10 border-primary/40'
+                : isDisabled
+                ? 'opacity-40 cursor-not-allowed border-border bg-muted/30'
+                : 'border-border hover:bg-accent/50'
+            }`}
+          >
+            <Checkbox
+              checked={isSelected}
+              disabled={isDisabled}
+              onCheckedChange={() => !isDisabled && onToggle(c.comment_id)}
+              className="mt-0.5"
+            />
+            <span className={isSelected ? 'font-medium' : ''}>{c.comment_text}</span>
+          </label>
+        );
+      })}
+    </div>
+  );
+}
 
 export function TrialReportDialog({ open, onOpenChange, trialId, studentName, trialInfo }: TrialReportDialogProps) {
   const { data: commentBank = [], isLoading: bankLoading } = useCommentBank();
@@ -43,7 +85,7 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
   const [copied, setCopied] = useState(false);
 
   const filteredComments = useMemo(() => {
-    const filter = (skill: Skill, type: 'strength' | 'next_step') =>
+    const filter = (skill: string, type: string) =>
       commentBank.filter(c => c.skill === skill && c.comment_type === type);
     return {
       readingStrengths: filter('reading', 'strength'),
@@ -67,13 +109,14 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
     });
   };
 
-  const canGenerate = () => {
-    const rStr = selectedComments.filter(c => c.skill === 'reading' && c.comment_type === 'strength').length;
-    const rNext = selectedComments.filter(c => c.skill === 'reading' && c.comment_type === 'next_step').length;
-    const sStr = selectedComments.filter(c => c.skill === 'speaking' && c.comment_type === 'strength').length;
-    const sNext = selectedComments.filter(c => c.skill === 'speaking' && c.comment_type === 'next_step').length;
-    return rStr >= 1 && rNext >= 1 && sStr >= 1 && sNext >= 1;
-  };
+  const selectionCounts = useMemo(() => ({
+    rStr: selectedComments.filter(c => c.skill === 'reading' && c.comment_type === 'strength').length,
+    rNext: selectedComments.filter(c => c.skill === 'reading' && c.comment_type === 'next_step').length,
+    sStr: selectedComments.filter(c => c.skill === 'speaking' && c.comment_type === 'strength').length,
+    sNext: selectedComments.filter(c => c.skill === 'speaking' && c.comment_type === 'next_step').length,
+  }), [selectedComments]);
+
+  const canGenerate = selectionCounts.rStr >= 1 && selectionCounts.rNext >= 1 && selectionCounts.sStr >= 1 && selectionCounts.sNext >= 1;
 
   const handleGenerate = async () => {
     try {
@@ -185,58 +228,29 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
     setGeneratedReport(null);
   };
 
-  const CommentChips = ({ comments, maxSelect }: { comments: CommentBankEntry[]; maxSelect: number }) => {
-    const selectedCount = comments.filter(c => selectedIds.has(c.comment_id)).length;
-    return (
-      <div className="flex flex-wrap gap-2">
-        {comments.map(c => {
-          const isSelected = selectedIds.has(c.comment_id);
-          const isDisabled = !isSelected && selectedCount >= maxSelect;
-          return (
-            <button
-              key={c.comment_id}
-              onClick={() => !isDisabled && toggleComment(c.comment_id)}
-              disabled={isDisabled}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all text-left ${
-                isSelected
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : isDisabled
-                  ? 'opacity-40 cursor-not-allowed border-border bg-muted text-muted-foreground'
-                  : 'border-border bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer'
-              }`}
-            >
-              {isSelected && <Check className="w-3 h-3 inline mr-1" />}
-              {c.comment_text}
-            </button>
-          );
-        })}
-      </div>
-    );
-  };
-
   return (
     <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) resetForm(); }}>
-      <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0">
+        <DialogHeader className="px-6 pt-5 pb-3">
           <DialogTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5 text-primary" />
             Trial Lesson Report — {studentName}
           </DialogTitle>
           <DialogDescription>
-            {step === 'select' && 'Select observations for reading and speaking, then generate a professional report.'}
-            {step === 'preview' && 'Review, polish with AI, and download as PDF.'}
+            {step === 'select' && 'Select observations, add notes, then generate a professional report for parents.'}
+            {step === 'preview' && 'Review, edit, polish with AI, then download as PDF.'}
             {step === 'history' && 'Previous reports for this student.'}
           </DialogDescription>
         </DialogHeader>
 
         {/* Step navigation */}
-        <div className="flex items-center gap-2 text-sm">
+        <div className="flex items-center gap-2 text-sm px-6 pb-2">
           <Button variant={step === 'select' ? 'default' : 'ghost'} size="sm" onClick={() => setStep('select')}>
-            1. Select Observations
+            1. Select
           </Button>
           <ChevronRight className="w-4 h-4 text-muted-foreground" />
           <Button variant={step === 'preview' ? 'default' : 'ghost'} size="sm" disabled={!generatedReport} onClick={() => setStep('preview')}>
-            2. Preview & Download
+            2. Preview & PDF
           </Button>
           {existingReports.length > 0 && (
             <>
@@ -246,202 +260,223 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
               </Button>
             </>
           )}
+
+          {/* Selection counter */}
+          {step === 'select' && (
+            <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
+              <span className={selectionCounts.rStr >= 1 ? 'text-emerald-500' : ''}>R✅ {selectionCounts.rStr}</span>
+              <span className={selectionCounts.rNext >= 1 ? 'text-emerald-500' : ''}>R🎯 {selectionCounts.rNext}</span>
+              <span className={selectionCounts.sStr >= 1 ? 'text-emerald-500' : ''}>S✅ {selectionCounts.sStr}</span>
+              <span className={selectionCounts.sNext >= 1 ? 'text-emerald-500' : ''}>S🎯 {selectionCounts.sNext}</span>
+            </div>
+          )}
         </div>
 
         <Separator />
 
-        <ScrollArea className="flex-1 pr-4">
-          {step === 'select' && (
-            <div className="space-y-5 pb-4">
-              {bankLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                </div>
-              ) : (
-                <>
-                  {/* Reading Section */}
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2 text-base">
-                        <BookOpen className="w-4 h-4 text-blue-500" /> Reading
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground mb-2">
-                          ✅ Strengths <span className="text-xs">(select 1–5)</span>
-                        </p>
-                        <CommentChips comments={filteredComments.readingStrengths} maxSelect={5} />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground mb-2">
-                          🎯 Next Steps <span className="text-xs">(select 1–3)</span>
-                        </p>
-                        <CommentChips comments={filteredComments.readingNextSteps} maxSelect={3} />
-                      </div>
-                    </CardContent>
-                  </Card>
+        <ScrollArea className="flex-1">
+          <div className="px-6 py-4">
+            {step === 'select' && (
+              <div className="space-y-5">
+                {bankLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <>
+                    {/* Two-column layout: Reading | Speaking */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                      {/* Reading */}
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                          <BookOpen className="w-4 h-4 text-primary" />
+                          <h3 className="font-semibold text-sm">Reading</h3>
+                        </div>
 
-                  {/* Speaking Section */}
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2 text-base">
-                        <Mic className="w-4 h-4 text-purple-500" /> Speaking & Listening
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground mb-2">
-                          ✅ Strengths <span className="text-xs">(select 1–5)</span>
-                        </p>
-                        <CommentChips comments={filteredComments.speakingStrengths} maxSelect={5} />
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-2">✅ Strengths (select 1–5)</p>
+                          <CommentCheckList
+                            comments={filteredComments.readingStrengths}
+                            selectedIds={selectedIds}
+                            onToggle={toggleComment}
+                            maxSelect={5}
+                          />
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-2">🎯 Next Steps (select 1–3)</p>
+                          <CommentCheckList
+                            comments={filteredComments.readingNextSteps}
+                            selectedIds={selectedIds}
+                            onToggle={toggleComment}
+                            maxSelect={3}
+                          />
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground mb-2">
-                          🎯 Next Steps <span className="text-xs">(select 1–3)</span>
-                        </p>
-                        <CommentChips comments={filteredComments.speakingNextSteps} maxSelect={3} />
-                      </div>
-                    </CardContent>
-                  </Card>
 
-                  {/* Teacher Notes */}
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2 text-base">
-                        📝 Teacher Notes <span className="text-xs font-normal text-muted-foreground">(optional)</span>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
+                      {/* Speaking */}
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                          <Mic className="w-4 h-4 text-primary" />
+                          <h3 className="font-semibold text-sm">Speaking & Listening</h3>
+                        </div>
+
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-2">✅ Strengths (select 1–5)</p>
+                          <CommentCheckList
+                            comments={filteredComments.speakingStrengths}
+                            selectedIds={selectedIds}
+                            onToggle={toggleComment}
+                            maxSelect={5}
+                          />
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-2">🎯 Next Steps (select 1–3)</p>
+                          <CommentCheckList
+                            comments={filteredComments.speakingNextSteps}
+                            selectedIds={selectedIds}
+                            onToggle={toggleComment}
+                            maxSelect={3}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Teacher Notes */}
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground mb-2">📝 Teacher Notes (optional — will appear in the report)</p>
                       <Textarea
-                        placeholder="Add any personal observation about the student that you'd like included in the report..."
+                        placeholder="Add any personal observation about the student..."
                         value={teacherNotes}
                         onChange={(e) => setTeacherNotes(e.target.value)}
-                        className="min-h-[80px] resize-none"
+                        className="min-h-[70px] resize-none"
                       />
-                    </CardContent>
-                  </Card>
+                    </div>
 
-                  {/* Generate button */}
-                  <div className="flex justify-end">
-                    <Button
-                      onClick={handleGenerate}
-                      disabled={!canGenerate() || saveReport.isPending}
-                      size="lg"
-                    >
-                      {saveReport.isPending ? (
-                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating...</>
-                      ) : (
-                        <><FileText className="w-4 h-4 mr-2" /> Generate Report</>
-                      )}
-                    </Button>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
-          {step === 'preview' && generatedReport && (
-            <div className="space-y-4 pb-4">
-              {/* Trial info summary */}
-              {trialInfo && (
-                <div className="grid grid-cols-3 gap-3 text-sm">
-                  <div className="bg-muted/50 rounded-lg p-3">
-                    <span className="text-muted-foreground text-xs">Teacher</span>
-                    <p className="font-medium">{trialInfo.teacherName || 'N/A'}</p>
-                  </div>
-                  <div className="bg-muted/50 rounded-lg p-3">
-                    <span className="text-muted-foreground text-xs">Date & Time</span>
-                    <p className="font-medium">
-                      {trialInfo.trialDate ? format(new Date(trialInfo.trialDate), 'dd MMM yyyy') : 'N/A'} · {formatTime12h(trialInfo.trialTime)}
-                    </p>
-                  </div>
-                  <div className="bg-muted/50 rounded-lg p-3">
-                    <span className="text-muted-foreground text-xs">Program</span>
-                    <p className="font-medium">{trialInfo.program || 'N/A'}</p>
-                  </div>
-                </div>
-              )}
-
-              <Card>
-                <CardContent className="pt-6">
-                  <Textarea
-                    value={generatedReport.text}
-                    onChange={(e) => setGeneratedReport({ ...generatedReport, text: e.target.value })}
-                    className="min-h-[200px] text-sm leading-relaxed"
-                  />
-                </CardContent>
-              </Card>
-
-              <div className="flex items-center gap-2 flex-wrap">
-                {!generatedReport.isPolished && (
-                  <Button onClick={handlePolish} disabled={polishReport.isPending} variant="outline">
-                    {polishReport.isPending ? (
-                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Polishing...</>
-                    ) : (
-                      <><Sparkles className="w-4 h-4 mr-2" /> Polish with AI</>
-                    )}
-                  </Button>
+                    {/* Generate button */}
+                    <div className="flex items-center justify-between pt-2">
+                      <p className="text-xs text-muted-foreground">
+                        {canGenerate
+                          ? `${selectedIds.size} observations selected — ready to generate`
+                          : 'Select at least 1 strength & 1 next step per skill'}
+                      </p>
+                      <Button
+                        onClick={handleGenerate}
+                        disabled={!canGenerate || saveReport.isPending}
+                        size="lg"
+                      >
+                        {saveReport.isPending ? (
+                          <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating...</>
+                        ) : (
+                          <><FileText className="w-4 h-4 mr-2" /> Generate Report</>
+                        )}
+                      </Button>
+                    </div>
+                  </>
                 )}
-                {generatedReport.isPolished && (
-                  <Badge variant="outline" className="bg-purple-500/10 text-purple-500 border-purple-500/30">
-                    <Sparkles className="w-3 h-3 mr-1" /> AI Polished
-                  </Badge>
-                )}
-                <Button onClick={() => handleDownloadPdf()} className="bg-primary">
-                  <Download className="w-4 h-4 mr-2" /> Download PDF
-                </Button>
-                <Button onClick={handleCopy} variant="outline">
-                  {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-                  {copied ? 'Copied!' : 'Copy Text'}
-                </Button>
-                <Button variant="ghost" onClick={resetForm}>
-                  Generate Another
-                </Button>
               </div>
-            </div>
-          )}
+            )}
 
-          {step === 'history' && (
-            <div className="space-y-3 pb-4">
-              {existingReports.map(r => (
-                <Card key={r.report_id}>
-                  <CardContent className="pt-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge variant="outline" className="text-xs">
-                        {format(new Date(r.created_at), 'dd MMM yyyy, HH:mm')}
-                      </Badge>
-                      {r.ai_polished_text && (
-                        <Badge variant="outline" className="bg-purple-500/10 text-purple-500 border-purple-500/30 text-xs">
-                          <Sparkles className="w-3 h-3 mr-1" /> AI Polished
-                        </Badge>
-                      )}
+            {step === 'preview' && generatedReport && (
+              <div className="space-y-4">
+                {/* Trial info summary */}
+                {trialInfo && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+                    <div className="bg-muted/50 rounded-lg p-3">
+                      <span className="text-muted-foreground text-xs">Teacher</span>
+                      <p className="font-medium">{trialInfo.teacherName || 'N/A'}</p>
                     </div>
-                    <p className="text-sm leading-relaxed mb-3">{r.final_text}</p>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDownloadHistoryPdf(r)}
-                      >
-                        <Download className="w-3 h-3 mr-1" /> PDF
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          navigator.clipboard.writeText(r.final_text);
-                          toast.success('Copied!');
-                        }}
-                      >
-                        <Copy className="w-3 h-3 mr-1" /> Copy
-                      </Button>
+                    <div className="bg-muted/50 rounded-lg p-3">
+                      <span className="text-muted-foreground text-xs">Date & Time</span>
+                      <p className="font-medium">
+                        {trialInfo.trialDate ? format(new Date(trialInfo.trialDate), 'dd MMM yyyy') : 'N/A'} · {formatTime12h(trialInfo.trialTime)}
+                      </p>
                     </div>
+                    <div className="bg-muted/50 rounded-lg p-3">
+                      <span className="text-muted-foreground text-xs">Program · Duration</span>
+                      <p className="font-medium">{trialInfo.program || 'N/A'} · {trialInfo.duration || 30} min</p>
+                    </div>
+                  </div>
+                )}
+
+                <Card>
+                  <CardContent className="pt-5 pb-4">
+                    <Textarea
+                      value={generatedReport.text}
+                      onChange={(e) => setGeneratedReport({ ...generatedReport, text: e.target.value })}
+                      className="min-h-[200px] text-sm leading-relaxed border-0 shadow-none focus-visible:ring-0 p-0"
+                    />
                   </CardContent>
                 </Card>
-              ))}
-            </div>
-          )}
+
+                <div className="flex items-center gap-2 flex-wrap">
+                  {!generatedReport.isPolished && (
+                    <Button onClick={handlePolish} disabled={polishReport.isPending} variant="outline">
+                      {polishReport.isPending ? (
+                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Polishing...</>
+                      ) : (
+                        <><Sparkles className="w-4 h-4 mr-2" /> Polish with AI</>
+                      )}
+                    </Button>
+                  )}
+                  {generatedReport.isPolished && (
+                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
+                      <Sparkles className="w-3 h-3 mr-1" /> AI Polished
+                    </Badge>
+                  )}
+                  <Button onClick={() => handleDownloadPdf()}>
+                    <Download className="w-4 h-4 mr-2" /> Download PDF
+                  </Button>
+                  <Button onClick={handleCopy} variant="outline">
+                    {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                    {copied ? 'Copied!' : 'Copy Text'}
+                  </Button>
+                  <Button variant="ghost" onClick={resetForm}>
+                    Generate Another
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {step === 'history' && (
+              <div className="space-y-3">
+                {existingReports.length === 0 && (
+                  <p className="text-center text-muted-foreground py-8">No reports generated yet.</p>
+                )}
+                {existingReports.map(r => (
+                  <Card key={r.report_id}>
+                    <CardContent className="pt-4 pb-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge variant="outline" className="text-xs">
+                          {format(new Date(r.created_at), 'dd MMM yyyy, HH:mm')}
+                        </Badge>
+                        {r.ai_polished_text && (
+                          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-xs">
+                            <Sparkles className="w-3 h-3 mr-1" /> AI Polished
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm leading-relaxed mb-3">{r.final_text}</p>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={() => handleDownloadHistoryPdf(r)}>
+                          <Download className="w-3 h-3 mr-1" /> PDF
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            navigator.clipboard.writeText(r.final_text);
+                            toast.success('Copied!');
+                          }}
+                        >
+                          <Copy className="w-3 h-3 mr-1" /> Copy
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
         </ScrollArea>
       </DialogContent>
     </Dialog>
