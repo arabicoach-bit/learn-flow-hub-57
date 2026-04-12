@@ -274,7 +274,7 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
 
         <Separator />
 
-        <ScrollArea className="flex-1">
+        <ScrollArea className="flex-1 min-h-0 overflow-hidden">
           <div className="px-6 py-4">
             {step === 'select' && (
               <div className="space-y-5">
