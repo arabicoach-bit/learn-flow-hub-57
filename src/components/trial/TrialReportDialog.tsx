@@ -132,6 +132,7 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
         selectedComments: mapped,
         studentName,
         teacherNotes: teacherNotes.trim() || undefined,
+        gender: trialInfo?.gender || undefined,
       });
       setGeneratedReport({ reportId: result.report_id, text: result.final_text, isPolished: false });
       setStep('preview');
