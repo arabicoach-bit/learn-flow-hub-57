@@ -1,4 +1,4 @@
-import { useState, useMemo, forwardRef } from 'react';
+import { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -192,15 +192,15 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
     finalText: text,
   });
 
-  const handleDownloadPdf = (text?: string) => {
+  const handleDownloadPdf = async (text?: string) => {
     const finalText = text || generatedReport?.text || '';
     const pdfData = buildPdfData(finalText);
-    const doc = generateTrialReportPdf(pdfData);
+    const doc = await generateTrialReportPdfWithLogo(pdfData);
     doc.save(`Trial_Report_${studentName.replace(/\s+/g, '_')}.pdf`);
     toast.success('PDF downloaded!');
   };
 
-  const handleDownloadHistoryPdf = (report: any) => {
+  const handleDownloadHistoryPdf = async (report: any) => {
     const comments = Array.isArray(report.selected_comments) ? report.selected_comments : [];
     const pdfData: TrialReportPdfData = {
       studentName,
@@ -211,6 +211,7 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
       duration: `${trialInfo?.duration || 30} minutes`,
       age: trialInfo?.age ? String(trialInfo.age) : '',
       yearGroup: trialInfo?.yearGroup || '',
+      gender: trialInfo?.gender || '',
       readingStrengths: comments.filter((c: any) => c.skill === 'reading' && c.type === 'strength').map((c: any) => c.text),
       readingNextSteps: comments.filter((c: any) => c.skill === 'reading' && c.type === 'next_step').map((c: any) => c.text),
       speakingStrengths: comments.filter((c: any) => c.skill === 'speaking' && c.type === 'strength').map((c: any) => c.text),
@@ -218,7 +219,7 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
       teacherNotes: report.teacher_notes || '',
       finalText: report.final_text,
     };
-    const doc = generateTrialReportPdf(pdfData);
+    const doc = await generateTrialReportPdfWithLogo(pdfData);
     doc.save(`Trial_Report_${studentName.replace(/\s+/g, '_')}.pdf`);
     toast.success('PDF downloaded!');
   };
