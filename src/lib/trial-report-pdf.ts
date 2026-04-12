@@ -65,25 +65,7 @@ export function generateTrialReportPdf(data: TrialReportPdfData): jsPDF {
 
   const personalize = (t: string) => personalizeText(t, data.studentName, data.gender);
 
-  // ===== HEADER with logo =====
-  // Logo placeholder - will attempt to load
-  const loadImage = (src: string): Promise<string> =>
-    new Promise((resolve) => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        const c = document.createElement('canvas');
-        c.width = img.width;
-        c.height = img.height;
-        c.getContext('2d')?.drawImage(img, 0, 0);
-        resolve(c.toDataURL('image/png'));
-      };
-      img.onerror = () => resolve('');
-      img.src = src;
-    });
-
-  // We'll build the doc synchronously, logo is added via the wrapper
-  // Header text
+  // Header text (logo added asynchronously via generateTrialReportPdfWithLogo)
   doc.setFontSize(20);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...navy);
