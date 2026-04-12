@@ -156,6 +156,11 @@ export function TrialLessonCard({ lesson, onLessonMarked }: TrialLessonCardProps
         onOpenChange={setShowReport}
         trialId={lesson.trial_student_id}
         studentName={lesson.student_name}
+        trialInfo={{
+          trialDate: lesson.lesson_date,
+          trialTime: lesson.lesson_time || undefined,
+          duration: lesson.duration_minutes,
+        }}
       />
     </Card>
   );
