@@ -1062,6 +1062,7 @@ export type Database = {
           report_id: string
           selected_comments: Json
           speaking_level: string
+          teacher_notes: string | null
           template_text: string | null
           trial_id: string
           updated_at: string
@@ -1075,6 +1076,7 @@ export type Database = {
           report_id?: string
           selected_comments?: Json
           speaking_level: string
+          teacher_notes?: string | null
           template_text?: string | null
           trial_id: string
           updated_at?: string
@@ -1088,6 +1090,7 @@ export type Database = {
           report_id?: string
           selected_comments?: Json
           speaking_level?: string
+          teacher_notes?: string | null
           template_text?: string | null
           trial_id?: string
           updated_at?: string
