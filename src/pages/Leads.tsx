@@ -1,11 +1,12 @@
 import { useState, useMemo } from 'react';
-import { Download, Users, Plus, Loader2 } from 'lucide-react';
+import { Download, Users, Loader2 } from 'lucide-react';
 import { getCurrentQuarter, getQuarterDateRange, type QuarterFilterValue } from '@/components/shared/QuarterFilter';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useLeads, useUpdateLead, useDeleteLead, type Lead } from '@/hooks/use-leads';
-import { useLeadCommentsCounts } from '@/hooks/use-lead-comments';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { EditLeadDialog } from '@/components/leads/EditLeadDialog';
 import { LeadCard } from '@/components/leads/LeadCard';
@@ -19,6 +20,8 @@ import { LeadCommentsDialog } from '@/components/leads/LeadCommentsDialog';
 import { exportLeads, type LeadExport } from '@/lib/excel-export';
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog';
 
+type TabValue = 'all' | 'new' | 'contacted' | 'interested' | 'converted' | 'lost';
+
 export default function Leads() {
   const [search, setSearch] = useState('');
   const [trialStatusFilter, setTrialStatusFilter] = useState('all');
@@ -27,10 +30,11 @@ export default function Leads() {
   const [quarterFilter, setQuarterFilter] = useState<QuarterFilterValue>(getCurrentQuarter);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [convertingLead, setConvertingLead] = useState<Lead | null>(null);
-  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('table');
   const [sortBy, setSortBy] = useState<LeadSortOption>('newest');
   const [deleteLeadId, setDeleteLeadId] = useState<string | null>(null);
   const [notesLead, setNotesLead] = useState<Lead | null>(null);
+  const [activeTab, setActiveTab] = useState<TabValue>('all');
   const { toast } = useToast();
 
   const { startDate: filterStart, endDate: filterEnd } = getQuarterDateRange(quarterFilter);
@@ -44,11 +48,9 @@ export default function Leads() {
 
   const updateLead = useUpdateLead();
   const deleteLead = useDeleteLead();
-  const leadIds = useMemo(() => leads?.map(l => l.lead_id) || [], [leads]);
-  const { data: commentCounts } = useLeadCommentsCounts(leadIds);
 
-  // Client-side filters for lead status and follow-up
-  const filteredLeads = useMemo(() => {
+  // Base filtered (before tabs)
+  const baseFiltered = useMemo(() => {
     if (!leads) return [];
     let result = leads;
     if (leadStatusFilter !== 'all') {
@@ -68,6 +70,38 @@ export default function Leads() {
       }
     });
   }, [leads, leadStatusFilter, followUpFilter, sortBy]);
+
+  // Tab-filtered list
+  const filteredLeads = useMemo(() => {
+    if (activeTab === 'all') return baseFiltered;
+    if (activeTab === 'new') return baseFiltered.filter(l => l.status === 'New');
+    if (activeTab === 'contacted') return baseFiltered.filter(l => l.status === 'Contacted');
+    if (activeTab === 'interested') return baseFiltered.filter(l => l.status === 'Interested');
+    if (activeTab === 'converted') return baseFiltered.filter(l => l.trial_status === 'Trial Booked' || l.status === 'Converted');
+    if (activeTab === 'lost') return baseFiltered.filter(l => l.trial_status === 'Lost' || l.status === 'Lost');
+    return baseFiltered;
+  }, [baseFiltered, activeTab]);
+
+  // Stats based on baseFiltered (not tab-filtered)
+  const totalLeads = baseFiltered.length;
+  const convertedCount = baseFiltered.filter(l => l.trial_status === 'Trial Booked' || l.status === 'Converted').length;
+  const stats = {
+    total: totalLeads,
+    pending: baseFiltered.filter(l => l.trial_status === 'Pending').length,
+    priceNegotiation: baseFiltered.filter(l => l.trial_status === 'Price Negotiation').length,
+    lost: baseFiltered.filter(l => l.trial_status === 'Lost' || l.status === 'Lost').length,
+    converted: convertedCount,
+    conversionRate: totalLeads > 0 ? (convertedCount / totalLeads) * 100 : 0,
+  };
+
+  const tabCounts = {
+    all: baseFiltered.length,
+    new: baseFiltered.filter(l => l.status === 'New').length,
+    contacted: baseFiltered.filter(l => l.status === 'Contacted').length,
+    interested: baseFiltered.filter(l => l.status === 'Interested').length,
+    converted: convertedCount,
+    lost: stats.lost,
+  };
 
   const handleDeleteLead = async () => {
     if (!deleteLeadId) return;
@@ -113,6 +147,7 @@ export default function Leads() {
       toast({ title: 'Error', description: 'Failed to update follow-up.', variant: 'destructive' });
     }
   };
+
   const handleUpdateHandledBy = async (leadId: string, handledBy: string) => {
     try {
       await updateLead.mutateAsync({ leadId, handled_by: handledBy || undefined });
@@ -122,55 +157,96 @@ export default function Leads() {
     }
   };
 
-  const totalLeads = filteredLeads.length;
-  // "Trial Booked" = converted in the lead pipeline
-  const convertedCount = filteredLeads.filter(l => l.trial_status === 'Trial Booked' || l.status === 'Converted').length;
-  const stats = {
-    total: totalLeads,
-    pending: filteredLeads.filter(l => l.trial_status === 'Pending').length,
-    priceNegotiation: filteredLeads.filter(l => l.trial_status === 'Price Negotiation').length,
-    lost: filteredLeads.filter(l => l.trial_status === 'Lost').length,
-    converted: convertedCount,
-    conversionRate: totalLeads > 0 ? (convertedCount / totalLeads) * 100 : 0,
+  const handleExport = () => {
+    if (!filteredLeads.length) {
+      toast({ title: 'No data to export', variant: 'destructive' });
+      return;
+    }
+    const exportData: LeadExport[] = filteredLeads.map(l => ({
+      name: l.name, phone: l.phone, source: l.source, interest: l.interest,
+      status: l.status, first_contact_date: l.first_contact_date,
+      last_contact_date: l.last_contact_date, next_followup_date: l.next_followup_date,
+      handled_by: l.handled_by, trial_status: l.trial_status,
+      follow_up: l.follow_up, notes: l.notes, created_at: l.created_at,
+    }));
+    exportLeads(exportData);
+    toast({ title: 'Exported successfully!' });
   };
 
   const hasFilters = search || trialStatusFilter !== 'all' || leadStatusFilter !== 'all' || followUpFilter !== 'all';
 
+  const renderContent = (leadsList: Lead[]) => {
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      );
+    }
+
+    if (leadsList.length === 0) {
+      return (
+        <Card className="bg-card">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Users className="w-12 h-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No leads found</h3>
+            <p className="text-muted-foreground text-center mb-4">
+              {hasFilters ? 'Try adjusting your filters' : 'Add your first lead to get started'}
+            </p>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    if (viewMode === 'table') {
+      return (
+        <LeadTableView
+          leads={leadsList}
+          onUpdateLeadStatus={handleUpdateLeadStatus}
+          onUpdateTrialStatus={handleUpdateTrialStatus}
+          onUpdateFollowUp={handleUpdateFollowUp}
+          onUpdateHandledBy={handleUpdateHandledBy}
+          onEdit={setEditingLead}
+          onDelete={(leadId) => setDeleteLeadId(leadId)}
+          onConvertToTrial={setConvertingLead}
+        />
+      );
+    }
+
+    return (
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {leadsList.map(lead => (
+          <LeadCard
+            key={lead.lead_id} lead={lead}
+            onUpdateTrialStatus={handleUpdateTrialStatus}
+            onUpdateFollowUp={handleUpdateFollowUp}
+            onEdit={setEditingLead}
+            onDelete={(leadId) => setDeleteLeadId(leadId)}
+            onConvertToTrial={setConvertingLead}
+            onOpenNotes={setNotesLead}
+          />
+        ))}
+      </div>
+    );
+  };
+
   return (
     <AdminLayout>
-      <div className="space-y-6 animate-fade-in">
+      <div className="space-y-4 animate-fade-in">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-display font-bold">Leads CRM</h1>
-            <p className="text-muted-foreground">Track and manage potential students</p>
           </div>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                if (!filteredLeads.length) {
-                  toast({ title: 'No data to export', variant: 'destructive' });
-                  return;
-                }
-                const exportData: LeadExport[] = filteredLeads.map(l => ({
-                  name: l.name, phone: l.phone, source: l.source, interest: l.interest,
-                  status: l.status, first_contact_date: l.first_contact_date,
-                  last_contact_date: l.last_contact_date, next_followup_date: l.next_followup_date,
-                  handled_by: l.handled_by, trial_status: l.trial_status,
-                  follow_up: l.follow_up, notes: l.notes, created_at: l.created_at,
-                }));
-                exportLeads(exportData);
-                toast({ title: 'Exported successfully!' });
-              }}
-            >
-              <Download className="w-4 h-4 mr-2" />Export Excel
+            <Button variant="outline" size="sm" onClick={handleExport}>
+              <Download className="w-4 h-4 mr-1.5" />Export
             </Button>
             <AddLeadForm />
           </div>
         </div>
 
-        {/* Stats */}
+        {/* Compact Stats */}
         <LeadStatsCards stats={stats} />
 
         {/* Filters */}
@@ -184,52 +260,33 @@ export default function Leads() {
           viewMode={viewMode} onViewModeChange={setViewMode}
         />
 
-        {/* Content */}
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          </div>
-        ) : filteredLeads.length > 0 ? (
-          viewMode === 'cards' ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredLeads.map(lead => (
-                <LeadCard
-                  key={lead.lead_id} lead={lead}
-                  commentCount={commentCounts?.[lead.lead_id]}
-                  onUpdateTrialStatus={handleUpdateTrialStatus}
-                  onUpdateFollowUp={handleUpdateFollowUp}
-                  onEdit={setEditingLead}
-                  onDelete={(leadId) => setDeleteLeadId(leadId)}
-                  onConvertToTrial={setConvertingLead}
-                  onOpenNotes={setNotesLead}
-                />
-              ))}
-            </div>
-          ) : (
-            <LeadTableView
-              leads={filteredLeads}
-              commentCounts={commentCounts}
-              onUpdateLeadStatus={handleUpdateLeadStatus}
-              onUpdateTrialStatus={handleUpdateTrialStatus}
-              onUpdateFollowUp={handleUpdateFollowUp}
-              onUpdateHandledBy={handleUpdateHandledBy}
-              onEdit={setEditingLead}
-              onDelete={(leadId) => setDeleteLeadId(leadId)}
-              onConvertToTrial={setConvertingLead}
-              onOpenNotes={setNotesLead}
-            />
-          )
-        ) : (
-          <Card className="bg-card">
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Users className="w-12 h-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No leads found</h3>
-              <p className="text-muted-foreground text-center mb-4">
-                {hasFilters ? 'Try adjusting your filters' : 'Add your first lead to get started'}
-              </p>
-            </CardContent>
-          </Card>
-        )}
+        {/* Tabs + Content */}
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)}>
+          <TabsList className="bg-muted/50 h-9">
+            <TabsTrigger value="all" className="text-xs h-7 px-3">
+              All <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4">{tabCounts.all}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="new" className="text-xs h-7 px-3">
+              New <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-sky-500/20 text-sky-400">{tabCounts.new}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="contacted" className="text-xs h-7 px-3">
+              Contacted <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-blue-500/20 text-blue-400">{tabCounts.contacted}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="interested" className="text-xs h-7 px-3">
+              Interested <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-amber-500/20 text-amber-400">{tabCounts.interested}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="converted" className="text-xs h-7 px-3">
+              Converted <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-emerald-500/20 text-emerald-400">{tabCounts.converted}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="lost" className="text-xs h-7 px-3">
+              Lost <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-red-500/20 text-red-400">{tabCounts.lost}</Badge>
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value={activeTab} className="mt-3">
+            {renderContent(filteredLeads)}
+          </TabsContent>
+        </Tabs>
 
         <EditLeadDialog
           lead={editingLead} open={!!editingLead}
