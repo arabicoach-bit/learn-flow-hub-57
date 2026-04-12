@@ -13,6 +13,31 @@ export interface TeacherTrialLesson {
   status: string;
   notes: string | null;
   teacher_payment_amount: number | null;
+  // Extra metadata for report
+  gender: string | null;
+  age: number | null;
+  year_group: string | null;
+  interested_program: string | null;
+  teacher_name: string | null;
+}
+
+function mapLessons(data: any[], teacherName: string | null): TeacherTrialLesson[] {
+  return (data || []).map((lesson: any) => ({
+    trial_lesson_id: lesson.trial_lesson_id,
+    trial_student_id: lesson.trial_student_id,
+    student_name: lesson.trial_students?.name || 'Unknown',
+    lesson_date: lesson.lesson_date,
+    lesson_time: lesson.lesson_time,
+    duration_minutes: lesson.duration_minutes,
+    status: lesson.status,
+    notes: lesson.notes,
+    teacher_payment_amount: lesson.teacher_payment_amount,
+    gender: lesson.trial_students?.gender || null,
+    age: lesson.trial_students?.age || null,
+    year_group: lesson.trial_students?.year_group || null,
+    interested_program: lesson.trial_students?.interested_program || null,
+    teacher_name: teacherName,
+  }));
 }
 
 export function useTodaysTrialLessons() {
@@ -25,6 +50,13 @@ export function useTodaysTrialLessons() {
       if (!teacherId) return [];
       
       const today = format(new Date(), 'yyyy-MM-dd');
+
+      // Get teacher name
+      const { data: teacher } = await supabase
+        .from('teachers')
+        .select('name')
+        .eq('teacher_id', teacherId)
+        .single();
       
       const { data, error } = await supabase
         .from('trial_lessons_log')
@@ -37,7 +69,7 @@ export function useTodaysTrialLessons() {
           status,
           notes,
           teacher_payment_amount,
-          trial_students!inner(name)
+          trial_students!inner(name, gender, age, year_group, interested_program)
         `)
         .eq('teacher_id', teacherId)
         .eq('lesson_date', today)
@@ -45,18 +77,7 @@ export function useTodaysTrialLessons() {
         .order('lesson_time');
 
       if (error) throw error;
-
-      return (data || []).map((lesson: any) => ({
-        trial_lesson_id: lesson.trial_lesson_id,
-        trial_student_id: lesson.trial_student_id,
-        student_name: lesson.trial_students?.name || 'Unknown',
-        lesson_date: lesson.lesson_date,
-        lesson_time: lesson.lesson_time,
-        duration_minutes: lesson.duration_minutes,
-        status: lesson.status,
-        notes: lesson.notes,
-        teacher_payment_amount: lesson.teacher_payment_amount,
-      })) as TeacherTrialLesson[];
+      return mapLessons(data, teacher?.name || null);
     },
     enabled: !!teacherId,
     refetchInterval: 60000,
@@ -75,6 +96,12 @@ export function usePendingTrialLessons() {
       const today = new Date();
       const sevenDaysAgo = subDays(today, 7);
       const todayStr = format(today, 'yyyy-MM-dd');
+
+      const { data: teacher } = await supabase
+        .from('teachers')
+        .select('name')
+        .eq('teacher_id', teacherId)
+        .single();
       
       const { data, error } = await supabase
         .from('trial_lessons_log')
@@ -87,7 +114,7 @@ export function usePendingTrialLessons() {
           status,
           notes,
           teacher_payment_amount,
-          trial_students!inner(name)
+          trial_students!inner(name, gender, age, year_group, interested_program)
         `)
         .eq('teacher_id', teacherId)
         .eq('status', 'scheduled')
@@ -96,18 +123,7 @@ export function usePendingTrialLessons() {
         .order('lesson_date', { ascending: false });
 
       if (error) throw error;
-
-      return (data || []).map((lesson: any) => ({
-        trial_lesson_id: lesson.trial_lesson_id,
-        trial_student_id: lesson.trial_student_id,
-        student_name: lesson.trial_students?.name || 'Unknown',
-        lesson_date: lesson.lesson_date,
-        lesson_time: lesson.lesson_time,
-        duration_minutes: lesson.duration_minutes,
-        status: lesson.status,
-        notes: lesson.notes,
-        teacher_payment_amount: lesson.teacher_payment_amount,
-      })) as TeacherTrialLesson[];
+      return mapLessons(data, teacher?.name || null);
     },
     enabled: !!teacherId,
     refetchInterval: 60000,
