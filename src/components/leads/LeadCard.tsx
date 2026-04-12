@@ -15,7 +15,7 @@ import type { Lead } from '@/hooks/use-leads';
 interface LeadCardProps {
   lead: Lead;
   commentCount?: number;
-  onUpdateTrialStatus: (leadId: string, trialStatus: string) => void;
+  onUpdateLeadStatus: (leadId: string, status: string) => void;
   onUpdateFollowUp: (leadId: string, followUp: string) => void;
   onEdit: (lead: Lead) => void;
   onDelete?: (leadId: string) => void;
@@ -23,18 +23,10 @@ interface LeadCardProps {
   onOpenNotes?: (lead: Lead) => void;
 }
 
-const trialStatusColors: Record<string, string> = {
-  'Trial Booked': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+const statusColors: Record<string, string> = {
+  'Trial Booked': 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
   Pending: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
   'Price Negotiation': 'bg-purple-500/20 text-purple-400 border-purple-500/30',
-  Lost: 'bg-red-500/20 text-red-400 border-red-500/30',
-};
-
-const leadStatusColors: Record<string, string> = {
-  New: 'bg-sky-500/20 text-sky-400 border-sky-500/30',
-  Contacted: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  Interested: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-  Converted: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
   Lost: 'bg-red-500/20 text-red-400 border-red-500/30',
 };
 
@@ -48,7 +40,7 @@ const followUpColors: Record<string, string> = {
   'F.7 – Arabic Challenge': 'bg-violet-500/20 text-violet-400',
 };
 
-const trialStatusOptions = ['Trial Booked', 'Pending', 'Price Negotiation', 'Lost'];
+const statusOptions = ['Pending', 'Trial Booked', 'Price Negotiation', 'Lost'];
 const followUpOptions = [
   'F.1 – Student Motivation', 'F.2 – Free Resources', 'F.3 – Parent Feedback',
   'F.4 – Special Offer', 'F.5 – Help Offer', 'F.6 – Soft Reminder', 'F.7 – Arabic Challenge',
@@ -60,7 +52,7 @@ function isOverdue(dateStr: string | null): boolean {
   return isPast(d) && !isToday(d);
 }
 
-export function LeadCard({ lead, commentCount, onUpdateTrialStatus, onUpdateFollowUp, onEdit, onDelete, onConvertToTrial, onOpenNotes }: LeadCardProps) {
+export function LeadCard({ lead, commentCount, onUpdateLeadStatus, onUpdateFollowUp, onEdit, onDelete, onConvertToTrial, onOpenNotes }: LeadCardProps) {
   const overdue = isOverdue(lead.next_followup_date);
 
   return (
@@ -74,16 +66,9 @@ export function LeadCard({ lead, commentCount, onUpdateTrialStatus, onUpdateFoll
             )}
           </div>
           <div className="flex items-center gap-2">
-            {lead.status && (
-              <Badge className={leadStatusColors[lead.status] || 'bg-muted text-muted-foreground'}>
-                {lead.status}
-              </Badge>
-            )}
-            {lead.trial_status && (
-              <Badge className={trialStatusColors[lead.trial_status] || 'bg-muted text-muted-foreground'}>
-                {lead.trial_status}
-              </Badge>
-            )}
+            <Badge className={statusColors[lead.trial_status] || 'bg-muted text-muted-foreground'}>
+              {lead.trial_status}
+            </Badge>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -92,14 +77,14 @@ export function LeadCard({ lead, commentCount, onUpdateTrialStatus, onUpdateFoll
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => onEdit(lead)}>Edit Details</DropdownMenuItem>
-                {onConvertToTrial && lead.trial_status !== 'Trial Booked' && lead.status !== 'Converted' && (
+                {onConvertToTrial && lead.trial_status !== 'Trial Booked' && (
                   <DropdownMenuItem onClick={() => onConvertToTrial(lead)} className="text-primary">
                     <UserPlus className="w-4 h-4 mr-2" />Convert to Trial
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
-                {trialStatusOptions.map((status) => (
-                  <DropdownMenuItem key={status} onClick={() => onUpdateTrialStatus(lead.lead_id, status)}>
+                {statusOptions.map((status) => (
+                  <DropdownMenuItem key={status} onClick={() => onUpdateLeadStatus(lead.lead_id, status)}>
                     Mark as {status}
                   </DropdownMenuItem>
                 ))}

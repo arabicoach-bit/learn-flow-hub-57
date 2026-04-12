@@ -20,12 +20,11 @@ import { LeadCommentsDialog } from '@/components/leads/LeadCommentsDialog';
 import { exportLeads, type LeadExport } from '@/lib/excel-export';
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog';
 
-type TabValue = 'all' | 'new' | 'contacted' | 'interested' | 'converted' | 'lost';
+type TabValue = 'all' | 'pending' | 'trial_booked' | 'price_negotiation' | 'lost';
 
 export default function Leads() {
   const [search, setSearch] = useState('');
-  const [trialStatusFilter, setTrialStatusFilter] = useState('all');
-  const [leadStatusFilter, setLeadStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [followUpFilter, setFollowUpFilter] = useState('all');
   const [quarterFilter, setQuarterFilter] = useState<QuarterFilterValue>(getCurrentQuarter);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
@@ -41,7 +40,7 @@ export default function Leads() {
 
   const { data: leads, isLoading } = useLeads({
     search,
-    trial_status: trialStatusFilter === 'all' ? undefined : trialStatusFilter,
+    trial_status: statusFilter === 'all' ? undefined : statusFilter,
     date_start: filterStart,
     date_end: filterEnd,
   });
@@ -52,14 +51,11 @@ export default function Leads() {
   // Base filtered (before tabs)
   const baseFiltered = useMemo(() => {
     if (!leads) return [];
-    let result = leads;
-    if (leadStatusFilter !== 'all') {
-      result = result.filter(l => l.status === leadStatusFilter);
-    }
+    let result = [...leads];
     if (followUpFilter !== 'all') {
       result = result.filter(l => l.follow_up === followUpFilter);
     }
-    return [...result].sort((a, b) => {
+    return result.sort((a, b) => {
       switch (sortBy) {
         case 'oldest': return (a.created_at || '').localeCompare(b.created_at || '');
         case 'alpha_asc': return (a.name || '').localeCompare(b.name || '');
@@ -69,37 +65,35 @@ export default function Leads() {
         case 'newest': default: return (b.created_at || '').localeCompare(a.created_at || '');
       }
     });
-  }, [leads, leadStatusFilter, followUpFilter, sortBy]);
+  }, [leads, followUpFilter, sortBy]);
 
   // Tab-filtered list
   const filteredLeads = useMemo(() => {
     if (activeTab === 'all') return baseFiltered;
-    if (activeTab === 'new') return baseFiltered.filter(l => l.status === 'New');
-    if (activeTab === 'contacted') return baseFiltered.filter(l => l.status === 'Contacted');
-    if (activeTab === 'interested') return baseFiltered.filter(l => l.status === 'Interested');
-    if (activeTab === 'converted') return baseFiltered.filter(l => l.trial_status === 'Trial Booked' || l.status === 'Converted');
-    if (activeTab === 'lost') return baseFiltered.filter(l => l.trial_status === 'Lost' || l.status === 'Lost');
+    if (activeTab === 'pending') return baseFiltered.filter(l => l.trial_status === 'Pending');
+    if (activeTab === 'trial_booked') return baseFiltered.filter(l => l.trial_status === 'Trial Booked');
+    if (activeTab === 'price_negotiation') return baseFiltered.filter(l => l.trial_status === 'Price Negotiation');
+    if (activeTab === 'lost') return baseFiltered.filter(l => l.trial_status === 'Lost');
     return baseFiltered;
   }, [baseFiltered, activeTab]);
 
-  // Stats based on baseFiltered (not tab-filtered)
+  // Stats
   const totalLeads = baseFiltered.length;
-  const convertedCount = baseFiltered.filter(l => l.trial_status === 'Trial Booked' || l.status === 'Converted').length;
+  const convertedCount = baseFiltered.filter(l => l.trial_status === 'Trial Booked').length;
   const stats = {
     total: totalLeads,
     pending: baseFiltered.filter(l => l.trial_status === 'Pending').length,
     priceNegotiation: baseFiltered.filter(l => l.trial_status === 'Price Negotiation').length,
-    lost: baseFiltered.filter(l => l.trial_status === 'Lost' || l.status === 'Lost').length,
+    lost: baseFiltered.filter(l => l.trial_status === 'Lost').length,
     converted: convertedCount,
     conversionRate: totalLeads > 0 ? (convertedCount / totalLeads) * 100 : 0,
   };
 
   const tabCounts = {
     all: baseFiltered.length,
-    new: baseFiltered.filter(l => l.status === 'New').length,
-    contacted: baseFiltered.filter(l => l.status === 'Contacted').length,
-    interested: baseFiltered.filter(l => l.status === 'Interested').length,
-    converted: convertedCount,
+    pending: stats.pending,
+    trial_booked: convertedCount,
+    price_negotiation: stats.priceNegotiation,
     lost: stats.lost,
   };
 
@@ -116,21 +110,12 @@ export default function Leads() {
 
   const deleteLeadName = leads?.find(l => l.lead_id === deleteLeadId)?.name;
 
-  const handleUpdateLeadStatus = async (leadId: string, status: string) => {
-    try {
-      await updateLead.mutateAsync({ leadId, status: status as Lead['status'] });
-      toast({ title: 'Lead status updated', description: `Lead marked as ${status}.` });
-    } catch {
-      toast({ title: 'Error', description: 'Failed to update lead status.', variant: 'destructive' });
-    }
-  };
-
-  const handleUpdateTrialStatus = async (leadId: string, trialStatus: string) => {
+  const handleUpdateLeadStatus = async (leadId: string, trialStatus: string) => {
     try {
       await updateLead.mutateAsync({ leadId, trial_status: trialStatus || undefined });
-      toast({ title: 'Trial status updated', description: trialStatus ? `Lead marked as ${trialStatus}.` : 'Trial status cleared.' });
+      toast({ title: 'Lead status updated', description: `Lead marked as ${trialStatus}.` });
     } catch {
-      toast({ title: 'Error', description: 'Failed to update trial status.', variant: 'destructive' });
+      toast({ title: 'Error', description: 'Failed to update lead status.', variant: 'destructive' });
     }
   };
 
@@ -164,7 +149,7 @@ export default function Leads() {
     }
     const exportData: LeadExport[] = filteredLeads.map(l => ({
       name: l.name, phone: l.phone, source: l.source, interest: l.interest,
-      status: l.status, first_contact_date: l.first_contact_date,
+      first_contact_date: l.first_contact_date,
       last_contact_date: l.last_contact_date, next_followup_date: l.next_followup_date,
       handled_by: l.handled_by, trial_status: l.trial_status,
       follow_up: l.follow_up, notes: l.notes, created_at: l.created_at,
@@ -173,7 +158,7 @@ export default function Leads() {
     toast({ title: 'Exported successfully!' });
   };
 
-  const hasFilters = search || trialStatusFilter !== 'all' || leadStatusFilter !== 'all' || followUpFilter !== 'all';
+  const hasFilters = search || statusFilter !== 'all' || followUpFilter !== 'all';
 
   const renderContent = (leadsList: Lead[]) => {
     if (isLoading) {
@@ -203,7 +188,6 @@ export default function Leads() {
         <LeadTableView
           leads={leadsList}
           onUpdateLeadStatus={handleUpdateLeadStatus}
-          onUpdateTrialStatus={handleUpdateTrialStatus}
           onUpdateFollowUp={handleUpdateFollowUp}
           onUpdateHandledBy={handleUpdateHandledBy}
           onEdit={setEditingLead}
@@ -218,7 +202,7 @@ export default function Leads() {
         {leadsList.map(lead => (
           <LeadCard
             key={lead.lead_id} lead={lead}
-            onUpdateTrialStatus={handleUpdateTrialStatus}
+            onUpdateLeadStatus={handleUpdateLeadStatus}
             onUpdateFollowUp={handleUpdateFollowUp}
             onEdit={setEditingLead}
             onDelete={(leadId) => setDeleteLeadId(leadId)}
@@ -252,8 +236,7 @@ export default function Leads() {
         {/* Filters */}
         <LeadFiltersBar
           search={search} onSearchChange={setSearch}
-          trialStatusFilter={trialStatusFilter} onTrialStatusChange={setTrialStatusFilter}
-          leadStatusFilter={leadStatusFilter} onLeadStatusChange={setLeadStatusFilter}
+          statusFilter={statusFilter} onStatusChange={setStatusFilter}
           followUpFilter={followUpFilter} onFollowUpChange={setFollowUpFilter}
           quarterFilter={quarterFilter} onQuarterChange={setQuarterFilter}
           sortBy={sortBy} onSortChange={setSortBy}
@@ -266,17 +249,14 @@ export default function Leads() {
             <TabsTrigger value="all" className="text-xs h-7 px-3">
               All <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4">{tabCounts.all}</Badge>
             </TabsTrigger>
-            <TabsTrigger value="new" className="text-xs h-7 px-3">
-              New <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-sky-500/20 text-sky-400">{tabCounts.new}</Badge>
+            <TabsTrigger value="pending" className="text-xs h-7 px-3">
+              Pending <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-amber-500/20 text-amber-400">{tabCounts.pending}</Badge>
             </TabsTrigger>
-            <TabsTrigger value="contacted" className="text-xs h-7 px-3">
-              Contacted <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-blue-500/20 text-blue-400">{tabCounts.contacted}</Badge>
+            <TabsTrigger value="trial_booked" className="text-xs h-7 px-3">
+              Trial Booked <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-emerald-500/20 text-emerald-400">{tabCounts.trial_booked}</Badge>
             </TabsTrigger>
-            <TabsTrigger value="interested" className="text-xs h-7 px-3">
-              Interested <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-amber-500/20 text-amber-400">{tabCounts.interested}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="converted" className="text-xs h-7 px-3">
-              Converted <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-emerald-500/20 text-emerald-400">{tabCounts.converted}</Badge>
+            <TabsTrigger value="price_negotiation" className="text-xs h-7 px-3">
+              Price Neg. <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-purple-500/20 text-purple-400">{tabCounts.price_negotiation}</Badge>
             </TabsTrigger>
             <TabsTrigger value="lost" className="text-xs h-7 px-3">
               Lost <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0 h-4 bg-red-500/20 text-red-400">{tabCounts.lost}</Badge>

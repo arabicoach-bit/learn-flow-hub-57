@@ -16,12 +16,7 @@ import { usePrograms } from '@/hooks/use-programs';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
-const trialStatusOptions = [
-  'Trial Booked',
-  'Pending',
-  'Price Negotiation',
-  'Lost',
-];
+const statusOptions = ['Pending', 'Trial Booked', 'Price Negotiation', 'Lost'];
 
 const followUpOptions = [
   'F.1 – Student Motivation',
@@ -49,10 +44,9 @@ export function EditLeadDialog({ lead, open, onOpenChange }: EditLeadDialogProps
     phone: '',
     source: '',
     interest: '',
-    status: '' as Lead['status'] | '',
+    trial_status: '',
     first_contact_date: '',
     last_contact_date: '',
-    trial_status: '',
     follow_up: '',
     handled_by: '',
     next_followup_date: '',
@@ -66,10 +60,9 @@ export function EditLeadDialog({ lead, open, onOpenChange }: EditLeadDialogProps
         phone: lead.phone || '',
         source: lead.source || '',
         interest: lead.interest || '',
-        status: lead.status || '',
+        trial_status: lead.trial_status || '',
         first_contact_date: lead.first_contact_date || '',
         last_contact_date: lead.last_contact_date || '',
-        trial_status: lead.trial_status || '',
         follow_up: lead.follow_up || '',
         handled_by: lead.handled_by || '',
         next_followup_date: lead.next_followup_date || '',
@@ -88,10 +81,9 @@ export function EditLeadDialog({ lead, open, onOpenChange }: EditLeadDialogProps
         phone: formData.phone,
         source: formData.source || undefined,
         interest: formData.interest || undefined,
-        status: formData.status as Lead['status'] || undefined,
+        trial_status: formData.trial_status || undefined,
         first_contact_date: formData.first_contact_date || undefined,
         last_contact_date: formData.last_contact_date || undefined,
-        trial_status: formData.trial_status || undefined,
         follow_up: formData.follow_up || undefined,
         handled_by: formData.handled_by || undefined,
         next_followup_date: formData.next_followup_date || undefined,
@@ -206,42 +198,21 @@ export function EditLeadDialog({ lead, open, onOpenChange }: EditLeadDialogProps
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="trial_status">Trial Status</Label>
+              <Label htmlFor="trial_status">Lead Status</Label>
               <Select
                 value={formData.trial_status}
                 onValueChange={(value) => setFormData({ ...formData, trial_status: value })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select trial status" />
+                  <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
-                  {trialStatusOptions.map(status => (
+                  {statusOptions.map(status => (
                     <SelectItem key={status} value={status}>{status}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="status">Lead Status</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value) => setFormData({ ...formData, status: value as Lead['status'] })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="New">New</SelectItem>
-                  <SelectItem value="Contacted">Contacted</SelectItem>
-                  <SelectItem value="Interested">Interested</SelectItem>
-                  <SelectItem value="Converted">Converted</SelectItem>
-                  <SelectItem value="Lost">Lost</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="follow_up">Follow-Up</Label>
               <Select
@@ -258,6 +229,9 @@ export function EditLeadDialog({ lead, open, onOpenChange }: EditLeadDialogProps
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="handled_by">Handled By</Label>
               <Select value={formData.handled_by || '__none__'} onValueChange={v => setFormData({ ...formData, handled_by: v === '__none__' ? '' : v })}>
@@ -270,16 +244,15 @@ export function EditLeadDialog({ lead, open, onOpenChange }: EditLeadDialogProps
                 </SelectContent>
               </Select>
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="next_followup_date">Next Follow-up Date</Label>
-            <Input
-              id="next_followup_date"
-              type="date"
-              value={formData.next_followup_date}
-              onChange={(e) => setFormData({ ...formData, next_followup_date: e.target.value })}
-            />
+            <div className="space-y-2">
+              <Label htmlFor="next_followup_date">Next Follow-up Date</Label>
+              <Input
+                id="next_followup_date"
+                type="date"
+                value={formData.next_followup_date}
+                onChange={(e) => setFormData({ ...formData, next_followup_date: e.target.value })}
+              />
+            </div>
           </div>
 
           <div className="space-y-2">

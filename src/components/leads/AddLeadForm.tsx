@@ -10,7 +10,7 @@ import { useCreateLead } from '@/hooks/use-leads';
 import { usePrograms } from '@/hooks/use-programs';
 import { useToast } from '@/hooks/use-toast';
 
-const trialStatusOptions = ['Trial Booked', 'Pending', 'Price Negotiation', 'Lost'];
+const statusOptions = ['Pending', 'Trial Booked', 'Price Negotiation', 'Lost'];
 const followUpOptions = [
   'F.1 – Student Motivation', 'F.2 – Free Resources', 'F.3 – Parent Feedback',
   'F.4 – Special Offer', 'F.5 – Help Offer', 'F.6 – Soft Reminder', 'F.7 – Arabic Challenge',
@@ -108,11 +108,11 @@ export function AddLeadForm() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Trial Status</Label>
+              <Label>Lead Status</Label>
               <Select value={formData.trial_status} onValueChange={v => update('trial_status', v)}>
-                <SelectTrigger><SelectValue placeholder="Select trial status" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
                 <SelectContent>
-                  {trialStatusOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  {statusOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
