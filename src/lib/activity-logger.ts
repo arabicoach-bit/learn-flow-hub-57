@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
  * This creates an automatic audit trail visible in the Notes tab.
  */
 
-type EntityType = 'student' | 'trial' | 'package';
+type EntityType = 'student' | 'trial' | 'package' | 'lead';
 
 interface ActivityLogEntry {
   entityType: EntityType;
