@@ -78,6 +78,7 @@ export function TrialTableView({ students, onUpdateStatus, onUpdateConversion, o
   const [commentsStudentName, setCommentsStudentName] = useState('');
   const [reportTrialId, setReportTrialId] = useState<string | null>(null);
   const [reportStudentName, setReportStudentName] = useState('');
+  const [reportTrialInfo, setReportTrialInfo] = useState<any>(null);
 
   const trialIds = students.map(s => s.trial_id);
   const { data: commentCounts } = useTrialCommentsCounts(trialIds);
@@ -281,7 +282,7 @@ export function TrialTableView({ students, onUpdateStatus, onUpdateConversion, o
 
                         <TableCell className="py-2" onClick={e => e.stopPropagation()}>
                           <div className="flex items-center gap-0.5">
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setReportTrialId(student.trial_id); setReportStudentName(student.name); }} title="Generate Report">
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setReportTrialId(student.trial_id); setReportStudentName(student.name); setReportTrialInfo({ teacherName: student.teachers?.name, program: student.interested_program, trialDate: student.trial_date, trialTime: student.trial_time, duration: student.duration_minutes, age: student.age, yearGroup: student.year_group }); }} title="Generate Report">
                               <ClipboardList className="h-3.5 w-3.5" />
                             </Button>
                             {canConvert && (
@@ -432,6 +433,7 @@ export function TrialTableView({ students, onUpdateStatus, onUpdateConversion, o
           onOpenChange={(open) => { if (!open) setReportTrialId(null); }}
           trialId={reportTrialId}
           studentName={reportStudentName}
+          trialInfo={reportTrialInfo}
         />
       )}
     </Card>
