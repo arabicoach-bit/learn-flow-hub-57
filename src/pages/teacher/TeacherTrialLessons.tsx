@@ -564,32 +564,41 @@ export default function TeacherTrialLessons() {
                                 )}
                               </TableCell>
                               <TableCell>
-                                {lesson.status === 'scheduled' ? (
-                                  <div className="flex items-center gap-1 justify-center">
-                                    <Button
-                                      size="icon"
-                                      variant="ghost"
-                                      className="h-7 w-7 text-emerald-600 hover:bg-emerald-500/20"
-                                      onClick={() => handleInlineStatus(lesson.trial_lesson_id, 'completed')}
-                                      disabled={isThisUpdating}
-                                      title="Mark Completed"
-                                    >
-                                      {isThisUpdating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-                                    </Button>
-                                    <Button
-                                      size="icon"
-                                      variant="ghost"
-                                      className="h-7 w-7 text-destructive hover:bg-destructive/20"
-                                      onClick={() => handleInlineStatus(lesson.trial_lesson_id, 'absent')}
-                                      disabled={isThisUpdating}
-                                      title="Mark Absent"
-                                    >
-                                      <XCircle className="w-4 h-4" />
-                                    </Button>
-                                  </div>
-                                ) : (
-                                  <span className="text-muted-foreground text-xs">—</span>
-                                )}
+                                <div className="flex items-center gap-1 justify-center">
+                                  {lesson.status === 'scheduled' && (
+                                    <>
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className="h-7 w-7 text-emerald-600 hover:bg-emerald-500/20"
+                                        onClick={() => handleInlineStatus(lesson.trial_lesson_id, 'completed')}
+                                        disabled={isThisUpdating}
+                                        title="Mark Completed"
+                                      >
+                                        {isThisUpdating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                                      </Button>
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className="h-7 w-7 text-destructive hover:bg-destructive/20"
+                                        onClick={() => handleInlineStatus(lesson.trial_lesson_id, 'absent')}
+                                        disabled={isThisUpdating}
+                                        title="Mark Absent"
+                                      >
+                                        <XCircle className="w-4 h-4" />
+                                      </Button>
+                                    </>
+                                  )}
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-7 w-7 text-primary hover:bg-primary/20"
+                                    onClick={() => setReportLesson(lesson)}
+                                    title="Trial Report"
+                                  >
+                                    <ClipboardList className="w-4 h-4" />
+                                  </Button>
+                                </div>
                               </TableCell>
                             </TableRow>
                           );
