@@ -81,31 +81,27 @@ function buildTemplateParagraph(
   const p = (t: string) => personalizeComment(t, studentName, gender);
   const parts: string[] = [];
 
-  parts.push(`${studentName} participated in a trial lesson and demonstrated the following abilities.`);
-
   if (readingStrengths.length > 0) {
-    parts.push(`In reading, ${readingStrengths.map(s => p(s).replace(/\.$/, '')).join('. Additionally, ')}.`);
+    parts.push('Reading — Strengths:');
+    readingStrengths.forEach(s => parts.push(`• ${p(s)}`));
   }
-
   if (readingNextSteps.length > 0) {
-    parts.push(`To develop reading skills further, ${readingNextSteps.map(s => p(s).replace(/\.$/, '')).join(', and ')}.`);
+    parts.push('Reading — Next Steps:');
+    readingNextSteps.forEach(s => parts.push(`• ${p(s)}`));
   }
-
   if (speakingStrengths.length > 0) {
-    parts.push(`In speaking and listening, ${speakingStrengths.map(s => p(s).replace(/\.$/, '')).join('. Also, ')}.`);
+    parts.push('Conversation (Speaking & Listening) — Strengths:');
+    speakingStrengths.forEach(s => parts.push(`• ${p(s)}`));
   }
-
   if (speakingNextSteps.length > 0) {
-    parts.push(`To improve speaking and listening, ${speakingNextSteps.map(s => p(s).replace(/\.$/, '')).join(', and ')}.`);
+    parts.push('Conversation (Speaking & Listening) — Next Steps:');
+    speakingNextSteps.forEach(s => parts.push(`• ${p(s)}`));
   }
-
   if (teacherNotes?.trim()) {
-    parts.push(teacherNotes.trim());
+    parts.push(`Teacher Notes: ${teacherNotes.trim()}`);
   }
 
-  parts.push(`Overall, it was a productive session and we look forward to supporting ${studentName}'s learning journey.`);
-
-  return parts.join(' ');
+  return parts.join('\n');
 }
 
 export function useSaveTrialReport() {
