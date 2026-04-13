@@ -18,6 +18,7 @@ export interface TrialReportPdfData {
   finalText: string;
   /** When true, render finalText as-is instead of rebuilding from comment arrays */
   useRawText?: boolean;
+  recommendedLevel?: string;
 }
 
 function personalizeText(text: string, name: string, gender: string): string {
