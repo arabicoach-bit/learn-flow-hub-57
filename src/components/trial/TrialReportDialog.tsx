@@ -134,7 +134,7 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
         teacherNotes: teacherNotes.trim() || undefined,
         gender: trialInfo?.gender || undefined,
       });
-      setGeneratedReport({ reportId: result.report_id, text: result.final_text, isPolished: false });
+      setGeneratedReport({ reportId: result.report_id, text: result.final_text, isPolished: false, originalText: result.final_text });
       setStep('preview');
       toast.success('Report generated!');
     } catch (err: any) {
@@ -151,7 +151,7 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
         templateText: generatedReport.text,
         studentName,
       });
-      setGeneratedReport({ ...generatedReport, text: polishedText, isPolished: true });
+      setGeneratedReport({ ...generatedReport, text: polishedText, isPolished: true, originalText: polishedText });
       toast.success('Report polished with AI!');
     } catch (err: any) {
       toast.error('Failed to polish report', { description: err.message });
