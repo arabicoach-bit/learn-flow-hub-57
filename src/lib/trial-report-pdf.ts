@@ -144,7 +144,7 @@ export function generateTrialReportPdf(data: TrialReportPdfData): jsPDF {
     doc.text(title, margin + 4, y + 6);
     y += 13;
 
-    // Strengths as bullet points
+    // Strengths as a flowing paragraph
     if (strengths.length > 0) {
       doc.setFontSize(9);
       doc.setFont('helvetica', 'bold');
@@ -154,17 +154,14 @@ export function generateTrialReportPdf(data: TrialReportPdfData): jsPDF {
 
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(...darkText);
-      strengths.forEach(s => {
-        const text = personalize(s);
-        const lines = doc.splitTextToSize(`• ${text}`, contentW - 14);
-        if (y + lines.length * 4.5 > 275) { doc.addPage(); y = 20; }
-        doc.text(lines, margin + 8, y);
-        y += lines.length * 4.5 + 1;
-      });
-      y += 2;
+      const paragraph = strengths.map(s => personalize(s)).join('. ').replace(/\.\./g, '.') + '.';
+      const lines = doc.splitTextToSize(paragraph, contentW - 8);
+      if (y + lines.length * 4.5 > 275) { doc.addPage(); y = 20; }
+      doc.text(lines, margin + 4, y);
+      y += lines.length * 4.5 + 3;
     }
 
-    // Next Steps as bullet points
+    // Next Steps as a flowing paragraph
     if (nextSteps.length > 0) {
       doc.setFontSize(9);
       doc.setFont('helvetica', 'bold');
@@ -174,14 +171,11 @@ export function generateTrialReportPdf(data: TrialReportPdfData): jsPDF {
 
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(...darkText);
-      nextSteps.forEach(s => {
-        const text = personalize(s);
-        const lines = doc.splitTextToSize(`• ${text}`, contentW - 14);
-        if (y + lines.length * 4.5 > 275) { doc.addPage(); y = 20; }
-        doc.text(lines, margin + 8, y);
-        y += lines.length * 4.5 + 1;
-      });
-      y += 2;
+      const paragraph = nextSteps.map(s => personalize(s)).join('. ').replace(/\.\./g, '.') + '.';
+      const lines = doc.splitTextToSize(paragraph, contentW - 8);
+      if (y + lines.length * 4.5 > 275) { doc.addPage(); y = 20; }
+      doc.text(lines, margin + 4, y);
+      y += lines.length * 4.5 + 3;
     }
 
     y += 4;
