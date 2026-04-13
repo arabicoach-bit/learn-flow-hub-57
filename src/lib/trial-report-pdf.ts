@@ -128,109 +128,152 @@ export function generateTrialReportPdf(data: TrialReportPdfData): jsPDF {
   infoLine('Age / Year: ', ageYear, margin + 4, y);
   y += 10;
 
-  // ===== READING SECTION =====
-  const drawSkillSection = (
-    title: string,
-    color: [number, number, number],
-    strengths: string[],
-    nextSteps: string[],
-    strengthsIntro: string
-  ) => {
-    if (y > 230) { doc.addPage(); y = 20; }
+  // ===== CONTENT =====
+  if (data.useRawText && data.finalText) {
+    // Render edited text as-is, splitting by double newlines into paragraphs
+    const paragraphs = data.finalText.split(/\n\n+/);
+    for (const para of paragraphs) {
+      if (!para.trim()) continue;
+      const lines = para.split('\n');
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        const isBullet = line.trim().startsWith('•');
+        const isHeader = /^(Reading|Conversation|Teacher Notes)/i.test(line.trim());
+        const isSubHeader = /^(Strengths|Next Steps)/i.test(line.trim());
 
-    // Section header
-    doc.setFillColor(...color);
-    doc.rect(margin, y, contentW, 8, 'F');
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(255, 255, 255);
-    doc.text(title, margin + 4, y + 6);
-    y += 13;
+        if (isHeader) {
+          if (y > 240) { doc.addPage(); y = 20; }
+          // Section header bar
+          const headerColor = /^Reading/i.test(line.trim()) ? navy : /^Conversation/i.test(line.trim()) ? purple : navy;
+          doc.setFillColor(...headerColor);
+          doc.rect(margin, y, contentW, 8, 'F');
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(255, 255, 255);
+          doc.text(line.trim().replace(/[—:]+\s*$/, '').trim(), margin + 4, y + 6);
+          y += 13;
+        } else if (isSubHeader) {
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'bold');
+          const subColor = /^Strengths/i.test(line.trim()) ? green : amber;
+          doc.setTextColor(...subColor);
+          doc.text(line.trim(), margin + 4, y);
+          y += 6;
+        } else if (isBullet) {
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(...darkText);
+          const bLines = doc.splitTextToSize(line.trim(), contentW - 12);
+          if (y + bLines.length * 4.5 > 275) { doc.addPage(); y = 20; }
+          doc.text(bLines, margin + 6, y);
+          y += bLines.length * 4.5 + 1;
+        } else {
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(...darkText);
+          const tLines = doc.splitTextToSize(line.trim(), contentW - 8);
+          if (y + tLines.length * 4.5 > 275) { doc.addPage(); y = 20; }
+          doc.text(tLines, margin + 4, y);
+          y += tLines.length * 4.5 + 2;
+        }
+      }
+      y += 3;
+    }
+  } else {
+    // ===== Structured rendering from comment arrays =====
+    const drawSkillSection = (
+      title: string,
+      color: [number, number, number],
+      strengths: string[],
+      nextSteps: string[],
+      strengthsIntro: string
+    ) => {
+      if (y > 230) { doc.addPage(); y = 20; }
 
-    // Helper to strip student name from bullet start to avoid repetition
-    const stripName = (text: string) => {
-      let r = text.replace(new RegExp(`^${data.studentName}\\s+`, 'i'), '');
-      r = r.replace(/^The student\s+/i, '');
-      return r.charAt(0).toUpperCase() + r.slice(1);
+      doc.setFillColor(...color);
+      doc.rect(margin, y, contentW, 8, 'F');
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(255, 255, 255);
+      doc.text(title, margin + 4, y + 6);
+      y += 13;
+
+      const stripName = (text: string) => {
+        let r = text.replace(new RegExp(`^${data.studentName}\\s+`, 'i'), '');
+        r = r.replace(/^The student\s+/i, '');
+        return r.charAt(0).toUpperCase() + r.slice(1);
+      };
+
+      const pronoun = data.gender?.toLowerCase() === 'female' ? 'she' : data.gender?.toLowerCase() === 'male' ? 'he' : 'the student';
+
+      if (strengths.length > 0) {
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...green);
+        doc.text('Strengths', margin + 4, y);
+        y += 6;
+
+        doc.setFont('helvetica', 'italic');
+        doc.setTextColor(...darkText);
+        const introLines = doc.splitTextToSize(strengthsIntro, contentW - 8);
+        if (y + introLines.length * 4.5 > 275) { doc.addPage(); y = 20; }
+        doc.text(introLines, margin + 4, y);
+        y += introLines.length * 4.5 + 2;
+
+        doc.setFont('helvetica', 'normal');
+        for (const s of strengths) {
+          const bullet = `•  ${stripName(personalize(s))}`;
+          const bLines = doc.splitTextToSize(bullet, contentW - 12);
+          if (y + bLines.length * 4.5 > 275) { doc.addPage(); y = 20; }
+          doc.text(bLines, margin + 6, y);
+          y += bLines.length * 4.5 + 1;
+        }
+        y += 2;
+      }
+
+      if (nextSteps.length > 0) {
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...amber);
+        doc.text('Next Steps', margin + 4, y);
+        y += 6;
+
+        doc.setFont('helvetica', 'italic');
+        doc.setTextColor(...darkText);
+        const intro = `To continue progressing, ${pronoun} should focus on:`;
+        const introLines = doc.splitTextToSize(intro, contentW - 8);
+        if (y + introLines.length * 4.5 > 275) { doc.addPage(); y = 20; }
+        doc.text(introLines, margin + 4, y);
+        y += introLines.length * 4.5 + 2;
+
+        doc.setFont('helvetica', 'normal');
+        for (const s of nextSteps) {
+          const bullet = `•  ${stripName(personalize(s))}`;
+          const bLines = doc.splitTextToSize(bullet, contentW - 12);
+          if (y + bLines.length * 4.5 > 275) { doc.addPage(); y = 20; }
+          doc.text(bLines, margin + 6, y);
+          y += bLines.length * 4.5 + 1;
+        }
+        y += 2;
+      }
+
+      y += 4;
     };
 
-    const pronoun = data.gender?.toLowerCase() === 'female' ? 'she' : data.gender?.toLowerCase() === 'male' ? 'he' : 'the student';
+    drawSkillSection('Reading', navy, data.readingStrengths, data.readingNextSteps, `${data.studentName} demonstrated strong reading skills in the following areas:`);
+    drawSkillSection('Conversation (Speaking & Listening)', purple, data.speakingStrengths, data.speakingNextSteps, `${data.studentName} showed confidence in the following areas:`);
 
-    // Strengths
-    if (strengths.length > 0) {
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(...green);
-      doc.text('Strengths', margin + 4, y);
-      y += 6;
-
-      // Intro sentence
-      doc.setFont('helvetica', 'italic');
+    if (data.teacherNotes?.trim()) {
+      if (y > 240) { doc.addPage(); y = 20; }
+      drawSectionHeader('Teacher Notes');
       doc.setTextColor(...darkText);
-      const intro = strengthsIntro;
-      const introLines = doc.splitTextToSize(intro, contentW - 8);
-      if (y + introLines.length * 4.5 > 275) { doc.addPage(); y = 20; }
-      doc.text(introLines, margin + 4, y);
-      y += introLines.length * 4.5 + 2;
-
-      // Bullet points
-      doc.setFont('helvetica', 'normal');
-      for (const s of strengths) {
-        const bullet = `•  ${stripName(personalize(s))}`;
-        const bLines = doc.splitTextToSize(bullet, contentW - 12);
-        if (y + bLines.length * 4.5 > 275) { doc.addPage(); y = 20; }
-        doc.text(bLines, margin + 6, y);
-        y += bLines.length * 4.5 + 1;
-      }
-      y += 2;
-    }
-
-    // Next Steps
-    if (nextSteps.length > 0) {
       doc.setFontSize(9);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(...amber);
-      doc.text('Next Steps', margin + 4, y);
-      y += 6;
-
-      // Intro sentence
       doc.setFont('helvetica', 'italic');
-      doc.setTextColor(...darkText);
-      const intro = `To continue progressing, ${pronoun} should focus on:`;
-      const introLines = doc.splitTextToSize(intro, contentW - 8);
-      if (y + introLines.length * 4.5 > 275) { doc.addPage(); y = 20; }
-      doc.text(introLines, margin + 4, y);
-      y += introLines.length * 4.5 + 2;
-
-      // Bullet points
-      doc.setFont('helvetica', 'normal');
-      for (const s of nextSteps) {
-        const bullet = `•  ${stripName(personalize(s))}`;
-        const bLines = doc.splitTextToSize(bullet, contentW - 12);
-        if (y + bLines.length * 4.5 > 275) { doc.addPage(); y = 20; }
-        doc.text(bLines, margin + 6, y);
-        y += bLines.length * 4.5 + 1;
-      }
-      y += 2;
+      const noteLines = doc.splitTextToSize(data.teacherNotes, contentW - 8);
+      if (y + noteLines.length * 4.5 > 275) { doc.addPage(); y = 20; }
+      doc.text(noteLines, margin + 4, y);
+      y += noteLines.length * 4.5 + 6;
     }
-
-    y += 4;
-  };
-
-  drawSkillSection('Reading', navy, data.readingStrengths, data.readingNextSteps, `${data.studentName} demonstrated strong reading skills in the following areas:`);
-  drawSkillSection('Conversation (Speaking & Listening)', purple, data.speakingStrengths, data.speakingNextSteps, `${data.studentName} showed confidence in the following areas:`);
-
-  // ===== TEACHER NOTES (only if provided) =====
-  if (data.teacherNotes?.trim()) {
-    if (y > 240) { doc.addPage(); y = 20; }
-    drawSectionHeader('Teacher Notes');
-    doc.setTextColor(...darkText);
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'italic');
-    const noteLines = doc.splitTextToSize(data.teacherNotes, contentW - 8);
-    if (y + noteLines.length * 4.5 > 275) { doc.addPage(); y = 20; }
-    doc.text(noteLines, margin + 4, y);
-    y += noteLines.length * 4.5 + 6;
   }
 
   // ===== FOOTER on all pages =====
