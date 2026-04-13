@@ -224,7 +224,7 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
       speakingNextSteps: comments.filter((c: any) => c.skill === 'speaking' && c.type === 'next_step').map((c: any) => c.text),
       teacherNotes: report.teacher_notes || '',
       finalText: report.final_text,
-      recommendedLevel: report.recommended_level || undefined,
+      
     };
     const doc = await generateTrialReportPdfWithLogo(pdfData);
     doc.save(`Trial_Report_${studentName.replace(/\s+/g, '_')}.pdf`);
