@@ -82,7 +82,7 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
   const [step, setStep] = useState<'select' | 'preview' | 'history'>('select');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [teacherNotes, setTeacherNotes] = useState('');
-  const [generatedReport, setGeneratedReport] = useState<{ reportId: string; text: string; isPolished: boolean } | null>(null);
+  const [generatedReport, setGeneratedReport] = useState<{ reportId: string; text: string; isPolished: boolean; originalText: string } | null>(null);
   const [copied, setCopied] = useState(false);
 
   const filteredComments = useMemo(() => {
