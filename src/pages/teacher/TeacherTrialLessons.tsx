@@ -15,13 +15,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { QuarterFilter, getCurrentQuarter, getQuarterDateRange, type QuarterFilterValue } from '@/components/shared/QuarterFilter';
 import { TrialLessonCalendarCard, type TrialLessonCalendarData } from '@/components/schedule/TrialLessonCalendarCard';
+import { TrialReportDialog } from '@/components/trial/TrialReportDialog';
 import { toast } from 'sonner';
 import { invalidateAllTrialCaches } from '@/lib/trial-cache-utils';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   Users, Clock, Check, X, CalendarDays, Search,
-  AlertCircle, Sunrise, Sun, ListFilter, TrendingUp,
-  CheckCircle, XCircle, Loader2, ArrowUpDown, MessageSquare,
+  AlertCircle, Sunrise, Sun, ListFilter,
+  CheckCircle, XCircle, Loader2, ArrowUpDown, ClipboardList,
 } from 'lucide-react';
 
 type TrialLesson = TrialLessonCalendarData & { conversion_status?: string; trial_result?: string | null };
@@ -42,7 +43,7 @@ function useTeacherTrialData(teacherId: string, startDate: string | null, endDat
           notes,
           teacher_payment_amount,
           trial_students!inner(
-            name, phone, age, school, year_group,
+            name, phone, age, school, year_group, gender,
             interested_program, student_level, parent_guardian_name,
             conversion_status, trial_result
           )
@@ -75,6 +76,7 @@ function useTeacherTrialData(teacherId: string, startDate: string | null, endDat
         parent_guardian_name: lesson.trial_students?.parent_guardian_name,
         conversion_status: lesson.trial_students?.conversion_status,
         trial_result: lesson.trial_students?.trial_result,
+        gender: lesson.trial_students?.gender,
       })) as TrialLesson[];
     },
     enabled: !!teacherId,
@@ -154,6 +156,7 @@ export default function TeacherTrialLessons() {
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [reportLesson, setReportLesson] = useState<TrialLesson | null>(null);
 
   const { startDate, endDate } = getQuarterDateRange(filter);
   const { data: allLessons = [], isLoading, refetch } = useTeacherTrialData(teacherId || '', startDate, endDate);
@@ -561,32 +564,41 @@ export default function TeacherTrialLessons() {
                                 )}
                               </TableCell>
                               <TableCell>
-                                {lesson.status === 'scheduled' ? (
-                                  <div className="flex items-center gap-1 justify-center">
-                                    <Button
-                                      size="icon"
-                                      variant="ghost"
-                                      className="h-7 w-7 text-emerald-600 hover:bg-emerald-500/20"
-                                      onClick={() => handleInlineStatus(lesson.trial_lesson_id, 'completed')}
-                                      disabled={isThisUpdating}
-                                      title="Mark Completed"
-                                    >
-                                      {isThisUpdating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-                                    </Button>
-                                    <Button
-                                      size="icon"
-                                      variant="ghost"
-                                      className="h-7 w-7 text-destructive hover:bg-destructive/20"
-                                      onClick={() => handleInlineStatus(lesson.trial_lesson_id, 'absent')}
-                                      disabled={isThisUpdating}
-                                      title="Mark Absent"
-                                    >
-                                      <XCircle className="w-4 h-4" />
-                                    </Button>
-                                  </div>
-                                ) : (
-                                  <span className="text-muted-foreground text-xs">—</span>
-                                )}
+                                <div className="flex items-center gap-1 justify-center">
+                                  {lesson.status === 'scheduled' && (
+                                    <>
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className="h-7 w-7 text-emerald-600 hover:bg-emerald-500/20"
+                                        onClick={() => handleInlineStatus(lesson.trial_lesson_id, 'completed')}
+                                        disabled={isThisUpdating}
+                                        title="Mark Completed"
+                                      >
+                                        {isThisUpdating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                                      </Button>
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className="h-7 w-7 text-destructive hover:bg-destructive/20"
+                                        onClick={() => handleInlineStatus(lesson.trial_lesson_id, 'absent')}
+                                        disabled={isThisUpdating}
+                                        title="Mark Absent"
+                                      >
+                                        <XCircle className="w-4 h-4" />
+                                      </Button>
+                                    </>
+                                  )}
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-7 w-7 text-primary hover:bg-primary/20"
+                                    onClick={() => setReportLesson(lesson)}
+                                    title="Trial Report"
+                                  >
+                                    <ClipboardList className="w-4 h-4" />
+                                  </Button>
+                                </div>
                               </TableCell>
                             </TableRow>
                           );
@@ -683,6 +695,25 @@ export default function TeacherTrialLessons() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {reportLesson && (
+        <TrialReportDialog
+          open={!!reportLesson}
+          onOpenChange={(v) => { if (!v) setReportLesson(null); }}
+          trialId={reportLesson.trial_student_id}
+          studentName={reportLesson.student_name}
+          trialInfo={{
+            teacherName: profile?.full_name || undefined,
+            program: reportLesson.interested_program || undefined,
+            trialDate: reportLesson.lesson_date,
+            trialTime: reportLesson.lesson_time || undefined,
+            duration: reportLesson.duration_minutes,
+            age: reportLesson.age,
+            yearGroup: reportLesson.year_group,
+            gender: reportLesson.gender,
+          }}
+        />
+      )}
     </TeacherLayout>
   );
 }
