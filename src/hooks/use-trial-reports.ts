@@ -113,6 +113,48 @@ function buildTemplateParagraph(
   return parts.join('\n\n');
 }
 
+export function useUpdateTrialReport() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      reportId: string;
+      trialId: string;
+      selectedComments: { commentId: string; skill: string; type: string; text: string }[];
+      studentName: string;
+      teacherNotes?: string;
+      gender?: string;
+      finalText?: string;
+    }) => {
+      const readingStrengths = input.selectedComments.filter(c => c.skill === 'reading' && c.type === 'strength').map(c => c.text);
+      const readingNextSteps = input.selectedComments.filter(c => c.skill === 'reading' && c.type === 'next_step').map(c => c.text);
+      const speakingStrengths = input.selectedComments.filter(c => c.skill === 'speaking' && c.type === 'strength').map(c => c.text);
+      const speakingNextSteps = input.selectedComments.filter(c => c.skill === 'speaking' && c.type === 'next_step').map(c => c.text);
+
+      const templateText = buildTemplateParagraph(input.studentName, readingStrengths, readingNextSteps, speakingStrengths, speakingNextSteps, input.teacherNotes, input.gender);
+      const finalText = input.finalText || templateText;
+
+      const { data, error } = await supabase
+        .from('trial_reports')
+        .update({
+          selected_comments: input.selectedComments,
+          template_text: templateText,
+          final_text: finalText,
+          teacher_notes: input.teacherNotes || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('report_id', input.reportId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['trial-reports', variables.trialId] });
+    },
+  });
+}
+
 export function useSaveTrialReport() {
   const queryClient = useQueryClient();
   return useMutation({
