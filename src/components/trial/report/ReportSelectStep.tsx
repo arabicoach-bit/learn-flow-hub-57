@@ -44,25 +44,6 @@ function CommentCheckList({ comments, selectedIds, onToggle, maxSelect }: Commen
   );
 }
 
-const LEVEL_OPTIONS = [
-  { value: 'all', label: 'All Levels' },
-  { value: 'general', label: 'General' },
-  { value: 'beginner', label: 'Beginner' },
-  { value: 'elementary', label: 'Elementary' },
-  { value: 'intermediate', label: 'Intermediate' },
-  { value: 'advanced', label: 'Advanced' },
-];
-
-const RECOMMENDED_LEVELS = [
-  { value: 'none', label: 'No Recommendation' },
-  { value: 'Beginner', label: 'Beginner' },
-  { value: 'Elementary', label: 'Elementary' },
-  { value: 'Pre-Intermediate', label: 'Pre-Intermediate' },
-  { value: 'Intermediate', label: 'Intermediate' },
-  { value: 'Upper-Intermediate', label: 'Upper-Intermediate' },
-  { value: 'Advanced', label: 'Advanced' },
-];
-
 interface ReportSelectStepProps {
   commentBank: CommentBankEntry[];
   bankLoading: boolean;
@@ -70,10 +51,6 @@ interface ReportSelectStepProps {
   onToggle: (id: string) => void;
   teacherNotes: string;
   onTeacherNotesChange: (v: string) => void;
-  recommendedLevel: string;
-  onRecommendedLevelChange: (v: string) => void;
-  levelFilter: string;
-  onLevelFilterChange: (v: string) => void;
   loadedReportId: string | null;
   canGenerate: boolean;
   isGenerating: boolean;
@@ -89,10 +66,6 @@ export function ReportSelectStep({
   onToggle,
   teacherNotes,
   onTeacherNotesChange,
-  recommendedLevel,
-  onRecommendedLevelChange,
-  levelFilter,
-  onLevelFilterChange,
   loadedReportId,
   canGenerate,
   isGenerating,
@@ -101,17 +74,15 @@ export function ReportSelectStep({
   selectionCounts,
 }: ReportSelectStepProps) {
   const filteredComments = useMemo(() => {
-    const matchLevel = (c: CommentBankEntry) =>
-      levelFilter === 'all' || c.level === levelFilter || c.level === 'general';
     const filter = (skill: string, type: string) =>
-      commentBank.filter(c => c.skill === skill && c.comment_type === type && matchLevel(c));
+      commentBank.filter(c => c.skill === skill && c.comment_type === type);
     return {
       readingStrengths: filter('reading', 'strength'),
       readingNextSteps: filter('reading', 'next_step'),
       speakingStrengths: filter('speaking', 'strength'),
       speakingNextSteps: filter('speaking', 'next_step'),
     };
-  }, [commentBank, levelFilter]);
+  }, [commentBank]);
 
   if (bankLoading) {
     return (
@@ -129,36 +100,6 @@ export function ReportSelectStep({
           <span>Editing existing report — change selections and click "Update Report" to save.</span>
         </div>
       )}
-
-      {/* Level filter + Recommended Level */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <Label className="text-xs text-muted-foreground mb-1.5 block">Filter Comments by Level</Label>
-          <Select value={levelFilter} onValueChange={onLevelFilterChange}>
-            <SelectTrigger className="h-9">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {LEVEL_OPTIONS.map(o => (
-                <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label className="text-xs text-muted-foreground mb-1.5 block">Recommended Level (shown in PDF)</Label>
-          <Select value={recommendedLevel || 'none'} onValueChange={v => onRecommendedLevelChange(v === 'none' ? '' : v)}>
-            <SelectTrigger className="h-9">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {RECOMMENDED_LEVELS.map(o => (
-                <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
 
       {/* Two-column layout: Reading | Speaking */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">

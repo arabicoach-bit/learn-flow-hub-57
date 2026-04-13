@@ -39,7 +39,6 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
   const [step, setStep] = useState<'select' | 'preview' | 'history'>('select');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [teacherNotes, setTeacherNotes] = useState('');
-  const [recommendedLevel, setRecommendedLevel] = useState('');
   const [levelFilter, setLevelFilter] = useState('all');
   const [reportStatus, setReportStatus] = useState('draft');
   const [generatedReport, setGeneratedReport] = useState<{ reportId: string; text: string; isPolished: boolean; originalText: string } | null>(null);
