@@ -695,6 +695,25 @@ export default function TeacherTrialLessons() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {reportLesson && (
+        <TrialReportDialog
+          open={!!reportLesson}
+          onOpenChange={(v) => { if (!v) setReportLesson(null); }}
+          trialId={reportLesson.trial_student_id}
+          studentName={reportLesson.student_name}
+          trialInfo={{
+            teacherName: profile?.full_name || undefined,
+            program: reportLesson.interested_program || undefined,
+            trialDate: reportLesson.lesson_date,
+            trialTime: reportLesson.lesson_time || undefined,
+            duration: reportLesson.duration_minutes,
+            age: reportLesson.age,
+            yearGroup: reportLesson.year_group,
+            gender: reportLesson.gender,
+          }}
+        />
+      )}
     </TeacherLayout>
   );
 }
