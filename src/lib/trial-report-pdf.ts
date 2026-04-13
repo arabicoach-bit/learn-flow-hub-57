@@ -127,6 +127,9 @@ export function generateTrialReportPdf(data: TrialReportPdfData): jsPDF {
   y += 6;
   const ageYear = [data.age, data.yearGroup].filter(Boolean).join(' / ') || 'N/A';
   infoLine('Age / Year: ', ageYear, margin + 4, y);
+  if (data.recommendedLevel) {
+    infoLine('Recommended Level: ', data.recommendedLevel, 110, y);
+  }
   y += 10;
 
   // ===== CONTENT =====
