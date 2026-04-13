@@ -156,6 +156,7 @@ export default function TeacherTrialLessons() {
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [reportLesson, setReportLesson] = useState<TrialLesson | null>(null);
 
   const { startDate, endDate } = getQuarterDateRange(filter);
   const { data: allLessons = [], isLoading, refetch } = useTeacherTrialData(teacherId || '', startDate, endDate);
