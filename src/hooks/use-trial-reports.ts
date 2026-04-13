@@ -21,6 +21,8 @@ export interface TrialReport {
   final_text: string;
   teacher_notes: string | null;
   generated_by: string | null;
+  recommended_level: string | null;
+  status: string;
   created_at: string;
 }
 
@@ -70,11 +72,9 @@ function personalizeComment(text: string, name: string, gender?: string): string
 }
 
 function stripStudentName(text: string, name: string): string {
-  // Remove leading "The student" or student name + verb patterns to avoid repetition in bullets
   let result = text;
   result = result.replace(new RegExp(`^${name}\\s+`, 'i'), '');
   result = result.replace(/^The student\s+/i, '');
-  // Capitalize first letter
   return result.charAt(0).toUpperCase() + result.slice(1);
 }
 
@@ -124,6 +124,8 @@ export function useUpdateTrialReport() {
       teacherNotes?: string;
       gender?: string;
       finalText?: string;
+      recommendedLevel?: string;
+      status?: string;
     }) => {
       const readingStrengths = input.selectedComments.filter(c => c.skill === 'reading' && c.type === 'strength').map(c => c.text);
       const readingNextSteps = input.selectedComments.filter(c => c.skill === 'reading' && c.type === 'next_step').map(c => c.text);
@@ -133,15 +135,19 @@ export function useUpdateTrialReport() {
       const templateText = buildTemplateParagraph(input.studentName, readingStrengths, readingNextSteps, speakingStrengths, speakingNextSteps, input.teacherNotes, input.gender);
       const finalText = input.finalText || templateText;
 
+      const updateData: Record<string, any> = {
+        selected_comments: input.selectedComments,
+        template_text: templateText,
+        final_text: finalText,
+        teacher_notes: input.teacherNotes || null,
+        updated_at: new Date().toISOString(),
+      };
+      if (input.recommendedLevel !== undefined) updateData.recommended_level = input.recommendedLevel || null;
+      if (input.status !== undefined) updateData.status = input.status;
+
       const { data, error } = await supabase
         .from('trial_reports')
-        .update({
-          selected_comments: input.selectedComments,
-          template_text: templateText,
-          final_text: finalText,
-          teacher_notes: input.teacherNotes || null,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updateData)
         .eq('report_id', input.reportId)
         .select()
         .single();
@@ -164,29 +170,14 @@ export function useSaveTrialReport() {
       studentName: string;
       teacherNotes?: string;
       gender?: string;
+      recommendedLevel?: string;
     }) => {
-      const readingStrengths = input.selectedComments
-        .filter(c => c.skill === 'reading' && c.type === 'strength')
-        .map(c => c.text);
-      const readingNextSteps = input.selectedComments
-        .filter(c => c.skill === 'reading' && c.type === 'next_step')
-        .map(c => c.text);
-      const speakingStrengths = input.selectedComments
-        .filter(c => c.skill === 'speaking' && c.type === 'strength')
-        .map(c => c.text);
-      const speakingNextSteps = input.selectedComments
-        .filter(c => c.skill === 'speaking' && c.type === 'next_step')
-        .map(c => c.text);
+      const readingStrengths = input.selectedComments.filter(c => c.skill === 'reading' && c.type === 'strength').map(c => c.text);
+      const readingNextSteps = input.selectedComments.filter(c => c.skill === 'reading' && c.type === 'next_step').map(c => c.text);
+      const speakingStrengths = input.selectedComments.filter(c => c.skill === 'speaking' && c.type === 'strength').map(c => c.text);
+      const speakingNextSteps = input.selectedComments.filter(c => c.skill === 'speaking' && c.type === 'next_step').map(c => c.text);
 
-      const templateText = buildTemplateParagraph(
-        input.studentName,
-        readingStrengths,
-        readingNextSteps,
-        speakingStrengths,
-        speakingNextSteps,
-        input.teacherNotes,
-        input.gender
-      );
+      const templateText = buildTemplateParagraph(input.studentName, readingStrengths, readingNextSteps, speakingStrengths, speakingNextSteps, input.teacherNotes, input.gender);
 
       const { data: userData } = await supabase.auth.getUser();
 
@@ -201,6 +192,7 @@ export function useSaveTrialReport() {
           final_text: templateText,
           teacher_notes: input.teacherNotes || null,
           generated_by: userData.user?.id || null,
+          recommended_level: input.recommendedLevel || null,
         })
         .select()
         .single();
