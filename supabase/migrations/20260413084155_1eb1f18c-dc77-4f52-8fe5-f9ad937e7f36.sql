@@ -1,0 +1,2 @@
+ALTER TABLE public.trial_reports DROP CONSTRAINT trial_reports_reading_level_check;
+ALTER TABLE public.trial_reports DROP CONSTRAINT trial_reports_speaking_level_check;
