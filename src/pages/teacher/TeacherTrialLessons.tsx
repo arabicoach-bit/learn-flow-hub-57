@@ -21,8 +21,8 @@ import { invalidateAllTrialCaches } from '@/lib/trial-cache-utils';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   Users, Clock, Check, X, CalendarDays, Search,
-  AlertCircle, Sunrise, Sun, ListFilter, TrendingUp,
-  CheckCircle, XCircle, Loader2, ArrowUpDown, MessageSquare, ClipboardList,
+  AlertCircle, Sunrise, Sun, ListFilter,
+  CheckCircle, XCircle, Loader2, ArrowUpDown, ClipboardList,
 } from 'lucide-react';
 
 type TrialLesson = TrialLessonCalendarData & { conversion_status?: string; trial_result?: string | null };
