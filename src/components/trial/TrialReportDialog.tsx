@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,8 +7,8 @@ import { Textarea } from '@/components/ui/textarea';
 
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
-import { BookOpen, Mic, Sparkles, FileText, Copy, Check, Loader2, ChevronRight, Download } from 'lucide-react';
-import { useCommentBank, useSaveTrialReport, usePolishReport, useTrialReports, type CommentBankEntry } from '@/hooks/use-trial-reports';
+import { BookOpen, Mic, Sparkles, FileText, Copy, Check, Loader2, ChevronRight, Download, Save } from 'lucide-react';
+import { useCommentBank, useSaveTrialReport, useUpdateTrialReport, usePolishReport, useTrialReports, type CommentBankEntry } from '@/hooks/use-trial-reports';
 import { generateTrialReportPdfWithLogo, type TrialReportPdfData } from '@/lib/trial-report-pdf';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -77,6 +77,7 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
   const { data: commentBank = [], isLoading: bankLoading } = useCommentBank();
   const { data: existingReports = [] } = useTrialReports(trialId);
   const saveReport = useSaveTrialReport();
+  const updateReport = useUpdateTrialReport();
   const polishReport = usePolishReport();
 
   const [step, setStep] = useState<'select' | 'preview' | 'history'>('select');
@@ -84,6 +85,38 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
   const [teacherNotes, setTeacherNotes] = useState('');
   const [generatedReport, setGeneratedReport] = useState<{ reportId: string; text: string; isPolished: boolean; originalText: string } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [loadedReportId, setLoadedReportId] = useState<string | null>(null);
+
+  // Load latest existing report when dialog opens
+  useEffect(() => {
+    if (!open || commentBank.length === 0 || existingReports.length === 0) return;
+    // Only auto-load once per dialog open
+    if (loadedReportId) return;
+
+    const latest = existingReports[0]; // Already sorted desc by created_at
+    const savedComments = Array.isArray(latest.selected_comments) ? latest.selected_comments as any[] : [];
+
+    // Restore selected comment IDs
+    const ids = new Set<string>();
+    savedComments.forEach((c: any) => {
+      if (c.commentId) {
+        // Verify the comment still exists in the bank
+        const exists = commentBank.find(bc => bc.comment_id === c.commentId);
+        if (exists) ids.add(c.commentId);
+      }
+    });
+
+    setSelectedIds(ids);
+    setTeacherNotes(latest.teacher_notes || '');
+    setGeneratedReport({
+      reportId: latest.report_id,
+      text: latest.final_text,
+      isPolished: !!latest.ai_polished_text,
+      originalText: latest.final_text,
+    });
+    setLoadedReportId(latest.report_id);
+    setStep('preview');
+  }, [open, commentBank, existingReports, loadedReportId]);
 
   const filteredComments = useMemo(() => {
     const filter = (skill: string, type: string) =>
@@ -127,18 +160,60 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
         type: c.comment_type,
         text: c.comment_text,
       }));
-      const result = await saveReport.mutateAsync({
+
+      // If we have an existing report, update it instead of creating a new one
+      if (loadedReportId) {
+        const result = await updateReport.mutateAsync({
+          reportId: loadedReportId,
+          trialId,
+          selectedComments: mapped,
+          studentName,
+          teacherNotes: teacherNotes.trim() || undefined,
+          gender: trialInfo?.gender || undefined,
+        });
+        setGeneratedReport({ reportId: result.report_id, text: result.final_text, isPolished: false, originalText: result.final_text });
+        setStep('preview');
+        toast.success('Report updated!');
+      } else {
+        const result = await saveReport.mutateAsync({
+          trialId,
+          selectedComments: mapped,
+          studentName,
+          teacherNotes: teacherNotes.trim() || undefined,
+          gender: trialInfo?.gender || undefined,
+        });
+        setGeneratedReport({ reportId: result.report_id, text: result.final_text, isPolished: false, originalText: result.final_text });
+        setLoadedReportId(result.report_id);
+        setStep('preview');
+        toast.success('Report generated!');
+      }
+    } catch (err: any) {
+      toast.error('Failed to generate report', { description: err.message });
+    }
+  };
+
+  const handleSaveEdits = async () => {
+    if (!generatedReport || !loadedReportId) return;
+    try {
+      const mapped = selectedComments.map(c => ({
+        commentId: c.comment_id,
+        skill: c.skill,
+        type: c.comment_type,
+        text: c.comment_text,
+      }));
+      await updateReport.mutateAsync({
+        reportId: loadedReportId,
         trialId,
         selectedComments: mapped,
         studentName,
         teacherNotes: teacherNotes.trim() || undefined,
         gender: trialInfo?.gender || undefined,
+        finalText: generatedReport.text,
       });
-      setGeneratedReport({ reportId: result.report_id, text: result.final_text, isPolished: false, originalText: result.final_text });
-      setStep('preview');
-      toast.success('Report generated!');
+      setGeneratedReport({ ...generatedReport, originalText: generatedReport.text });
+      toast.success('Report saved!');
     } catch (err: any) {
-      toast.error('Failed to generate report', { description: err.message });
+      toast.error('Failed to save', { description: err.message });
     }
   };
 
@@ -232,7 +307,10 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
     setSelectedIds(new Set());
     setTeacherNotes('');
     setGeneratedReport(null);
+    setLoadedReportId(null);
   };
+
+  const hasUnsavedChanges = generatedReport && generatedReport.text !== generatedReport.originalText;
 
   return (
     <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) resetForm(); }}>
@@ -243,7 +321,9 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
             Trial Lesson Report — {studentName}
           </DialogTitle>
           <DialogDescription>
-            {step === 'select' && 'Select observations, add notes, then generate a professional report for parents.'}
+            {step === 'select' && (loadedReportId
+              ? 'Edit selections and notes, then re-generate to update the report.'
+              : 'Select observations, add notes, then generate a professional report for parents.')}
             {step === 'preview' && 'Review, edit, polish with AI, then download as PDF.'}
             {step === 'history' && 'Previous reports for this student.'}
           </DialogDescription>
@@ -258,7 +338,7 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
           <Button variant={step === 'preview' ? 'default' : 'ghost'} size="sm" disabled={!generatedReport} onClick={() => setStep('preview')}>
             2. Preview & PDF
           </Button>
-          {existingReports.length > 0 && (
+          {existingReports.length > 1 && (
             <>
               <ChevronRight className="w-4 h-4 text-muted-foreground" />
               <Button variant={step === 'history' ? 'default' : 'ghost'} size="sm" onClick={() => setStep('history')}>
@@ -290,6 +370,13 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
                   </div>
                 ) : (
                   <>
+                    {loadedReportId && (
+                      <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20 text-sm">
+                        <FileText className="w-4 h-4 text-primary" />
+                        <span>Editing existing report — change selections and click "Update Report" to save.</span>
+                      </div>
+                    )}
+
                     {/* Two-column layout: Reading | Speaking */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                       {/* Reading */}
@@ -362,20 +449,27 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
                     <div className="flex items-center justify-between pt-2">
                       <p className="text-xs text-muted-foreground">
                         {canGenerate
-                          ? `${selectedIds.size} observations selected — ready to generate`
+                          ? `${selectedIds.size} observations selected — ready to ${loadedReportId ? 'update' : 'generate'}`
                           : 'Select at least 1 strength & 1 next step per skill'}
                       </p>
-                      <Button
-                        onClick={handleGenerate}
-                        disabled={!canGenerate || saveReport.isPending}
-                        size="lg"
-                      >
-                        {saveReport.isPending ? (
-                          <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating...</>
-                        ) : (
-                          <><FileText className="w-4 h-4 mr-2" /> Generate Report</>
+                      <div className="flex gap-2">
+                        {loadedReportId && (
+                          <Button variant="outline" onClick={() => { resetForm(); }}>
+                            Start Fresh
+                          </Button>
                         )}
-                      </Button>
+                        <Button
+                          onClick={handleGenerate}
+                          disabled={!canGenerate || saveReport.isPending || updateReport.isPending}
+                          size="lg"
+                        >
+                          {(saveReport.isPending || updateReport.isPending) ? (
+                            <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {loadedReportId ? 'Updating...' : 'Generating...'}</>
+                          ) : (
+                            <><FileText className="w-4 h-4 mr-2" /> {loadedReportId ? 'Update Report' : 'Generate Report'}</>
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </>
                 )}
@@ -429,6 +523,15 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
                       <Sparkles className="w-3 h-3 mr-1" /> AI Polished
                     </Badge>
                   )}
+                  {hasUnsavedChanges && (
+                    <Button onClick={handleSaveEdits} disabled={updateReport.isPending} variant="outline" className="border-amber-500/50 text-amber-600">
+                      {updateReport.isPending ? (
+                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</>
+                      ) : (
+                        <><Save className="w-4 h-4 mr-2" /> Save Changes</>
+                      )}
+                    </Button>
+                  )}
                   <Button onClick={() => handleDownloadPdf()}>
                     <Download className="w-4 h-4 mr-2" /> Download PDF
                   </Button>
@@ -437,7 +540,7 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
                     {copied ? 'Copied!' : 'Copy Text'}
                   </Button>
                   <Button variant="ghost" onClick={resetForm}>
-                    Generate Another
+                    Start Fresh
                   </Button>
                 </div>
               </div>
