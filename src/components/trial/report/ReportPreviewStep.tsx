@@ -51,7 +51,6 @@ export function ReportPreviewStep({
   generatedReport,
   onTextChange,
   trialInfo,
-  studentName,
   recommendedLevel,
   reportStatus,
   isPolishing,
