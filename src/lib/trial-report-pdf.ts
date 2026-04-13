@@ -133,7 +133,6 @@ export function generateTrialReportPdf(data: TrialReportPdfData): jsPDF {
     strengths: string[],
     nextSteps: string[]
   ) => {
-    // Check page space
     if (y > 230) { doc.addPage(); y = 20; }
 
     // Section header
@@ -145,50 +144,56 @@ export function generateTrialReportPdf(data: TrialReportPdfData): jsPDF {
     doc.text(title, margin + 4, y + 6);
     y += 13;
 
-    // Strengths paragraph
+    // Strengths as bullet points
     if (strengths.length > 0) {
       doc.setFontSize(9);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...green);
       doc.text('Strengths', margin + 4, y);
-      y += 5;
+      y += 6;
 
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(...darkText);
-      const paragraph = strengths.map(s => personalize(s)).join('. ') + '.';
-      const lines = doc.splitTextToSize(paragraph, contentW - 8);
-      if (y + lines.length * 4.5 > 275) { doc.addPage(); y = 20; }
-      doc.text(lines, margin + 4, y);
-      y += lines.length * 4.5 + 3;
+      strengths.forEach(s => {
+        const text = personalize(s);
+        const lines = doc.splitTextToSize(`• ${text}`, contentW - 14);
+        if (y + lines.length * 4.5 > 275) { doc.addPage(); y = 20; }
+        doc.text(lines, margin + 8, y);
+        y += lines.length * 4.5 + 1;
+      });
+      y += 2;
     }
 
-    // Next Steps paragraph
+    // Next Steps as bullet points
     if (nextSteps.length > 0) {
       doc.setFontSize(9);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...amber);
       doc.text('Next Steps', margin + 4, y);
-      y += 5;
+      y += 6;
 
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(...darkText);
-      const paragraph = nextSteps.map(s => personalize(s)).join('. ') + '.';
-      const lines = doc.splitTextToSize(paragraph, contentW - 8);
-      if (y + lines.length * 4.5 > 275) { doc.addPage(); y = 20; }
-      doc.text(lines, margin + 4, y);
-      y += lines.length * 4.5 + 3;
+      nextSteps.forEach(s => {
+        const text = personalize(s);
+        const lines = doc.splitTextToSize(`• ${text}`, contentW - 14);
+        if (y + lines.length * 4.5 > 275) { doc.addPage(); y = 20; }
+        doc.text(lines, margin + 8, y);
+        y += lines.length * 4.5 + 1;
+      });
+      y += 2;
     }
 
     y += 4;
   };
 
   drawSkillSection('Reading', navy, data.readingStrengths, data.readingNextSteps);
-  drawSkillSection('Speaking & Listening', purple, data.speakingStrengths, data.speakingNextSteps);
+  drawSkillSection('Conversation (Speaking & Listening)', purple, data.speakingStrengths, data.speakingNextSteps);
 
-  // ===== TEACHER NOTES =====
+  // ===== TEACHER NOTES (only if provided) =====
   if (data.teacherNotes?.trim()) {
     if (y > 240) { doc.addPage(); y = 20; }
-    drawSectionHeader('Additional Notes');
+    drawSectionHeader('Teacher Notes');
     doc.setTextColor(...darkText);
     doc.setFontSize(9);
     doc.setFont('helvetica', 'italic');
@@ -196,27 +201,6 @@ export function generateTrialReportPdf(data: TrialReportPdfData): jsPDF {
     if (y + noteLines.length * 4.5 > 275) { doc.addPage(); y = 20; }
     doc.text(noteLines, margin + 4, y);
     y += noteLines.length * 4.5 + 6;
-  }
-
-  // ===== SUMMARY PARAGRAPH =====
-  if (data.finalText?.trim()) {
-    if (y > 220) { doc.addPage(); y = 20; }
-
-    doc.setFillColor(239, 246, 255);
-    doc.rect(margin, y, contentW, 8, 'F');
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...navy);
-    doc.text('Summary', margin + 4, y + 6);
-    y += 13;
-
-    doc.setTextColor(...darkText);
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    const summaryLines = doc.splitTextToSize(personalize(data.finalText), contentW - 8);
-    if (y + summaryLines.length * 4.5 > 275) { doc.addPage(); y = 20; }
-    doc.text(summaryLines, margin + 4, y);
-    y += summaryLines.length * 4.5;
   }
 
   // ===== FOOTER on all pages =====
