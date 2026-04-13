@@ -28,6 +28,7 @@ export interface TrialLessonCalendarData {
   parent_guardian_name?: string | null;
   conversion_status?: string;
   trial_result?: string | null;
+  gender?: string | null;
 }
 
 interface TrialLessonCalendarCardProps {

@@ -15,13 +15,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { QuarterFilter, getCurrentQuarter, getQuarterDateRange, type QuarterFilterValue } from '@/components/shared/QuarterFilter';
 import { TrialLessonCalendarCard, type TrialLessonCalendarData } from '@/components/schedule/TrialLessonCalendarCard';
+import { TrialReportDialog } from '@/components/trial/TrialReportDialog';
 import { toast } from 'sonner';
 import { invalidateAllTrialCaches } from '@/lib/trial-cache-utils';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   Users, Clock, Check, X, CalendarDays, Search,
   AlertCircle, Sunrise, Sun, ListFilter, TrendingUp,
-  CheckCircle, XCircle, Loader2, ArrowUpDown, MessageSquare,
+  CheckCircle, XCircle, Loader2, ArrowUpDown, MessageSquare, ClipboardList,
 } from 'lucide-react';
 
 type TrialLesson = TrialLessonCalendarData & { conversion_status?: string; trial_result?: string | null };
