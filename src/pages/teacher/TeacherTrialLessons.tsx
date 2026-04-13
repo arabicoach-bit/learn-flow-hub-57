@@ -43,7 +43,7 @@ function useTeacherTrialData(teacherId: string, startDate: string | null, endDat
           notes,
           teacher_payment_amount,
           trial_students!inner(
-            name, phone, age, school, year_group,
+            name, phone, age, school, year_group, gender,
             interested_program, student_level, parent_guardian_name,
             conversion_status, trial_result
           )
