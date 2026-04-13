@@ -69,6 +69,15 @@ function personalizeComment(text: string, name: string, gender?: string): string
   return result;
 }
 
+function stripStudentName(text: string, name: string): string {
+  // Remove leading "The student" or student name + verb patterns to avoid repetition in bullets
+  let result = text;
+  result = result.replace(new RegExp(`^${name}\\s+`, 'i'), '');
+  result = result.replace(/^The student\s+/i, '');
+  // Capitalize first letter
+  return result.charAt(0).toUpperCase() + result.slice(1);
+}
+
 function buildTemplateParagraph(
   studentName: string,
   readingStrengths: string[],
@@ -79,22 +88,23 @@ function buildTemplateParagraph(
   gender?: string
 ): string {
   const p = (t: string) => personalizeComment(t, studentName, gender);
-  const joinParagraph = (items: string[]) =>
-    items.map(s => p(s)).join('. ').replace(/\.\./g, '.') + '.';
+  const pronoun = gender?.toLowerCase() === 'female' ? 'she' : gender?.toLowerCase() === 'male' ? 'he' : 'the student';
+  const formatBullets = (items: string[]) =>
+    items.map(s => '• ' + stripStudentName(p(s), studentName)).join('\n');
 
   const parts: string[] = [];
 
   if (readingStrengths.length > 0) {
-    parts.push('Reading — Strengths:\n' + joinParagraph(readingStrengths));
+    parts.push(`Reading — Strengths:\n${studentName} demonstrated strong skills in the following areas:\n${formatBullets(readingStrengths)}`);
   }
   if (readingNextSteps.length > 0) {
-    parts.push('Reading — Next Steps:\n' + joinParagraph(readingNextSteps));
+    parts.push(`Reading — Next Steps:\nTo continue progressing, ${pronoun} should focus on:\n${formatBullets(readingNextSteps)}`);
   }
   if (speakingStrengths.length > 0) {
-    parts.push('Conversation (Speaking & Listening) — Strengths:\n' + joinParagraph(speakingStrengths));
+    parts.push(`Conversation (Speaking & Listening) — Strengths:\n${studentName} showed confidence in the following areas:\n${formatBullets(speakingStrengths)}`);
   }
   if (speakingNextSteps.length > 0) {
-    parts.push('Conversation (Speaking & Listening) — Next Steps:\n' + joinParagraph(speakingNextSteps));
+    parts.push(`Conversation (Speaking & Listening) — Next Steps:\nTo develop further, ${pronoun} should work on:\n${formatBullets(speakingNextSteps)}`);
   }
   if (teacherNotes?.trim()) {
     parts.push('Teacher Notes:\n' + teacherNotes.trim());
