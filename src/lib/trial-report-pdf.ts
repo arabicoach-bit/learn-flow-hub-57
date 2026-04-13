@@ -144,7 +144,16 @@ export function generateTrialReportPdf(data: TrialReportPdfData): jsPDF {
     doc.text(title, margin + 4, y + 6);
     y += 13;
 
-    // Strengths as a flowing paragraph
+    // Helper to strip student name from bullet start to avoid repetition
+    const stripName = (text: string) => {
+      let r = text.replace(new RegExp(`^${data.studentName}\\s+`, 'i'), '');
+      r = r.replace(/^The student\s+/i, '');
+      return r.charAt(0).toUpperCase() + r.slice(1);
+    };
+
+    const pronoun = data.gender?.toLowerCase() === 'female' ? 'she' : data.gender?.toLowerCase() === 'male' ? 'he' : 'the student';
+
+    // Strengths
     if (strengths.length > 0) {
       doc.setFontSize(9);
       doc.setFont('helvetica', 'bold');
@@ -152,16 +161,28 @@ export function generateTrialReportPdf(data: TrialReportPdfData): jsPDF {
       doc.text('Strengths', margin + 4, y);
       y += 6;
 
-      doc.setFont('helvetica', 'normal');
+      // Intro sentence
+      doc.setFont('helvetica', 'italic');
       doc.setTextColor(...darkText);
-      const paragraph = strengths.map(s => personalize(s)).join('. ').replace(/\.\./g, '.') + '.';
-      const lines = doc.splitTextToSize(paragraph, contentW - 8);
-      if (y + lines.length * 4.5 > 275) { doc.addPage(); y = 20; }
-      doc.text(lines, margin + 4, y);
-      y += lines.length * 4.5 + 3;
+      const intro = `${data.studentName} demonstrated strong skills in the following areas:`;
+      const introLines = doc.splitTextToSize(intro, contentW - 8);
+      if (y + introLines.length * 4.5 > 275) { doc.addPage(); y = 20; }
+      doc.text(introLines, margin + 4, y);
+      y += introLines.length * 4.5 + 2;
+
+      // Bullet points
+      doc.setFont('helvetica', 'normal');
+      for (const s of strengths) {
+        const bullet = `•  ${stripName(personalize(s))}`;
+        const bLines = doc.splitTextToSize(bullet, contentW - 12);
+        if (y + bLines.length * 4.5 > 275) { doc.addPage(); y = 20; }
+        doc.text(bLines, margin + 6, y);
+        y += bLines.length * 4.5 + 1;
+      }
+      y += 2;
     }
 
-    // Next Steps as a flowing paragraph
+    // Next Steps
     if (nextSteps.length > 0) {
       doc.setFontSize(9);
       doc.setFont('helvetica', 'bold');
@@ -169,13 +190,25 @@ export function generateTrialReportPdf(data: TrialReportPdfData): jsPDF {
       doc.text('Next Steps', margin + 4, y);
       y += 6;
 
-      doc.setFont('helvetica', 'normal');
+      // Intro sentence
+      doc.setFont('helvetica', 'italic');
       doc.setTextColor(...darkText);
-      const paragraph = nextSteps.map(s => personalize(s)).join('. ').replace(/\.\./g, '.') + '.';
-      const lines = doc.splitTextToSize(paragraph, contentW - 8);
-      if (y + lines.length * 4.5 > 275) { doc.addPage(); y = 20; }
-      doc.text(lines, margin + 4, y);
-      y += lines.length * 4.5 + 3;
+      const intro = `To continue progressing, ${pronoun} should focus on:`;
+      const introLines = doc.splitTextToSize(intro, contentW - 8);
+      if (y + introLines.length * 4.5 > 275) { doc.addPage(); y = 20; }
+      doc.text(introLines, margin + 4, y);
+      y += introLines.length * 4.5 + 2;
+
+      // Bullet points
+      doc.setFont('helvetica', 'normal');
+      for (const s of nextSteps) {
+        const bullet = `•  ${stripName(personalize(s))}`;
+        const bLines = doc.splitTextToSize(bullet, contentW - 12);
+        if (y + bLines.length * 4.5 > 275) { doc.addPage(); y = 20; }
+        doc.text(bLines, margin + 6, y);
+        y += bLines.length * 4.5 + 1;
+      }
+      y += 2;
     }
 
     y += 4;
