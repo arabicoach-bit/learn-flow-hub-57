@@ -82,7 +82,7 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
   const [step, setStep] = useState<'select' | 'preview' | 'history'>('select');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [teacherNotes, setTeacherNotes] = useState('');
-  const [generatedReport, setGeneratedReport] = useState<{ reportId: string; text: string; isPolished: boolean } | null>(null);
+  const [generatedReport, setGeneratedReport] = useState<{ reportId: string; text: string; isPolished: boolean; originalText: string } | null>(null);
   const [copied, setCopied] = useState(false);
 
   const filteredComments = useMemo(() => {
@@ -134,7 +134,7 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
         teacherNotes: teacherNotes.trim() || undefined,
         gender: trialInfo?.gender || undefined,
       });
-      setGeneratedReport({ reportId: result.report_id, text: result.final_text, isPolished: false });
+      setGeneratedReport({ reportId: result.report_id, text: result.final_text, isPolished: false, originalText: result.final_text });
       setStep('preview');
       toast.success('Report generated!');
     } catch (err: any) {
@@ -151,7 +151,7 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
         templateText: generatedReport.text,
         studentName,
       });
-      setGeneratedReport({ ...generatedReport, text: polishedText, isPolished: true });
+      setGeneratedReport({ ...generatedReport, text: polishedText, isPolished: true, originalText: polishedText });
       toast.success('Report polished with AI!');
     } catch (err: any) {
       toast.error('Failed to polish report', { description: err.message });
@@ -175,7 +175,7 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
     return `${hour12}:${minutes} ${ampm}`;
   };
 
-  const buildPdfData = (text: string): TrialReportPdfData => ({
+  const buildPdfData = (text: string, rawMode?: boolean): TrialReportPdfData => ({
     studentName,
     teacherName: trialInfo?.teacherName || 'N/A',
     program: trialInfo?.program || 'N/A',
@@ -191,11 +191,13 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
     speakingNextSteps: selectedComments.filter(c => c.skill === 'speaking' && c.comment_type === 'next_step').map(c => c.comment_text),
     teacherNotes: teacherNotes.trim(),
     finalText: text,
+    useRawText: rawMode,
   });
 
   const handleDownloadPdf = async (text?: string) => {
     const finalText = text || generatedReport?.text || '';
-    const pdfData = buildPdfData(finalText);
+    const wasEdited = generatedReport ? finalText !== generatedReport.originalText : false;
+    const pdfData = buildPdfData(finalText, wasEdited);
     const doc = await generateTrialReportPdfWithLogo(pdfData);
     doc.save(`Trial_Report_${studentName.replace(/\s+/g, '_')}.pdf`);
     toast.success('PDF downloaded!');
