@@ -165,7 +165,7 @@ export function generateTrialReportPdf(data: TrialReportPdfData): jsPDF {
       // Intro sentence
       doc.setFont('helvetica', 'italic');
       doc.setTextColor(...darkText);
-      const intro = `${data.studentName} demonstrated strong skills in the following areas:`;
+      const intro = strengthsIntro;
       const introLines = doc.splitTextToSize(intro, contentW - 8);
       if (y + introLines.length * 4.5 > 275) { doc.addPage(); y = 20; }
       doc.text(introLines, margin + 4, y);
@@ -215,8 +215,8 @@ export function generateTrialReportPdf(data: TrialReportPdfData): jsPDF {
     y += 4;
   };
 
-  drawSkillSection('Reading', navy, data.readingStrengths, data.readingNextSteps);
-  drawSkillSection('Conversation (Speaking & Listening)', purple, data.speakingStrengths, data.speakingNextSteps);
+  drawSkillSection('Reading', navy, data.readingStrengths, data.readingNextSteps, `${data.studentName} demonstrated strong reading skills in the following areas:`);
+  drawSkillSection('Conversation (Speaking & Listening)', purple, data.speakingStrengths, data.speakingNextSteps, `${data.studentName} showed confidence in the following areas:`);
 
   // ===== TEACHER NOTES (only if provided) =====
   if (data.teacherNotes?.trim()) {
