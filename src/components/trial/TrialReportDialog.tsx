@@ -321,7 +321,7 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
                       <div className="space-y-4">
                         <div className="flex items-center gap-2">
                           <Mic className="w-4 h-4 text-primary" />
-                          <h3 className="font-semibold text-sm">Speaking & Listening</h3>
+                          <h3 className="font-semibold text-sm">Conversation (Speaking & Listening)</h3>
                         </div>
 
                         <div>
