@@ -196,7 +196,8 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
 
   const handleDownloadPdf = async (text?: string) => {
     const finalText = text || generatedReport?.text || '';
-    const pdfData = buildPdfData(finalText);
+    const wasEdited = generatedReport ? finalText !== generatedReport.originalText : false;
+    const pdfData = buildPdfData(finalText, wasEdited);
     const doc = await generateTrialReportPdfWithLogo(pdfData);
     doc.save(`Trial_Report_${studentName.replace(/\s+/g, '_')}.pdf`);
     toast.success('PDF downloaded!');
