@@ -76,6 +76,7 @@ function useTeacherTrialData(teacherId: string, startDate: string | null, endDat
         parent_guardian_name: lesson.trial_students?.parent_guardian_name,
         conversion_status: lesson.trial_students?.conversion_status,
         trial_result: lesson.trial_students?.trial_result,
+        gender: lesson.trial_students?.gender,
       })) as TrialLesson[];
     },
     enabled: !!teacherId,
