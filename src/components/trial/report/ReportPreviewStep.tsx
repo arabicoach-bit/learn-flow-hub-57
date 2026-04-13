@@ -22,7 +22,6 @@ interface ReportPreviewStepProps {
     trialTime?: string;
     duration?: number;
   };
-  studentName: string;
   studentPhone?: string;
   recommendedLevel?: string;
   reportStatus: string;
