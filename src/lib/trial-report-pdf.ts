@@ -16,6 +16,8 @@ export interface TrialReportPdfData {
   speakingNextSteps: string[];
   teacherNotes: string;
   finalText: string;
+  /** When true, render finalText as-is instead of rebuilding from comment arrays */
+  useRawText?: boolean;
 }
 
 function personalizeText(text: string, name: string, gender: string): string {
