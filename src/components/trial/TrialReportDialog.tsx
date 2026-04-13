@@ -175,7 +175,7 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
     return `${hour12}:${minutes} ${ampm}`;
   };
 
-  const buildPdfData = (text: string): TrialReportPdfData => ({
+  const buildPdfData = (text: string, rawMode?: boolean): TrialReportPdfData => ({
     studentName,
     teacherName: trialInfo?.teacherName || 'N/A',
     program: trialInfo?.program || 'N/A',
@@ -191,6 +191,7 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
     speakingNextSteps: selectedComments.filter(c => c.skill === 'speaking' && c.comment_type === 'next_step').map(c => c.comment_text),
     teacherNotes: teacherNotes.trim(),
     finalText: text,
+    useRawText: rawMode,
   });
 
   const handleDownloadPdf = async (text?: string) => {
