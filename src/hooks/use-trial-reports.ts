@@ -79,29 +79,28 @@ function buildTemplateParagraph(
   gender?: string
 ): string {
   const p = (t: string) => personalizeComment(t, studentName, gender);
+  const joinParagraph = (items: string[]) =>
+    items.map(s => p(s)).join('. ').replace(/\.\./g, '.') + '.';
+
   const parts: string[] = [];
 
   if (readingStrengths.length > 0) {
-    parts.push('Reading — Strengths:');
-    readingStrengths.forEach(s => parts.push(`• ${p(s)}`));
+    parts.push('Reading — Strengths:\n' + joinParagraph(readingStrengths));
   }
   if (readingNextSteps.length > 0) {
-    parts.push('Reading — Next Steps:');
-    readingNextSteps.forEach(s => parts.push(`• ${p(s)}`));
+    parts.push('Reading — Next Steps:\n' + joinParagraph(readingNextSteps));
   }
   if (speakingStrengths.length > 0) {
-    parts.push('Conversation (Speaking & Listening) — Strengths:');
-    speakingStrengths.forEach(s => parts.push(`• ${p(s)}`));
+    parts.push('Conversation (Speaking & Listening) — Strengths:\n' + joinParagraph(speakingStrengths));
   }
   if (speakingNextSteps.length > 0) {
-    parts.push('Conversation (Speaking & Listening) — Next Steps:');
-    speakingNextSteps.forEach(s => parts.push(`• ${p(s)}`));
+    parts.push('Conversation (Speaking & Listening) — Next Steps:\n' + joinParagraph(speakingNextSteps));
   }
   if (teacherNotes?.trim()) {
-    parts.push(`Teacher Notes: ${teacherNotes.trim()}`);
+    parts.push('Teacher Notes:\n' + teacherNotes.trim());
   }
 
-  return parts.join('\n');
+  return parts.join('\n\n');
 }
 
 export function useSaveTrialReport() {
