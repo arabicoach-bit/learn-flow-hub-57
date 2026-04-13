@@ -338,7 +338,6 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
                 generatedReport={generatedReport}
                 onTextChange={(text) => setGeneratedReport({ ...generatedReport, text })}
                 trialInfo={trialInfo}
-                studentName={studentName}
                 recommendedLevel={recommendedLevel}
                 reportStatus={reportStatus}
                 isPolishing={polishReport.isPending}
