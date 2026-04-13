@@ -35,11 +35,6 @@ export function ReportHistoryStep({ reports, onDownloadPdf }: ReportHistoryStepP
                   <Check className="w-3 h-3 mr-1" /> Sent
                 </Badge>
               )}
-              {(r as any).recommended_level && (
-                <Badge variant="outline" className="text-xs">
-                  Level: {(r as any).recommended_level}
-                </Badge>
-              )}
             </div>
             <p className="text-sm leading-relaxed mb-3 line-clamp-4">{r.final_text}</p>
             <div className="flex gap-2">
