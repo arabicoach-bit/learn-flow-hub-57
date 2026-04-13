@@ -18,6 +18,7 @@ export interface TrialReportPdfData {
   finalText: string;
   /** When true, render finalText as-is instead of rebuilding from comment arrays */
   useRawText?: boolean;
+  recommendedLevel?: string;
 }
 
 function personalizeText(text: string, name: string, gender: string): string {
@@ -126,6 +127,9 @@ export function generateTrialReportPdf(data: TrialReportPdfData): jsPDF {
   y += 6;
   const ageYear = [data.age, data.yearGroup].filter(Boolean).join(' / ') || 'N/A';
   infoLine('Age / Year: ', ageYear, margin + 4, y);
+  if (data.recommendedLevel) {
+    infoLine('Recommended Level: ', data.recommendedLevel, 110, y);
+  }
   y += 10;
 
   // ===== CONTENT =====

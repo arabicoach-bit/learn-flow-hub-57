@@ -282,7 +282,7 @@ export function TrialTableView({ students, onUpdateStatus, onUpdateConversion, o
 
                         <TableCell className="py-2" onClick={e => e.stopPropagation()}>
                           <div className="flex items-center gap-0.5">
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setReportTrialId(student.trial_id); setReportStudentName(student.name); setReportTrialInfo({ teacherName: student.teachers?.name, program: student.interested_program, trialDate: student.trial_date, trialTime: student.trial_time, duration: student.duration_minutes, age: student.age, yearGroup: student.year_group }); }} title="Generate Report">
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setReportTrialId(student.trial_id); setReportStudentName(student.name); setReportTrialInfo({ teacherName: student.teachers?.name, program: student.interested_program, trialDate: student.trial_date, trialTime: student.trial_time, duration: student.duration_minutes, age: student.age, yearGroup: student.year_group, gender: student.gender, phone: student.phone }); }} title="Generate Report">
                               <ClipboardList className="h-3.5 w-3.5" />
                             </Button>
                             {canConvert && (

@@ -1059,9 +1059,11 @@ export type Database = {
           final_text: string
           generated_by: string | null
           reading_level: string
+          recommended_level: string | null
           report_id: string
           selected_comments: Json
           speaking_level: string
+          status: string
           teacher_notes: string | null
           template_text: string | null
           trial_id: string
@@ -1073,9 +1075,11 @@ export type Database = {
           final_text: string
           generated_by?: string | null
           reading_level: string
+          recommended_level?: string | null
           report_id?: string
           selected_comments?: Json
           speaking_level: string
+          status?: string
           teacher_notes?: string | null
           template_text?: string | null
           trial_id: string
@@ -1087,9 +1091,11 @@ export type Database = {
           final_text?: string
           generated_by?: string | null
           reading_level?: string
+          recommended_level?: string | null
           report_id?: string
           selected_comments?: Json
           speaking_level?: string
+          status?: string
           teacher_notes?: string | null
           template_text?: string | null
           trial_id?: string
