@@ -131,7 +131,8 @@ export function generateTrialReportPdf(data: TrialReportPdfData): jsPDF {
     title: string,
     color: [number, number, number],
     strengths: string[],
-    nextSteps: string[]
+    nextSteps: string[],
+    strengthsIntro: string
   ) => {
     if (y > 230) { doc.addPage(); y = 20; }
 
