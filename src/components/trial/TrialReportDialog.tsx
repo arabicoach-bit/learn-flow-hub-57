@@ -39,8 +39,7 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
   const [step, setStep] = useState<'select' | 'preview' | 'history'>('select');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [teacherNotes, setTeacherNotes] = useState('');
-  const [recommendedLevel, setRecommendedLevel] = useState('');
-  const [levelFilter, setLevelFilter] = useState('all');
+  
   const [reportStatus, setReportStatus] = useState('draft');
   const [generatedReport, setGeneratedReport] = useState<{ reportId: string; text: string; isPolished: boolean; originalText: string } | null>(null);
   const [copied, setCopied] = useState(false);
@@ -64,7 +63,7 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
 
     setSelectedIds(ids);
     setTeacherNotes(latest.teacher_notes || '');
-    setRecommendedLevel(latest.recommended_level || '');
+    
     setReportStatus(latest.status || 'draft');
     setGeneratedReport({
       reportId: latest.report_id,
@@ -113,7 +112,6 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
         const result = await updateReport.mutateAsync({
           reportId: loadedReportId, trialId, selectedComments: mapped, studentName,
           teacherNotes: teacherNotes.trim() || undefined, gender: trialInfo?.gender || undefined,
-          recommendedLevel: recommendedLevel || undefined,
         });
         setGeneratedReport({ reportId: result.report_id, text: result.final_text, isPolished: false, originalText: result.final_text });
         setStep('preview');
@@ -122,7 +120,6 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
         const result = await saveReport.mutateAsync({
           trialId, selectedComments: mapped, studentName,
           teacherNotes: teacherNotes.trim() || undefined, gender: trialInfo?.gender || undefined,
-          recommendedLevel: recommendedLevel || undefined,
         });
         setGeneratedReport({ reportId: result.report_id, text: result.final_text, isPolished: false, originalText: result.final_text });
         setLoadedReportId(result.report_id);
@@ -140,7 +137,7 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
       await updateReport.mutateAsync({
         reportId: loadedReportId, trialId, selectedComments: mapComments(), studentName,
         teacherNotes: teacherNotes.trim() || undefined, gender: trialInfo?.gender || undefined,
-        finalText: generatedReport.text, recommendedLevel: recommendedLevel || undefined,
+        finalText: generatedReport.text,
       });
       setGeneratedReport({ ...generatedReport, originalText: generatedReport.text });
       toast.success('Report saved!');
@@ -197,7 +194,7 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
     teacherNotes: teacherNotes.trim(),
     finalText: text,
     useRawText: rawMode,
-    recommendedLevel: recommendedLevel || undefined,
+    
   });
 
   const handleDownloadPdf = async (text?: string) => {
@@ -227,7 +224,7 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
       speakingNextSteps: comments.filter((c: any) => c.skill === 'speaking' && c.type === 'next_step').map((c: any) => c.text),
       teacherNotes: report.teacher_notes || '',
       finalText: report.final_text,
-      recommendedLevel: report.recommended_level || undefined,
+      
     };
     const doc = await generateTrialReportPdfWithLogo(pdfData);
     doc.save(`Trial_Report_${studentName.replace(/\s+/g, '_')}.pdf`);
@@ -263,11 +260,11 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
     setStep('select');
     setSelectedIds(new Set());
     setTeacherNotes('');
-    setRecommendedLevel('');
+    
     setReportStatus('draft');
     setGeneratedReport(null);
     setLoadedReportId(null);
-    setLevelFilter('all');
+    
   };
 
   const hasUnsavedChanges = generatedReport && generatedReport.text !== generatedReport.originalText;
@@ -320,10 +317,6 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
                 onToggle={toggleComment}
                 teacherNotes={teacherNotes}
                 onTeacherNotesChange={setTeacherNotes}
-                recommendedLevel={recommendedLevel}
-                onRecommendedLevelChange={setRecommendedLevel}
-                levelFilter={levelFilter}
-                onLevelFilterChange={setLevelFilter}
                 loadedReportId={loadedReportId}
                 canGenerate={canGenerate}
                 isGenerating={saveReport.isPending || updateReport.isPending}
@@ -338,7 +331,7 @@ export function TrialReportDialog({ open, onOpenChange, trialId, studentName, tr
                 generatedReport={generatedReport}
                 onTextChange={(text) => setGeneratedReport({ ...generatedReport, text })}
                 trialInfo={trialInfo}
-                recommendedLevel={recommendedLevel}
+                
                 reportStatus={reportStatus}
                 isPolishing={polishReport.isPending}
                 isSaving={updateReport.isPending}

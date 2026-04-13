@@ -124,7 +124,6 @@ export function useUpdateTrialReport() {
       teacherNotes?: string;
       gender?: string;
       finalText?: string;
-      recommendedLevel?: string;
       status?: string;
     }) => {
       const readingStrengths = input.selectedComments.filter(c => c.skill === 'reading' && c.type === 'strength').map(c => c.text);
@@ -142,7 +141,7 @@ export function useUpdateTrialReport() {
         teacher_notes: input.teacherNotes || null,
         updated_at: new Date().toISOString(),
       };
-      if (input.recommendedLevel !== undefined) updateData.recommended_level = input.recommendedLevel || null;
+      
       if (input.status !== undefined) updateData.status = input.status;
 
       const { data, error } = await supabase
@@ -170,7 +169,7 @@ export function useSaveTrialReport() {
       studentName: string;
       teacherNotes?: string;
       gender?: string;
-      recommendedLevel?: string;
+      
     }) => {
       const readingStrengths = input.selectedComments.filter(c => c.skill === 'reading' && c.type === 'strength').map(c => c.text);
       const readingNextSteps = input.selectedComments.filter(c => c.skill === 'reading' && c.type === 'next_step').map(c => c.text);
@@ -192,7 +191,7 @@ export function useSaveTrialReport() {
           final_text: templateText,
           teacher_notes: input.teacherNotes || null,
           generated_by: userData.user?.id || null,
-          recommended_level: input.recommendedLevel || null,
+          
         })
         .select()
         .single();

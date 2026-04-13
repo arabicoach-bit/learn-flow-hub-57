@@ -23,7 +23,7 @@ interface ReportPreviewStepProps {
     duration?: number;
   };
   studentPhone?: string;
-  recommendedLevel?: string;
+  
   reportStatus: string;
   isPolishing: boolean;
   isSaving: boolean;
@@ -51,7 +51,7 @@ export function ReportPreviewStep({
   generatedReport,
   onTextChange,
   trialInfo,
-  recommendedLevel,
+  
   reportStatus,
   isPolishing,
   isSaving,
@@ -84,12 +84,6 @@ export function ReportPreviewStep({
             <span className="text-muted-foreground text-xs">Program · Duration</span>
             <p className="font-medium">{trialInfo.program || 'N/A'} · {trialInfo.duration || 30} min</p>
           </div>
-          {recommendedLevel && (
-            <div className="bg-primary/5 rounded-lg p-3 border border-primary/20">
-              <span className="text-muted-foreground text-xs">Recommended Level</span>
-              <p className="font-medium text-primary">{recommendedLevel}</p>
-            </div>
-          )}
         </div>
       )}
 
