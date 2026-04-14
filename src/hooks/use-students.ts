@@ -188,13 +188,6 @@ export function useUpdateStudent() {
       teacher_id?: string | null;
       status?: 'Active' | 'Temporary Stop' | 'Left';
     }) => {
-      // Fetch old values for before→after tracking
-      const { data: oldStudent } = await supabase
-        .from('students')
-        .select('name, phone, parent_phone, parent_guardian_name, age, gender, nationality, school, year_group, student_level, status')
-        .eq('student_id', studentId)
-        .single();
-
       const { error } = await supabase
         .from('students')
         .update(data)
@@ -210,7 +203,7 @@ export function useUpdateStudent() {
       });
 
       // Activity log — concise
-      if (data.status && oldStudent) {
+      if (data.status) {
         logStudentActivity(studentId, `Status changed to ${data.status}`);
       } else {
         logStudentActivity(studentId, 'Student details updated');
