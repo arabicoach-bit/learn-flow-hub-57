@@ -48,7 +48,6 @@ export function EditLeadDialog({ lead, open, onOpenChange }: EditLeadDialogProps
     first_contact_date: '',
     last_contact_date: '',
     follow_up: '',
-    handled_by: '',
     next_followup_date: '',
     notes: '',
   });
@@ -64,7 +63,6 @@ export function EditLeadDialog({ lead, open, onOpenChange }: EditLeadDialogProps
         first_contact_date: lead.first_contact_date || '',
         last_contact_date: lead.last_contact_date || '',
         follow_up: lead.follow_up || '',
-        handled_by: lead.handled_by || '',
         next_followup_date: lead.next_followup_date || '',
         notes: lead.notes || '',
       });
@@ -85,7 +83,7 @@ export function EditLeadDialog({ lead, open, onOpenChange }: EditLeadDialogProps
         first_contact_date: formData.first_contact_date || undefined,
         last_contact_date: formData.last_contact_date || undefined,
         follow_up: formData.follow_up || undefined,
-        handled_by: formData.handled_by || undefined,
+        
         next_followup_date: formData.next_followup_date || undefined,
         notes: formData.notes || undefined,
       });
@@ -231,28 +229,14 @@ export function EditLeadDialog({ lead, open, onOpenChange }: EditLeadDialogProps
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="handled_by">Handled By</Label>
-              <Select value={formData.handled_by || '__none__'} onValueChange={v => setFormData({ ...formData, handled_by: v === '__none__' ? '' : v })}>
-                <SelectTrigger><SelectValue placeholder="Select handler" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">— None —</SelectItem>
-                  {['Amira', 'Hind', 'Mona', 'Ahmed', 'Eman'].map(h => (
-                    <SelectItem key={h} value={h}>{h}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="next_followup_date">Next Follow-up Date</Label>
-              <Input
-                id="next_followup_date"
-                type="date"
-                value={formData.next_followup_date}
-                onChange={(e) => setFormData({ ...formData, next_followup_date: e.target.value })}
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="next_followup_date">Next Follow-up Date</Label>
+            <Input
+              id="next_followup_date"
+              type="date"
+              value={formData.next_followup_date}
+              onChange={(e) => setFormData({ ...formData, next_followup_date: e.target.value })}
+            />
           </div>
 
           <div className="space-y-2">

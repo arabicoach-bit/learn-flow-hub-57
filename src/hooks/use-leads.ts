@@ -16,7 +16,6 @@ export interface Lead {
   first_contact_date: string | null;
   last_contact_date: string | null;
   follow_up: string | null;
-  handled_by: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -32,7 +31,6 @@ export interface CreateLeadInput {
   last_contact_date?: string;
   trial_status?: string;
   follow_up?: string;
-  handled_by?: string;
 }
 
 export function useLeads(filters?: { status?: string; search?: string; trial_status?: string; date_range?: string; date_start?: string; date_end?: string }) {
@@ -118,7 +116,7 @@ export function useCreateLead() {
           last_contact_date: input.last_contact_date || null,
           trial_status: input.trial_status || 'Pending',
           follow_up: input.follow_up || null,
-          handled_by: input.handled_by || null,
+          
         })
         .select()
         .single();
@@ -157,7 +155,6 @@ export function useUpdateLead() {
       if (data.last_contact_date !== undefined) updateData.last_contact_date = data.last_contact_date || null;
       if (data.trial_status !== undefined) updateData.trial_status = data.trial_status || 'Pending';
       if (data.follow_up !== undefined) updateData.follow_up = data.follow_up || null;
-      if (data.handled_by !== undefined) updateData.handled_by = data.handled_by || null;
       
       const { error } = await supabase
         .from('leads')
@@ -180,10 +177,7 @@ export function useUpdateLead() {
       if (data.follow_up !== undefined) {
         logLeadActivity(leadId, data.follow_up ? `Follow-up set to "${data.follow_up}"` : 'Follow-up cleared');
       }
-      if (data.handled_by !== undefined) {
-        logLeadActivity(leadId, data.handled_by ? `Handled by set to "${data.handled_by}"` : 'Handled by cleared');
-      }
-      if (data.trial_status === undefined && !data.follow_up && !data.handled_by) {
+      if (data.trial_status === undefined && !data.follow_up) {
         logLeadActivity(leadId, 'Lead details edited');
       }
     },

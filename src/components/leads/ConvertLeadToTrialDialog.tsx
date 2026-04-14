@@ -61,7 +61,7 @@ export function ConvertLeadToTrialDialog({ lead, open, onOpenChange }: ConvertLe
         trial_date: formData.trial_date || undefined,
         trial_time: formData.trial_time || undefined,
         notes: formData.notes || lead.notes || undefined,
-        handled_by: lead.handled_by || undefined,
+        
       });
 
       // Update lead status to Trial Booked

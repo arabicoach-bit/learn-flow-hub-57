@@ -161,7 +161,6 @@ export type Database = {
           date: string | null
           first_contact_date: string | null
           follow_up: string | null
-          handled_by: string | null
           interest: string | null
           last_contact_date: string | null
           lead_id: string
@@ -178,7 +177,6 @@ export type Database = {
           date?: string | null
           first_contact_date?: string | null
           follow_up?: string | null
-          handled_by?: string | null
           interest?: string | null
           last_contact_date?: string | null
           lead_id?: string
@@ -195,7 +193,6 @@ export type Database = {
           date?: string | null
           first_contact_date?: string | null
           follow_up?: string | null
-          handled_by?: string | null
           interest?: string | null
           last_contact_date?: string | null
           lead_id?: string
