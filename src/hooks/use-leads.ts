@@ -130,7 +130,7 @@ export function useCreateLead() {
         entityId: data.lead_id,
         details: { name: input.name, phone: input.phone, source: input.source },
       });
-      logLeadActivity(data.lead_id, 'Lead created', `Name: ${input.name} | Phone: ${input.phone}${input.source ? ` | Source: ${input.source}` : ''}`);
+      logCreationEvent('lead', data.lead_id, input.name, `Name: ${input.name} | Phone: ${input.phone}${input.source ? ` | Source: ${input.source}` : ''}`);
       return data;
     },
     onSuccess: () => {
