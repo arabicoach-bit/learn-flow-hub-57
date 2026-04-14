@@ -24,6 +24,7 @@ import { QuarterFilter, getCurrentQuarter, getQuarterDateRange, type QuarterFilt
 import { EditStudentDialog } from '@/components/teacher/EditStudentDialog';
 import { StudentLessonsView } from '@/components/student/StudentLessonsView';
 import { StudentInfoView } from '@/components/student/StudentInfoView';
+import { StudentAcademicNotes } from '@/components/student/StudentAcademicNotes';
 import { Student, useUpdateStudent } from '@/hooks/use-students';
 import { usePrograms } from '@/hooks/use-programs';
 import { useScheduledLessons } from '@/hooks/use-scheduled-lessons';
@@ -510,6 +511,7 @@ export function TeacherStudentsTab({ students, teacherId }: TeacherStudentsTabPr
               <Tabs defaultValue="lessons" className="w-full">
                 <TabsList className="w-full justify-start rounded-none bg-transparent px-4 pt-2">
                   <TabsTrigger value="lessons"><BookOpen className="w-4 h-4 mr-1" /> Lessons</TabsTrigger>
+                  <TabsTrigger value="academic"><GraduationCap className="w-4 h-4 mr-1" /> Academic Notes</TabsTrigger>
                   <TabsTrigger value="profile"><User className="w-4 h-4 mr-1" /> Profile</TabsTrigger>
                 </TabsList>
                 <TabsContent value="lessons" className="p-4 mt-0">
@@ -519,6 +521,9 @@ export function TeacherStudentsTab({ students, teacherId }: TeacherStudentsTabPr
                     walletBalance={student.wallet_balance || 0}
                     role="admin"
                   />
+                </TabsContent>
+                <TabsContent value="academic" className="p-4 mt-0">
+                  <StudentAcademicNotes studentId={student.student_id} teacherId={teacherId} />
                 </TabsContent>
                 <TabsContent value="profile" className="p-4 mt-0">
                   <StudentInfoView student={student} role="admin" />
@@ -647,6 +652,9 @@ export function TeacherStudentsTab({ students, teacherId }: TeacherStudentsTabPr
                           <TabsTrigger value="lessons" className="data-[state=active]:bg-muted">
                             <BookOpen className="w-4 h-4 mr-1" /> Lessons
                           </TabsTrigger>
+                          <TabsTrigger value="academic" className="data-[state=active]:bg-muted">
+                            <GraduationCap className="w-4 h-4 mr-1" /> Academic Notes
+                          </TabsTrigger>
                           <TabsTrigger value="profile" className="data-[state=active]:bg-muted">
                             <User className="w-4 h-4 mr-1" /> Profile
                           </TabsTrigger>
@@ -658,6 +666,9 @@ export function TeacherStudentsTab({ students, teacherId }: TeacherStudentsTabPr
                             walletBalance={student.wallet_balance || 0}
                             role="admin"
                           />
+                        </TabsContent>
+                        <TabsContent value="academic" className="p-4 mt-0">
+                          <StudentAcademicNotes studentId={student.student_id} teacherId={teacherId} />
                         </TabsContent>
                         <TabsContent value="profile" className="p-4 mt-0">
                           <StudentInfoView student={student} role="admin" />

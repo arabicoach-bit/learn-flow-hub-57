@@ -20,6 +20,7 @@ import { WalletBadge } from '@/components/shared/WalletBadge';
 import { LessonsBadge } from '@/components/shared/LessonsBadge';
 import { StudentLessonsView } from '@/components/student/StudentLessonsView';
 import { StudentInfoView } from '@/components/student/StudentInfoView';
+import { StudentAcademicNotes } from '@/components/student/StudentAcademicNotes';
 import {
   GraduationCap, Search, Phone, ChevronDown, User, BookOpen,
   AlertTriangle, Users, UserCheck, PauseCircle, UserX, TrendingUp,
@@ -517,6 +518,7 @@ export default function TeacherStudents() {
                   <Tabs defaultValue="lessons" className="w-full">
                     <TabsList className="w-full justify-start rounded-none bg-transparent px-4 pt-2">
                       <TabsTrigger value="lessons"><BookOpen className="w-4 h-4 mr-1" /> Lessons</TabsTrigger>
+                      <TabsTrigger value="academic"><GraduationCap className="w-4 h-4 mr-1" /> Academic Notes</TabsTrigger>
                       <TabsTrigger value="profile"><User className="w-4 h-4 mr-1" /> Profile</TabsTrigger>
                     </TabsList>
                     <TabsContent value="lessons" className="p-4 mt-0">
@@ -527,6 +529,9 @@ export default function TeacherStudents() {
                         role="teacher"
                         teacherId={teacherId}
                       />
+                    </TabsContent>
+                    <TabsContent value="academic" className="p-4 mt-0">
+                      <StudentAcademicNotes studentId={student.student_id} teacherId={teacherId} />
                     </TabsContent>
                     <TabsContent value="profile" className="p-4 mt-0">
                       <StudentInfoView student={student} role="teacher" />
@@ -664,6 +669,9 @@ export default function TeacherStudents() {
                             <TabsTrigger value="lessons" className="data-[state=active]:bg-muted">
                               <BookOpen className="w-4 h-4 mr-1" /> Lessons
                             </TabsTrigger>
+                            <TabsTrigger value="academic" className="data-[state=active]:bg-muted">
+                              <GraduationCap className="w-4 h-4 mr-1" /> Academic Notes
+                            </TabsTrigger>
                             <TabsTrigger value="profile" className="data-[state=active]:bg-muted">
                               <User className="w-4 h-4 mr-1" /> Profile
                             </TabsTrigger>
@@ -676,6 +684,9 @@ export default function TeacherStudents() {
                               role="teacher"
                               teacherId={teacherId}
                             />
+                          </TabsContent>
+                          <TabsContent value="academic" className="p-4 mt-0">
+                            <StudentAcademicNotes studentId={student.student_id} teacherId={teacherId} />
                           </TabsContent>
                           <TabsContent value="profile" className="p-4 mt-0">
                             <StudentInfoView student={student} role="teacher" />
