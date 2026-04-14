@@ -48,7 +48,7 @@ const formSchema = z.object({
   trial_date: z.string().optional(),
   trial_time: z.string().optional(),
   notes: z.string().max(1000).optional(),
-  handled_by: z.string().max(100).optional(),
+  
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -80,7 +80,7 @@ export function AddTrialStudentForm({ open, onOpenChange }: AddTrialStudentFormP
       trial_date: '',
       trial_time: '',
       notes: '',
-      handled_by: '',
+      
     },
   });
 
@@ -103,7 +103,7 @@ export function AddTrialStudentForm({ open, onOpenChange }: AddTrialStudentFormP
         trial_date: values.trial_date || undefined,
         trial_time: values.trial_time || undefined,
         notes: values.notes || undefined,
-        handled_by: values.handled_by || undefined,
+        
       });
 
       toast({
@@ -384,19 +384,8 @@ export function AddTrialStudentForm({ open, onOpenChange }: AddTrialStudentFormP
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="handled_by"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Handled By</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Who is handling this trial?" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+
+
 
             <FormField
               control={form.control}
