@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
+import { logLessonMarked } from '@/lib/activity-logger';
 
 interface AddLessonRecordDialogProps {
   open: boolean;
@@ -46,6 +47,16 @@ export function AddLessonRecordDialog({ open, onOpenChange, student }: AddLesson
       });
 
       if (error) throw error;
+
+      // Auto-log to student + package notes with teacher name
+      logLessonMarked({
+        studentId: student.student_id,
+        teacherId: profile.teacher_id,
+        status,
+        date: lessonDate,
+        time: lessonTime,
+        notes: notes || null,
+      });
 
       toast.success(`Lesson record added for ${student.name}`);
       

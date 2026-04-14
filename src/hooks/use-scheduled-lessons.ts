@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { logAdminAction } from '@/hooks/use-audit-log';
-import { logStudentActivity } from '@/lib/activity-logger';
+import { logStudentActivity, logLessonMarked } from '@/lib/activity-logger';
 
 export interface ScheduledLesson {
   scheduled_lesson_id: string;
@@ -154,11 +154,17 @@ export function useMarkScheduledLesson() {
         details: { status, student_id: lesson.student_id, teacher_id: lesson.teacher_id, notes },
       });
 
-      // Auto-log to student notes
-      if (lesson.student_id) {
-        const statusLabel = status === 'completed' ? '✅ Completed' : '❌ Absent';
-        logStudentActivity(lesson.student_id, `Lesson ${statusLabel}`,
-          `Date: ${lesson.scheduled_date} | Time: ${lesson.scheduled_time}${notes ? `\nNotes: ${notes}` : ''}`);
+      // Auto-log to student + package notes with teacher name
+      if (lesson.student_id && lesson.teacher_id) {
+        logLessonMarked({
+          studentId: lesson.student_id,
+          teacherId: lesson.teacher_id,
+          packageId: lesson.package_id,
+          status,
+          date: lesson.scheduled_date,
+          time: lesson.scheduled_time,
+          notes: notes || null,
+        });
       }
 
       return result;
@@ -192,7 +198,7 @@ export function useUpdateScheduledLesson() {
       // Get current lesson for context
       const { data: currentLesson, error: currentLessonError } = await supabase
         .from('scheduled_lessons')
-        .select('student_id, teacher_id, status, notes')
+        .select('student_id, teacher_id, status, notes, package_id, scheduled_date, scheduled_time')
         .eq('scheduled_lesson_id', scheduledLessonId)
         .single();
 
@@ -226,6 +232,17 @@ export function useUpdateScheduledLesson() {
             p_teacher_id: currentLesson.teacher_id,
             p_status: status,
             p_notes: currentLesson.notes || null,
+          });
+
+          // Auto-log to student + package notes with teacher name
+          logLessonMarked({
+            studentId: currentLesson.student_id,
+            teacherId: currentLesson.teacher_id,
+            packageId: currentLesson.package_id,
+            status: status as 'completed' | 'absent',
+            date: scheduled_date || currentLesson.scheduled_date,
+            time: scheduled_time || currentLesson.scheduled_time,
+            notes: currentLesson.notes,
           });
         }
       }
