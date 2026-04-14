@@ -14,49 +14,70 @@ interface ActivityLogEntry {
   details?: string;
 }
 
-async function getCurrentUserId(): Promise<string | null> {
+async function getCurrentUser(): Promise<{ id: string | null; name: string | null }> {
   const { data } = await supabase.auth.getUser();
-  return data?.user?.id || null;
+  if (!data?.user?.id) return { id: null, name: null };
+  
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('full_name')
+    .eq('id', data.user.id)
+    .single();
+  
+  return { id: data.user.id, name: profile?.full_name || null };
 }
+
+const tableMap: Record<EntityType, string> = {
+  student: 'student_comments',
+  trial: 'trial_comments',
+  package: 'package_comments',
+  lead: 'lead_comments',
+};
+
+const idColMap: Record<EntityType, string> = {
+  student: 'student_id',
+  trial: 'trial_id',
+  package: 'package_id',
+  lead: 'lead_id',
+};
 
 export async function logActivityComment({ entityType, entityId, action, details }: ActivityLogEntry) {
   try {
-    const userId = await getCurrentUserId();
+    const user = await getCurrentUser();
     const message = details ? `🔄 ${action}\n${details}` : `🔄 ${action}`;
 
-    switch (entityType) {
-      case 'student':
-        await supabase.from('student_comments').insert({
-          student_id: entityId,
-          author_id: userId,
-          comment: message,
-        });
-        break;
-      case 'trial':
-        await supabase.from('trial_comments').insert({
-          trial_id: entityId,
-          author_id: userId,
-          comment: message,
-        });
-        break;
-      case 'package':
-        await supabase.from('package_comments').insert({
-          package_id: entityId,
-          author_id: userId,
-          comment: message,
-        });
-        break;
-      case 'lead':
-        await supabase.from('lead_comments').insert({
-          lead_id: entityId,
-          author_id: userId,
-          comment: message,
-        });
-        break;
-    }
+    await supabase.from(tableMap[entityType] as any).insert({
+      [idColMap[entityType]]: entityId,
+      author_id: user.id,
+      comment: message,
+    } as any);
   } catch (err) {
     console.error('Failed to log activity comment:', err);
-    // Silent fail — don't block the main action
+  }
+}
+
+/**
+ * Logs a creation event with the admin's name prominently displayed.
+ * Uses 📋 prefix to distinguish from regular activity logs.
+ */
+export async function logCreationEvent(
+  entityType: EntityType,
+  entityId: string,
+  entityLabel: string,
+  details?: string,
+) {
+  try {
+    const user = await getCurrentUser();
+    const adminName = user.name || 'Unknown';
+    const message = `📋 Created by ${adminName}${details ? `\n${details}` : ''}`;
+
+    await supabase.from(tableMap[entityType] as any).insert({
+      [idColMap[entityType]]: entityId,
+      author_id: user.id,
+      comment: message,
+    } as any);
+  } catch (err) {
+    console.error('Failed to log creation event:', err);
   }
 }
 
@@ -70,35 +91,20 @@ export async function logJourneyLink(
   action: string,
 ) {
   try {
-    const userId = await getCurrentUserId();
-    const sourceMsg = `🔗 ${action}\n→ Linked to ${destination.type}: ${destination.label}`;
-    const destMsg = `🔗 ${action}\n← Linked from ${source.type}: ${source.label}`;
-
-    // Log in source thread
-    await logActivityComment({ entityType: source.type, entityId: source.id, action: '' }).catch(() => {});
-    // Actually insert the journey-specific message
-    const tableMap: Record<EntityType, string> = {
-      student: 'student_comments',
-      trial: 'trial_comments',
-      package: 'package_comments',
-      lead: 'lead_comments',
-    };
-    const idColMap: Record<EntityType, string> = {
-      student: 'student_id',
-      trial: 'trial_id',
-      package: 'package_id',
-      lead: 'lead_id',
-    };
+    const user = await getCurrentUser();
+    const adminName = user.name || 'Unknown';
+    const sourceMsg = `🔗 ${action} by ${adminName}\n→ Linked to ${destination.type}: ${destination.label}`;
+    const destMsg = `🔗 ${action} by ${adminName}\n← Linked from ${source.type}: ${source.label}`;
 
     await supabase.from(tableMap[source.type] as any).insert({
       [idColMap[source.type]]: source.id,
-      author_id: userId,
+      author_id: user.id,
       comment: sourceMsg,
     } as any);
 
     await supabase.from(tableMap[destination.type] as any).insert({
       [idColMap[destination.type]]: destination.id,
-      author_id: userId,
+      author_id: user.id,
       comment: destMsg,
     } as any);
   } catch (err) {
