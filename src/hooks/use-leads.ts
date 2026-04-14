@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { logAdminAction } from '@/hooks/use-audit-log';
-import { logLeadActivity } from '@/lib/activity-logger';
+import { logLeadActivity, logCreationEvent } from '@/lib/activity-logger';
 
 export interface Lead {
   lead_id: string;
@@ -130,7 +130,7 @@ export function useCreateLead() {
         entityId: data.lead_id,
         details: { name: input.name, phone: input.phone, source: input.source },
       });
-      logLeadActivity(data.lead_id, 'Lead created', `Name: ${input.name} | Phone: ${input.phone}${input.source ? ` | Source: ${input.source}` : ''}`);
+      logCreationEvent('lead', data.lead_id, input.name, `Name: ${input.name} | Phone: ${input.phone}${input.source ? ` | Source: ${input.source}` : ''}`);
       return data;
     },
     onSuccess: () => {

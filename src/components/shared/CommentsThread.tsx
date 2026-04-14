@@ -35,11 +35,15 @@ interface CommentsThreadProps {
 }
 
 function isSystemComment(comment: string) {
-  return comment.startsWith('🔄') || comment.startsWith('🔗');
+  return comment.startsWith('🔄') || comment.startsWith('🔗') || comment.startsWith('📋');
 }
 
 function isJourneyComment(comment: string) {
   return comment.startsWith('🔗');
+}
+
+function isCreationComment(comment: string) {
+  return comment.startsWith('📋');
 }
 
 export function CommentsThread({
@@ -158,6 +162,7 @@ export function CommentsThread({
             sortedComments.map((c) => {
               const isSystem = isSystemComment(c.comment);
               const isJourney = isJourneyComment(c.comment);
+              const isCreation = isCreationComment(c.comment);
               const isEditing = editingId === c.comment_id;
 
               return (
@@ -166,11 +171,13 @@ export function CommentsThread({
                   className={cn(
                     'rounded-lg px-3 py-2 group relative',
                     c.is_pinned && 'ring-1 ring-primary/30',
-                    isJourney
-                      ? 'bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800'
-                      : isSystem
-                        ? 'bg-muted/30 border-l-2 border-muted-foreground/20'
-                        : 'bg-muted/50'
+                    isCreation
+                      ? 'bg-primary/5 border border-primary/20'
+                      : isJourney
+                        ? 'bg-accent/30 border border-accent/40'
+                        : isSystem
+                          ? 'bg-muted/30 border-l-2 border-muted-foreground/20'
+                          : 'bg-muted/50'
                   )}
                 >
                   {/* Pinned badge */}
@@ -182,18 +189,21 @@ export function CommentsThread({
 
                   <div className="flex items-center justify-between mb-0.5">
                     <div className="flex items-center gap-1.5">
-                      {isJourney && <ArrowRight className="h-3 w-3 text-blue-500" />}
+                      {isJourney && <ArrowRight className="h-3 w-3 text-primary" />}
                       <span className={cn(
                         'text-xs font-medium',
-                        isSystem ? 'text-muted-foreground' : 'text-foreground/80'
+                        isCreation ? 'text-primary font-semibold' : isSystem ? 'text-muted-foreground' : 'text-foreground/80'
                       )}>
                         {c.profiles?.full_name || 'System'}
                       </span>
-                      {isSystem && !isJourney && (
+                      {isCreation && (
+                        <Badge variant="default" className="text-[9px] h-4 px-1">Creator</Badge>
+                      )}
+                      {isSystem && !isJourney && !isCreation && (
                         <Badge variant="secondary" className="text-[9px] h-4 px-1">Auto</Badge>
                       )}
                       {isJourney && (
-                        <Badge variant="secondary" className="text-[9px] h-4 px-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">Link</Badge>
+                        <Badge variant="outline" className="text-[9px] h-4 px-1 text-primary border-primary/30">Link</Badge>
                       )}
                     </div>
                     <div className="flex items-center gap-1">
