@@ -12,7 +12,7 @@ interface DuplicateResult {
 }
 
 export function useDuplicatePhoneCheck(phone: string, enabled = true) {
-  const normalizedPhone = phone.replace(/[\s\-\(\)]/g, '');
+  const normalizedPhone = phone.replace(/[\s\-()]/g, '');
   
   return useQuery({
     queryKey: ['duplicate-phone', normalizedPhone],
