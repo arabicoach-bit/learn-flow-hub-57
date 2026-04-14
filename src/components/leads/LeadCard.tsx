@@ -112,11 +112,6 @@ export function LeadCard({ lead, commentCount, onUpdateLeadStatus, onUpdateFollo
           <div className="flex items-center gap-2 text-muted-foreground">
             <Phone className="w-4 h-4" /><span>{lead.phone}</span>
           </div>
-          {lead.handled_by && (
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <User className="w-4 h-4" /><span>{lead.handled_by}</span>
-            </div>
-          )}
         </div>
 
         {lead.interest && (

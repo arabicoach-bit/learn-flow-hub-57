@@ -15,7 +15,6 @@ interface LeadTableViewProps {
   leads: Lead[];
   onUpdateLeadStatus: (leadId: string, status: string) => void;
   onUpdateFollowUp: (leadId: string, followUp: string) => void;
-  onUpdateHandledBy: (leadId: string, handledBy: string) => void;
   onEdit: (lead: Lead) => void;
   onDelete: (leadId: string) => void;
   onConvertToTrial?: (lead: Lead) => void;
@@ -43,7 +42,7 @@ const followUpOptions = [
   'F.1 – Student Motivation', 'F.2 – Free Resources', 'F.3 – Parent Feedback',
   'F.4 – Special Offer', 'F.5 – Help Offer', 'F.6 – Soft Reminder', 'F.7 – Arabic Challenge',
 ];
-const handledByOptions = ['Amira', 'Hind', 'Mona', 'Ahmed', 'Eman'];
+
 
 function getRowHighlight(lead: Lead) {
   if (lead.trial_status === 'Trial Booked') return 'bg-emerald-500/5 hover:bg-emerald-500/10';
@@ -52,7 +51,7 @@ function getRowHighlight(lead: Lead) {
   return 'hover:bg-muted/50';
 }
 
-export function LeadTableView({ leads, onUpdateLeadStatus, onUpdateFollowUp, onUpdateHandledBy, onEdit, onDelete, onConvertToTrial }: LeadTableViewProps) {
+export function LeadTableView({ leads, onUpdateLeadStatus, onUpdateFollowUp, onEdit, onDelete, onConvertToTrial }: LeadTableViewProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [commentsLeadId, setCommentsLeadId] = useState<string | null>(null);
   const [commentsLeadName, setCommentsLeadName] = useState('');
@@ -84,9 +83,6 @@ export function LeadTableView({ leads, onUpdateLeadStatus, onUpdateFollowUp, onU
                 </TableHead>
                 <TableHead className="text-center border-l border-border/50">
                   <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Follow-Up</span>
-                </TableHead>
-                <TableHead className="text-center border-r border-border/50">
-                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Handled By</span>
                 </TableHead>
                 <TableHead className="text-center">
                   <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Notes</span>
@@ -165,27 +161,6 @@ export function LeadTableView({ leads, onUpdateLeadStatus, onUpdateFollowUp, onU
                           </div>
                         </TableCell>
 
-                        {/* Handled By */}
-                        <TableCell className="py-2 border-r border-border/30" onClick={e => e.stopPropagation()}>
-                          <Select
-                            value={lead.handled_by || '__none__'}
-                            onValueChange={(v) => onUpdateHandledBy(lead.lead_id, v === '__none__' ? '' : v)}
-                          >
-                            <SelectTrigger className="h-6 w-[100px] text-xs border-0 bg-transparent px-0.5 focus:ring-0">
-                              {lead.handled_by ? (
-                                <span className="text-xs">{lead.handled_by}</span>
-                              ) : (
-                                <span className="text-muted-foreground text-[11px]">Assign</span>
-                              )}
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="__none__">— None —</SelectItem>
-                              {handledByOptions.map(h => (
-                                <SelectItem key={h} value={h}>{h}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
 
                         {/* Notes */}
                         <TableCell className="text-center py-2" onClick={e => e.stopPropagation()}>
@@ -226,7 +201,7 @@ export function LeadTableView({ leads, onUpdateLeadStatus, onUpdateFollowUp, onU
                       {/* Expanded details */}
                       {isExpanded && (
                         <tr className="bg-muted/20 border-b">
-                          <td colSpan={9} className="p-0">
+                          <td colSpan={8} className="p-0">
                             <CollapsibleContent forceMount className="px-6 py-4">
                               <div className="grid grid-cols-4 gap-6 text-sm">
                                 {/* Contact Info */}
@@ -241,12 +216,6 @@ export function LeadTableView({ leads, onUpdateLeadStatus, onUpdateFollowUp, onU
                                       <div className="flex items-center gap-2 text-muted-foreground">
                                         <Tag className="w-3.5 h-3.5" />
                                         <span>Source: {lead.source}</span>
-                                      </div>
-                                    )}
-                                    {lead.handled_by && (
-                                      <div className="flex items-center gap-2 text-muted-foreground">
-                                        <User className="w-3.5 h-3.5" />
-                                        <span>Handled by: {lead.handled_by}</span>
                                       </div>
                                     )}
                                   </div>

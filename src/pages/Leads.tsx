@@ -133,14 +133,6 @@ export default function Leads() {
     }
   };
 
-  const handleUpdateHandledBy = async (leadId: string, handledBy: string) => {
-    try {
-      await updateLead.mutateAsync({ leadId, handled_by: handledBy || undefined });
-      toast({ title: 'Updated', description: handledBy ? `Handled by set to ${handledBy}.` : 'Handled by cleared.' });
-    } catch {
-      toast({ title: 'Error', description: 'Failed to update.', variant: 'destructive' });
-    }
-  };
 
   const handleExport = () => {
     if (!filteredLeads.length) {
@@ -151,7 +143,7 @@ export default function Leads() {
       name: l.name, phone: l.phone, source: l.source, interest: l.interest,
       first_contact_date: l.first_contact_date,
       last_contact_date: l.last_contact_date, next_followup_date: l.next_followup_date,
-      handled_by: l.handled_by, trial_status: l.trial_status,
+      trial_status: l.trial_status,
       follow_up: l.follow_up, notes: l.notes, created_at: l.created_at,
     }));
     exportLeads(exportData);
@@ -189,7 +181,7 @@ export default function Leads() {
           leads={leadsList}
           onUpdateLeadStatus={handleUpdateLeadStatus}
           onUpdateFollowUp={handleUpdateFollowUp}
-          onUpdateHandledBy={handleUpdateHandledBy}
+          
           onEdit={setEditingLead}
           onDelete={(leadId) => setDeleteLeadId(leadId)}
           onConvertToTrial={setConvertingLead}
