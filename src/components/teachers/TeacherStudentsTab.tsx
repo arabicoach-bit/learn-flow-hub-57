@@ -511,6 +511,7 @@ export function TeacherStudentsTab({ students, teacherId }: TeacherStudentsTabPr
               <Tabs defaultValue="lessons" className="w-full">
                 <TabsList className="w-full justify-start rounded-none bg-transparent px-4 pt-2">
                   <TabsTrigger value="lessons"><BookOpen className="w-4 h-4 mr-1" /> Lessons</TabsTrigger>
+                  <TabsTrigger value="academic"><GraduationCap className="w-4 h-4 mr-1" /> Academic Notes</TabsTrigger>
                   <TabsTrigger value="profile"><User className="w-4 h-4 mr-1" /> Profile</TabsTrigger>
                 </TabsList>
                 <TabsContent value="lessons" className="p-4 mt-0">
@@ -520,6 +521,9 @@ export function TeacherStudentsTab({ students, teacherId }: TeacherStudentsTabPr
                     walletBalance={student.wallet_balance || 0}
                     role="admin"
                   />
+                </TabsContent>
+                <TabsContent value="academic" className="p-4 mt-0">
+                  <StudentAcademicNotes studentId={student.student_id} teacherId={teacherId} />
                 </TabsContent>
                 <TabsContent value="profile" className="p-4 mt-0">
                   <StudentInfoView student={student} role="admin" />
