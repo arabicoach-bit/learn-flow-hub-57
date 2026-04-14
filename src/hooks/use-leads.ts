@@ -116,7 +116,7 @@ export function useCreateLead() {
           next_followup_date: input.next_followup_date || null,
           first_contact_date: input.first_contact_date || null,
           last_contact_date: input.last_contact_date || null,
-          trial_status: input.trial_status || null,
+          trial_status: input.trial_status || 'Pending',
           follow_up: input.follow_up || null,
           handled_by: input.handled_by || null,
         })
