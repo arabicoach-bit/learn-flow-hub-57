@@ -101,8 +101,7 @@ export function EditTrialStudentDialog({ student, open, onOpenChange }: EditTria
         handled_by: formData.handled_by || undefined,
       });
 
-      logTrialActivity(student.trial_id, 'Trial student details edited',
-        `Name: ${formData.name}\nTeacher: ${formData.teacher_id ? 'Changed' : 'N/A'}\nDate: ${formData.trial_date || '-'}`);
+      logTrialActivity(student.trial_id, 'Trial details edited');
 
       toast({
         title: 'Trial student updated',

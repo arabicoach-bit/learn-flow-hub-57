@@ -63,8 +63,7 @@ export function TransferStudentDialog({
         throw new Error(result.error || 'Transfer failed');
       }
 
-      logStudentActivity(studentId, 'Student transferred',
-        `From: ${result.from_teacher}\nTo: ${result.to_teacher}\nLessons moved: ${result.lessons_moved}${notes ? '\nNotes: ' + notes : ''}`);
+      logStudentActivity(studentId, `Transferred to ${result.to_teacher}`);
 
       toast.success(
         `${studentName} transferred to ${result.to_teacher}. ${result.lessons_moved} future lessons reassigned.`

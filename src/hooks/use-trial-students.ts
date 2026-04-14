@@ -212,8 +212,7 @@ export function useCreateTrialStudent() {
         details: { name: input.name, phone: input.phone, teacher_id: input.teacher_id },
       });
 
-      logCreationEvent('trial', data.trial_id, input.name,
-        `Name: ${input.name} | Phone: ${input.phone}${input.teacher_id ? ` | Teacher assigned` : ''}${input.trial_date ? ` | Date: ${input.trial_date}` : ''}`);
+      logCreationEvent('trial', data.trial_id, input.name);
 
       return data;
     },
@@ -249,21 +248,21 @@ export function useUpdateTrialStudent() {
         details: data,
       });
 
-      // Auto-log with before→after
+      // Auto-log — concise
       if (data.status && oldTrial) {
-        logTrialActivity(trial_id, 'Status changed', `${oldTrial.status} → ${data.status}`);
+        logTrialActivity(trial_id, `Status changed to ${data.status}`);
       }
       if (data.conversion_status && oldTrial) {
-        logTrialActivity(trial_id, 'Conversion status changed', `${oldTrial.conversion_status} → ${data.conversion_status}`);
+        logTrialActivity(trial_id, `Conversion changed to ${data.conversion_status}`);
       }
       if (data.trial_result && oldTrial) {
-        logTrialActivity(trial_id, 'Trial result updated', `${oldTrial.trial_result ?? '—'} → ${data.trial_result}`);
+        logTrialActivity(trial_id, `Result set to ${data.trial_result}`);
       }
       if (data.teacher_id && oldTrial && data.teacher_id !== oldTrial.teacher_id) {
         logTrialActivity(trial_id, 'Teacher reassigned');
       }
       if (data.handled_by !== undefined && oldTrial) {
-        logTrialActivity(trial_id, 'Handled by updated', `${oldTrial.handled_by ?? '—'} → ${data.handled_by || 'None'}`);
+        logTrialActivity(trial_id, data.handled_by ? `Handled by set to "${data.handled_by}"` : 'Handled by cleared');
       }
 
       // DB triggers now handle syncing status, teacher_id, date/time to trial_lessons_log
