@@ -198,7 +198,7 @@ export function useUpdateScheduledLesson() {
       // Get current lesson for context
       const { data: currentLesson, error: currentLessonError } = await supabase
         .from('scheduled_lessons')
-        .select('student_id, teacher_id, status, notes')
+        .select('student_id, teacher_id, status, notes, package_id, scheduled_date, scheduled_time')
         .eq('scheduled_lesson_id', scheduledLessonId)
         .single();
 
@@ -232,6 +232,17 @@ export function useUpdateScheduledLesson() {
             p_teacher_id: currentLesson.teacher_id,
             p_status: status,
             p_notes: currentLesson.notes || null,
+          });
+
+          // Auto-log to student + package notes with teacher name
+          logLessonMarked({
+            studentId: currentLesson.student_id,
+            teacherId: currentLesson.teacher_id,
+            packageId: currentLesson.package_id,
+            status: status as 'completed' | 'absent',
+            date: scheduled_date || currentLesson.scheduled_date,
+            time: scheduled_time || currentLesson.scheduled_time,
+            notes: currentLesson.notes,
           });
         }
       }
