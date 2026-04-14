@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { processMentions } from '@/lib/mention-utils';
 
 export interface StudentComment {
   comment_id: string;
@@ -9,6 +10,8 @@ export interface StudentComment {
   created_at: string;
   is_pinned?: boolean;
   updated_at?: string | null;
+  attachment_url?: string | null;
+  attachment_name?: string | null;
   profiles?: { full_name: string } | null;
 }
 
@@ -31,12 +34,21 @@ export function useStudentComments(studentId: string | null) {
 export function useAddStudentComment() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ studentId, comment }: { studentId: string; comment: string }) => {
+    mutationFn: async ({ studentId, comment, attachmentUrl, attachmentName }: { studentId: string; comment: string; attachmentUrl?: string; attachmentName?: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
       const { error } = await supabase
         .from('student_comments')
-        .insert({ student_id: studentId, comment, author_id: user?.id ?? null });
+        .insert({
+          student_id: studentId,
+          comment,
+          author_id: user?.id ?? null,
+          attachment_url: attachmentUrl || null,
+          attachment_name: attachmentName || null,
+        } as any);
       if (error) throw error;
+      // Process @mentions
+      const { data: student } = await supabase.from('students').select('name').eq('student_id', studentId).single();
+      processMentions(comment, 'Student', student?.name || 'Unknown');
     },
     onSuccess: (_, { studentId }) => {
       queryClient.invalidateQueries({ queryKey: ['student-comments', studentId] });

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { logAdminAction } from '@/hooks/use-audit-log';
+import { logStudentActivity } from '@/lib/activity-logger';
 
 export interface ScheduledLesson {
   scheduled_lesson_id: string;
@@ -152,6 +153,13 @@ export function useMarkScheduledLesson() {
         entityId: scheduledLessonId,
         details: { status, student_id: lesson.student_id, teacher_id: lesson.teacher_id, notes },
       });
+
+      // Auto-log to student notes
+      if (lesson.student_id) {
+        const statusLabel = status === 'completed' ? '✅ Completed' : '❌ Absent';
+        logStudentActivity(lesson.student_id, `Lesson ${statusLabel}`,
+          `Date: ${lesson.scheduled_date} | Time: ${lesson.scheduled_time}${notes ? `\nNotes: ${notes}` : ''}`);
+      }
 
       return result;
     },

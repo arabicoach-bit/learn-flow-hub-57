@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { CommentsThread } from '@/components/shared/CommentsThread';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { uploadNoteAttachment } from '@/lib/upload-note-attachment';
 
 interface PackageCommentsDialogProps {
   open: boolean;
@@ -42,9 +43,14 @@ export function PackageCommentsDialog({ open, onOpenChange, packageId, packageLa
             currentUserId={userId}
             isAdmin={role === 'admin'}
             isAdding={addComment.isPending}
-            onAdd={async (comment) => {
+            onAdd={async (comment, attachment) => {
               try {
-                await addComment.mutateAsync({ packageId, comment });
+                await addComment.mutateAsync({
+                  packageId,
+                  comment,
+                  attachmentUrl: attachment?.url,
+                  attachmentName: attachment?.name,
+                });
               } catch {
                 toast({ title: 'Failed to add note', variant: 'destructive' });
               }
@@ -70,6 +76,7 @@ export function PackageCommentsDialog({ open, onOpenChange, packageId, packageLa
                 toast({ title: 'Failed to pin note', variant: 'destructive' });
               }
             }}
+            onUploadAttachment={uploadNoteAttachment}
           />
         </div>
       </DialogContent>

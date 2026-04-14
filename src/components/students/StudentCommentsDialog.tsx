@@ -5,6 +5,10 @@ import { useToast } from '@/hooks/use-toast';
 import { CommentsThread } from '@/components/shared/CommentsThread';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { uploadNoteAttachment } from '@/lib/upload-note-attachment';
+import { Button } from '@/components/ui/button';
+import { FileDown } from 'lucide-react';
+import { exportJourneyHistory } from '@/lib/export-journey-pdf';
 
 interface StudentCommentsDialogProps {
   open: boolean;
@@ -31,9 +35,21 @@ export function StudentCommentsDialog({ open, onOpenChange, studentId, studentNa
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md max-h-[80vh] flex flex-col gap-0 p-0">
         <DialogHeader className="px-5 pt-5 pb-3 border-b">
-          <DialogTitle className="text-base">
-            Notes — <span className="text-primary">{studentName}</span>
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-base">
+              Notes — <span className="text-primary">{studentName}</span>
+            </DialogTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs gap-1"
+              onClick={() => exportJourneyHistory(studentId, studentName)}
+              title="Export full journey history"
+            >
+              <FileDown className="h-3.5 w-3.5" />
+              Export
+            </Button>
+          </div>
         </DialogHeader>
         <div className="px-5 py-3 flex-1 min-h-0">
           <CommentsThread
@@ -42,9 +58,14 @@ export function StudentCommentsDialog({ open, onOpenChange, studentId, studentNa
             currentUserId={userId}
             isAdmin={role === 'admin'}
             isAdding={addComment.isPending}
-            onAdd={async (comment) => {
+            onAdd={async (comment, attachment) => {
               try {
-                await addComment.mutateAsync({ studentId, comment });
+                await addComment.mutateAsync({
+                  studentId,
+                  comment,
+                  attachmentUrl: attachment?.url,
+                  attachmentName: attachment?.name,
+                });
               } catch {
                 toast({ title: 'Failed to add note', variant: 'destructive' });
               }
@@ -70,6 +91,7 @@ export function StudentCommentsDialog({ open, onOpenChange, studentId, studentNa
                 toast({ title: 'Failed to pin note', variant: 'destructive' });
               }
             }}
+            onUploadAttachment={uploadNoteAttachment}
           />
         </div>
       </DialogContent>

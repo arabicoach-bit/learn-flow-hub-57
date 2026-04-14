@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { processMentions } from '@/lib/mention-utils';
 
 export interface PackageComment {
   comment_id: string;
@@ -9,6 +10,8 @@ export interface PackageComment {
   created_at: string;
   is_pinned?: boolean;
   updated_at?: string | null;
+  attachment_url?: string | null;
+  attachment_name?: string | null;
   profiles?: { full_name: string } | null;
 }
 
@@ -31,12 +34,19 @@ export function usePackageComments(packageId: string | null) {
 export function useAddPackageComment() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ packageId, comment }: { packageId: string; comment: string }) => {
+    mutationFn: async ({ packageId, comment, attachmentUrl, attachmentName }: { packageId: string; comment: string; attachmentUrl?: string; attachmentName?: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
       const { error } = await supabase
         .from('package_comments')
-        .insert({ package_id: packageId, comment, author_id: user?.id ?? null });
+        .insert({
+          package_id: packageId,
+          comment,
+          author_id: user?.id ?? null,
+          attachment_url: attachmentUrl || null,
+          attachment_name: attachmentName || null,
+        } as any);
       if (error) throw error;
+      processMentions(comment, 'Package', packageId);
     },
     onSuccess: (_, { packageId }) => {
       queryClient.invalidateQueries({ queryKey: ['package-comments', packageId] });

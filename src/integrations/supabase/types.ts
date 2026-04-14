@@ -106,6 +106,8 @@ export type Database = {
       }
       lead_comments: {
         Row: {
+          attachment_name: string | null
+          attachment_url: string | null
           author_id: string | null
           comment: string
           comment_id: string
@@ -115,6 +117,8 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          attachment_name?: string | null
+          attachment_url?: string | null
           author_id?: string | null
           comment: string
           comment_id?: string
@@ -124,6 +128,8 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          attachment_name?: string | null
+          attachment_url?: string | null
           author_id?: string | null
           comment?: string
           comment_id?: string
@@ -273,6 +279,8 @@ export type Database = {
       }
       package_comments: {
         Row: {
+          attachment_name: string | null
+          attachment_url: string | null
           author_id: string | null
           comment: string
           comment_id: string
@@ -282,6 +290,8 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          attachment_name?: string | null
+          attachment_url?: string | null
           author_id?: string | null
           comment: string
           comment_id?: string
@@ -291,6 +301,8 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          attachment_name?: string | null
+          attachment_url?: string | null
           author_id?: string | null
           comment?: string
           comment_id?: string
@@ -654,6 +666,8 @@ export type Database = {
       }
       student_comments: {
         Row: {
+          attachment_name: string | null
+          attachment_url: string | null
           author_id: string | null
           comment: string
           comment_id: string
@@ -663,6 +677,8 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          attachment_name?: string | null
+          attachment_url?: string | null
           author_id?: string | null
           comment: string
           comment_id?: string
@@ -672,6 +688,8 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          attachment_name?: string | null
+          attachment_url?: string | null
           author_id?: string | null
           comment?: string
           comment_id?: string
@@ -963,6 +981,8 @@ export type Database = {
       }
       trial_comments: {
         Row: {
+          attachment_name: string | null
+          attachment_url: string | null
           author_id: string | null
           comment: string
           comment_id: string
@@ -972,6 +992,8 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          attachment_name?: string | null
+          attachment_url?: string | null
           author_id?: string | null
           comment: string
           comment_id?: string
@@ -981,6 +1003,8 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          attachment_name?: string | null
+          attachment_url?: string | null
           author_id?: string | null
           comment?: string
           comment_id?: string
