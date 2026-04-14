@@ -206,7 +206,13 @@ export function LeadTableView({ leads, onUpdateLeadStatus, onUpdateFollowUp, onE
                       {isExpanded && (
                         <tr className="bg-muted/20 border-b">
                           <td colSpan={8} className="p-0">
-                            <CollapsibleContent forceMount className="px-6 py-4">
+                         <CollapsibleContent forceMount className="px-6 py-4 space-y-4">
+                              {/* Journey Timeline */}
+                              <div className="space-y-1.5">
+                                <h4 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Journey</h4>
+                                <JourneyTimeline leadId={lead.lead_id} />
+                              </div>
+
                               <div className="grid grid-cols-4 gap-6 text-sm">
                                 {/* Contact Info */}
                                 <div className="space-y-2">
@@ -280,6 +286,17 @@ export function LeadTableView({ leads, onUpdateLeadStatus, onUpdateFollowUp, onE
                                     <p className="text-muted-foreground text-xs">No notes</p>
                                   )}
                                 </div>
+                              </div>
+
+                              {/* Quick Inline Note */}
+                              <div className="border-t pt-3">
+                                <h4 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Quick Note</h4>
+                                <QuickInlineNote
+                                  placeholder="Add a quick note..."
+                                  onSubmit={async (note) => {
+                                    await addComment.mutateAsync({ leadId: lead.lead_id, comment: note });
+                                  }}
+                                />
                               </div>
                             </CollapsibleContent>
                           </td>
