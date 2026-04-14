@@ -60,6 +60,52 @@ export async function logActivityComment({ entityType, entityId, action, details
   }
 }
 
+/**
+ * Logs a journey link across entities (Lead→Trial, Trial→Student).
+ * Creates a 🔗 entry in both the source and destination comment threads.
+ */
+export async function logJourneyLink(
+  source: { type: EntityType; id: string; label: string },
+  destination: { type: EntityType; id: string; label: string },
+  action: string,
+) {
+  try {
+    const userId = await getCurrentUserId();
+    const sourceMsg = `🔗 ${action}\n→ Linked to ${destination.type}: ${destination.label}`;
+    const destMsg = `🔗 ${action}\n← Linked from ${source.type}: ${source.label}`;
+
+    // Log in source thread
+    await logActivityComment({ entityType: source.type, entityId: source.id, action: '' }).catch(() => {});
+    // Actually insert the journey-specific message
+    const tableMap: Record<EntityType, string> = {
+      student: 'student_comments',
+      trial: 'trial_comments',
+      package: 'package_comments',
+      lead: 'lead_comments',
+    };
+    const idColMap: Record<EntityType, string> = {
+      student: 'student_id',
+      trial: 'trial_id',
+      package: 'package_id',
+      lead: 'lead_id',
+    };
+
+    await supabase.from(tableMap[source.type] as any).insert({
+      [idColMap[source.type]]: source.id,
+      author_id: userId,
+      comment: sourceMsg,
+    } as any);
+
+    await supabase.from(tableMap[destination.type] as any).insert({
+      [idColMap[destination.type]]: destination.id,
+      author_id: userId,
+      comment: destMsg,
+    } as any);
+  } catch (err) {
+    console.error('Failed to log journey link:', err);
+  }
+}
+
 // ──── Convenience functions ────
 
 export function logTrialActivity(trialId: string, action: string, details?: string) {
