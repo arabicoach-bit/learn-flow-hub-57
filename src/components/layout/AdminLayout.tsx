@@ -27,6 +27,7 @@ import {
   Activity,
   Shield,
   ClipboardList,
+  Search,
 } from 'lucide-react';
 import { useUnreadNotificationsCount } from '@/hooks/use-notifications';
 import { cn } from '@/lib/utils';
@@ -42,6 +43,7 @@ const adminNavItems = [
   { title: 'Activity Log', url: '/admin/activity-log', icon: Activity },
   { title: 'Admin Team', url: '/admin/admin-management', icon: Shield },
   { title: 'Report Comments', url: '/admin/report-comments', icon: ClipboardList },
+  { title: 'Notes Search', url: '/admin/notes-search', icon: Search },
 ];
 
 interface AdminLayoutProps {
