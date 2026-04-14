@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { logAdminAction } from '@/hooks/use-audit-log';
-import { logStudentActivity } from '@/lib/activity-logger';
+import { logStudentActivity, logCreationEvent } from '@/lib/activity-logger';
 
 export interface Student {
   student_id: string;
@@ -127,7 +127,7 @@ export function useCreateStudent() {
         details: { name: input.name, phone: input.phone, teacher_id: input.teacher_id },
       });
 
-      logStudentActivity(student.student_id, 'Student created', 
+      logCreationEvent('student', student.student_id, input.name,
         `Name: ${input.name}\nPhone: ${input.phone}`);
 
       if (input.initial_lessons && input.initial_lessons > 0 && input.initial_amount) {
