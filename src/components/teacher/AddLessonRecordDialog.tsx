@@ -48,6 +48,16 @@ export function AddLessonRecordDialog({ open, onOpenChange, student }: AddLesson
 
       if (error) throw error;
 
+      // Auto-log to student + package notes with teacher name
+      logLessonMarked({
+        studentId: student.student_id,
+        teacherId: profile.teacher_id,
+        status,
+        date: lessonDate,
+        time: lessonTime,
+        notes: notes || null,
+      });
+
       toast.success(`Lesson record added for ${student.name}`);
       
       // Invalidate all relevant queries
