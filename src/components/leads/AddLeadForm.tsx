@@ -8,6 +8,7 @@ import { Plus } from 'lucide-react';
 import { useCreateLead } from '@/hooks/use-leads';
 import { usePrograms } from '@/hooks/use-programs';
 import { useToast } from '@/hooks/use-toast';
+import { DuplicatePhoneWarning } from '@/components/shared/DuplicatePhoneWarning';
 
 const initialForm = {
   name: '',
@@ -60,6 +61,7 @@ export function AddLeadForm() {
           <div className="space-y-2">
             <Label>WhatsApp Contact *</Label>
             <Input value={formData.phone} onChange={e => update('phone', e.target.value)} placeholder="00971-50-123-456" required />
+            <DuplicatePhoneWarning phone={formData.phone} />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
