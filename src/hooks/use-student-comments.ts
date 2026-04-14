@@ -7,6 +7,8 @@ export interface StudentComment {
   author_id: string | null;
   comment: string;
   created_at: string;
+  is_pinned?: boolean;
+  updated_at?: string | null;
   profiles?: { full_name: string } | null;
 }
 
@@ -39,6 +41,58 @@ export function useAddStudentComment() {
     onSuccess: (_, { studentId }) => {
       queryClient.invalidateQueries({ queryKey: ['student-comments', studentId] });
       queryClient.invalidateQueries({ queryKey: ['student-comments-count'] });
+    },
+  });
+}
+
+export function useEditStudentComment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ commentId, comment, studentId }: { commentId: string; comment: string; studentId: string }) => {
+      const { error } = await supabase
+        .from('student_comments')
+        .update({ comment, updated_at: new Date().toISOString() })
+        .eq('comment_id', commentId);
+      if (error) throw error;
+      return studentId;
+    },
+    onSuccess: (studentId) => {
+      queryClient.invalidateQueries({ queryKey: ['student-comments', studentId] });
+    },
+  });
+}
+
+export function useDeleteStudentComment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ commentId, studentId }: { commentId: string; studentId: string }) => {
+      const { error } = await supabase
+        .from('student_comments')
+        .delete()
+        .eq('comment_id', commentId);
+      if (error) throw error;
+      return studentId;
+    },
+    onSuccess: (studentId) => {
+      queryClient.invalidateQueries({ queryKey: ['student-comments', studentId] });
+      queryClient.invalidateQueries({ queryKey: ['student-comments-count'] });
+    },
+  });
+}
+
+export function useTogglePinStudentComment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ commentId, pinned, studentId }: { commentId: string; pinned: boolean; studentId: string }) => {
+      const { error } = await supabase
+        .from('student_comments')
+        .update({ is_pinned: pinned })
+        .eq('comment_id', commentId);
+      if (error) throw error;
+      return studentId;
+    },
+    onSuccess: (studentId) => {
+      queryClient.invalidateQueries({ queryKey: ['student-comments', studentId] });
     },
   });
 }
