@@ -9,6 +9,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ChevronRight, Pencil, Trash2, UserPlus, Phone, Calendar, GraduationCap, MessageSquareText, Tag, FileText } from 'lucide-react';
 import { useLeadCommentsCounts } from '@/hooks/use-lead-comments';
 import { LeadCommentsDialog } from '@/components/leads/LeadCommentsDialog';
+import { QuickInlineNote } from '@/components/shared/QuickInlineNote';
+import { JourneyTimeline } from '@/components/shared/JourneyTimeline';
+import { useAddLeadComment } from '@/hooks/use-lead-comments';
 import type { Lead } from '@/hooks/use-leads';
 
 interface LeadTableViewProps {
