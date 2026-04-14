@@ -63,8 +63,7 @@ export async function logActivityComment({ entityType, entityId, action, details
 export async function logCreationEvent(
   entityType: EntityType,
   entityId: string,
-  entityLabel: string,
-  details?: string,
+  _entityLabel?: string,
 ) {
   try {
     const user = await getCurrentUser();

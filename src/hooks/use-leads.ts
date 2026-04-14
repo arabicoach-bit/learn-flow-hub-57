@@ -145,13 +145,6 @@ export function useUpdateLead() {
 
   return useMutation({
     mutationFn: async ({ leadId, ...data }: { leadId: string } & Partial<CreateLeadInput>) => {
-      // Fetch old values for before→after
-      const { data: oldLead } = await supabase
-        .from('leads')
-        .select('trial_status, follow_up, handled_by, name, phone')
-        .eq('lead_id', leadId)
-        .single();
-
       const updateData: Record<string, unknown> = {};
       
       if (data.name !== undefined) updateData.name = data.name;

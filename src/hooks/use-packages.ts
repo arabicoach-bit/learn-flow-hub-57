@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { logAdminAction } from '@/hooks/use-audit-log';
-import { logPackageActivity, logStudentActivity, logCreationEvent } from '@/lib/activity-logger';
+import { logStudentActivity, logCreationEvent } from '@/lib/activity-logger';
 
 export interface AddPackageResult {
   success: boolean;
