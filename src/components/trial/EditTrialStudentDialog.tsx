@@ -51,7 +51,7 @@ export function EditTrialStudentDialog({ student, open, onOpenChange }: EditTria
     status: '' as TrialStatus | '',
     conversion_status: '' as TrialConversionStatus | '',
     trial_result: '' as TrialResult | '',
-    handled_by: '',
+    
   });
 
   useEffect(() => {
@@ -72,7 +72,7 @@ export function EditTrialStudentDialog({ student, open, onOpenChange }: EditTria
         status: student.status || '',
         conversion_status: student.conversion_status || '',
         trial_result: student.trial_result || '',
-        handled_by: student.handled_by || '',
+        
       });
     }
   }, [student]);
@@ -98,7 +98,7 @@ export function EditTrialStudentDialog({ student, open, onOpenChange }: EditTria
         status: formData.status as TrialStatus || undefined,
         conversion_status: formData.conversion_status as TrialConversionStatus || undefined,
         trial_result: formData.trial_result as TrialResult || undefined,
-        handled_by: formData.handled_by || undefined,
+        
       });
 
       logTrialActivity(student.trial_id, 'Trial details edited');
@@ -337,15 +337,6 @@ export function EditTrialStudentDialog({ student, open, onOpenChange }: EditTria
                     <SelectItem value="Negative">Negative</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="handled_by">Handled By</Label>
-                <Input
-                  id="handled_by"
-                  value={formData.handled_by}
-                  onChange={(e) => setFormData({ ...formData, handled_by: e.target.value })}
-                  placeholder="Who handled this trial"
-                />
               </div>
             </div>
           </div>
