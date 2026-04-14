@@ -22,7 +22,6 @@ interface TrialTableViewProps {
   onUpdateConversion: (trialId: string, conversion: 'Pending' | 'Converted' | 'Lost') => void;
   onUpdateResult: (trialId: string, result: TrialResult) => void;
   onUpdateFollowUp: (trialId: string, followUp: string) => void;
-  onUpdateHandledBy: (trialId: string, handledBy: string) => void;
   onEdit: (student: TrialStudent) => void;
   onConvert: (student: TrialStudent) => void;
   onDelete: (trialId: string) => void;
@@ -62,7 +61,7 @@ const followUpColors: Record<string, string> = {
   'F.7 – Arabic Challenge': 'bg-violet-500/20 text-violet-400',
 };
 
-const handledByOptions = ['Amira', 'Hind', 'Mona', 'Ahmed', 'Eman'];
+
 
 function getRowHighlight(student: TrialStudent) {
   if (student.conversion_status === 'Converted') return 'bg-emerald-500/5 hover:bg-emerald-500/10';
@@ -72,7 +71,7 @@ function getRowHighlight(student: TrialStudent) {
   return 'hover:bg-muted/50';
 }
 
-export function TrialTableView({ students, onUpdateStatus, onUpdateConversion, onUpdateResult, onUpdateFollowUp, onUpdateHandledBy, onEdit, onConvert, onDelete }: TrialTableViewProps) {
+export function TrialTableView({ students, onUpdateStatus, onUpdateConversion, onUpdateResult, onUpdateFollowUp, onEdit, onConvert, onDelete }: TrialTableViewProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [commentsTrialId, setCommentsTrialId] = useState<string | null>(null);
   const [commentsStudentName, setCommentsStudentName] = useState('');
@@ -115,9 +114,6 @@ export function TrialTableView({ students, onUpdateStatus, onUpdateConversion, o
                 {/* CRM group */}
                 <TableHead className="text-center border-l border-border/50">
                   <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Follow-Up</span>
-                </TableHead>
-                <TableHead className="text-center border-r border-border/50">
-                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Handled By</span>
                 </TableHead>
                 <TableHead className="text-center">
                   <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">Notes</span>
@@ -242,26 +238,6 @@ export function TrialTableView({ students, onUpdateStatus, onUpdateConversion, o
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell className="py-2 border-r border-border/30" onClick={e => e.stopPropagation()}>
-                          <Select
-                            value={student.handled_by || '__none__'}
-                            onValueChange={(v) => onUpdateHandledBy(student.trial_id, v === '__none__' ? '' : v)}
-                          >
-                            <SelectTrigger className="h-6 w-[100px] text-xs border-0 bg-transparent px-0.5 focus:ring-0">
-                              {student.handled_by ? (
-                                <span className="text-xs">{student.handled_by}</span>
-                              ) : (
-                                <span className="text-muted-foreground text-[11px]">Assign</span>
-                              )}
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="__none__">— None —</SelectItem>
-                              {handledByOptions.map(h => (
-                                <SelectItem key={h} value={h}>{h}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
 
                         <TableCell className="text-center py-2" onClick={e => e.stopPropagation()}>
                           <Button
@@ -302,7 +278,7 @@ export function TrialTableView({ students, onUpdateStatus, onUpdateConversion, o
 
                       {isExpanded && (
                         <tr className="bg-muted/20 border-b">
-                          <td colSpan={12} className="p-0">
+                          <td colSpan={11} className="p-0">
                             <CollapsibleContent forceMount className="px-6 py-4">
                               <div className="grid grid-cols-4 gap-6 text-sm">
                                 {/* Contact */}

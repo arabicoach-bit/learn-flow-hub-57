@@ -154,15 +154,6 @@ export default function TrialStudents() {
     }
   };
 
-  const handleUpdateHandledBy = async (trialId: string, handledBy: string) => {
-    try {
-      await updateTrialStudent.mutateAsync({ trial_id: trialId, handled_by: handledBy || undefined });
-      logTrialActivity(trialId, handledBy ? `Handled by set to "${handledBy}"` : 'Handled by cleared');
-      toast({ title: 'Updated', description: handledBy ? `Handled by set to ${handledBy}.` : 'Handled by cleared.' });
-    } catch {
-      toast({ title: 'Error', description: 'Failed to update.', variant: 'destructive' });
-    }
-  };
 
   const [deleteTrialId, setDeleteTrialId] = useState<string | null>(null);
   const handleDelete = async () => {
@@ -227,7 +218,7 @@ export default function TrialStudents() {
           onUpdateConversion={handleUpdateConversion}
           onUpdateResult={handleUpdateResult}
           onUpdateFollowUp={handleUpdateFollowUp}
-          onUpdateHandledBy={handleUpdateHandledBy}
+          
           onEdit={setEditingStudent}
           onConvert={setConvertingStudent}
            onDelete={(trialId) => setDeleteTrialId(trialId)}

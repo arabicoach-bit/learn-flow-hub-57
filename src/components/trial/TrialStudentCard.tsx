@@ -219,11 +219,6 @@ export function TrialStudentCard({ student, onUpdateStatus, onUpdateConversion, 
           </p>
         )}
 
-        {student.handled_by && (
-          <div className="text-xs text-muted-foreground">
-            Handled by: {student.handled_by}
-          </div>
-        )}
 
         {/* Convert to Student Button - Prominent CTA */}
         {canConvert && onConvert && (
