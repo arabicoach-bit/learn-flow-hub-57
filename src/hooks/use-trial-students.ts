@@ -228,6 +228,13 @@ export function useUpdateTrialStudent() {
 
   return useMutation({
     mutationFn: async ({ trial_id, ...data }: UpdateTrialStudentInput) => {
+      // Fetch old values for before→after
+      const { data: oldTrial } = await supabase
+        .from('trial_students')
+        .select('status, conversion_status, trial_result, teacher_id, trial_date, handled_by, follow_up')
+        .eq('trial_id', trial_id)
+        .single();
+
       const { error } = await supabase
         .from('trial_students')
         .update(data)
@@ -241,6 +248,23 @@ export function useUpdateTrialStudent() {
         entityId: trial_id,
         details: data,
       });
+
+      // Auto-log with before→after
+      if (data.status && oldTrial) {
+        logTrialActivity(trial_id, 'Status changed', `${oldTrial.status} → ${data.status}`);
+      }
+      if (data.conversion_status && oldTrial) {
+        logTrialActivity(trial_id, 'Conversion status changed', `${oldTrial.conversion_status} → ${data.conversion_status}`);
+      }
+      if (data.trial_result && oldTrial) {
+        logTrialActivity(trial_id, 'Trial result updated', `${oldTrial.trial_result ?? '—'} → ${data.trial_result}`);
+      }
+      if (data.teacher_id && oldTrial && data.teacher_id !== oldTrial.teacher_id) {
+        logTrialActivity(trial_id, 'Teacher reassigned');
+      }
+      if (data.handled_by !== undefined && oldTrial) {
+        logTrialActivity(trial_id, 'Handled by updated', `${oldTrial.handled_by ?? '—'} → ${data.handled_by || 'None'}`);
+      }
 
       // DB triggers now handle syncing status, teacher_id, date/time to trial_lessons_log
       // We only need to handle the case where a trial_lessons_log entry doesn't exist yet
