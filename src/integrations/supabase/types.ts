@@ -110,21 +110,27 @@ export type Database = {
           comment: string
           comment_id: string
           created_at: string
+          is_pinned: boolean
           lead_id: string
+          updated_at: string | null
         }
         Insert: {
           author_id?: string | null
           comment: string
           comment_id?: string
           created_at?: string
+          is_pinned?: boolean
           lead_id: string
+          updated_at?: string | null
         }
         Update: {
           author_id?: string | null
           comment?: string
           comment_id?: string
           created_at?: string
+          is_pinned?: boolean
           lead_id?: string
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -271,21 +277,27 @@ export type Database = {
           comment: string
           comment_id: string
           created_at: string
+          is_pinned: boolean
           package_id: string
+          updated_at: string | null
         }
         Insert: {
           author_id?: string | null
           comment: string
           comment_id?: string
           created_at?: string
+          is_pinned?: boolean
           package_id: string
+          updated_at?: string | null
         }
         Update: {
           author_id?: string | null
           comment?: string
           comment_id?: string
           created_at?: string
+          is_pinned?: boolean
           package_id?: string
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -646,21 +658,27 @@ export type Database = {
           comment: string
           comment_id: string
           created_at: string
+          is_pinned: boolean
           student_id: string
+          updated_at: string | null
         }
         Insert: {
           author_id?: string | null
           comment: string
           comment_id?: string
           created_at?: string
+          is_pinned?: boolean
           student_id: string
+          updated_at?: string | null
         }
         Update: {
           author_id?: string | null
           comment?: string
           comment_id?: string
           created_at?: string
+          is_pinned?: boolean
           student_id?: string
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -949,21 +967,27 @@ export type Database = {
           comment: string
           comment_id: string
           created_at: string
+          is_pinned: boolean
           trial_id: string
+          updated_at: string | null
         }
         Insert: {
           author_id?: string | null
           comment: string
           comment_id?: string
           created_at?: string
+          is_pinned?: boolean
           trial_id: string
+          updated_at?: string | null
         }
         Update: {
           author_id?: string | null
           comment?: string
           comment_id?: string
           created_at?: string
+          is_pinned?: boolean
           trial_id?: string
+          updated_at?: string | null
         }
         Relationships: [
           {
