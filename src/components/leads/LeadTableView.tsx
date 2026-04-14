@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { Card, CardContent } from '@/components/ui/card';
-import { ChevronRight, Pencil, Trash2, UserPlus, Phone, Calendar, GraduationCap, User, MessageSquareText, Tag, FileText } from 'lucide-react';
+import { ChevronRight, Pencil, Trash2, UserPlus, Phone, Calendar, GraduationCap, MessageSquareText, Tag, FileText } from 'lucide-react';
 import { useLeadCommentsCounts } from '@/hooks/use-lead-comments';
 import { LeadCommentsDialog } from '@/components/leads/LeadCommentsDialog';
 import type { Lead } from '@/hooks/use-leads';

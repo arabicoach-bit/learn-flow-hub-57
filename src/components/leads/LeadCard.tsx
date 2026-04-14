@@ -7,7 +7,7 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  MoreVertical, Phone, GraduationCap, Calendar, User,
+  MoreVertical, Phone, GraduationCap, Calendar,
   MessageSquare, Tag, Trash2, AlertTriangle, UserPlus,
 } from 'lucide-react';
 import type { Lead } from '@/hooks/use-leads';
