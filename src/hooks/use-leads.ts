@@ -145,6 +145,13 @@ export function useUpdateLead() {
 
   return useMutation({
     mutationFn: async ({ leadId, ...data }: { leadId: string } & Partial<CreateLeadInput>) => {
+      // Fetch old values for before→after
+      const { data: oldLead } = await supabase
+        .from('leads')
+        .select('trial_status, follow_up, handled_by, name, phone')
+        .eq('lead_id', leadId)
+        .single();
+
       const updateData: Record<string, unknown> = {};
       
       if (data.name !== undefined) updateData.name = data.name;
@@ -173,15 +180,15 @@ export function useUpdateLead() {
         details: data,
       });
 
-      // Activity logging in lead notes
+      // Activity logging with before→after
       if (data.trial_status !== undefined) {
-        logLeadActivity(leadId, 'Lead status changed', `Status → ${data.trial_status || 'Pending'}`);
+        logLeadActivity(leadId, 'Lead status changed', `${oldLead?.trial_status ?? '—'} → ${data.trial_status || 'Pending'}`);
       }
       if (data.follow_up !== undefined) {
-        logLeadActivity(leadId, 'Follow-up updated', `Follow-up → ${data.follow_up || 'Cleared'}`);
+        logLeadActivity(leadId, 'Follow-up updated', `${oldLead?.follow_up ?? '—'} → ${data.follow_up || 'Cleared'}`);
       }
       if (data.handled_by !== undefined) {
-        logLeadActivity(leadId, 'Handled by updated', `Assigned to → ${data.handled_by || 'None'}`);
+        logLeadActivity(leadId, 'Handled by updated', `${oldLead?.handled_by ?? '—'} → ${data.handled_by || 'None'}`);
       }
       if (data.trial_status === undefined && !data.follow_up && !data.handled_by) {
         logLeadActivity(leadId, 'Lead details edited');

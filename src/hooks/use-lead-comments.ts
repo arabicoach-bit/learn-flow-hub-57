@@ -7,6 +7,8 @@ export interface LeadComment {
   author_id: string | null;
   comment: string;
   created_at: string;
+  is_pinned?: boolean;
+  updated_at?: string | null;
   profiles?: { full_name: string } | null;
 }
 
@@ -39,6 +41,58 @@ export function useAddLeadComment() {
     onSuccess: (_, { leadId }) => {
       queryClient.invalidateQueries({ queryKey: ['lead-comments', leadId] });
       queryClient.invalidateQueries({ queryKey: ['lead-comments-count'] });
+    },
+  });
+}
+
+export function useEditLeadComment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ commentId, comment, leadId }: { commentId: string; comment: string; leadId: string }) => {
+      const { error } = await supabase
+        .from('lead_comments')
+        .update({ comment, updated_at: new Date().toISOString() })
+        .eq('comment_id', commentId);
+      if (error) throw error;
+      return leadId;
+    },
+    onSuccess: (leadId) => {
+      queryClient.invalidateQueries({ queryKey: ['lead-comments', leadId] });
+    },
+  });
+}
+
+export function useDeleteLeadComment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ commentId, leadId }: { commentId: string; leadId: string }) => {
+      const { error } = await supabase
+        .from('lead_comments')
+        .delete()
+        .eq('comment_id', commentId);
+      if (error) throw error;
+      return leadId;
+    },
+    onSuccess: (leadId) => {
+      queryClient.invalidateQueries({ queryKey: ['lead-comments', leadId] });
+      queryClient.invalidateQueries({ queryKey: ['lead-comments-count'] });
+    },
+  });
+}
+
+export function useTogglePinLeadComment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ commentId, pinned, leadId }: { commentId: string; pinned: boolean; leadId: string }) => {
+      const { error } = await supabase
+        .from('lead_comments')
+        .update({ is_pinned: pinned })
+        .eq('comment_id', commentId);
+      if (error) throw error;
+      return leadId;
+    },
+    onSuccess: (leadId) => {
+      queryClient.invalidateQueries({ queryKey: ['lead-comments', leadId] });
     },
   });
 }

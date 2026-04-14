@@ -189,6 +189,13 @@ export function useUpdateStudent() {
       teacher_id?: string | null;
       status?: 'Active' | 'Temporary Stop' | 'Left';
     }) => {
+      // Fetch old values for before→after tracking
+      const { data: oldStudent } = await supabase
+        .from('students')
+        .select('name, phone, parent_phone, parent_guardian_name, age, gender, nationality, school, year_group, student_level, status')
+        .eq('student_id', studentId)
+        .single();
+
       const { error } = await supabase
         .from('students')
         .update(data)
@@ -203,13 +210,20 @@ export function useUpdateStudent() {
         details: data,
       });
 
-      // Activity log in student notes
-      if (data.status) {
-        logStudentActivity(studentId, `Status changed to ${data.status}`);
-      } else {
+      // Activity log with before→after
+      if (data.status && oldStudent) {
+        logStudentActivity(studentId, 'Status changed', `${oldStudent.status} → ${data.status}`);
+      } else if (oldStudent) {
         const changes = Object.entries(data)
           .filter(([_, v]) => v !== undefined)
-          .map(([k, v]) => `${k}: ${v}`)
+          .map(([k, v]) => {
+            const oldVal = (oldStudent as any)[k];
+            if (oldVal !== undefined && String(oldVal) !== String(v)) {
+              return `${k}: ${oldVal ?? '—'} → ${v ?? '—'}`;
+            }
+            return null;
+          })
+          .filter(Boolean)
           .join('\n');
         if (changes) logStudentActivity(studentId, 'Student details updated', changes);
       }

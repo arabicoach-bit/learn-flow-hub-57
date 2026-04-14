@@ -7,6 +7,8 @@ export interface TrialComment {
   author_id: string | null;
   comment: string;
   created_at: string;
+  is_pinned?: boolean;
+  updated_at?: string | null;
   profiles?: { full_name: string } | null;
 }
 
@@ -39,6 +41,58 @@ export function useAddTrialComment() {
     onSuccess: (_, { trialId }) => {
       queryClient.invalidateQueries({ queryKey: ['trial-comments', trialId] });
       queryClient.invalidateQueries({ queryKey: ['trial-comments-count'] });
+    },
+  });
+}
+
+export function useEditTrialComment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ commentId, comment, trialId }: { commentId: string; comment: string; trialId: string }) => {
+      const { error } = await supabase
+        .from('trial_comments')
+        .update({ comment, updated_at: new Date().toISOString() })
+        .eq('comment_id', commentId);
+      if (error) throw error;
+      return trialId;
+    },
+    onSuccess: (trialId) => {
+      queryClient.invalidateQueries({ queryKey: ['trial-comments', trialId] });
+    },
+  });
+}
+
+export function useDeleteTrialComment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ commentId, trialId }: { commentId: string; trialId: string }) => {
+      const { error } = await supabase
+        .from('trial_comments')
+        .delete()
+        .eq('comment_id', commentId);
+      if (error) throw error;
+      return trialId;
+    },
+    onSuccess: (trialId) => {
+      queryClient.invalidateQueries({ queryKey: ['trial-comments', trialId] });
+      queryClient.invalidateQueries({ queryKey: ['trial-comments-count'] });
+    },
+  });
+}
+
+export function useTogglePinTrialComment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ commentId, pinned, trialId }: { commentId: string; pinned: boolean; trialId: string }) => {
+      const { error } = await supabase
+        .from('trial_comments')
+        .update({ is_pinned: pinned })
+        .eq('comment_id', commentId);
+      if (error) throw error;
+      return trialId;
+    },
+    onSuccess: (trialId) => {
+      queryClient.invalidateQueries({ queryKey: ['trial-comments', trialId] });
     },
   });
 }

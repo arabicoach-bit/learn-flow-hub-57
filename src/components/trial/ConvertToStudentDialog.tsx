@@ -16,8 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, UserPlus, CheckCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { logTrialActivity } from '@/lib/activity-logger';
-import { logStudentActivity } from '@/lib/activity-logger';
+import { logTrialActivity, logStudentActivity, logJourneyLink } from '@/lib/activity-logger';
 
 interface ConvertToStudentDialogProps {
   trialStudent: TrialStudent | null;
@@ -108,6 +107,13 @@ export function ConvertToStudentDialog({
         `Converted to regular student: ${formData.name}`);
       logStudentActivity(newStudent.student_id, 'Student created from trial conversion',
         `Converted from trial | Name: ${formData.name} | Phone: ${formData.phone}`);
+
+      // Journey link: Trial → Student
+      logJourneyLink(
+        { type: 'trial', id: trialStudent.trial_id, label: trialStudent.name },
+        { type: 'student', id: newStudent.student_id, label: formData.name },
+        'Trial converted to Student'
+      );
 
       toast({
         title: 'Student converted successfully!',

@@ -1,13 +1,10 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Send } from 'lucide-react';
-import { format } from 'date-fns';
-import { useTrialComments, useAddTrialComment } from '@/hooks/use-trial-comments';
+import { useTrialComments, useAddTrialComment, useEditTrialComment, useDeleteTrialComment, useTogglePinTrialComment } from '@/hooks/use-trial-comments';
 import { useToast } from '@/hooks/use-toast';
+import { CommentsThread } from '@/components/shared/CommentsThread';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface TrialCommentsDialogProps {
   open: boolean;
@@ -17,69 +14,63 @@ interface TrialCommentsDialogProps {
 }
 
 export function TrialCommentsDialog({ open, onOpenChange, trialId, studentName }: TrialCommentsDialogProps) {
-  const [newComment, setNewComment] = useState('');
   const { data: comments, isLoading } = useTrialComments(open ? trialId : null);
   const addComment = useAddTrialComment();
+  const editComment = useEditTrialComment();
+  const deleteComment = useDeleteTrialComment();
+  const togglePin = useTogglePinTrialComment();
   const { toast } = useToast();
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const { role } = useAuth();
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [comments]);
-
-  const handleSubmit = async () => {
-    if (!newComment.trim()) return;
-    try {
-      await addComment.mutateAsync({ trialId, comment: newComment.trim() });
-      setNewComment('');
-    } catch {
-      toast({ title: 'Error', description: 'Failed to add note', variant: 'destructive' });
-    }
-  };
+    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+  }, []);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-base">Trial Notes — {studentName}</DialogTitle>
+      <DialogContent className="max-w-md max-h-[80vh] flex flex-col gap-0 p-0">
+        <DialogHeader className="px-5 pt-5 pb-3 border-b">
+          <DialogTitle className="text-base">
+            Trial Notes — <span className="text-primary">{studentName}</span>
+          </DialogTitle>
         </DialogHeader>
-        <div className="flex flex-col gap-3">
-          <ScrollArea className="h-[280px] pr-3" ref={scrollRef as any}>
-            {isLoading ? (
-              <div className="space-y-2">
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-3/4" />
-              </div>
-            ) : !comments?.length ? (
-              <p className="text-sm text-muted-foreground text-center py-8">No notes yet</p>
-            ) : (
-              <div className="space-y-2">
-                {comments.map((c) => (
-                  <div key={c.comment_id} className="rounded-lg bg-muted/50 px-3 py-2">
-                    <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-xs font-medium text-foreground/80">{c.profiles?.full_name || 'System'}</span>
-                      <span className="text-[10px] text-muted-foreground">{format(new Date(c.created_at), 'dd MMM yyyy, HH:mm')}</span>
-                    </div>
-                    <p className="text-sm text-foreground/90 whitespace-pre-wrap">{c.comment}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </ScrollArea>
-          <div className="flex gap-2">
-            <Textarea
-              placeholder="Add a note..."
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              className="min-h-[60px] text-sm"
-              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(); } }}
-            />
-            <Button size="icon" className="shrink-0 self-end" onClick={handleSubmit} disabled={!newComment.trim() || addComment.isPending}>
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
+        <div className="px-5 py-3 flex-1 min-h-0">
+          <CommentsThread
+            comments={comments}
+            isLoading={isLoading}
+            currentUserId={userId}
+            isAdmin={role === 'admin'}
+            isAdding={addComment.isPending}
+            onAdd={async (comment) => {
+              try {
+                await addComment.mutateAsync({ trialId, comment });
+              } catch {
+                toast({ title: 'Failed to add note', variant: 'destructive' });
+              }
+            }}
+            onEdit={async (commentId, comment) => {
+              try {
+                await editComment.mutateAsync({ commentId, comment, trialId });
+              } catch {
+                toast({ title: 'Failed to edit note', variant: 'destructive' });
+              }
+            }}
+            onDelete={async (commentId) => {
+              try {
+                await deleteComment.mutateAsync({ commentId, trialId });
+              } catch {
+                toast({ title: 'Failed to delete note', variant: 'destructive' });
+              }
+            }}
+            onTogglePin={async (commentId, pinned) => {
+              try {
+                await togglePin.mutateAsync({ commentId, pinned, trialId });
+              } catch {
+                toast({ title: 'Failed to pin note', variant: 'destructive' });
+              }
+            }}
+          />
         </div>
       </DialogContent>
     </Dialog>

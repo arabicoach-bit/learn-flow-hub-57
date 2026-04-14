@@ -7,6 +7,8 @@ export interface PackageComment {
   author_id: string | null;
   comment: string;
   created_at: string;
+  is_pinned?: boolean;
+  updated_at?: string | null;
   profiles?: { full_name: string } | null;
 }
 
@@ -39,6 +41,58 @@ export function useAddPackageComment() {
     onSuccess: (_, { packageId }) => {
       queryClient.invalidateQueries({ queryKey: ['package-comments', packageId] });
       queryClient.invalidateQueries({ queryKey: ['package-comments-count'] });
+    },
+  });
+}
+
+export function useEditPackageComment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ commentId, comment, packageId }: { commentId: string; comment: string; packageId: string }) => {
+      const { error } = await supabase
+        .from('package_comments')
+        .update({ comment, updated_at: new Date().toISOString() })
+        .eq('comment_id', commentId);
+      if (error) throw error;
+      return packageId;
+    },
+    onSuccess: (packageId) => {
+      queryClient.invalidateQueries({ queryKey: ['package-comments', packageId] });
+    },
+  });
+}
+
+export function useDeletePackageComment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ commentId, packageId }: { commentId: string; packageId: string }) => {
+      const { error } = await supabase
+        .from('package_comments')
+        .delete()
+        .eq('comment_id', commentId);
+      if (error) throw error;
+      return packageId;
+    },
+    onSuccess: (packageId) => {
+      queryClient.invalidateQueries({ queryKey: ['package-comments', packageId] });
+      queryClient.invalidateQueries({ queryKey: ['package-comments-count'] });
+    },
+  });
+}
+
+export function useTogglePinPackageComment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ commentId, pinned, packageId }: { commentId: string; pinned: boolean; packageId: string }) => {
+      const { error } = await supabase
+        .from('package_comments')
+        .update({ is_pinned: pinned })
+        .eq('comment_id', commentId);
+      if (error) throw error;
+      return packageId;
+    },
+    onSuccess: (packageId) => {
+      queryClient.invalidateQueries({ queryKey: ['package-comments', packageId] });
     },
   });
 }
