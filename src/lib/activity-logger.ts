@@ -112,6 +112,17 @@ export async function logJourneyLink(
   }
 }
 
+// ──── Helper: get teacher name ────
+
+async function getTeacherName(teacherId: string): Promise<string> {
+  const { data } = await supabase
+    .from('teachers')
+    .select('name')
+    .eq('teacher_id', teacherId)
+    .single();
+  return data?.name || 'Unknown Teacher';
+}
+
 // ──── Convenience functions ────
 
 export function logTrialActivity(trialId: string, action: string, details?: string) {
@@ -128,4 +139,35 @@ export function logPackageActivity(packageId: string, action: string, details?: 
 
 export function logLeadActivity(leadId: string, action: string, details?: string) {
   return logActivityComment({ entityType: 'lead', entityId: leadId, action, details });
+}
+
+/**
+ * Logs lesson completion/absence with the teacher's name into both
+ * student notes and package notes (if package_id is available).
+ */
+export async function logLessonMarked(params: {
+  studentId: string;
+  teacherId: string;
+  packageId?: string | null;
+  status: 'completed' | 'absent';
+  date: string;
+  time: string;
+  notes?: string | null;
+}) {
+  try {
+    const teacherName = await getTeacherName(params.teacherId);
+    const statusLabel = params.status === 'completed' ? '✅ Completed' : '❌ Absent';
+    const action = `Lesson ${statusLabel} — by ${teacherName}`;
+    const details = `Date: ${params.date} | Time: ${params.time}${params.notes ? `\nNotes: ${params.notes}` : ''}`;
+
+    // Log to student notes
+    logStudentActivity(params.studentId, action, details);
+
+    // Log to package notes
+    if (params.packageId) {
+      logPackageActivity(params.packageId, action, details);
+    }
+  } catch (err) {
+    console.error('Failed to log lesson marked:', err);
+  }
 }
