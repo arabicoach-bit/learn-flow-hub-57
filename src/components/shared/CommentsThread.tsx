@@ -35,11 +35,15 @@ interface CommentsThreadProps {
 }
 
 function isSystemComment(comment: string) {
-  return comment.startsWith('🔄') || comment.startsWith('🔗');
+  return comment.startsWith('🔄') || comment.startsWith('🔗') || comment.startsWith('📋');
 }
 
 function isJourneyComment(comment: string) {
   return comment.startsWith('🔗');
+}
+
+function isCreationComment(comment: string) {
+  return comment.startsWith('📋');
 }
 
 export function CommentsThread({
