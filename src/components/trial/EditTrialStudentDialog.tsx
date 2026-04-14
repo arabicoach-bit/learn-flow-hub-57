@@ -338,8 +338,6 @@ export function EditTrialStudentDialog({ student, open, onOpenChange }: EditTria
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-              </div>
             </div>
           </div>
 
