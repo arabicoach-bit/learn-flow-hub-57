@@ -47,7 +47,7 @@ export function ConvertLeadToTrialDialog({ lead, open, onOpenChange }: ConvertLe
   const handleConvert = async () => {
     if (!lead) return;
     try {
-      await createTrialStudent.mutateAsync({
+      const trialData = await createTrialStudent.mutateAsync({
         name: lead.name,
         phone: lead.phone,
         parent_guardian_name: formData.parent_guardian_name || undefined,
@@ -70,8 +70,14 @@ export function ConvertLeadToTrialDialog({ lead, open, onOpenChange }: ConvertLe
         trial_status: 'Trial Booked',
       });
 
-      logLeadActivity(lead.lead_id, 'Lead converted to trial student',
-        `Converted to trial | Date: ${formData.trial_date || 'TBD'}`);
+      // Journey link: Lead → Trial
+      if (trialData?.trial_id) {
+        logJourneyLink(
+          { type: 'lead', id: lead.lead_id, label: lead.name },
+          { type: 'trial', id: trialData.trial_id, label: lead.name },
+          'Lead converted to Trial'
+        );
+      }
 
       toast({ title: 'Lead converted!', description: `${lead.name} has been added as a trial student.` });
       onOpenChange(false);
