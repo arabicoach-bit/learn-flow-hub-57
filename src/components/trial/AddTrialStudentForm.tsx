@@ -33,6 +33,7 @@ import { useCreateTrialStudent } from '@/hooks/use-trial-students';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Clock, DollarSign } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { DuplicatePhoneWarning } from '@/components/shared/DuplicatePhoneWarning';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(100),
@@ -185,6 +186,7 @@ export function AddTrialStudentForm({ open, onOpenChange }: AddTrialStudentFormP
                     <FormControl>
                       <Input placeholder="00971-50-123-456" {...field} />
                     </FormControl>
+                    <DuplicatePhoneWarning phone={field.value} excludeType="trial" />
                     <FormMessage />
                   </FormItem>
                 )}
