@@ -13,6 +13,7 @@ import { useTeachers } from '@/hooks/use-teachers';
 import { usePrograms } from '@/hooks/use-programs';
 import { useToast } from '@/hooks/use-toast';
 import { logLeadActivity } from '@/lib/activity-logger';
+import { logJourneyLink } from '@/lib/activity-logger';
 
 interface ConvertLeadToTrialDialogProps {
   lead: Lead | null;
