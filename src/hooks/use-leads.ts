@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { logAdminAction } from '@/hooks/use-audit-log';
-import { logLeadActivity } from '@/lib/activity-logger';
+import { logLeadActivity, logCreationEvent } from '@/lib/activity-logger';
 
 export interface Lead {
   lead_id: string;
