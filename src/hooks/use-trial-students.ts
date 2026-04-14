@@ -212,7 +212,7 @@ export function useCreateTrialStudent() {
         details: { name: input.name, phone: input.phone, teacher_id: input.teacher_id },
       });
 
-      logTrialActivity(data.trial_id, 'Trial student created',
+      logCreationEvent('trial', data.trial_id, input.name,
         `Name: ${input.name} | Phone: ${input.phone}${input.teacher_id ? ` | Teacher assigned` : ''}${input.trial_date ? ` | Date: ${input.trial_date}` : ''}`);
 
       return data;
