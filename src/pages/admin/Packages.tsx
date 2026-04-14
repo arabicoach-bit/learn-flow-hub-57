@@ -169,8 +169,7 @@ export default function Packages() {
         .eq('package_id', markPaidPkg.package_id);
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ['packages'] });
-      logPackageActivity(markPaidPkg.package_id, 'Payment marked as Paid',
-        `Student: ${markPaidPkg.students?.name}\nAmount: AED ${markPaidPkg.amount}`);
+      logPackageActivity(markPaidPkg.package_id, 'Payment marked as Paid');
       toast.success(`Marked as Paid for ${markPaidPkg.students?.name}`);
       setMarkPaidPkg(null);
     } catch (error: any) {
@@ -193,8 +192,7 @@ export default function Packages() {
         .eq('package_id', editingPkg.package_id);
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ['packages'] });
-      logPackageActivity(editingPkg.package_id, 'Payment details updated',
-        `Status: ${editPaymentStatus}\nAmount: AED ${editAmount}`);
+      logPackageActivity(editingPkg.package_id, `Payment updated to ${editPaymentStatus}`);
       toast.success('Payment updated!');
       setIsEditPaymentOpen(false);
     } catch (error: any) {

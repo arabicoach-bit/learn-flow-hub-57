@@ -74,8 +74,7 @@ export function EditPackageDialog({ package_, open, onOpenChange, onSuccess }: E
       
       if (error) throw error;
 
-      logPackageActivity(package_.package_id, 'Package edited',
-        `Amount: AED ${data.amount}\nPayment: ${data.payment_status}\nDuration: ${data.lesson_duration || '-'} min`);
+      logPackageActivity(package_.package_id, 'Package details edited');
 
       // Recalculate wallet + package status after any package edit
       await supabase.rpc('recalculate_student_wallet', { p_student_id: package_.student_id });

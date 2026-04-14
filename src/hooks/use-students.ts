@@ -127,8 +127,7 @@ export function useCreateStudent() {
         details: { name: input.name, phone: input.phone, teacher_id: input.teacher_id },
       });
 
-      logCreationEvent('student', student.student_id, input.name,
-        `Name: ${input.name}\nPhone: ${input.phone}`);
+      logCreationEvent('student', student.student_id, input.name);
 
       if (input.initial_lessons && input.initial_lessons > 0 && input.initial_amount) {
         const { data: packageData, error: packageError } = await supabase
@@ -189,13 +188,6 @@ export function useUpdateStudent() {
       teacher_id?: string | null;
       status?: 'Active' | 'Temporary Stop' | 'Left';
     }) => {
-      // Fetch old values for before→after tracking
-      const { data: oldStudent } = await supabase
-        .from('students')
-        .select('name, phone, parent_phone, parent_guardian_name, age, gender, nationality, school, year_group, student_level, status')
-        .eq('student_id', studentId)
-        .single();
-
       const { error } = await supabase
         .from('students')
         .update(data)
@@ -210,22 +202,11 @@ export function useUpdateStudent() {
         details: data,
       });
 
-      // Activity log with before→after
-      if (data.status && oldStudent) {
-        logStudentActivity(studentId, 'Status changed', `${oldStudent.status} → ${data.status}`);
-      } else if (oldStudent) {
-        const changes = Object.entries(data)
-          .filter(([_, v]) => v !== undefined)
-          .map(([k, v]) => {
-            const oldVal = (oldStudent as any)[k];
-            if (oldVal !== undefined && String(oldVal) !== String(v)) {
-              return `${k}: ${oldVal ?? '—'} → ${v ?? '—'}`;
-            }
-            return null;
-          })
-          .filter(Boolean)
-          .join('\n');
-        if (changes) logStudentActivity(studentId, 'Student details updated', changes);
+      // Activity log — concise
+      if (data.status) {
+        logStudentActivity(studentId, `Status changed to ${data.status}`);
+      } else {
+        logStudentActivity(studentId, 'Student details updated');
       }
     },
     onSuccess: () => {

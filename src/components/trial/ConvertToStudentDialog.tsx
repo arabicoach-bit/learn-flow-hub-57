@@ -103,10 +103,8 @@ export function ConvertToStudentDialog({
         registration_date: new Date().toISOString().split('T')[0],
       });
 
-      logTrialActivity(trialStudent.trial_id, 'Trial converted to student',
-        `Converted to regular student: ${formData.name}`);
-      logStudentActivity(newStudent.student_id, 'Student created from trial conversion',
-        `Converted from trial | Name: ${formData.name} | Phone: ${formData.phone}`);
+      logTrialActivity(trialStudent.trial_id, 'Converted to student');
+      logStudentActivity(newStudent.student_id, 'Created from trial conversion');
 
       // Journey link: Trial → Student
       logJourneyLink(

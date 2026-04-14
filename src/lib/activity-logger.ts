@@ -63,13 +63,12 @@ export async function logActivityComment({ entityType, entityId, action, details
 export async function logCreationEvent(
   entityType: EntityType,
   entityId: string,
-  entityLabel: string,
-  details?: string,
+  _entityLabel?: string,
 ) {
   try {
     const user = await getCurrentUser();
     const adminName = user.name || 'Unknown';
-    const message = `📋 Created by ${adminName}${details ? `\n${details}` : ''}`;
+    const message = `📋 Created by ${adminName}`;
 
     await supabase.from(tableMap[entityType] as any).insert({
       [idColMap[entityType]]: entityId,
@@ -156,16 +155,15 @@ export async function logLessonMarked(params: {
 }) {
   try {
     const teacherName = await getTeacherName(params.teacherId);
-    const statusLabel = params.status === 'completed' ? '✅ Completed' : '❌ Absent';
-    const action = `Lesson ${statusLabel} — by ${teacherName}`;
-    const details = `Date: ${params.date} | Time: ${params.time}${params.notes ? `\nNotes: ${params.notes}` : ''}`;
+    const statusLabel = params.status === 'completed' ? '✅ Lesson completed' : '❌ Lesson marked absent';
+    const action = `${statusLabel} — by ${teacherName}`;
 
     // Log to student notes
-    logStudentActivity(params.studentId, action, details);
+    logStudentActivity(params.studentId, action);
 
     // Log to package notes
     if (params.packageId) {
-      logPackageActivity(params.packageId, action, details);
+      logPackageActivity(params.packageId, action);
     }
   } catch (err) {
     console.error('Failed to log lesson marked:', err);
