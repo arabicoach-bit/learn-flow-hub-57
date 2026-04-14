@@ -24,6 +24,7 @@ import { QuarterFilter, getCurrentQuarter, getQuarterDateRange, type QuarterFilt
 import { EditStudentDialog } from '@/components/teacher/EditStudentDialog';
 import { StudentLessonsView } from '@/components/student/StudentLessonsView';
 import { StudentInfoView } from '@/components/student/StudentInfoView';
+import { StudentAcademicNotes } from '@/components/student/StudentAcademicNotes';
 import { Student, useUpdateStudent } from '@/hooks/use-students';
 import { usePrograms } from '@/hooks/use-programs';
 import { useScheduledLessons } from '@/hooks/use-scheduled-lessons';

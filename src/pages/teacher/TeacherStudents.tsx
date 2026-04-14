@@ -20,6 +20,7 @@ import { WalletBadge } from '@/components/shared/WalletBadge';
 import { LessonsBadge } from '@/components/shared/LessonsBadge';
 import { StudentLessonsView } from '@/components/student/StudentLessonsView';
 import { StudentInfoView } from '@/components/student/StudentInfoView';
+import { StudentAcademicNotes } from '@/components/student/StudentAcademicNotes';
 import {
   GraduationCap, Search, Phone, ChevronDown, User, BookOpen,
   AlertTriangle, Users, UserCheck, PauseCircle, UserX, TrendingUp,
