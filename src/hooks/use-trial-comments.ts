@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { processMentions } from '@/lib/mention-utils';
 
 export interface TrialComment {
   comment_id: string;
@@ -9,6 +10,8 @@ export interface TrialComment {
   created_at: string;
   is_pinned?: boolean;
   updated_at?: string | null;
+  attachment_url?: string | null;
+  attachment_name?: string | null;
   profiles?: { full_name: string } | null;
 }
 
@@ -31,12 +34,20 @@ export function useTrialComments(trialId: string | null) {
 export function useAddTrialComment() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ trialId, comment }: { trialId: string; comment: string }) => {
+    mutationFn: async ({ trialId, comment, attachmentUrl, attachmentName }: { trialId: string; comment: string; attachmentUrl?: string; attachmentName?: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
       const { error } = await supabase
         .from('trial_comments')
-        .insert({ trial_id: trialId, comment, author_id: user?.id ?? null });
+        .insert({
+          trial_id: trialId,
+          comment,
+          author_id: user?.id ?? null,
+          attachment_url: attachmentUrl || null,
+          attachment_name: attachmentName || null,
+        } as any);
       if (error) throw error;
+      const { data: trial } = await supabase.from('trial_students').select('name').eq('trial_id', trialId).single();
+      processMentions(comment, 'Trial', trial?.name || 'Unknown');
     },
     onSuccess: (_, { trialId }) => {
       queryClient.invalidateQueries({ queryKey: ['trial-comments', trialId] });

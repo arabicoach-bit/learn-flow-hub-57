@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { processMentions } from '@/lib/mention-utils';
 
 export interface LeadComment {
   comment_id: string;
@@ -9,6 +10,8 @@ export interface LeadComment {
   created_at: string;
   is_pinned?: boolean;
   updated_at?: string | null;
+  attachment_url?: string | null;
+  attachment_name?: string | null;
   profiles?: { full_name: string } | null;
 }
 
@@ -31,12 +34,20 @@ export function useLeadComments(leadId: string | null) {
 export function useAddLeadComment() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ leadId, comment }: { leadId: string; comment: string }) => {
+    mutationFn: async ({ leadId, comment, attachmentUrl, attachmentName }: { leadId: string; comment: string; attachmentUrl?: string; attachmentName?: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
       const { error } = await supabase
         .from('lead_comments')
-        .insert({ lead_id: leadId, comment, author_id: user?.id ?? null });
+        .insert({
+          lead_id: leadId,
+          comment,
+          author_id: user?.id ?? null,
+          attachment_url: attachmentUrl || null,
+          attachment_name: attachmentName || null,
+        } as any);
       if (error) throw error;
+      const { data: lead } = await supabase.from('leads').select('name').eq('lead_id', leadId).single();
+      processMentions(comment, 'Lead', lead?.name || 'Unknown');
     },
     onSuccess: (_, { leadId }) => {
       queryClient.invalidateQueries({ queryKey: ['lead-comments', leadId] });
