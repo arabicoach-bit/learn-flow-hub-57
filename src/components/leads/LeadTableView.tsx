@@ -58,6 +58,7 @@ export function LeadTableView({ leads, onUpdateLeadStatus, onUpdateFollowUp, onE
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [commentsLeadId, setCommentsLeadId] = useState<string | null>(null);
   const [commentsLeadName, setCommentsLeadName] = useState('');
+  const addComment = useAddLeadComment();
 
   const leadIds = leads.map(l => l.lead_id);
   const { data: commentCounts } = useLeadCommentsCounts(leadIds);
