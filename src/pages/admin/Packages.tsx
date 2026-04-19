@@ -82,10 +82,24 @@ export default function Packages() {
         }
       }
 
+      // Month filter: narrow further by created_at month (or completed_date for finished)
+      let matchesMonth = true;
+      if (monthFilter !== null) {
+        const refDateStr = pkg.status === 'Completed'
+          ? (pkg.completed_date?.slice(0, 10) || pkg.created_at?.slice(0, 10))
+          : pkg.created_at?.slice(0, 10);
+        if (refDateStr) {
+          const monthIdx = parseInt(refDateStr.slice(5, 7), 10) - 1;
+          matchesMonth = monthIdx === monthFilter;
+        } else {
+          matchesMonth = false;
+        }
+      }
+
       const matchesStatus = statusFilter === 'all' || pkg.status === statusFilter;
       const matchesTeacher = teacherFilter === 'all' || (pkg.students as any)?.teacher_id === teacherFilter;
       const matchesPayment = paymentFilter === 'all' || pkg.payment_status === paymentFilter;
-      return matchesSearch && matchesPeriod && matchesStatus && matchesTeacher && matchesPayment;
+      return matchesSearch && matchesPeriod && matchesMonth && matchesStatus && matchesTeacher && matchesPayment;
     });
 
     return filtered.sort((a, b) => {
