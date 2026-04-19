@@ -114,7 +114,7 @@ export default function Packages() {
         case 'newest': default: return (b.created_at || '').localeCompare(a.created_at || '');
       }
     });
-  }, [packages, searchQuery, startDate, endDate, statusFilter, teacherFilter, paymentFilter, sortBy]);
+  }, [packages, searchQuery, startDate, endDate, monthFilter, statusFilter, teacherFilter, paymentFilter, sortBy]);
 
   // Tab-filtered list
   const filteredPackages = useMemo(() => {
@@ -247,6 +247,7 @@ export default function Packages() {
         <PackageFiltersBar
           searchQuery={searchQuery} onSearchChange={setSearchQuery}
           quarterFilter={quarterFilter} onQuarterChange={setQuarterFilter}
+          monthFilter={monthFilter} onMonthFilterChange={setMonthFilter}
           statusFilter={statusFilter} onStatusFilterChange={(v) => setStatusFilter(v as StatusFilter)}
           teacherFilter={teacherFilter} onTeacherFilterChange={setTeacherFilter}
           paymentFilter={paymentFilter} onPaymentFilterChange={setPaymentFilter}
