@@ -36,6 +36,7 @@ export default function Packages() {
   const { data: teachers } = useTeachers();
   const [searchQuery, setSearchQuery] = useSearchParamState('q', '');
   const [quarterFilter, setQuarterFilter] = useState<QuarterFilterValue>(getCurrentQuarter);
+  const [monthFilter, setMonthFilter] = useState<number | null>(null); // 0-11, null = all months
   const [statusFilter, setStatusFilter] = useSearchParamState('status', 'all') as [string, (v: string) => void];
   const [teacherFilter, setTeacherFilter] = useSearchParamState('teacher', 'all');
   const [paymentFilter, setPaymentFilter] = useSearchParamState('payment', 'all');
