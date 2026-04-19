@@ -5,6 +5,11 @@ import { QuarterFilter, type QuarterFilterValue } from '@/components/shared/Quar
 
 export type PackageSortOption = 'newest' | 'oldest' | 'alpha_asc' | 'alpha_desc' | 'due_date' | 'payment_date' | 'amount_high' | 'amount_low';
 
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
 interface Teacher {
   teacher_id: string;
   name: string;
@@ -15,6 +20,8 @@ interface PackageFiltersBarProps {
   onSearchChange: (v: string) => void;
   quarterFilter: QuarterFilterValue;
   onQuarterChange: (v: QuarterFilterValue) => void;
+  monthFilter: number | null; // 0-11, or null for all months
+  onMonthFilterChange: (v: number | null) => void;
   statusFilter: string;
   onStatusFilterChange: (v: string) => void;
   teacherFilter: string;
@@ -29,6 +36,7 @@ interface PackageFiltersBarProps {
 export function PackageFiltersBar({
   searchQuery, onSearchChange,
   quarterFilter, onQuarterChange,
+  monthFilter, onMonthFilterChange,
   statusFilter, onStatusFilterChange,
   teacherFilter, onTeacherFilterChange,
   paymentFilter, onPaymentFilterChange,
@@ -47,6 +55,20 @@ export function PackageFiltersBar({
         />
       </div>
       <QuarterFilter value={quarterFilter} onChange={onQuarterChange} />
+      <Select
+        value={monthFilter === null ? 'all' : String(monthFilter)}
+        onValueChange={(v) => onMonthFilterChange(v === 'all' ? null : Number(v))}
+      >
+        <SelectTrigger className="w-[140px] h-9 text-sm">
+          <SelectValue placeholder="Month" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Months</SelectItem>
+          {MONTHS.map((m, i) => (
+            <SelectItem key={i} value={String(i)}>{m}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
       <Select value={sortBy} onValueChange={(v) => onSortChange(v as PackageSortOption)}>
         <SelectTrigger className="w-[160px]">
           <ArrowUpDown className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />

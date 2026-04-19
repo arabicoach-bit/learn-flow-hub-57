@@ -36,6 +36,7 @@ export default function Packages() {
   const { data: teachers } = useTeachers();
   const [searchQuery, setSearchQuery] = useSearchParamState('q', '');
   const [quarterFilter, setQuarterFilter] = useState<QuarterFilterValue>(getCurrentQuarter);
+  const [monthFilter, setMonthFilter] = useState<number | null>(null); // 0-11, null = all months
   const [statusFilter, setStatusFilter] = useSearchParamState('status', 'all') as [string, (v: string) => void];
   const [teacherFilter, setTeacherFilter] = useSearchParamState('teacher', 'all');
   const [paymentFilter, setPaymentFilter] = useSearchParamState('payment', 'all');
@@ -81,10 +82,24 @@ export default function Packages() {
         }
       }
 
+      // Month filter: narrow further by created_at month (or completed_date for finished)
+      let matchesMonth = true;
+      if (monthFilter !== null) {
+        const refDateStr = pkg.status === 'Completed'
+          ? (pkg.completed_date?.slice(0, 10) || pkg.created_at?.slice(0, 10))
+          : pkg.created_at?.slice(0, 10);
+        if (refDateStr) {
+          const monthIdx = parseInt(refDateStr.slice(5, 7), 10) - 1;
+          matchesMonth = monthIdx === monthFilter;
+        } else {
+          matchesMonth = false;
+        }
+      }
+
       const matchesStatus = statusFilter === 'all' || pkg.status === statusFilter;
       const matchesTeacher = teacherFilter === 'all' || (pkg.students as any)?.teacher_id === teacherFilter;
       const matchesPayment = paymentFilter === 'all' || pkg.payment_status === paymentFilter;
-      return matchesSearch && matchesPeriod && matchesStatus && matchesTeacher && matchesPayment;
+      return matchesSearch && matchesPeriod && matchesMonth && matchesStatus && matchesTeacher && matchesPayment;
     });
 
     return filtered.sort((a, b) => {
@@ -99,7 +114,7 @@ export default function Packages() {
         case 'newest': default: return (b.created_at || '').localeCompare(a.created_at || '');
       }
     });
-  }, [packages, searchQuery, startDate, endDate, statusFilter, teacherFilter, paymentFilter, sortBy]);
+  }, [packages, searchQuery, startDate, endDate, monthFilter, statusFilter, teacherFilter, paymentFilter, sortBy]);
 
   // Tab-filtered list
   const filteredPackages = useMemo(() => {
@@ -232,6 +247,7 @@ export default function Packages() {
         <PackageFiltersBar
           searchQuery={searchQuery} onSearchChange={setSearchQuery}
           quarterFilter={quarterFilter} onQuarterChange={setQuarterFilter}
+          monthFilter={monthFilter} onMonthFilterChange={setMonthFilter}
           statusFilter={statusFilter} onStatusFilterChange={(v) => setStatusFilter(v as StatusFilter)}
           teacherFilter={teacherFilter} onTeacherFilterChange={setTeacherFilter}
           paymentFilter={paymentFilter} onPaymentFilterChange={setPaymentFilter}
