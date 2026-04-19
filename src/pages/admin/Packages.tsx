@@ -64,32 +64,19 @@ export default function Packages() {
         studentName.includes(searchQuery.toLowerCase()) ||
         packageType.includes(searchQuery.toLowerCase());
 
-      // Rollover logic: In-Progress (Active) packages roll over across quarters,
-      // Finished (Completed) packages only show in the quarter they were created
+      // Strict period filter: only packages CREATED within the selected quarter
       let matchesPeriod = true;
-      if (startDate && endDate && pkg.created_at) {
-        const createdDate = pkg.created_at.slice(0, 10);
-        if (pkg.status === 'Completed') {
-          // Finished packages: must have been created within or before the quarter,
-          // and completed within the quarter
-          const completedDate = pkg.completed_date?.slice(0, 10);
-          matchesPeriod = completedDate
-            ? completedDate >= startDate && completedDate <= endDate
-            : createdDate >= startDate && createdDate <= endDate;
-        } else {
-          // In-Progress (Active) packages: include if created before or during the quarter end
-          matchesPeriod = createdDate <= endDate;
-        }
+      if (startDate && endDate) {
+        const createdDate = pkg.created_at?.slice(0, 10);
+        matchesPeriod = !!createdDate && createdDate >= startDate && createdDate <= endDate;
       }
 
-      // Month filter: narrow further by created_at month (or completed_date for finished)
+      // Month filter: only packages CREATED in the selected month
       let matchesMonth = true;
       if (monthFilter !== null) {
-        const refDateStr = pkg.status === 'Completed'
-          ? (pkg.completed_date?.slice(0, 10) || pkg.created_at?.slice(0, 10))
-          : pkg.created_at?.slice(0, 10);
-        if (refDateStr) {
-          const monthIdx = parseInt(refDateStr.slice(5, 7), 10) - 1;
+        const createdDate = pkg.created_at?.slice(0, 10);
+        if (createdDate) {
+          const monthIdx = parseInt(createdDate.slice(5, 7), 10) - 1;
           matchesMonth = monthIdx === monthFilter;
         } else {
           matchesMonth = false;
