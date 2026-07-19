@@ -15,12 +15,12 @@ export function getCurrentQuarter(): QuarterFilterValue {
   // Academic year starts in September
   const academicYear = month >= 9 ? year : year - 1;
 
-  // Q1: Sep-Nov, Q2: Dec-Mar, Q3: Apr-Jun
+  // Q1: Sep-Nov, Q2: Dec-Mar, Q3: Apr-Jun, Q4: Jul-Aug
   let quarterIdx = 0;
   if (month >= 9 && month <= 11) quarterIdx = 0;
   else if (month === 12 || (month >= 1 && month <= 3)) quarterIdx = 1;
   else if (month >= 4 && month <= 6) quarterIdx = 2;
-  else quarterIdx = 2; // Jul-Aug fallback to Q3
+  else quarterIdx = 3; // Jul-Aug
 
   return { year: academicYear, quarterIdx };
 }
