@@ -30,7 +30,7 @@ export default function QuarterAnalysis() {
     if (!comparePrevious) return null;
     if (selectedQuarterIdx > 0) return academicYear.quarters[selectedQuarterIdx - 1];
     const prevYear = getAcademicYear(selectedYear - 1);
-    return prevYear.quarters[2];
+    return prevYear.quarters[prevYear.quarters.length - 1];
   }, [comparePrevious, selectedQuarterIdx, selectedYear, academicYear]);
 
   const { data, isLoading } = useQuarterAnalysis(currentQuarter, selectedYear);
