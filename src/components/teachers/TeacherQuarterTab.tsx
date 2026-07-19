@@ -33,19 +33,21 @@ export function TeacherQuarterTab({ teacherId }: TeacherQuarterTabProps) {
   const q1 = academicYear.quarters[0];
   const q2 = academicYear.quarters[1];
   const q3 = academicYear.quarters[2];
+  const q4 = academicYear.quarters[3];
 
   const { teacherData: td1, isLoading: l1 } = useTeacherQuarterData(q1, selectedYear, teacherId);
   const { teacherData: td2, isLoading: l2 } = useTeacherQuarterData(q2, selectedYear, teacherId);
   const { teacherData: td3, isLoading: l3 } = useTeacherQuarterData(q3, selectedYear, teacherId);
+  const { teacherData: td4, isLoading: l4 } = useTeacherQuarterData(q4, selectedYear, teacherId);
 
-  const isLoading = l1 || l2 || l3;
+  const isLoading = l1 || l2 || l3 || l4;
 
   // Aggregate yearly totals
   const yearlyTotals = useMemo(() => {
-    const all = [td1, td2, td3].filter(Boolean) as NonNullable<typeof td1>[];
+    const all = [td1, td2, td3, td4].filter(Boolean) as NonNullable<typeof td1>[];
     if (all.length === 0) return null;
     // Active = latest quarter's active (rollover)
-    const latestWithData = [td3, td2, td1].find((entry) => entry && entry.totalStudents > 0) ?? null;
+    const latestWithData = [td4, td3, td2, td1].find((entry) => entry && entry.totalStudents > 0) ?? null;
     const activeStudents = latestWithData?.activeStudents ?? 0;
     // Stopped & Left = sum across ALL quarters (each event counted once in its quarter)
     const stoppedStudents = all.reduce((s, t) => s + t.stoppedStudents, 0);
@@ -60,12 +62,13 @@ export function TeacherQuarterTab({ teacherId }: TeacherQuarterTabProps) {
       trialsConducted: all.reduce((s, t) => s + t.trialsConducted, 0),
       trialConversions: all.reduce((s, t) => s + t.trialConversions, 0),
     };
-  }, [td1, td2, td3]);
+  }, [td1, td2, td3, td4]);
 
   const quarterSections = [
     { quarter: q1, data: td1 },
     { quarter: q2, data: td2 },
     { quarter: q3, data: td3 },
+    { quarter: q4, data: td4 },
   ];
 
   return (
