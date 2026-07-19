@@ -5,7 +5,7 @@ import { isHistoricalMonth, getHistoricalDataForMonth, type HistoricalTeacherMon
 import { countStudentsForPeriod } from '@/lib/quarter-student-counting';
 
 // Custom academic quarters
-// Q1: Sep, Oct, Nov | Q2: Dec, Jan, Feb, Mar | Q3: Apr, May, Jun
+// Q1: Sep, Oct, Nov | Q2: Dec, Jan, Feb, Mar | Q3: Apr, May, Jun | Q4: Jul, Aug (summer)
 
 export interface AcademicQuarter {
   label: string;
@@ -21,6 +21,7 @@ export function getAcademicYear(year: number): { label: string; quarters: Academ
       { label: 'Quarter 1', months: [9, 10, 11], startDate: `${year}-09-01`, endDate: `${year}-11-30` },
       { label: 'Quarter 2', months: [12, 1, 2, 3], startDate: `${year}-12-01`, endDate: `${year + 1}-03-31` },
       { label: 'Quarter 3', months: [4, 5, 6], startDate: `${year + 1}-04-01`, endDate: `${year + 1}-06-30` },
+      { label: 'Quarter 4', months: [7, 8], startDate: `${year + 1}-07-01`, endDate: `${year + 1}-08-31` },
     ],
   };
 }
